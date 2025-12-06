@@ -1,0 +1,37 @@
+# Lista de herramientas de terminal para Arch Linux
+
+# === SISTEMA BASE ===
+git
+openssh
+base-devel
+
+# === TERMINAL Y SHELL ===
+fish
+kitty
+starship
+
+# === HERRAMIENTAS MODERNAS ===
+eza                 # listado de archivos mejorado
+duf                 # información de discos mejorada
+zoxide              # navegación de directorios inteligente
+fzf                 # buscador difuso
+ripgrep             # búsqueda en texto
+fd                  # búsqueda de archivos
+less                # visor de texto
+bat                 # cat mejorado
+
+# === EDITORES ===
+neovim
+
+# === UTILIDADES ===
+jq                  # procesador JSON
+curl                # cliente web
+wget                # descargador web
+
+# === MONITORES Y SISTEMA ===
+htop                # monitor de procesos
+fastfetch           # información del sistema
+ncdu                # visor de uso de disco en terminal
+
+# === CONTENEDORES ===
+docker
