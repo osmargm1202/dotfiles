@@ -16,7 +16,7 @@ io.gitlab.theevilskeleton.Upscaler    # escalador de imágenes con IA
 # === PRODUCTIVIDAD Y OFICINA ===
 com.wps.Office
 org.gnome.Calculator                   # calculadora GNOME
-org.gnome.Papers                       # visor de documentos GNOME
+# org.gnome.Papers                       # visor de documentos GNOME
 org.gnome.SimpleScan                   # escáner de documentos GNOME
 
 # === COMUNICACIÓN ===
