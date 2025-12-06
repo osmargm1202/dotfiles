@@ -23,8 +23,8 @@ org.gnome.SimpleScan                   # escáner de documentos GNOME
 com.discordapp.Discord
 
 # === DESARROLLO ===
-com.dbeaver.DBeaverCommunity
-io.github.nickvergessen.SQLiteBrowser  # navegador SQLite
+io.dbeaver.DBeaverCommunity
+org.sqlitebrowser.sqlitebrowser
 
 # === DISEÑO Y CREATIVIDAD ===
 org.gimp.GIMP
@@ -44,11 +44,5 @@ org.kde.kwrite                         # editor de texto KDE
 # === SEGURIDAD Y PRIVACIDAD ===
 com.bitwarden.desktop
 
-# === STREAMING Y REMOTO ===
-com.moonlight_stream.Moonlight
-com.github.iwalton3.jellyfin-media-player
-dev.lizardbyte.app.Sunshine
 
-# === HERRAMIENTAS ADICIONALES ===
-org.openrgb.OpenRGB
 
