@@ -6,6 +6,7 @@ cursor-appimage          # IDE moderno
 
 # === HERRAMIENTAS Y UTILIDADES ===
 gnome-keyring       # gestor de claves y contraseñas
+papers              # Document Viewer gnome PDF
 udiskie             # montaje automático de medios
 
 # === THEMING Y CONFIGURACIÓN ===

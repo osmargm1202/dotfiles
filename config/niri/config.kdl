@@ -227,6 +227,7 @@ window-rule {
 window-rule {
     match app-id="cursor$"
     match app-id="Chromium$"
+    match app-id="Claude$"
     match app-id="org.chromium.Chromium"        // Chromium Flatpak
     match app-id="Chromium"                     // Chromium - mayúscula
     match app-id="Cursor"                       // Cursor - mayúscula
@@ -258,7 +259,7 @@ binds {
     Mod+Slash { show-hotkey-overlay; }
     Mod+Return hotkey-overlay-title="Abrir terminal (kitty)" { spawn "kitty"; }
     Mod+E hotkey-overlay-title="Gestor de archivos" { spawn "fish" "-c" "dolphin"; }
-    Mod+W hotkey-overlay-title="Navegador" { spawn "fish" "-c" "chromium"; }
+    Mod+W hotkey-overlay-title="Navegador" { spawn "fish" "-c" "--class" "chromium" "chromium"; }
     Super+Alt+C hotkey-overlay-title="Cursor Code Editor" { spawn "fish" "-c" "cursor"; }
     Mod+A hotkey-overlay-title="chatgpt terminal" { spawn "kitty" "--class" "orgmai-chat" "-e" "fish" "-c" "orgmai chat"; }
     Mod+Shift+A hotkey-overlay-title="chatgpt terminal última conversación" { spawn "kitty" "--class" "orgmai-chat" "-e" "fish" "-c" "orgmai prev"; }
