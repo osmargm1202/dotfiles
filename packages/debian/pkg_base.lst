@@ -1,0 +1,27 @@
+# Lista de herramientas de terminal para Debian
+
+# === SISTEMA BASE ===
+git                 # control de versiones
+openssh-client      # cliente SSH
+build-essential     # herramientas de desarrollo básicas
+
+# === TERMINAL Y SHELL ===
+fish                # shell moderno
+starship            # prompt personalizable
+
+# === HERRAMIENTAS MODERNAS ===
+fzf                 # buscador difuso
+ripgrep             # búsqueda en texto
+fd-find             # búsqueda de archivos (fd en Arch)
+bat                 # cat mejorado
+eza                 # listado de archivos mejorado
+zoxide              # navegación de directorios inteligente
+
+# === EDITORES ===
+neovim              # editor de texto avanzado
+
+# === UTILIDADES ===
+jq                  # procesador JSON
+curl                # cliente web
+wget                # descargador web
+

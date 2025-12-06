@@ -1,0 +1,19 @@
+# Paquetes extras para Arch Linux
+
+# === GIT Y DOCKER UI ===
+lazygit             # interfaz git
+lazydocker          # interfaz docker
+uv                  # herramienta de gestión de proyectos Python
+
+# === UTILIDADES ===
+smbclient           # cliente SMB/CIFS
+tmux                # terminal multiplexer
+ctop                # monitor de contenedores
+rsync               # sincronización de archivos
+watchexec           # ejecuta comandos cuando detecta cambios en archivos
+nnn                 # explorador de archivos
+
+# === MONITORES Y SISTEMA ===
+pacseek             # explorador de paquetes
+peaclock            # reloj, temporizador y cronómetro para terminal
+

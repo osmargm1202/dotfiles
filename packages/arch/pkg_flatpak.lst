@@ -1,0 +1,57 @@
+# Lista de aplicaciones Flatpak organizadas por categorías
+
+# === JUEGOS Y GAMING ===
+com.valvesoftware.Steam
+com.valvesoftware.Steam.CompatibilityTool.Proton-GE
+
+# === MULTIMEDIA - REPRODUCTORES ===
+org.videolan.VLC
+com.spotify.Client
+
+# === MULTIMEDIA - EDICIÓN ===
+com.obsproject.Studio
+com.github.unrud.VideoDownloader
+com.github.jesec.FreeTube
+io.gitlab.theevilskeleton.Upscaler    # escalador de imágenes con IA
+
+# === PRODUCTIVIDAD Y OFICINA ===
+com.wps.Office
+org.gnome.Calculator                   # calculadora GNOME
+org.gnome.Evince                       # visor de documentos GNOME
+org.gnome.SimpleScan                   # escáner de documentos GNOME
+
+# === COMUNICACIÓN ===
+com.discordapp.Discord
+
+# === DESARROLLO ===
+com.dbeaver.DBeaverCommunity
+io.github.nickvergessen.SQLiteBrowser  # navegador SQLite
+
+# === DISEÑO Y CREATIVIDAD ===
+org.gimp.GIMP
+org.inkscape.Inkscape
+org.blender.Blender
+
+# === UTILIDADES DEL SISTEMA ===
+com.github.tchx84.Flatseal
+io.github.flattool.Warehouse
+io.missioncenter.MissionCenter
+io.gitlab.adhami3310.Impression
+org.gnome.eog                          # visor de imágenes Eye of GNOME
+
+# === ADMINISTRADORES DE ARCHIVOS ===
+org.kde.dolphin                        # administrador de archivos KDE
+org.kde.kwrite                         # editor de texto KDE
+
+# === SEGURIDAD Y PRIVACIDAD ===
+com.bitwarden.desktop
+
+# === STREAMING Y REMOTO ===
+com.moonlight_stream.Moonlight
+com.github.iwalton3.jellyfin-media-player
+dev.lizardbyte.app.Sunshine
+
+# === HERRAMIENTAS ADICIONALES ===
+org.openrgb.OpenRGB
+org.chromium.Chromium                  # navegador Chromium
+

@@ -1,0 +1,11 @@
+# Herramientas de red y seguridad para Arch Linux
+
+# === RED Y SEGURIDAD ===
+bind                # herramientas DNS (incluye nslookup)
+hcxdumptool         # herramienta de captura WiFi
+hcxtools            # herramientas para análisis WiFi
+wireshark-cli       # analizador de protocolos de red (CLI)
+wifite              # herramienta de captura WiFi
+rustscan            # herramienta de escaneo de red
+nmap                # herramienta de escaneo de red
+

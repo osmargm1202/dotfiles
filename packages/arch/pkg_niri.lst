@@ -1,0 +1,13 @@
+# Paquetes específicos para Niri (Wayland compositor)
+
+# === NIRI CORE ===
+niri
+xwayland-satellite
+xdg-desktop-portal-gtk
+xdg-desktop-portal-gnome
+
+# === UTILIDADES ===
+brightnessctl
+power-profiles-daemon
+swayidle            # gestor de inactividad para Wayland
+

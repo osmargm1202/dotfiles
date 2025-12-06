@@ -1,0 +1,11 @@
+# Herramientas de red y seguridad para Debian
+
+# === RED Y SEGURIDAD ===
+bind9-dnsutils      # herramientas DNS (incluye nslookup, dig)
+wireshark           # analizador de protocolos de red
+nmap                # herramienta de escaneo de red
+# hcxdumptool: compilación manual
+# hcxtools: compilación manual
+# wifite: pip install wifite
+# rustscan: instalación manual desde releases
+

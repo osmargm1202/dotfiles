@@ -1,0 +1,33 @@
+# Paquetes específicos para i3 Window Manager
+
+# === I3 CORE ===
+i3-wm               # window manager
+i3lock-color        # pantalla de bloqueo mejorada
+
+# === COMPOSITOR Y EFECTOS ===
+picom               # compositor para transparencias
+python-pywal        # paleta de colores para wal
+
+# === BARRAS Y LANZADORES ===
+polybar             # barra del sistema
+rofi                # lanzador de aplicaciones
+dunst               # daemon de notificaciones
+
+# === WALLPAPER Y VISUAL ===
+feh                 # gestor de wallpapers
+xwallpaper          # gestor de wallpapers con soporte multi-monitor
+
+# === HERRAMIENTAS X11 ===
+xorg-xrandr         # configuración de pantallas
+xorg-xinput         # configuración de entrada
+xorg-xsetroot       # configuración de root window
+arandr              # GUI para configurar pantallas
+autorandr           # gestión automática de configuraciones de pantalla
+
+# === UTILIDADES ===
+brightnessctl       # control de brillo
+scrot               # capturas para lock screen
+xclip               # gestor de portapapeles
+clipmenu            # menú de portapapeles
+flameshot           # herramienta de capturas
+

@@ -1,0 +1,20 @@
+# Lista de paquetes generales del sistema para Debian
+# Nota: Las herramientas de terminal están en pkg_base.lst
+
+# === EDITORES Y DESARROLLO ===
+# cursor: instalación manual desde https://cursor.sh
+
+# === HERRAMIENTAS Y UTILIDADES ===
+gnome-keyring       # gestor de claves y contraseñas
+udisks2             # montaje de medios
+
+# === THEMING Y CONFIGURACIÓN ===
+fonts-noto-color-emoji    # fuente emoji
+fonts-jetbrains-mono      # fuente JetBrains Mono
+fonts-roboto              # fuente sans-serif
+# ttf-ms-fonts: instalación manual (ttf-mscorefonts-installer)
+
+# === CURSORES E ICONOS ===
+papirus-icon-theme        # tema de iconos Papirus
+# bibata-cursor-theme: instalación manual desde releases
+

@@ -1,0 +1,19 @@
+# Paquetes extras para Debian
+
+# === GIT Y DOCKER UI ===
+# lazygit: instalación manual desde releases o go install
+# lazydocker: instalación manual desde releases o go install
+# uv: pip install uv o instalación desde pipx
+
+# === UTILIDADES ===
+smbclient           # cliente SMB/CIFS
+tmux                # terminal multiplexer
+# ctop: instalación manual desde releases
+rsync               # sincronización de archivos
+# watchexec: cargo install watchexec-cli
+nnn                 # explorador de archivos
+
+# === MONITORES Y SISTEMA ===
+# pacseek: solo disponible en Arch
+# peaclock: instalación manual desde releases
+
