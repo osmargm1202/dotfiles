@@ -11,13 +11,12 @@ com.spotify.Client
 # === MULTIMEDIA - EDICIÓN ===
 com.obsproject.Studio
 com.github.unrud.VideoDownloader
-com.github.jesec.FreeTube
 io.gitlab.theevilskeleton.Upscaler    # escalador de imágenes con IA
 
 # === PRODUCTIVIDAD Y OFICINA ===
 com.wps.Office
 org.gnome.Calculator                   # calculadora GNOME
-org.gnome.Evince                       # visor de documentos GNOME
+org.gnome.Papers                       # visor de documentos GNOME
 org.gnome.SimpleScan                   # escáner de documentos GNOME
 
 # === COMUNICACIÓN ===
@@ -40,7 +39,6 @@ io.gitlab.adhami3310.Impression
 org.gnome.eog                          # visor de imágenes Eye of GNOME
 
 # === ADMINISTRADORES DE ARCHIVOS ===
-org.kde.dolphin                        # administrador de archivos KDE
 org.kde.kwrite                         # editor de texto KDE
 
 # === SEGURIDAD Y PRIVACIDAD ===
@@ -53,5 +51,4 @@ dev.lizardbyte.app.Sunshine
 
 # === HERRAMIENTAS ADICIONALES ===
 org.openrgb.OpenRGB
-org.chromium.Chromium                  # navegador Chromium
 
