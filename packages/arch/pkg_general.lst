@@ -2,7 +2,7 @@
 # Nota: Las herramientas de terminal están en pkg_arch.lst
 
 # === EDITORES Y DESARROLLO ===
-cursor-bin          # IDE moderno
+cursor-appimage          # IDE moderno
 
 # === HERRAMIENTAS Y UTILIDADES ===
 gnome-keyring       # gestor de claves y contraseñas
