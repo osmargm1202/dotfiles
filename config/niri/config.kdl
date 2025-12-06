@@ -257,8 +257,7 @@ overview {
 binds {
     Mod+Slash { show-hotkey-overlay; }
     Mod+Return hotkey-overlay-title="Abrir terminal (kitty)" { spawn "kitty"; }
-    Mod+M hotkey-overlay-title="Lanzador de apps (rofi)" { spawn "fish" "-c" "rofi -show drun -show-icons"; }
-    Mod+E hotkey-overlay-title="Gestor de archivos" { spawn "fish" "-c" "dolphin" }
+    Mod+E hotkey-overlay-title="Gestor de archivos" { spawn "fish" "-c" "dolphin"; }
     Mod+W hotkey-overlay-title="Navegador" { spawn "fish" "-c" "chromium"; }
     Super+Alt+C hotkey-overlay-title="Cursor Code Editor" { spawn "fish" "-c" "cursor"; }
     Mod+A hotkey-overlay-title="chatgpt terminal" { spawn "kitty" "--class" "orgmai-chat" "-e" "fish" "-c" "orgmai chat"; }
@@ -267,7 +266,8 @@ binds {
     // dms
     Mod+Y hotkey-overlay-title="Historial del portapapeles" { spawn-sh "dms ipc call clipboard open"; }
     Mod+Alt+E hotkey-overlay-title="Menú de sesión (apagar, suspender, cerrar sesión)" { spawn-sh "dms ipc call powermenu toggle"; }
-    Mod+space hotkey-overlay-title="Lanzador de aplicaciones" { spawn-sh "dms ipc call spotlight toggle"; }
+    Mod+M hotkey-overlay-title="Lanzador de aplicaciones" { spawn "fish" "-c" "dms ipc call spotlight toggle"; }
+    Mod+space hotkey-overlay-title="Lanzador de aplicaciones" { spawn "fish" "-c" "dms ipc call spotlight toggle"; }
     Super+Alt+L hotkey-overlay-title="Bloquear sesión" { spawn-sh "dms ipc call lock lock"; }
     Mod+N hotkey-overlay-title="Bloc de notas" { spawn-sh "dms ipc call notepad toggle"; }
     Super+Alt+space hotkey-overlay-title="Cambiar fondo de pantalla" { spawn-sh "dms ipc call wallpaper next"; }
