@@ -1,0 +1,21 @@
+# Configuración de peaclock para ORGMOS
+# Reloj digital con formato de 12 horas, segundos, fecha y auto-ajuste
+
+# Formato de 12 horas (desactivar 24 horas)
+set hour-24 off
+
+# Mostrar segundos
+set seconds on
+
+# Auto-ajustar tamaño
+set auto-size on
+
+# Auto-ajustar ratio
+set auto-ratio on
+
+# Mostrar fecha
+set date on
+
+# Vista digital
+view digital
+

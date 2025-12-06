@@ -1,0 +1,101 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  // Configuración general
+  "display": {
+    "separator": " -> ",
+    "color": {
+      "keys": "blue",
+      "title": "yellow"
+    }
+  },
+  // Configuración del logo/imagen
+  "logo": {
+    //"source": "auto",  // Usa el logo del OS automáticamente
+    // Para usar una imagen personalizada, cambia a:
+    "source": "./orgm.png",
+    "width": 35,
+    "height": 6,
+    "padding": {
+      "top": 6,
+      "left": 2,
+      "right": 2
+    }
+  },
+  // También puedes usar estos ajustes alternativos para la imagen:
+  // "logo": {
+  //     "source": "/home/usuario/Imágenes/logo.png",
+  //     "type": "kitty-direct",  // Específico para Kitty
+  //     "width": 25,
+  //     "height": 12,
+  //     "padding": {
+  //         "top": 0,
+  //         "left": 1,
+  //         "right": 3
+  //     }
+  // },
+  // Módulos a mostrar
+  "modules": [
+    {
+      "type": "title",
+      "format": "{user-name}@{host-name}"
+    },
+    "separator",
+    {
+      "type": "os",
+      "format": "{name} {version}"
+    },
+    {
+      "type": "kernel",
+      "format": "{release}"
+    },
+    {
+      "type": "uptime",
+      "format": "{days}d {hours}h {minutes}m"
+    },
+    {
+      "type": "packages",
+      "format": "{all} (pacman)"
+    },
+    {
+      "type": "display",
+      "format": "{width}x{height} @ {refresh-rate}Hz"
+    },
+    {
+      "type": "wm",
+      "format": "{pretty-name}"
+    },
+    {
+      "type": "cpu",
+      "format": "{name}"
+    },
+    {
+      "type": "gpu",
+      "format": "{name}"
+    },
+    {
+      "type": "memory",
+      "format": "{used} / {total} ({percentage}%)"
+    },
+    {
+      "type": "swap",
+      "format": "{used} / {total} ({percentage}%)"
+    },
+    {
+      "type": "localip",
+      "format": "{ipv4} (IPv4)"
+    },
+    {
+      "type": "publicip",
+      "format": "{ip} ({location})"
+    },
+    {
+      "type": "wifi",
+      "format": "{ssid}"
+    },
+    "separator",
+    {
+      "type": "colors",
+      "symbol": "circle"
+    }
+  ]
+}
