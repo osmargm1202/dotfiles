@@ -1,4 +1,4 @@
-//spawn-at-startup "fish" "-c" "nextcloud --background && notify-send -u normal -a 'niri' 'Nextcloud '"
+spawn-at-startup "fish" "-c" "flatpak run com.nextcloud.desktopclient.nextcloud --background"
 spawn-at-startup "fish" "-c" "wl-paste -t text --watch cliphist store & wl-paste -t image/png --watch cliphist store"
 spawn-at-startup "fish" "-c" "swayidle -w timeout 300 'wlopm --off \\*' resume 'wlopm --on \\*' timeout 600 'dms ipc call lock lock' timeout 900 'systemctl suspend' before-sleep 'dms ipc call lock lock'"
 
@@ -258,9 +258,9 @@ binds {
     Mod+Slash { show-hotkey-overlay; }
     Mod+Return hotkey-overlay-title="Abrir terminal (kitty)" { spawn "kitty"; }
     Mod+M hotkey-overlay-title="Lanzador de apps (rofi)" { spawn "fish" "-c" "rofi -show drun -show-icons"; }
-    Mod+E hotkey-overlay-title="Gestor de archivos" { spawn "fish" "-c" "flatpak run org.kde.dolphin"; }
-    Mod+W hotkey-overlay-title="Navegador" { spawn "fish" "-c" "env OZONE_PLATFORM=wayland chromium --ozone-platform=wayland"; }
-    Super+Alt+C hotkey-overlay-title="Cursor Code Editor" { spawn "fish" "-c" "env OZONE_PLATFORM=wayland ELECTRON_OZONE_PLATFORM_HINT=auto cursor --ozone-platform=wayland"; }
+    Mod+E hotkey-overlay-title="Gestor de archivos" { spawn "fish" "-c" "dolphin" }
+    Mod+W hotkey-overlay-title="Navegador" { spawn "fish" "-c" "chromium"; }
+    Super+Alt+C hotkey-overlay-title="Cursor Code Editor" { spawn "fish" "-c" "cursor"; }
     Mod+A hotkey-overlay-title="chatgpt terminal" { spawn "kitty" "--class" "orgmai-chat" "-e" "fish" "-c" "orgmai chat"; }
     Mod+Shift+A hotkey-overlay-title="chatgpt terminal última conversación" { spawn "kitty" "--class" "orgmai-chat" "-e" "fish" "-c" "orgmai prev"; }
 
