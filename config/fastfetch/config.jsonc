@@ -10,16 +10,16 @@
   },
   // Configuración del logo/imagen
   "logo": {
-    //"source": "auto",  // Usa el logo del OS automáticamente
+    "source": "auto" // Usa el logo del OS automáticamente
     // Para usar una imagen personalizada, cambia a:
-    "source": "./orgm.png",
-    "width": 35,
-    "height": 6,
-    "padding": {
-      "top": 6,
-      "left": 2,
-      "right": 2
-    }
+    //"source": "~/.config/fastfetch/orgm.png",
+    //"width": 35,
+    //"height": 6,
+    //"padding": {
+    //  "top": 6,
+    //  "left": 2,
+    //  "right": 2
+    // }
   },
   // También puedes usar estos ajustes alternativos para la imagen:
   // "logo": {
@@ -54,7 +54,8 @@
     },
     {
       "type": "packages",
-      "format": "{all} (pacman)"
+      "key": "Packages",
+      "format": "{all} (total) + {15} (flatpak-user) {14} (flatpak-system) {pacman} (pacman)"
     },
     {
       "type": "display",
