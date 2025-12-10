@@ -85,9 +85,21 @@ if type -q nvim
     set EDITOR nvim
 end
 # si fedora es el sistema operativo
-if type -q dnf or type -q rpm-ostree:
-    alias tba="toolbox enter arch"
-    alias tbf="toolbox enter orgm"
+
+function tbo
+    if test (count $argv) -gt 0
+        toolbox run --container orgm fish -c "$argv"
+    else
+        toolbox run --container orgm fish
+    end
+end
+
+function tbo
+    if test (count $argv) -gt 0
+        toolbox run --container orgm fish -c "$argv"
+    else
+        toolbox run --container orgm fish
+    end
 end
 
 # history search (ctrl+r mejorado con fzf si lo instalas)
