@@ -9,7 +9,7 @@ base-devel
 fish
 nano
 vi
-
+github-cli
 starship
 uv                  # herramienta de gestión de proyectos Python
 
