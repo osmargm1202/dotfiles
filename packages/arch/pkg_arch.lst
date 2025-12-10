@@ -7,8 +7,11 @@ base-devel
 
 # === TERMINAL Y SHELL ===
 fish
-kitty
+nano
+vi
+
 starship
+uv                  # herramienta de gestión de proyectos Python
 
 # === HERRAMIENTAS MODERNAS ===
 eza                 # listado de archivos mejorado
@@ -32,6 +35,3 @@ wget                # descargador web
 htop                # monitor de procesos
 fastfetch           # información del sistema
 ncdu                # visor de uso de disco en terminal
-
-# === CONTENEDORES ===
-docker

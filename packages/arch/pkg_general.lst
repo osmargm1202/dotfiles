@@ -8,6 +8,10 @@ cursor-appimage          # IDE moderno
 gnome-keyring       # gestor de claves y contraseñas
 papers              # Document Viewer gnome PDF
 udiskie             # montaje automático de medios
+kitty
+
+# === CONTENEDORES ===
+docker
 
 # === THEMING Y CONFIGURACIÓN ===
 noto-fonts-emoji              # fuente emoji

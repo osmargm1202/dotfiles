@@ -74,9 +74,17 @@ set TERM xterm-256color
 
 if type -q nvim
     set EDITOR nvim
+else if type -q nano
+    set EDITOR nano
+else if type -q vi
+    set EDITOR vi
 end
 
-
+# si fedora es el sistema operativo
+if type -q dnf
+    alias tba="toolbox enter arch"
+    alias tbf="toolbox enter orgm"
+fi
 
 # history search (ctrl+r mejorado con fzf si lo instalas)
 if type -q fzf

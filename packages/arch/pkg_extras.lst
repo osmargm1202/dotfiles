@@ -3,7 +3,7 @@
 # === GIT Y DOCKER UI ===
 lazygit             # interfaz git
 lazydocker          # interfaz docker
-uv                  # herramienta de gestión de proyectos Python
+
 
 # === UTILIDADES ===
 smbclient           # cliente SMB/CIFS
