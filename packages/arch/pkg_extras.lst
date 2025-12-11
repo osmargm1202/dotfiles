@@ -1,19 +1,18 @@
-# Paquetes extras para Arch Linux
+# Paquetes extras para Arch Linux (programas GUI y temas)
 
-# === GIT Y DOCKER UI ===
-lazygit             # interfaz git
-lazydocker          # interfaz docker
+# === THEMING Y CONFIGURACIÓN ===
+noto-fonts-emoji              # fuente emoji
+ttf-jetbrains-mono-nerd       # fuente nerdfont
+ttf-roboto                    # fuente sans-serif
+ttf-ms-fonts                  # fuente Microsoft
+ttf-wps-fonts                 # fuente de WPS Office
 
+# === EDITORES Y DESARROLLO ===
+cursor-bin          # IDE moderno
 
-# === UTILIDADES ===
-smbclient           # cliente SMB/CIFS
-tmux                # terminal multiplexer
-ctop                # monitor de contenedores
-rsync               # sincronización de archivos
-watchexec           # ejecuta comandos cuando detecta cambios en archivos
-nnn                 # explorador de archivos
-
-# === MONITORES Y SISTEMA ===
-pacseek             # explorador de paquetes
-peaclock            # reloj, temporizador y cronómetro para terminal
+# === APLICACIONES GUI ===
+kitty               # emulador de terminal
+dolphin             # administrador de archivos
+papers              # visor de documentos
+kvantum             # tema de aplicación
 

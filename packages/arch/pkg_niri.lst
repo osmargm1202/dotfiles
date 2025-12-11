@@ -10,4 +10,4 @@ xdg-desktop-portal-gnome
 brightnessctl
 power-profiles-daemon
 swayidle            # gestor de inactividad para Wayland
-
+udiskie             # montaje automático de medios

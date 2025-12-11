@@ -55,7 +55,7 @@
     {
       "type": "packages",
       "key": "Packages",
-      "format": "{all} (total) + {15} (flatpak-user) {14} (flatpak-system) {pacman} (pacman)"
+      "format": "{all} (total) + {15} (flatpak) + {14} (flatpak-system)"
     },
     {
       "type": "display",

@@ -1,11 +1,28 @@
-# Paquetes extras para Ubuntu
+# Paquetes extras para Ubuntu (programas GUI y temas)
+
+# === THEMING Y CONFIGURACIÓN ===
+fonts-noto-color-emoji    # fuente emoji
+fonts-jetbrains-mono      # fuente JetBrains Mono
+fonts-roboto              # fuente sans-serif
+# ttf-ms-fonts: sudo apt install ttf-mscorefonts-installer
+
+# === CURSORES E ICONOS ===
+papirus-icon-theme        # tema de iconos Papirus
+# bibata-cursor-theme: instalación manual desde releases
+
+# === HERRAMIENTAS Y UTILIDADES GUI ===
+gnome-keyring       # gestor de claves y contraseñas
+udisks2             # montaje de medios
+
+# === EDITORES Y DESARROLLO ===
+# cursor: instalación manual desde https://cursor.sh
 
 # === GIT Y DOCKER UI ===
 # lazygit: instalación desde PPA o go install
 # lazydocker: instalación manual desde releases o go install
 # uv: pip install uv o instalación desde pipx
 
-# === UTILIDADES ===
+# === UTILIDADES CLI ADICIONALES ===
 smbclient           # cliente SMB/CIFS
 tmux                # terminal multiplexer
 # ctop: instalación manual desde releases
@@ -16,4 +33,3 @@ nnn                 # explorador de archivos
 # === MONITORES Y SISTEMA ===
 # pacseek: solo disponible en Arch
 # peaclock: instalación manual desde releases
-

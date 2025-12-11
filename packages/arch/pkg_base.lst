@@ -4,13 +4,18 @@
 git
 openssh
 base-devel
+pacman-contrib
 
 # === TERMINAL Y SHELL ===
 fish
-nano
-vi
-github-cli
 starship
+
+# === LENGUAJES Y RUNTIMES ===
+go
+rust
+cargo
+nodejs
+bun
 uv                  # herramienta de gestión de proyectos Python
 
 # === HERRAMIENTAS MODERNAS ===
@@ -25,13 +30,37 @@ bat                 # cat mejorado
 
 # === EDITORES ===
 neovim
+vim
+nano
+vi
 
 # === UTILIDADES ===
 jq                  # procesador JSON
 curl                # cliente web
 wget                # descargador web
+rsync               # sincronización de archivos
+smbclient           # cliente SMB/CIFS
+tmux                # terminal multiplexer
+watchexec           # ejecuta comandos cuando detecta cambios en archivos
+nnn                 # explorador de archivos
 
 # === MONITORES Y SISTEMA ===
 htop                # monitor de procesos
 fastfetch           # información del sistema
 ncdu                # visor de uso de disco en terminal
+ctop                # monitor de contenedores
+
+# === GIT Y DOCKER TUI ===
+lazygit             # interfaz git
+lazydocker          # interfaz docker
+pacseek             # explorador de paquetes
+peaclock            # reloj, temporizador y cronómetro para terminal
+
+# === CONTENEDORES ===
+podman
+docker
+docker-compose
+docker-buildx
+
+# === HERRAMIENTAS DE DESARROLLO ===
+github-cli

@@ -10,12 +10,12 @@ fish                # shell moderno
 starship            # prompt personalizable
 
 # === HERRAMIENTAS MODERNAS ===
+eza                 # listado de archivos mejorado
+zoxide              # navegación de directorios inteligente
 fzf                 # buscador difuso
 ripgrep             # búsqueda en texto
 fd-find             # búsqueda de archivos (fd en Arch)
 bat                 # cat mejorado
-eza                 # listado de archivos mejorado
-zoxide              # navegación de directorios inteligente
 
 # === EDITORES ===
 neovim              # editor de texto avanzado
@@ -24,4 +24,3 @@ neovim              # editor de texto avanzado
 jq                  # procesador JSON
 curl                # cliente web
 wget                # descargador web
-

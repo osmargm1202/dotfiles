@@ -12,6 +12,7 @@ python-pywal        # paleta de colores para wal
 polybar             # barra del sistema
 rofi                # lanzador de aplicaciones
 dunst               # daemon de notificaciones
+udiskie             # montaje automático de medios
 
 # === WALLPAPER Y VISUAL ===
 feh                 # gestor de wallpapers
