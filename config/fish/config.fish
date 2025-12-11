@@ -86,11 +86,11 @@ if type -q nvim
 end
 # si fedora es el sistema operativo
 
-function tbo
+function tba
     if test (count $argv) -gt 0
-        toolbox run --container orgm fish -c "$argv"
+        toolbox run --container arch fish -c "$argv"
     else
-        toolbox run --container orgm fish
+        toolbox run --container arch fish
     end
 end
 
