@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=YoutubeKids
+Comment=YoutubeKids Web Application
+Exec=chromium --app="https://youtubekids.com" --new-window --class="YoutubeKids"
+Icon=/home/osmar/.local/share/icons/webapp-icons/YoutubeKids.png
+Categories=AudioVideo;
+NoDisplay=false
+StartupWMClass=YoutubeKids
+StartupNotify=true
+Terminal=false

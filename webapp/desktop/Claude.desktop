@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Claude
+Comment=Claude Web Application
+Exec=chromium --app="https://claude.ai" --new-window --class="Claude"
+Icon=/home/osmar/.local/share/icons/webapp-icons/Claude.png
+Categories=Development;
+NoDisplay=false
+StartupWMClass=Claude
+StartupNotify=true
+Terminal=false

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Facebook
+Comment=Facebook Web Application
+Exec=chromium --app="https://Facebook.com" --new-window --class="Facebook"
+Icon=/home/osmar/.local/share/icons/webapp-icons/Facebook.png
+Categories=Network;WebBrowser;
+NoDisplay=false
+StartupWMClass=Facebook
+StartupNotify=true
+Terminal=false

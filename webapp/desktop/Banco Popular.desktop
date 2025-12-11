@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Banco Popular
+Comment=Internet Banking Banco Popular
+Exec=chromium --app="https://ib.bpd.com.do" --new-window --class="Banco Popular"
+Icon=/home/osmar/.local/share/icons/webapp-icons/Banco Popular.png
+Categories=Office;
+NoDisplay=false
+StartupWMClass=Banco Popular
+StartupNotify=true
+Terminal=false

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Fast
+Comment=Fast Web Application
+Exec=chromium --app="https://fast.com" --new-window --class="Fast"
+Icon=/home/osmar/.local/share/icons/webapp-icons/Fast.png
+Categories=Development;
+NoDisplay=false
+StartupWMClass=Fast
+StartupNotify=true
+Terminal=false

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Outlook - Hotmail
+Comment=Outlook - Hotmail Web Application
+Exec=chromium --app="https://outlook.office.com/" --new-window --class="Outlook - Hotmail"
+Icon=/home/osmar/.local/share/icons/webapp-icons/Outlook - Hotmail.png
+Categories=Office;
+NoDisplay=false
+StartupWMClass=Outlook - Hotmail
+StartupNotify=true
+Terminal=false

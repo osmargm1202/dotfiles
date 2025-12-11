@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=UberEats
+Comment=UberEats Web Application
+Exec=chromium --app="https://www.ubereats.com/" --new-window --class="UberEats"
+Icon=/home/osmar/.local/share/icons/webapp-icons/UberEats.png
+Categories=Utility;
+NoDisplay=false
+StartupWMClass=UberEats
+StartupNotify=true
+Terminal=false

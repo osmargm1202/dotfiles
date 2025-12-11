@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Cloud ORGM
+Comment=Cloud ORGM Web Application
+Exec=chromium --app="https://cloud.or-gm.com/" --new-window --class="Cloud ORGM"
+Icon=/home/osmar/.local/share/icons/webapp-icons/Cloud ORGM.png
+Categories=Office;
+NoDisplay=false
+StartupWMClass=Cloud ORGM
+StartupNotify=true
+Terminal=false

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Poki
+Comment=Poki Game App
+Exec=chromium --app="https://poki.com" --new-window --class="Poki"
+Icon=/home/osmar/.local/share/icons/webapp-icons/Poki.png
+Categories=Game;
+NoDisplay=false
+StartupWMClass=Poki
+StartupNotify=true
+Terminal=false

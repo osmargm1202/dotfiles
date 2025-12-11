@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Gmail
+Comment=Gmail Web Application
+Exec=chromium --app="https://gmail.com" --new-window --class="Gmail"
+Icon=/home/osmar/.local/share/icons/webapp-icons/Gmail.png
+Categories=Network;WebBrowser;
+NoDisplay=false
+StartupWMClass=Gmail
+StartupNotify=true
+Terminal=false

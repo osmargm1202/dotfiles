@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Google Cloud Console
+Comment=Google Cloud Console Web Application
+Exec=chromium --app="https://console.cloud.google.com" --new-window --class="Google Cloud Console"
+Icon=/home/osmar/.local/share/icons/webapp-icons/Google Cloud Console.png
+Categories=Utility;
+NoDisplay=false
+StartupWMClass=Google Cloud Console
+StartupNotify=true
+Terminal=false

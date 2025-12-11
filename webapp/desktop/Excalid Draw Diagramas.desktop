@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Excalid Draw Diagramas
+Comment=Excalid Draw Web App
+Exec=chromium --app="https://excalidraw.com/" --new-window --class="Excalid Draw Diagramas"
+Icon=/home/osmar/.local/share/icons/webapp-icons/Excalid Draw Diagramas.png
+Categories=Office;
+NoDisplay=false
+StartupWMClass=Excalid Draw Diagramas
+StartupNotify=true
+Terminal=false

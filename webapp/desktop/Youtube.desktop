@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Youtube
+Comment=Youtube Web Application
+Exec=chromium --app="https://youtube.com" --new-window --class="Youtube"
+Icon=/home/osmar/.local/share/icons/webapp-icons/Youtube.png
+Categories=AudioVideo;
+NoDisplay=false
+StartupWMClass=Youtube
+StartupNotify=true
+Terminal=false

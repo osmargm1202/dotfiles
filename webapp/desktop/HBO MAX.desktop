@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=HBO MAX
+Comment=HBO MAX Web Application
+Exec=chromium --app="https://hbomax.com" --new-window --class="HBO MAX"
+Icon=/home/osmar/.local/share/icons/webapp-icons/HBO MAX.png
+Categories=AudioVideo;
+NoDisplay=false
+StartupWMClass=HBO MAX
+StartupNotify=true
+Terminal=false
