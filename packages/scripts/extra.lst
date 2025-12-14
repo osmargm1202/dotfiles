@@ -1,3 +1,5 @@
 curl -fsSL custom.or-gm.com/orgmai.sh | sh          # orgmai para chat con IA Claude Sonnet, Haiku
 curl -fsSL custom.or-gm.com/orgmweb.sh | sh          # Creador de aplicaciones Web
 curl -fsSL custom.or-gm.com/orgmprop.sh | sh          # Creador de propuestas de proyectos
+curl -fsSL https://claude.ai/install.sh | bash 		# Claude Code
+curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz && tar -xf google-cloud-cli-linux-x86_64.tar.gz && ./google-cloud-sdk/install.sh #gcloud cli
