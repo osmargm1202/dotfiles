@@ -3,10 +3,12 @@ Version=1.0
 Type=Application
 Name=Github
 Comment=osmargm1202 Gitub App
-Exec=chromium --app="https://github.com/osmargm1202" --new-window --class="Github"
+Exec=flatpak run org.chromium.Chromium --app="https://github.com/osmargm1202" --new-window --class="Github"
 Icon=Github
 Categories=Development;
 NoDisplay=false
 StartupWMClass=Github
 StartupNotify=true
 Terminal=false
+
+

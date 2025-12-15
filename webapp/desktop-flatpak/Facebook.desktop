@@ -3,10 +3,12 @@ Version=1.0
 Type=Application
 Name=Facebook
 Comment=Facebook Web Application
-Exec=chromium --app="https://Facebook.com" --new-window --class="Facebook"
+Exec=flatpak run org.chromium.Chromium --app="https://Facebook.com" --new-window --class="Facebook"
 Icon=Facebook
 Categories=Network;WebBrowser;
 NoDisplay=false
 StartupWMClass=Facebook
 StartupNotify=true
 Terminal=false
+
+

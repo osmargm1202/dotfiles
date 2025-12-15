@@ -3,10 +3,12 @@ Version=1.0
 Type=Application
 Name=HBO MAX
 Comment=HBO MAX Web Application
-Exec=chromium --app="https://hbomax.com" --new-window --class="HBO MAX"
+Exec=flatpak run org.chromium.Chromium --app="https://hbomax.com" --new-window --class="HBO MAX"
 Icon=HBO MAX
 Categories=AudioVideo;
 NoDisplay=false
 StartupWMClass=HBO MAX
 StartupNotify=true
 Terminal=false
+
+

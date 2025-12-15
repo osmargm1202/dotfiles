@@ -3,10 +3,12 @@ Version=1.0
 Type=Application
 Name=Chatgpt
 Comment=Chatgpt Web Application
-Exec=chromium --app="https://chatgpt.com" --new-window --class="Chatgpt"
+Exec=flatpak run org.chromium.Chromium --app="https://chatgpt.com" --new-window --class="Chatgpt"
 Icon=Chatgpt
 Categories=Development;
 NoDisplay=false
 StartupWMClass=Chatgpt
 StartupNotify=true
 Terminal=false
+
+

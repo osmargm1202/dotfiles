@@ -3,10 +3,12 @@ Version=1.0
 Type=Application
 Name=Netflix
 Comment=Netflix Web Application
-Exec=chromium --app="https://netflix.com" --new-window --class="Netflix"
+Exec=flatpak run org.chromium.Chromium --app="https://netflix.com" --new-window --class="Netflix"
 Icon=Netflix
 Categories=Network;WebBrowser;
 NoDisplay=false
 StartupWMClass=Netflix
 StartupNotify=true
 Terminal=false
+
+

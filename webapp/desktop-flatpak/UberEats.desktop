@@ -3,10 +3,12 @@ Version=1.0
 Type=Application
 Name=UberEats
 Comment=UberEats Web Application
-Exec=chromium --app="https://www.ubereats.com/" --new-window --class="UberEats"
+Exec=flatpak run org.chromium.Chromium --app="https://www.ubereats.com/" --new-window --class="UberEats"
 Icon=UberEats
 Categories=Utility;
 NoDisplay=false
 StartupWMClass=UberEats
 StartupNotify=true
 Terminal=false
+
+

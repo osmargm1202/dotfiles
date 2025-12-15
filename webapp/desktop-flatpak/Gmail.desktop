@@ -3,10 +3,12 @@ Version=1.0
 Type=Application
 Name=Gmail
 Comment=Gmail Web Application
-Exec=chromium --app="https://gmail.com" --new-window --class="Gmail"
+Exec=flatpak run org.chromium.Chromium --app="https://gmail.com" --new-window --class="Gmail"
 Icon=Gmail
 Categories=Network;WebBrowser;
 NoDisplay=false
 StartupWMClass=Gmail
 StartupNotify=true
 Terminal=false
+
+

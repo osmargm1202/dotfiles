@@ -3,10 +3,12 @@ Version=1.0
 Type=Application
 Name=Outlook - Hotmail
 Comment=Outlook - Hotmail Web Application
-Exec=chromium --app="https://outlook.office.com/" --new-window --class="Outlook - Hotmail"
+Exec=flatpak run org.chromium.Chromium --app="https://outlook.office.com/" --new-window --class="Outlook - Hotmail"
 Icon=Outlook - Hotmail
 Categories=Office;
 NoDisplay=false
 StartupWMClass=Outlook - Hotmail
 StartupNotify=true
 Terminal=false
+
+

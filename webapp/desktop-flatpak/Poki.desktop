@@ -3,10 +3,12 @@ Version=1.0
 Type=Application
 Name=Poki
 Comment=Poki Game App
-Exec=chromium --app="https://poki.com" --new-window --class="Poki"
+Exec=flatpak run org.chromium.Chromium --app="https://poki.com" --new-window --class="Poki"
 Icon=Poki
 Categories=Game;
 NoDisplay=false
 StartupWMClass=Poki
 StartupNotify=true
 Terminal=false
+
+

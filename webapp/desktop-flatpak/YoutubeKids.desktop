@@ -3,10 +3,12 @@ Version=1.0
 Type=Application
 Name=YoutubeKids
 Comment=YoutubeKids Web Application
-Exec=chromium --app="https://youtubekids.com" --new-window --class="YoutubeKids"
+Exec=flatpak run org.chromium.Chromium --app="https://youtubekids.com" --new-window --class="YoutubeKids"
 Icon=YoutubeKids
 Categories=AudioVideo;
 NoDisplay=false
 StartupWMClass=YoutubeKids
 StartupNotify=true
 Terminal=false
+
+

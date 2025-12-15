@@ -3,10 +3,12 @@ Version=1.0
 Type=Application
 Name=Windows Docker
 Comment=Windows VM
-Exec=chromium --app="http://127.0.0.1:8006" --new-window --class="Windows Docker"
+Exec=flatpak run org.chromium.Chromium --app="http://127.0.0.1:8006" --new-window --class="Windows Docker"
 Icon=Windows Docker
 Categories=Development;
 NoDisplay=false
 StartupWMClass=Windows Docker
 StartupNotify=true
 Terminal=false
+
+
