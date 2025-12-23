@@ -179,8 +179,8 @@
     # === THEMING ===
     pywal
     lxappearance  # para configurar temas GTK
-    qt5ct  # para configurar temas Qt
-    
+    libsForQt5.qt5ct  # para configurar temas Qt
+    kdePackages.qt6ct
     # === NETWORK ===
     networkmanagerapplet  # nm-applet para systray
     

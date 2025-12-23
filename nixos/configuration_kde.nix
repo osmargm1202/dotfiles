@@ -60,9 +60,19 @@
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
-  # Enable the GNOME Desktop Environment.
-  services.desktopManager.gnome.enable = true;
-  services.displayManager.gdm.enable = true;
+  services = {
+  displayManager.sddm = {
+    enable = true;
+    #wayland.enable = false;
+    theme = "sddm-chili-theme";
+    };
+  desktopManager.plasma6.enable = true;
+  
+  # Asegúrate de deshabilitar GNOME
+  desktopManager.gnome.enable = false;
+  displayManager.gdm.enable = false;
+  displayManager.gdm.autoSuspend = false;
+};
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -119,19 +129,26 @@
     git
     distrobox
     htop
+    roboto
+    liberation_ttf
+    ntfs3g
+    gh
     nerd-fonts.jetbrains-mono
-    gnomeExtensions.blur-my-shell
-    gnomeExtensions.arc-menu
-    gnomeExtensions.appindicator
-    gnomeExtensions.caffeine
-    gnomeExtensions.clipboard-history
-    gnomeExtensions.night-theme-switcher
-    gnomeExtensions.removable-drive-menu
-    gnomeExtensions.system-monitor
-    gnomeExtensions.app-menu-is-back
-    gnomeExtensions.background-logo
-    gnomeExtensions.launch-new-instance
-    gnomeExtensions.windowswitcher
+    kdePackages.kate  # Editor de texto
+    kdePackages.kcalc  # Calculadora
+    sddm-chili-theme
+    #gnomeExtensions.blur-my-shell
+    #gnomeExtensions.arc-menu
+    #gnomeExtensions.appindicator
+    #gnomeExtensions.caffeine
+    #gnomeExtensions.clipboard-history
+    #gnomeExtensions.night-theme-switcher
+    #gnomeExtensions.removable-drive-menu
+    #gnomeExtensions.system-monitor
+    #gnomeExtensions.app-menu-is-back
+    #gnomeExtensions.background-logo
+    #gnomeExtensions.launch-new-instance
+    #gnomeExtensions.windowswitcher
     	
   ];
 

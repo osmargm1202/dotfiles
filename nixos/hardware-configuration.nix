@@ -9,13 +9,17 @@
     ];
   # Habilitar drivers NVIDIA
   services.xserver.videoDrivers = [ "nvidia" ];
+  services.xserver.displayManager.gdm.autoSuspend = false;
   
   hardware.nvidia = {
     modesetting.enable = true;
     powerManagement.enable = false;
+    powerManagement.finegrained = false;
+    nvidiaPersistenced = true;
     open = false;
     nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
+    # package = config.boot.kernelPackages.nvidiaPackages.stable;
+    package = config.boot.kernelPackages.nvidiaPackages.latest;
   };
   
   # Asegurar que el módulo se carga al boot
