@@ -10,8 +10,19 @@
       ./hardware-configuration.nix
     ];
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  
+    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
+    virtualisation.containers.enable = true;
+
+    virtualisation.containers.registries.insecure = {
+      "orgmcr.or-gm.coms"
+    }
+
+    virtualisation.podman = {
+      enable = true;
+      dockerCompact = true;
+    }
+
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -186,10 +197,9 @@
     
     # === FONTS ===
     noto-fonts
-    noto-fonts-emoji
     roboto
     liberation_ttf
-    (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
+    nerd-fonts.jetbrains-mono
     
     # === APLICACIONES GUI ===
     kitty  # terminal
@@ -198,9 +208,9 @@
     evince  # Document Viewer de GNOME
     vlc
     simple-scan  # escáner de GNOME
-    kate  # editor de texto
-    dolphin  # gestor de archivos (opcional)
-    
+    kdePackages.dolphin  # gestor de archivos (opcional)
+    kdePackages.kate
+
     # === DEVELOPMENT ===
     distrobox
     podman
