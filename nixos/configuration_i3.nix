@@ -10,18 +10,35 @@
       ./hardware-configuration.nix
     ];
 
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-    virtualisation.containers.enable = true;
+  security.polkit.enable = true;
 
-    virtualisation.containers.registries.insecure = {
-      "orgmcr.or-gm.coms"
-    }
+  systemd.user.services.polkit-gnome-authentication-agent-1 = {
+    description = "GNOME Polkit authentication agent";
+    wantedBy = [ "graphical-session.target" ];
+    wants = [ "graphical-session-target.service" ];
+    after = [ "graphical-session-target.service" ];
+    serviceConfig = {
+      Type = "dbus";
+      BusName = "org.freedesktop.PolicyKit1.AuthenticationAgent";
+      ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+      Restart = "on-failure";
+    };
+  };
 
-    virtualisation.podman = {
-      enable = true;
-      dockerCompact = true;
-    }
+
+
+  virtualisation.containers.enable = true;
+
+  virtualisation.containers.registries.insecure = {
+    "orgmcr.or-gm.coms"
+  }
+
+  virtualisation.podman = {
+    enable = true;
+    dockerCompact = true;
+  }
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -50,28 +67,28 @@
   services.xserver = {
     enable = true;
     
-    # i3 como window manager
-    windowManager.i3 = {
-      enable = true;
-      extraPackages = with pkgs; [
-        dmenu
-        i3status
-        i3lock
-        i3blocks
-      ];
-    };
-    
-    # Display Manager
-    displayManager = {
-      lightdm.enable = true;
-      defaultSession = "none+i3";
-    };
-    
-    # Keyboard layout
-    xkb = {
-      layout = "us,latam";
-      variant = "";
-    };
+  # i3 como window manager
+  windowManager.i3 = {
+    enable = true;
+    extraPackages = with pkgs; [
+      dmenu
+      i3status
+      i3lock
+      i3blocks
+    ];
+  };
+
+  # Display Manager
+  displayManager = {
+    lightdm.enable = true;
+    defaultSession = "none+i3";
+  };
+
+  # Keyboard layout
+  xkb = {
+    layout = "us,latam";
+    variant = "";
+  };
   };
 
   # Audio con pipewire
@@ -99,10 +116,10 @@
     script = ''
       flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
       flatpak remote-add --if-not-exists flathub https://nightly.gnome.org/gnome-nightly.flatpakrepo
-      flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo   
+      flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
     '';
   };
-  
+
   xdg.portal = {
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
@@ -150,7 +167,7 @@
     nano
     htop
     ncdu
-    
+
     # === SHELL Y CLI TOOLS ===
     fish
     starship
@@ -162,7 +179,7 @@
     fd
     bat
     jq
-    
+
     # === I3 Y WM ===
     i3
     i3status
@@ -172,7 +189,7 @@
     rofi
     dunst
     picom  # compositor para transparencias y efectos
-    
+
     # === UTILIDADES DE ESCRITORIO ===
     xclip
     clipmenu
@@ -186,7 +203,7 @@
     xorg.xinput
     xorg.xsetroot
     nitrogen  # alternativa a xwallpaper
-    
+
     # === THEMING ===
     pywal
     lxappearance  # para configurar temas GTK
@@ -194,13 +211,13 @@
     kdePackages.qt6ct
     # === NETWORK ===
     networkmanagerapplet  # nm-applet para systray
-    
+
     # === FONTS ===
     noto-fonts
     roboto
     liberation_ttf
     nerd-fonts.jetbrains-mono
-    
+
     # === APLICACIONES GUI ===
     kitty  # terminal
     chromium
@@ -215,10 +232,10 @@
     distrobox
     podman
     python3
-    
+
     # === POLKIT AGENT (IMPORTANTE) ===
     polkit_gnome  # agente de polkit para i3
-    
+
     # === FILE MANAGER CLI ===
     nnn
     ranger
