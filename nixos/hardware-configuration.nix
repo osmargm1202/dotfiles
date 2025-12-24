@@ -9,19 +9,36 @@
     ];
   # Habilitar drivers NVIDIA
   services.xserver.videoDrivers = [ "nvidia" ];
-  services.xserver.displayManager.gdm.autoSuspend = false;
-  
+   
   hardware.nvidia = {
     modesetting.enable = true;
-    powerManagement.enable = false;
-    powerManagement.finegrained = false;
-    nvidiaPersistenced = true;
-    open = false;
-    nvidiaSettings = true;
-    # package = config.boot.kernelPackages.nvidiaPackages.stable;
-    package = config.boot.kernelPackages.nvidiaPackages.latest;
-  };
   
+    # ESTO ES CLAVE - habilitar power management
+    powerManagement.enable = true;
+  
+    # Preservar memoria de video durante suspend
+    powerManagement.finegrained = false;
+  
+    # Usar drivers propietarios cerrados (más estables para suspend)
+    open = false;
+  
+    nvidiaSettings = true;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
+  };
+
+  # Agregar parámetro del kernel para preservar asignación de memoria
+  boot.kernelParams = [ 
+  "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
+  ];
+
+  # Habilitar los servicios de systemd para suspend/resume
+  boot.extraModprobeConfig = ''
+  options nvidia NVreg_PreserveVideoMemoryAllocations=1
+  '';
+
+
+
+
   # Asegurar que el módulo se carga al boot
   boot.kernelModules = [ "nvidia" "nvidia_drm" "nvidia_modeset" ];
 

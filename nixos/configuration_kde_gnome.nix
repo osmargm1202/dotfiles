@@ -8,7 +8,12 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-    ];
+  ];
+  # Polkit
+  security.polkit.enable = true;
+
+  # KWallet para gestión de credenciales
+  security.pam.services.sddm.enableKwallet = true;
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   # Bootloader.
@@ -180,3 +185,4 @@
   system.stateVersion = "25.11"; # Did you read the comment?
 
 }
+
