@@ -8,4 +8,4 @@ wireshark-cli       # analizador de protocolos de red (CLI)
 wifite              # herramienta de captura WiFi
 rustscan            # herramienta de escaneo de red
 nmap                # herramienta de escaneo de red
-
+lsof                # verificar puertos, redes de la maquina
