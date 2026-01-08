@@ -14,13 +14,24 @@
 
   # KWallet para gestión de credenciales
   security.pam.services.sddm.enableKwallet = true;
-
+  programs.gnupg.agent = {
+    enable = true;
+    pinentryPackage = pkgs.pinentry-curses;  # o pinentry-gtk2, pinentry-qt para GUI
+  };
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   
-  virtualisation.podman.enable = true;
+  virtualisation.podman = {
+    enable = true;
+    dockerCompat = true;  # alias docker -> podman
+    dockerSocket.enable = true;
+  };
+  boot.kernel.sysctl = {
+    "kernel.unprivileged_userns_clone" = 1;
+  };
+  #virtualisation.docker.enable = true;
   hardware.nvidia-container-toolkit.enable = true;
   services.flatpak.enable = true;
   systemd.services.flatpak-repo = {
@@ -112,6 +123,8 @@
     isNormalUser = true;
     description = "osmarg";
     shell = pkgs.fish;
+    subUidRanges = [{ startUid = 100000; count = 65536; }];
+    subGidRanges = [{ startGid = 100000; count = 65536; }];
     extraGroups = [ "networkmanager" "wheel" "docker" "osmarg" ];
     packages = with pkgs; [
     #  thunderbird
@@ -141,7 +154,11 @@
     nerd-fonts.jetbrains-mono
     kdePackages.kate  # Editor de texto
     kdePackages.kcalc  # Calculadora
+    kdePackages.kwalletmanager
     sddm-chili-theme
+    gcc
+    gnumake
+    podman-compose
     #gnomeExtensions.blur-my-shell
     #gnomeExtensions.arc-menu
     #gnomeExtensions.appindicator
