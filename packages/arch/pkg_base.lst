@@ -41,7 +41,8 @@ rsync               # sincronización de archivos
 smbclient           # cliente SMB/CIFS
 tmux                # terminal multiplexer
 watchexec           # ejecuta comandos cuando detecta cambios en archivos
-nnn                 # explorador de archivos
+nnn                 # explorador de
+wkhtmltopdf         # convertidor de html a pdf
 
 # === MONITORES Y SISTEMA ===
 htop                # monitor de procesos
