@@ -8,6 +8,7 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      <home-manager/nixos>
   ];
   # Polkit
   security.polkit.enable = true;
@@ -77,17 +78,17 @@
   services.xserver.enable = true;
 
   services = {
-  displayManager.sddm = {
-    enable = true;
-    #wayland.enable = false;
-    theme = "sddm-chili-theme";
-    };
-  desktopManager.plasma6.enable = true;
+  #displayManager.sddm = {
+  #  enable = true;
+  #  #wayland.enable = false;
+  #  theme = "sddm-chili-theme";
+  #  };
+  #desktopManager.plasma6.enable = true;
   
   # Asegúrate de deshabilitar GNOME
-  desktopManager.gnome.enable = false;
-  displayManager.gdm.enable = false;
-  displayManager.gdm.autoSuspend = false;
+  desktopManager.gnome.enable = true;
+  displayManager.gdm.enable = true;
+  displayManager.gdm.autoSuspend = true;
 };
 
   # Configure keymap in X11
@@ -147,32 +148,99 @@
     git
     distrobox
     htop
-    roboto
-    liberation_ttf
     ntfs3g
-    gh
-    nerd-fonts.jetbrains-mono
-    kdePackages.kate  # Editor de texto
-    kdePackages.kcalc  # Calculadora
-    kdePackages.kwalletmanager
+    #kdePackages.kate  # Editor de texto
+    #kdePackages.kcalc  # Calculadora
+    #kdePackages.kwalletmanager
     sddm-chili-theme
     gcc
     gnumake
     podman-compose
-    #gnomeExtensions.blur-my-shell
-    #gnomeExtensions.arc-menu
-    #gnomeExtensions.appindicator
-    #gnomeExtensions.caffeine
-    #gnomeExtensions.clipboard-history
-    #gnomeExtensions.night-theme-switcher
-    #gnomeExtensions.removable-drive-menu
-    #gnomeExtensions.system-monitor
-    #gnomeExtensions.app-menu-is-back
-    #gnomeExtensions.background-logo
-    #gnomeExtensions.launch-new-instance
-    #gnomeExtensions.windowswitcher
-    	
+    gnomeExtensions.blur-my-shell
+    gnomeExtensions.arc-menu
+    gnomeExtensions.appindicator
+    gnomeExtensions.caffeine
+    gnomeExtensions.clipboard-history
+    gnomeExtensions.night-theme-switcher
+    gnomeExtensions.removable-drive-menu
+    gnomeExtensions.system-monitor
+    gnomeExtensions.app-menu-is-back
+    gnomeExtensions.background-logo
+    gnomeExtensions.launch-new-instance
+    gnomeExtensions.windowswitcher	
   ];
+    fonts.fontconfig.enable = true;
+
+    home-manager.useGlobalPkgs = true;
+    home-manager.useUserPackages = true;
+    home-manager.users.osmarg = { pkgs, ... }: {
+    home.stateVersion = "25.11";
+    home.pointerCursor = {
+	  name = "Adwaita";
+	  package = pkgs.adwaita-icon-theme;
+	  size = 24;
+	  gtk.enable = true;
+	  x11.enable = true;
+    };
+    home.sessionPath = [
+      "$HOME/bin"
+      "$HOME/.local/bin"
+    ];
+    home.packages = with pkgs; [
+      zoxide
+      python313
+      python313Packages.tkinter
+      python313Packages.customtkinter
+      uv
+      nodejs_24
+      pnpm_9
+      bun
+      go
+      rustc
+      cargo
+      fzf
+      eza
+      bat
+      ripgrep
+      fd
+      less
+      ncdu
+      fastfetch
+      gh
+      starship
+      neovim
+      wifite2
+      bind
+      hcxdumptool
+      hcxtools
+      wireshark-cli
+      rustscan
+      nmap
+      lsof
+      corefonts
+      vista-fonts
+      nerd-fonts.jetbrains-mono
+      nerd-fonts.fira-code
+      inter
+      roboto
+      liberation_ttf
+    ];
+
+    programs.zoxide = {
+      enable = true;
+      enableZshIntegration = true;
+    };
+
+    programs.starship = {
+      enable = true;
+    };
+
+    programs.git = {
+      enable = true;
+      settings.user.name = "osmar";
+      settings.user.email = "osmargm1202@gmail.com";
+    };
+  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
