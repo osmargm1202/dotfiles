@@ -23,6 +23,14 @@ set -gx PATH $HOME/.local/bin $PATH
 
 set -gx PATH $HOME/go/bin $PATH
 
+set -gx NVM_DIR "$HOME/.config/nvm"
+
+if test -s "$NVM_DIR/nvm.sh"
+    function nvm
+        bash -lc "export NVM_DIR=\"$NVM_DIR\"; [ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"; nvm $argv"
+    end
+end
+
 # Prompt más vistoso (starship opcional)
 if type -q starship
     starship init fish | source
@@ -72,7 +80,6 @@ end
 
 set TERM xterm-256color
 
-
 if type -q nano
     set EDITOR nano
 end
@@ -86,19 +93,11 @@ if type -q nvim
 end
 # si fedora es el sistema operativo
 
-function tba
+function dbea
     if test (count $argv) -gt 0
-        toolbox run --container arch fish -c "$argv"
+        distrobox-enter arch -- fish -c "$argv"
     else
-        toolbox run --container arch fish
-    end
-end
-
-function tbo
-    if test (count $argv) -gt 0
-        toolbox run --container orgm fish -c "$argv"
-    else
-        toolbox run --container orgm fish
+        distrobox-enter arch
     end
 end
 
@@ -119,8 +118,10 @@ if type -q curl; and type -q fzf; and type -q bat
     end
 end
 
-
 # The next line updates PATH for the Google Cloud SDK.
 if test -f '/home/osmar/google-cloud-sdk/path.fish.inc'
     . '/home/osmar/google-cloud-sdk/path.fish.inc'
 end
+
+# opencode
+fish_add_path /home/osmarg/.opencode/bin
