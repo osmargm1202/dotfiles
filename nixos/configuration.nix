@@ -6,15 +6,17 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan.
+    [
+      # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      <home-manager/nixos>
-  ];
+      # Activate only one desktop profile at a time.
+      # ./profiles/gnome.nix
+      # ./profiles/kde.nix
+       ./profiles/niri-caelestia.nix
+    ];
   # Polkit
   security.polkit.enable = true;
 
-  # KWallet para gestión de credenciales
-  security.pam.services.sddm.enableKwallet = true;
   programs.gnupg.agent = {
     enable = true;
     pinentryPackage = pkgs.pinentry-curses;  # o pinentry-gtk2, pinentry-qt para GUI
@@ -46,6 +48,7 @@
   }; 
   programs.fish.enable = true;
   programs.git.enable = true;
+  programs.nix-ld.enable = true;
   networking.hostName = "orgm"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -72,29 +75,6 @@
     LC_PAPER = "es_DO.UTF-8";
     LC_TELEPHONE = "es_DO.UTF-8";
     LC_TIME = "es_DO.UTF-8";
-  };
-
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
-
-  services = {
-  #displayManager.sddm = {
-  #  enable = true;
-  #  #wayland.enable = false;
-  #  theme = "sddm-chili-theme";
-  #  };
-  #desktopManager.plasma6.enable = true;
-  
-  # Asegúrate de deshabilitar GNOME
-  desktopManager.gnome.enable = true;
-  displayManager.gdm.enable = true;
-  displayManager.gdm.autoSuspend = true;
-};
-
-  # Configure keymap in X11
-  services.xserver.xkb = {
-    layout = "us,latam";
-    variant = "";
   };
 
   # Enable CUPS to print documents.
@@ -128,7 +108,7 @@
     subGidRanges = [{ startGid = 100000; count = 65536; }];
     extraGroups = [ "networkmanager" "wheel" "docker" "osmarg" ];
     packages = with pkgs; [
-    #  thunderbird
+      # thunderbird
     ];
   };
 
@@ -141,107 +121,17 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-  #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-    wget
-    vim
-    fish
     git
+    fish
+    fastfetch
     distrobox
-    htop
     ntfs3g
-    #kdePackages.kate  # Editor de texto
-    #kdePackages.kcalc  # Calculadora
-    #kdePackages.kwalletmanager
-    sddm-chili-theme
-    gcc
-    gnumake
-    podman-compose
-    gnomeExtensions.blur-my-shell
-    gnomeExtensions.arc-menu
-    gnomeExtensions.appindicator
-    gnomeExtensions.caffeine
-    gnomeExtensions.clipboard-history
-    gnomeExtensions.night-theme-switcher
-    gnomeExtensions.removable-drive-menu
-    gnomeExtensions.system-monitor
-    gnomeExtensions.app-menu-is-back
-    gnomeExtensions.background-logo
-    gnomeExtensions.launch-new-instance
-    gnomeExtensions.windowswitcher	
+    starship
+    zoxide
   ];
-    fonts.fontconfig.enable = true;
-
-    home-manager.useGlobalPkgs = true;
-    home-manager.useUserPackages = true;
-    home-manager.users.osmarg = { pkgs, ... }: {
-    home.stateVersion = "25.11";
-    home.pointerCursor = {
-	  name = "Adwaita";
-	  package = pkgs.adwaita-icon-theme;
-	  size = 24;
-	  gtk.enable = true;
-	  x11.enable = true;
-    };
-    home.sessionPath = [
-      "$HOME/bin"
-      "$HOME/.local/bin"
-    ];
-    home.packages = with pkgs; [
-      zoxide
-      python313
-      python313Packages.tkinter
-      python313Packages.customtkinter
-      uv
-      nodejs_24
-      pnpm_9
-      bun
-      go
-      rustc
-      cargo
-      fzf
-      eza
-      bat
-      ripgrep
-      fd
-      less
-      ncdu
-      fastfetch
-      gh
-      starship
-      neovim
-      wifite2
-      bind
-      hcxdumptool
-      hcxtools
-      wireshark-cli
-      rustscan
-      nmap
-      lsof
-      corefonts
-      vista-fonts
-      nerd-fonts.jetbrains-mono
-      nerd-fonts.fira-code
-      inter
-      roboto
-      liberation_ttf
-    ];
-
-    programs.zoxide = {
-      enable = true;
-      enableZshIntegration = true;
-    };
-
-    programs.starship = {
-      enable = true;
-    };
-
-    programs.git = {
-      enable = true;
-      settings.user.name = "osmar";
-      settings.user.email = "osmargm1202@gmail.com";
-    };
-  };
-
+  fonts.fontconfig.enable = true;
+  # nix kernel
+  boot.kernelPackages = pkgs.linuxPackages_6_18;
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
@@ -270,4 +160,3 @@
   system.stateVersion = "25.11"; # Did you read the comment?
 
 }
-

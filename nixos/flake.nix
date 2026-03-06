@@ -3,13 +3,13 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    home-manager = {
-      url = "github:nix-community/home-manager/master";
+    caelestia-shell = {
+      url = "github:caelestia-dots/shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }:
+  outputs = inputs@{ self, nixpkgs, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -51,7 +51,6 @@
         neovim
         nmap
         nodejs
-        npm
         openssh
         podman
         python314
@@ -72,7 +71,7 @@
         wget
         wifite2
         wireshark-cli
-        xorg.xauth
+        xauth
         zip
         zoxide
       ];
@@ -88,9 +87,11 @@
 
       nixosConfigurations.orgm = nixpkgs.lib.nixosSystem {
         inherit system;
+        specialArgs = {
+          inherit inputs system;
+        };
         modules = [
           ./configuration.nix
-          home-manager.nixosModules.home-manager
         ];
       };
     };

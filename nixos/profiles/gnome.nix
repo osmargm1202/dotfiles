@@ -12,26 +12,23 @@
   services.displayManager.gdm.enable = true;
   services.displayManager.gdm.autoSuspend = true;
 
-  home-manager.users.osmarg = { ... }: {
-    dconf.settings."org/gnome/desktop/interface" = {
-      icon-theme = "Nordic-darker";
-      cursor-theme = "Adwaita";
-      gtk-theme = "Adwaita";
-    };
-
-    gtk = {
-      enable = true;
-      iconTheme = {
-        name = "Nordic-darker";
-      };
-      cursorTheme = {
-        name = "Adwaita";
-        package = pkgs.adwaita-icon-theme;
-      };
-      theme = {
-        name = "Adwaita";
-        package = pkgs.gnome-themes-extra;
-      };
-    };
-  };
+  environment.systemPackages = with pkgs; [
+    adwaita-icon-theme
+    gnome-themes-extra
+    gnomeExtensions.blur-my-shell
+    gnomeExtensions.arc-menu
+    gnomeExtensions.appindicator
+    gnomeExtensions.caffeine
+    gnomeExtensions.clipboard-history
+    gnomeExtensions.night-theme-switcher
+    gnomeExtensions.removable-drive-menu
+    gnomeExtensions.system-monitor
+    gnomeExtensions.app-menu-is-back
+    gnomeExtensions.background-logo
+    gnomeExtensions.launch-new-instance
+    gnomeExtensions.windowswitcher
+    gnomeExtensions.vitals
+    gnomeExtensions.paperwm
+    gnomeExtensions.quick-launch
+  ];
 }

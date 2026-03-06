@@ -5,7 +5,7 @@
 set -e
 
 DISTROBOX_CONTAINER="arch"
-OPENCODE_CMD="opencode serve"
+OPENCODE_CMD="opencode serve --port 39839"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ICON_DIR="${HOME}/.local/share/icons"
 ICON_PATH="${ICON_DIR}/opencode.svg"
