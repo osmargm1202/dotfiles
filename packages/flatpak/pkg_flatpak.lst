@@ -13,7 +13,7 @@ io.gitlab.theevilskeleton.Upscaler    # escalador de imágenes con IA
 
 # === PRODUCTIVIDAD Y OFICINA ===
 com.wps.Office
-# org.gnome.Papers                       # visor de documentos GNOME
+# org.gnome.Papers                       # visor de documentos GNOME opcional
 org.gnome.SimpleScan                   # escáner de documentos GNOME
 
 # === COMUNICACIÓN ===
@@ -29,9 +29,7 @@ org.inkscape.Inkscape
 org.blender.Blender
 
 # === UTILIDADES DEL SISTEMA ===
-com.github.tchx84.Flatseal
 io.github.flattool.Warehouse
-io.missioncenter.MissionCenter
 io.gitlab.adhami3310.Impression
 org.gnome.eog                          # visor de imágenes Eye of GNOME
 

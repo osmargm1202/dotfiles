@@ -3,10 +3,10 @@ Version=1.0
 Type=Application
 Name=Instagram
 Comment=Instagram Web Application
-Exec=chromium --app="https://instagram.com" --new-window --class="Instagram"
+Exec=chromium --app="https://instagram.com" --new-window
 Icon=Instagram
 Categories=Network;WebBrowser;
 NoDisplay=false
-StartupWMClass=Instagram
+StartupWMClass=chrome-instagram.com__-Default
 StartupNotify=true
 Terminal=false

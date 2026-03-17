@@ -3,11 +3,11 @@ Version=1.0
 Type=Application
 Name=Fast
 Comment=Fast Web Application
-Exec=flatpak run org.chromium.Chromium --app="https://fast.com" --new-window --class="Fast"
+Exec=flatpak run org.chromium.Chromium --app="https://fast.com" --new-window
 Icon=Fast
 Categories=Development;
 NoDisplay=false
-StartupWMClass=Fast
+StartupWMClass=chrome-fast.com__-Default
 StartupNotify=true
 Terminal=false
 

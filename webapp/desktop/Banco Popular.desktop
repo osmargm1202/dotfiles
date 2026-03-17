@@ -3,10 +3,10 @@ Version=1.0
 Type=Application
 Name=Banco Popular
 Comment=Internet Banking Banco Popular
-Exec=chromium --app="https://ib.bpd.com.do" --new-window --class="Banco Popular"
+Exec=chromium --app="https://ib.bpd.com.do" --new-window
 Icon=Banco Popular
 Categories=Office;
 NoDisplay=false
-StartupWMClass=Banco Popular
+StartupWMClass=chrome-ib.bpd.com.do__-Default
 StartupNotify=true
 Terminal=false

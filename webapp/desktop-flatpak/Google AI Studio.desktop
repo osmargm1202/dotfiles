@@ -3,11 +3,11 @@ Version=1.0
 Type=Application
 Name=Google AI Studio
 Comment=Google AI Studio Web Application
-Exec=flatpak run org.chromium.Chromium --app="https://aistudio.google.com/" --new-window --class="Google AI Studio"
+Exec=flatpak run org.chromium.Chromium --app="https://aistudio.google.com/" --new-window
 Icon=Google AI Studio
 Categories=Development;
 NoDisplay=false
-StartupWMClass=Google AI Studio
+StartupWMClass=chrome-aistudio.google.com__-Default
 StartupNotify=true
 Terminal=false
 

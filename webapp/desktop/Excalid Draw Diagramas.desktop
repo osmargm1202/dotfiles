@@ -3,10 +3,10 @@ Version=1.0
 Type=Application
 Name=Excalid Draw Diagramas
 Comment=Excalid Draw Web App
-Exec=chromium --app="https://excalidraw.com/" --new-window --class="Excalid Draw Diagramas"
+Exec=chromium --app="https://excalidraw.com/" --new-window
 Icon=Excalid Draw Diagramas
 Categories=Office;
 NoDisplay=false
-StartupWMClass=Excalid Draw Diagramas
+StartupWMClass=chrome-excalidraw.com__-Default
 StartupNotify=true
 Terminal=false

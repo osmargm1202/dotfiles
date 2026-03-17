@@ -3,10 +3,10 @@ Version=1.0
 Type=Application
 Name=Chatgpt
 Comment=Chatgpt Web Application
-Exec=chromium --app="https://chatgpt.com" --new-window --class="Chatgpt"
+Exec=chromium --app="https://chatgpt.com" --new-window
 Icon=Chatgpt
 Categories=Development;
 NoDisplay=false
-StartupWMClass=Chatgpt
+StartupWMClass=chrome-chatgpt.com__-Default
 StartupNotify=true
 Terminal=false

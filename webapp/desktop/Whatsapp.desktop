@@ -3,10 +3,10 @@ Version=1.0
 Type=Application
 Name=Whatsapp
 Comment=Whatsapp Web Application
-Exec=chromium --app="https://web.whatsapp.com/" --new-window --class="Whatsapp"
+Exec=chromium --app="https://web.whatsapp.com/" --new-window
 Icon=Whatsapp
 Categories=Network;WebBrowser;
 NoDisplay=false
-StartupWMClass=Whatsapp
+StartupWMClass=chrome-web.whatsapp.com__-Default
 StartupNotify=true
 Terminal=false

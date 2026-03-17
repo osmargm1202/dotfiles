@@ -1,20 +1,28 @@
 # Lista de herramientas de terminal para Arch Linux
 
 # === SISTEMA BASE ===
+base
+base-devel
+glibc-locales
+sudo
 git
 openssh
-base-devel
 pacman-contrib
 
 # === TERMINAL Y SHELL ===
 fish
+bash-completion
 starship
+kitty               # emulador de terminal
+tmux                # terminal multiplexer
+thefuck             # corrector de comandos
 
 # === LENGUAJES Y RUNTIMES ===
 go
 rust
 cargo
 nodejs
+npm
 uv                  # herramienta de gestión de proyectos Python
 
 # === HERRAMIENTAS MODERNAS ===
@@ -26,13 +34,14 @@ ripgrep             # búsqueda en texto
 fd                  # búsqueda de archivos
 less                # visor de texto
 bat                 # cat mejorado
+tree                # árbol de directorios
 
 # === EDITORES ===
 neovim
 vim
 nano
 vi
-
+cursor-bin          # editor con IA
 
 # === UTILIDADES ===
 jq                  # procesador JSON
@@ -40,9 +49,28 @@ curl                # cliente web
 wget                # descargador web
 rsync               # sincronización de archivos
 smbclient           # cliente SMB/CIFS
-tmux                # terminal multiplexer
 watchexec           # ejecuta comandos cuando detecta cambios en archivos
 nnn                 # explorador de archivos
+stow                # gestor de symlinks (dotfiles)
+pass                # gestor de contraseñas
+diffutils           # diff, cmp, etc.
+bc                  # calculadora
+zip                 # compresión
+unzip               # descompresión
+pigz                # gzip paralelo
+socat               # relay multipropósito
+wl-clipboard        # portapapeles Wayland
+xclip               # portapapeles X11
+time                # medir tiempo de ejecución
+
+# === RED Y DIAGNÓSTICO ===
+inetutils           # hostname, ping, ftp, telnet, etc.
+mtr                 # traceroute interactivo
+traceroute          # traza de ruta
+tcpdump             # captura de paquetes
+lsof                # archivos abiertos / puertos
+nss-mdns            # resolución mDNS (.local)
+xorg-xauth          # autenticación X11 (SSH forwarding)
 
 # === MONITORES Y SISTEMA ===
 htop                # monitor de procesos
@@ -53,8 +81,6 @@ ctop                # monitor de contenedores
 # === GIT Y DOCKER TUI ===
 lazygit             # interfaz git
 lazydocker          # interfaz docker
-pacseek             # explorador de paquetes
-peaclock            # reloj, temporizador y cronómetro para terminal
 
 # === CONTENEDORES ===
 podman
@@ -64,3 +90,14 @@ docker-buildx
 
 # === HERRAMIENTAS DE DESARROLLO ===
 github-cli
+
+# === DOCUMENTACIÓN ===
+man-db
+man-pages
+
+# === FUENTES Y GRÁFICOS ===
+ttf-jetbrains-mono-nerd  # fuente Nerd para terminal
+vte-common               # perfiles de terminal VTE
+mesa                     # drivers OpenGL
+vulkan-intel             # drivers Vulkan Intel
+vulkan-radeon            # drivers Vulkan AMD
