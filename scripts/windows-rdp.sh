@@ -10,8 +10,8 @@ RDP_HOST="localhost"
 RDP_PORT="3389"
 RDP_USER="osmarg"
 RDP_PASS="hacker12"
-WIDTH="2454"
-HEIGHT="1381"
+WIDTH="2530"
+HEIGHT="1301"
 
 SCRIPT_NAME="windows-rdp"
 BIN_DIR="$HOME/.local/bin"
@@ -19,6 +19,11 @@ APPS_DIR="$HOME/.local/share/applications"
 ICON_DIR="$HOME/.local/share/icons"
 ICON_URL="https://icones.pro/wp-content/uploads/2021/06/icone-windows-bleu.png"
 ICON_FILE="$ICON_DIR/windows.png"
+
+# Seconds to wait after port is open for RDP to fully initialize
+RDP_BOOT_DELAY=10
+# Max retries for RDP connection
+RDP_MAX_RETRIES=5
 
 # ============================================================
 # Functions
@@ -43,6 +48,8 @@ wait_rdp() {
   echo "Waiting for RDP on $RDP_HOST:$RDP_PORT..."
   for i in $(seq 1 60); do
     if nc -z "$RDP_HOST" "$RDP_PORT" 2>/dev/null; then
+      echo "Port open. Waiting ${RDP_BOOT_DELAY}s for Windows to finish booting..."
+      sleep "$RDP_BOOT_DELAY"
       echo "RDP is ready."
       return 0
     fi
@@ -53,20 +60,41 @@ wait_rdp() {
 }
 
 rdp_connect() {
-  distrobox-enter "$DISTROBOX" -- \
-    xfreerdp3 /v:"$RDP_HOST":"$RDP_PORT" \
-    /u:"$RDP_USER" \
-    /p:"$RDP_PASS" \
-    /size:"${WIDTH}x${HEIGHT}" \
-    /dynamic-resolution \
-    /sec:nla:off \
-    /tls:seclevel:0 \
-    /network:lan \
-    /bpp:32 \
-    /audio-mode:0 \
-    +clipboard \
-    +home-drive \
-    /cert:ignore
+  local attempt=1
+  while [[ $attempt -le $RDP_MAX_RETRIES ]]; do
+    echo "RDP connection attempt $attempt/$RDP_MAX_RETRIES..."
+    distrobox-enter "$DISTROBOX" -- \
+      xfreerdp3 /v:"$RDP_HOST":"$RDP_PORT" \
+      /u:"$RDP_USER" \
+      /p:"$RDP_PASS" \
+      /size:"${WIDTH}x${HEIGHT}" \
+      /dynamic-resolution \
+      /sec:nla:off \
+      /tls:seclevel:0 \
+      /network:lan \
+      /bpp:32 \
+      /audio-mode:0 \
+      +clipboard \
+      +home-drive \
+      /cert:ignore \
+      /wm-class:windows-rdp
+    local rc=$?
+
+    # rc=0 means clean disconnect (user closed session)
+    if [[ $rc -eq 0 ]]; then
+      return 0
+    fi
+
+    # If connection was rejected, retry after a delay
+    if [[ $attempt -lt $RDP_MAX_RETRIES ]]; then
+      echo "Connection failed (exit code $rc). Retrying in 5s..."
+      sleep 5
+    fi
+    ((attempt++))
+  done
+
+  echo "Error: Could not connect after $RDP_MAX_RETRIES attempts."
+  return 1
 }
 
 # ============================================================
@@ -134,6 +162,7 @@ Terminal=false
 Type=Application
 Categories=System;RemoteAccess;
 Keywords=windows;rdp;vm;container;
+StartupWMClass=windows-rdp
 EOF
   chmod +x "$APPS_DIR/$SCRIPT_NAME.desktop"
   echo "  Desktop -> $APPS_DIR/$SCRIPT_NAME.desktop"

@@ -1,35 +1,13 @@
 if status is-interactive
     if type -q fastfetch
-        if test -f ~/.config/fastfetch/config.jsonc
-            fastfetch --config ~/.config/fastfetch/config.jsonc
-        else if test -f ~/.config/fastfetch/orgm.png
-            fastfetch --logo-path ~/.config/fastfetch/orgm.png
-        else
-            fastfetch
-        end
+        fastfetch
     end
-end
-
-if test -f ~/.config/fish/conf.d/docker.fish
-    source ~/.config/fish/conf.d/docker.fish
-end
-
-if status --is-login
-    set -gx PATH $PATH ~/linux/bin
 end
 
 # PATH
 set -gx PATH $HOME/.local/bin $PATH
 
 set -gx PATH $HOME/go/bin $PATH
-
-set -gx NVM_DIR "$HOME/.config/nvm"
-
-if test -s "$NVM_DIR/nvm.sh"
-    function nvm
-        bash -lc "export NVM_DIR=\"$NVM_DIR\"; [ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"; nvm $argv"
-    end
-end
 
 # Prompt más vistoso (starship opcional)
 if type -q starship
@@ -61,7 +39,7 @@ end
 
 # fd (buscar archivos mejor que find), solo si está instalado
 if type -q fd
-    alias f="fd --hidden --exclude .git"
+    alias fd="fd --hidden --exclude .git"
 end
 
 # ipinfo (información de IP), solo si 'curl' está instalado
@@ -69,16 +47,7 @@ if type -q curl
     alias ipinfo="curl -s ipinfo.io"
 end
 
-# peaclock (reloj digital con configuración personalizada)
-if type -q peaclock
-    if test -f ~/.config/peaclock/config
-        alias clock="peaclock --config-dir ~/.config/peaclock"
-    else
-        alias clock="peaclock"
-    end
-end
-
-set TERM xterm-256color
+# set TERM xterm-256color
 
 if type -q nano
     set EDITOR nano
@@ -90,15 +59,9 @@ end
 
 if type -q nvim
     set EDITOR nvim
-end
-# si fedora es el sistema operativo
-
-function dbea
-    if test (count $argv) -gt 0
-        distrobox-enter arch -- fish -c "$argv"
-    else
-        distrobox-enter arch
-    end
+    alias fishconfig='nvim ~/.config/fish/config.fish'
+    alias kittyconfig='nvim ~/.config/kitty/kitty.conf'
+    alias ffconfig='nvim ~/.config/fastfetch/config.jsonc'
 end
 
 # history search (ctrl+r mejorado con fzf si lo instalas)
@@ -118,10 +81,108 @@ if type -q curl; and type -q fzf; and type -q bat
     end
 end
 
-# The next line updates PATH for the Google Cloud SDK.
-if test -f '/home/osmar/google-cloud-sdk/path.fish.inc'
-    . '/home/osmar/google-cloud-sdk/path.fish.inc'
+if not set -q DISTROBOX_ENTER_PATH
+    if type -q distrobox-enter
+        distrobox-enter arch -- fastfetch --logo nixos --logo-padding 5 --logo-type builtin --logo-width 0 --logo-padding-top 0
+    end
+    function nvim
+        distrobox-enter arch -- nvim $argv
+    end
+    function cd
+        distrobox-enter arch -- z $argv
+    end
+    function bat
+        distrobox-enter arch -- bat $argv
+    end
+    function git
+        distrobox-enter arch -- git $argv
+    end
+    function gh
+        distrobox-enter arch -- gh $argv
+    end
+    function fd
+        distrobox-enter arch -- fd $argv
+    end
+    function fzf
+        distrobox-enter arch -- fzf $argv
+    end
+    function go
+        distrobox-enter arch -- go $argv
+    end
+    function uv
+        distrobox-enter arch -- uv $argv
+    end
+    function npm
+        distrobox-enter arch -- npm $argv
+    end
+    function paru
+        distrobox enter arch -- paru $argv
+    end
+    function rust
+        distrobox-enter arch -- rust $argv
+    end
+    function cargo
+        distrobox-enter arch -- cargo $argv
+    end
+    function stow
+        distrobox-enter arch -- stow $argv
+    end
+    function tmux
+        distrobox-enter arch -- tmux $argv
+    end
+    function opencode
+        distrobox-enter arch -- opencode $argv
+    end
+    function fnm
+        distrobox-enter arch -- fnm $argv
+    end
+    function orgmrnc
+        distrobox-enter arch -- orgmrnc $argv
+    end
+    function orgmcalc
+        distrobox-enter arch -- orgmrnc $argv
+    end
+    function orgmorg
+        distrobox-enter arch -- orgmorg $argv
+    end
+    function orgmos
+        distrobox-enter arch -- orgmos $argv
+    end
+    function curl
+        distrobox-enter arch -- curl $argv
+    end
+    function mypy
+        distrobox-enter arch -- mypy $argv
+    end
+    function ty
+        distrobox-enter arch -- ty $argv
+    end
+    function ruff
+        distrobox-enter arch -- ruff $argv
+    end
+    function pyrefly
+        distrobox-enter arch -- pyrefly $argv
+    end
+    function yazi
+        distrobox-enter arch -- yazi $argv
+    end
+    alias ls='distrobox-enter arch -- eza --group-directories-first --icons'
+    alias ll='distrobox-enter arch -- eza -la --group-directories-first --icons'
+    alias lt='distrobox-enter arch -- eza --tree --group-directories-first --icons'
+    alias fishconfig='distrobox-enter arch -- nvim ~/.config/fish/config.fish'
+    alias kittyconfig='distrobox-enter arch -- nvim ~/.config/kitty/kitty.conf'
+    alias ffconfig'=distrobox-enter arch -- nvim ~/.config/fastfetch/config.jsonc'
+
 end
 
-# opencode
-fish_add_path /home/osmarg/.opencode/bin
+function g
+    set -l query (string join '+' $argv)
+    xdg-open "https://www.google.com/search?q=$query"
+    exit
+end
+
+function y
+    set -l query (string join '+' $argv)
+    xdg-open "https://www.youtube.com/results?search_query=$query"
+    exit
+end
