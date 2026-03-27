@@ -5,7 +5,7 @@
 # ============================================================
 
 CONTAINER="windows"
-DISTROBOX="autocad"
+DISTROBOX="arch-gpu"
 RDP_HOST="localhost"
 RDP_PORT="3389"
 RDP_USER="osmarg"
