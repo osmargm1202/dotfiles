@@ -1,6 +1,10 @@
 if status is-interactive
     if type -q fastfetch
-        fastfetch
+        if set -q TMUX
+            fastfetch --logo auto 2>/dev/null; or fastfetch
+        else
+            fastfetch
+        end
     end
 end
 
@@ -91,7 +95,7 @@ if type -q yazi
 end
 
 # Tmux session selector con gum
-if type -q gum
+if type -q gum; and type -q tmux
     source ~/.config/fish/functions/tmuxls.fish
     source ~/.config/fish/functions/tmuxdel.fish
 end

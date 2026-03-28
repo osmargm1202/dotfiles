@@ -128,25 +128,35 @@ function tmuxnewz
     # Guardar metadata del directorio para reutilizar la sesión luego
     tmux set-option -t $session_name @tmuxnew_dir "$target_dir" >/dev/null
 
-    # Layout:
-    # ┌─────────────────────────────┐
-    # │        Panel 0              │ ← opencode (40% altura)
-    # ├───────────┬─────────────────┤
-    # │ Panel 1   │    Panel 2      │
-    # │ terminal  │    yazi         │
-    # └───────────┴─────────────────┘
+    # Layout 2x2 exacto:
+    # ┌──────────────────────┬──────────────────────┐
+    # │ arriba izquierda     │ arriba derecha       │
+    # │ opencode             │ terminal             │
+    # ├──────────────────────┼──────────────────────┤
+    # │ abajo izquierda      │ abajo derecha        │
+    # │ terminal             │ yazi                 │
+    # └──────────────────────┴──────────────────────┘
 
-    # Dividir horizontalmente: Panel 0 y Panel 1 (terminal)
-    tmux split-window -v -t $session_name:0.0 -c $target_dir
+    # Tomar pane inicial (opencode)
+    set -l pane_opencode (tmux display-message -p -t $session_name:0.0 '#{pane_id}')
 
-    # Dividir el panel inferior: Panel 1 (izq terminal) y Panel 2 (der yazi)
-    tmux split-window -h -t $session_name:0.1 -c $target_dir "yazi"
+    # Crear pane arriba derecha (terminal)
+    set -l pane_top_right (tmux split-window -h -P -F '#{pane_id}' -t $pane_opencode -c $target_dir)
 
-    # Ajustar tamaño del panel superior (opencode) a 40%
-    tmux resize-pane -t $session_name:0.0 -y 40%
+    # Crear pane abajo izquierda (terminal)
+    set -l pane_bottom_left (tmux split-window -v -P -F '#{pane_id}' -t $pane_opencode -c $target_dir)
 
-    # Seleccionar el panel de la terminal (panel 1, abajo izquierda) por defecto
-    tmux select-pane -t $session_name:0.1
+    # Crear pane abajo derecha (yazi)
+    set -l pane_bottom_right (tmux split-window -v -P -F '#{pane_id}' -t $pane_top_right -c $target_dir "yazi")
+
+    # Hacer el main más angosto (como cuando lo ajustás manualmente)
+    tmux set-window-option -t $session_name:0 main-pane-width '35%' >/dev/null
+
+    # Aplicar layout main-vertical-mirrored (equivalente a C-a M-7)
+    tmux select-layout -t $session_name:0 main-vertical-mirrored
+
+    # Foco por defecto: terminal abajo izquierda
+    tmux select-pane -t $pane_bottom_left
 
     # Adjuntarse
     tmux attach-session -t $session_name
