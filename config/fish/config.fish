@@ -24,7 +24,7 @@ end
 
 if type -q git
     function dotpush
-        cd ~/Hobby/dotfiles && git add . && git commit -m $argv && git push
+        cd ~/Hobby/dotfiles && git add . && git commit -m "$argv" && git push
     end
 end
 
@@ -59,10 +59,16 @@ end
 
 if type -q nano
     set EDITOR nano
+    alias fishconfig='nano ~/.config/fish/config.fish'
+    alias kittyconfig='nano ~/.config/kitty/kitty.conf'
+    alias ffconfig='nano ~/.config/fastfetch/config.jsonc'
 end
 
-if type -q vi
-    set EDITOR vi
+if type -q vim
+    set EDITOR vim
+    alias fishconfig='vim ~/.config/fish/config.fish'
+    alias kittyconfig='vim ~/.config/kitty/kitty.conf'
+    alias ffconfig='vim ~/.config/fastfetch/config.jsonc'
 end
 
 if type -q nvim
