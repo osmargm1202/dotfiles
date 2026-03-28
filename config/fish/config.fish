@@ -101,6 +101,11 @@ if type -q tmux; and type -q yazi; and type -q opencode
     source ~/.config/fish/functions/tmuxnew.fish
 end
 
+# Tmux selector de directorios desde cwd con fzf + fd
+if type -q tmux; and type -q yazi; and type -q opencode; and type -q fzf; and type -q fd
+    source ~/.config/fish/functions/tmuxfd.fish
+end
+
 # Tmux new session usando zoxide + fzf
 if type -q tmux; and type -q yazi; and type -q opencode; and type -q zoxide; and type -q fzf
     source ~/.config/fish/functions/tmuxnewz.fish

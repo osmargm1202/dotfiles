@@ -6,3 +6,9 @@
 /home/osmarg/Code/orgmenv
 /home/osmarg/Code/orgmbt
 /home/osmarg/.config/fish
+/home/osmarg/Code/orgmbt-app
+/home/osmarg/Code/orgmenv
+/home/osmarg/Code/orgmbt
+/home/osmarg/Code/orgmbt
+/home/osmarg/Code/orgmbt
+/home/osmarg/Code/orgmbt
