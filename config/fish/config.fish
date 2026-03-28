@@ -4,6 +4,8 @@ if status is-interactive
     end
 end
 
+set -gx AGE_KEY_FILE "$HOME/Nextcloud/Documentos/keys/age.txt"
+
 # PATH
 set -gx PATH $HOME/.local/bin $PATH
 
