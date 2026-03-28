@@ -102,7 +102,7 @@ end
 if not set -q DISTROBOX_ENTER_PATH
 
     if string match -q "*arch*" (distrobox-list)
-        distrobox-enter arch -- fastfetch --logo nixos --logo-padding 5 --logo-type builtin --logo-width 0 --logo-padding-top 0
+        distrobox-enter arch -- fastfetch --logo arch --logo-padding 5 --logo-type builtin --logo-width 0 --logo-padding-top 0
         function nvim
             distrobox-enter arch -- nvim $argv
         end
