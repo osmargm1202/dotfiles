@@ -1,0 +1,5 @@
+/home/osmarg/Hobby/dotfiles
+/home/osmarg/Code/calc
+/home/osmarg/Hobby/dotfiles
+/home/osmarg/Hobby/dotfiles
+/home/osmarg/Code/calc

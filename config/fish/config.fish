@@ -90,6 +90,21 @@ if type -q yazi
     alias y='yazi'
 end
 
+# Tmux session selector con gum
+if type -q gum
+    source ~/.config/fish/functions/tmuxls.fish
+end
+
+# Tmux new session con layout (opencode arriba, terminal/yazi abajo)
+if type -q tmux; and type -q yazi; and type -q opencode
+    source ~/.config/fish/functions/tmuxnew.fish
+end
+
+# Tmux new session usando zoxide + fzf
+if type -q tmux; and type -q yazi; and type -q opencode; and type -q zoxide; and type -q fzf
+    source ~/.config/fish/functions/tmuxnewz.fish
+end
+
 # Deshabilitar mensaje de ayuda de fish
 set -U fish_greeting ""
 
