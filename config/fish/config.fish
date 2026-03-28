@@ -93,6 +93,7 @@ end
 # Tmux session selector con gum
 if type -q gum
     source ~/.config/fish/functions/tmuxls.fish
+    source ~/.config/fish/functions/tmuxdel.fish
 end
 
 # Tmux new session con layout (opencode arriba, terminal/yazi abajo)

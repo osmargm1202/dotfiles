@@ -3,3 +3,6 @@
 /home/osmarg/Hobby/dotfiles
 /home/osmarg/Hobby/dotfiles
 /home/osmarg/Code/calc
+/home/osmarg/Code/orgmenv
+/home/osmarg/Code/orgmbt
+/home/osmarg/.config/fish
