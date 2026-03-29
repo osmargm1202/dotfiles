@@ -17,3 +17,6 @@
 /home/osmarg/Code/orgmenv
 /home/osmarg/Code/orgmauth
 /home/osmarg/Code/orgmcalc-cli
+/home/osmarg/Code/orgmauth
+/home/osmarg/Code/orgmcalc
+/home/osmarg/Code/orgmcalc-cli
