@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ],
+      "directTools": false
+    },
+    "engram": {
+      "command": "/home/osmarg/go/bin/engram",
+      "args": [
+        "mcp",
+        "--tools=agent"
+      ],
+      "directTools": true
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": [
+        "obsidian-mcp",
+        "/home/osmarg/Nextcloud/Documentos/obsidian-vault"
+      ],
+      "directTools": false
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    }
+  }
+}

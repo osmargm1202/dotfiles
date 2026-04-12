@@ -1,10 +1,8 @@
 function tmuxfd
-    # Verificar entorno interactivo
-    if not status is-interactive
+    if not __tmux_init
         return 1
     end
 
-    # Dependencias
     if not type -q fzf
         echo "Error: fzf no está instalado."
         return 1
@@ -12,11 +10,6 @@ function tmuxfd
 
     if not type -q fd
         echo "Error: fd no está instalado."
-        return 1
-    end
-
-    if not type -q tmuxnew
-        echo "Error: tmuxnew no está disponible. Cargá config.fish o revisá dependencias (tmux/yazi/opencode)."
         return 1
     end
 
@@ -30,7 +23,6 @@ function tmuxfd
     end
 
     # Buscar con fd y filtrar con fzf
-    # Equivalente a: fd [busqueda] -t d . | fzf
     set -l selected_rel (begin
         printf '.\n'
         fd --type d --hidden --exclude .git -- "$query" . 2>/dev/null
@@ -50,6 +42,16 @@ function tmuxfd
         return 0
     end
 
-    # Abrir con layout tmuxnew
-    tmuxnew "$selected"
+    __tmux_dir_history_append $selected
+
+    # Reutilizar sesión existente
+    set -l existing (__tmux_find_session $selected)
+    if test -n "$existing"
+        echo "Entrando a la sesión existente '$existing' en: $selected"
+        tmux attach-session -t $existing
+        return 0
+    end
+
+    set -l session_name (__tmux_session_name $selected)
+    __tmux_create_session $session_name $selected
 end

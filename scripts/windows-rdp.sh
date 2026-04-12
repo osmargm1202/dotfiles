@@ -5,7 +5,7 @@
 # ============================================================
 
 CONTAINER="windows"
-DISTROBOX="arch-gpu"
+DISTROBOX="arch"
 RDP_HOST="localhost"
 RDP_PORT="3389"
 RDP_USER="osmarg"

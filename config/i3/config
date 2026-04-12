@@ -11,7 +11,7 @@
 
 set $browser chromium
 set $file-manager dolphin
-set $editor cursor
+set $editor zeditor
 set $term kitty
 set $mod Mod4
 
@@ -55,12 +55,11 @@ exec --no-startup-id export CM_LAUNCHER=rofi
 exec --no-startup-id clipmenud
 exec --no-startup-id picom --config ~/.config/picom/picom.conf -b
 exec --no-startup-id setxkbmap -layout "us,latam"
-exec --no-startup-id orgmos i3 wallpaper restore
+exec --no-startup-id i3-wallpaper-restore
 # Configure cursor theme Bibata-Modern-Ice
 exec --no-startup-id gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice' 2>/dev/null || xsetroot -cursor_name left_ptr 2>/dev/null || true 
 # Lanzar Transmission Daemon y notificar en la terminal con color
 
-1
 exec --no-startup-id system-config-printer-applet
 
 exec --no-startup-id dunst
@@ -99,7 +98,7 @@ bindsym $mod+v exec --no-startup-id CM_LAUNCHER=rofi clipmenu -p "Portapapeles"
 bindsym $mod+p exec flameshot gui
 bindsym $mod+Shift+o exec systemctl suspend
 bindsym $mod+Mod1+o exec poweroff
-bindsym $mod+Tab exec --no-startup-id "rofi -show window"n
+bindsym $mod+Tab exec --no-startup-id rofi -show window
 # Lanzar bloc de notas sencillo (mousepad o gedit según disponibilidad)
 bindsym $mod+n exec --no-startup-id bash -c 'command -v mousepad >/dev/null && mousepad || (command -v gedit >/dev/null && gedit || xterm -e nano)'
 
@@ -108,13 +107,13 @@ bindsym $mod+n exec --no-startup-id bash -c 'command -v mousepad >/dev/null && m
 
 # Change to random wallpaper keybinding
 # Super+Alt+Space = Random wallpaper
-bindsym $mod+Mod1+space exec --no-startup-id orgmos i3 wallpaper random
+bindsym $mod+Mod1+space exec --no-startup-id i3-wallpaper-random
 
 # For feh
 #bindsym $mod+Mod1+space exec --no-startup-id feh --bg-fill "$(find ~/Pictures -type f | shuf -n1)"
 
 # Bloquear pantalla con Mod+Shift+L
-bindsym $mod+Shift+l exec --no-startup-id orgmos i3 lock
+bindsym $mod+Shift+l exec --no-startup-id i3-lock
 
 # Apagar pantalla inmediatamente con Mod+Alt+P
 bindsym $mod+Mod1+p exec --no-startup-id xset dpms force off
@@ -329,5 +328,5 @@ client.placeholder      #000000 #1a1b26 #ffffff #000000 #1a1b26
 #}
 
 # Hotkey helper - Show all keybindings
-bindsym $mod+slash exec --no-startup-id orgmos i3 hotkey
-bindsym $mod+minus exec --no-startup-id orgmos i3 hotkey
+bindsym $mod+slash exec --no-startup-id i3-hotkeys
+bindsym $mod+minus exec --no-startup-id i3-hotkeys

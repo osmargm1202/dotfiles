@@ -6,26 +6,28 @@
 
 {
   imports =
-    [
-      # Include the results of the hardware scan.
+    [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      # Activate only one desktop profile at a time.
-      # ./profiles/gnome.nix
-      # ./profiles/kde.nix
-       ./profiles/niri-caelestia.nix
-    ];
+      ./profiles/gnome.nix
+      # ./profiles/i3.nix  # Uncomment to enable i3 desktop profile (replaces GNOME)
+      <home-manager/nixos>
+  ];
   # Polkit
   security.polkit.enable = true;
 
-  programs.gnupg.agent = {
-    enable = true;
-    pinentryPackage = pkgs.pinentry-curses;  # o pinentry-gtk2, pinentry-qt para GUI
-  };
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # KWallet para gestión de credenciales
+  #security.pam.services.sddm.enableKwallet = true;
+  #programs.gnupg.agent = {
+  #  enable = true;
+  #  pinentryPackage = pkgs.pinentry-curses;  # o pinentry-gtk2, pinentry-qt para GUI
+  #};
+  #nix.settings.experimental-features = [ "nix-command" "flakes" ];
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  
+ 
+  hardware.uinput.enable = true;
+
   virtualisation.podman = {
     enable = true;
     dockerCompat = true;  # alias docker -> podman
@@ -42,13 +44,15 @@
     path = [ pkgs.flatpak ];
     script = ''
       flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-      flatpak remote-add --if-not-exists flathub https://nightly.gnome.org/gnome-nightly.flatpakrepo
       flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo   
     '';
   }; 
   programs.fish.enable = true;
-  programs.git.enable = true;
-  programs.nix-ld.enable = true;
+  programs.git = {
+    enable = true;
+    config.user.name = "osmar";
+    config.user.email = "osmargm1202@gmail.com";
+  };
   networking.hostName = "orgm"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -106,32 +110,37 @@
     shell = pkgs.fish;
     subUidRanges = [{ startUid = 100000; count = 65536; }];
     subGidRanges = [{ startGid = 100000; count = 65536; }];
-    extraGroups = [ "networkmanager" "wheel" "docker" "osmarg" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" "osmarg" "podman" "input" ];
     packages = with pkgs; [
-      # thunderbird
+    #  thunderbird
+       
     ];
   };
 
-  # Install firefox.
   # programs.firefox.enable = true;
 
-  # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
   environment.systemPackages = with pkgs; [
-    git
+    wget
+    vim
     fish
-    fastfetch
+    curl
+    git
     distrobox
+    htop
     ntfs3g
-    starship
+    gcc
     zoxide
+    ncdu
+    gnumake
+    podman-compose
+    nerd-fonts.jetbrains-mono
+    (chromium.override { enableWideVine = true; })
   ];
-  fonts.fontconfig.enable = true;
-  # nix kernel
-  boot.kernelPackages = pkgs.linuxPackages_6_18;
+
+    fonts.fontconfig.enable = true;
+
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
@@ -148,15 +157,14 @@
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
+  #networking.firewall = {
+  # enable = true;
+  # allowedTCPPorts = [ 47984 47989 47990 48010 ];
+  # allowedUDPPorts = [ 47998 47999 48000 48010 ];
+  #};
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "25.11"; # Did you read the comment?
 
 }

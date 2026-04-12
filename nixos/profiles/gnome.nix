@@ -9,26 +9,35 @@
   };
 
   services.desktopManager.gnome.enable = true;
-  services.displayManager.gdm.enable = true;
-  services.displayManager.gdm.autoSuspend = true;
+
+  services.displayManager.gdm = {
+    enable = true;
+    autoSuspend = true;
+  };
+
+  systemd.services.flatpak-repo.script = ''
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+    flatpak remote-add --if-not-exists flathub https://nightly.gnome.org/gnome-nightly.flatpakrepo
+    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+  '';
 
   environment.systemPackages = with pkgs; [
-    adwaita-icon-theme
-    gnome-themes-extra
+    gnome-tweaks
+    yaru-remix-theme
+    gnomeExtensions.user-themes
     gnomeExtensions.blur-my-shell
-    gnomeExtensions.arc-menu
     gnomeExtensions.appindicator
     gnomeExtensions.caffeine
-    gnomeExtensions.clipboard-history
-    gnomeExtensions.night-theme-switcher
     gnomeExtensions.removable-drive-menu
     gnomeExtensions.system-monitor
-    gnomeExtensions.app-menu-is-back
     gnomeExtensions.background-logo
-    gnomeExtensions.launch-new-instance
-    gnomeExtensions.windowswitcher
-    gnomeExtensions.vitals
-    gnomeExtensions.paperwm
-    gnomeExtensions.quick-launch
+    gnomeExtensions.dash-to-dock
+    gnomeExtensions.gnome-40-ui-improvements
+    gnomeExtensions.pip-on-top
+    gnomeExtensions.tiling-shell
+    gnomeExtensions.veil
+    gnomeExtensions.burn-my-windows
+    gnomeExtensions.clipboard-indicator
+    gnomeExtensions.easy-docker-containers
   ];
 }

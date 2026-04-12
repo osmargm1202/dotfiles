@@ -1,6 +1,5 @@
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
-  // Configuración general
   "display": {
     "separator": " -> ",
     "color": {
@@ -8,33 +7,9 @@
       "title": "yellow"
     }
   },
-  // Configuración del logo/imagen
   "logo": {
-    //"source": "auto" // Usa el logo del OS automáticamente
-    // Para usar una imagen personalizada, cambia a:
-    "source": "~/.config/fastfetch/logo/orgm.png",
-    "width": 35,
-    "height": 6,
-     "type": "kitty-direct", 
-    "padding": {
-      "top": 6,
-      "left": 2,
-      "right": 2
-     }
+    "type": "auto"
   },
-  // También puedes usar estos ajustes alternativos para la imagen:
-  // "logo": {
-  //     "source": "/home/usuario/Imágenes/logo.png",
-  //     "type": "kitty-direct",  // Específico para Kitty
-  //     "width": 25,
-  //     "height": 12,
-  //     "padding": {
-  //         "top": 0,
-  //         "left": 1,
-  //         "right": 3
-  //     }
-  // },
-  // Módulos a mostrar
   "modules": [
     {
       "type": "title",
@@ -56,7 +31,7 @@
     {
       "type": "packages",
       "key": "Packages",
-      "format": "{all} (total) + {15} (flatpak) + {14} (flatpak-system)"
+      "format": "{all}"
     },
     {
       "type": "display",
@@ -85,10 +60,6 @@
     {
       "type": "localip",
       "format": "{ipv4} (IPv4)"
-    },
-    {
-      "type": "publicip",
-      "format": "{ip} ({location})"
     },
     {
       "type": "wifi",

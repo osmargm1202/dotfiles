@@ -1,4 +1,4 @@
-if status is-interactive
+if status is-login
     if type -q fastfetch
         if set -q TMUX
             fastfetch --logo auto 2>/dev/null; or fastfetch
@@ -9,6 +9,10 @@ if status is-interactive
 end
 
 set -gx AGE_KEY_FILE "$HOME/Nextcloud/Documentos/keys/age.txt"
+
+if test -f ~/.config/fish/private-env.fish
+    source ~/.config/fish/private-env.fish
+end
 
 # PATH
 set -gx PATH $HOME/.local/bin $PATH
@@ -29,6 +33,13 @@ end
 if type -q git
     function dotpush
         cd ~/Hobby/dotfiles && git add . && git commit -m "$argv" && git push
+    end
+    alias gst="git status"
+    alias gdiff="git diff"
+    function gp
+        git add .
+        git commit -m "$argv"
+        git push
     end
 end
 
@@ -68,12 +79,12 @@ if type -q nano
     alias ffconfig='nano ~/.config/fastfetch/config.jsonc'
 end
 
-if type -q vim
-    set EDITOR vim
-    alias fishconfig='vim ~/.config/fish/config.fish'
-    alias kittyconfig='vim ~/.config/kitty/kitty.conf'
-    alias ffconfig='vim ~/.config/fastfetch/config.jsonc'
-end
+#if type -q vim
+#   set EDITOR vim
+#   alias fishconfig='vim ~/.config/fish/config.fish'
+#   alias kittyconfig='vim ~/.config/kitty/kitty.conf'
+#   alias ffconfig='vim ~/.config/fastfetch/config.jsonc'
+#end
 
 if type -q nvim
     set EDITOR nvim
@@ -100,18 +111,20 @@ if type -q gum; and type -q tmux
     source ~/.config/fish/functions/tmuxdel.fish
 end
 
-# Tmux new session con layout (opencode arriba, terminal/yazi abajo)
-if type -q tmux; and type -q yazi; and type -q opencode
-    source ~/.config/fish/functions/tmuxnew.fish
-end
+# Helper compartido (valida tmux + pi, exporta herramienta_ia)
+source ~/.config/fish/functions/__tmux_init.fish
+source ~/.config/fish/functions/__tmux_shared.fish
+
+# Tmux new session con layout mc7 (herramienta_ia + 3 terminales)
+source ~/.config/fish/functions/tmuxnew.fish
 
 # Tmux selector de directorios desde cwd con fzf + fd
-if type -q tmux; and type -q yazi; and type -q opencode; and type -q fzf; and type -q fd
+if type -q fzf; and type -q fd
     source ~/.config/fish/functions/tmuxfd.fish
 end
 
 # Tmux new session usando zoxide + fzf
-if type -q tmux; and type -q yazi; and type -q opencode; and type -q zoxide; and type -q fzf
+if type -q zoxide; and type -q fzf
     source ~/.config/fish/functions/tmuxnewz.fish
 end
 
@@ -173,8 +186,8 @@ if not set -q DISTROBOX_ENTER_PATH
         function tmux
             distrobox-enter arch -- tmux $argv
         end
-        function opencode
-            distrobox-enter arch -- opencode $argv
+        function pi
+            distrobox-enter arch -- pi $argv
         end
         function fnm
             distrobox-enter arch -- fnm $argv
