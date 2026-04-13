@@ -161,21 +161,8 @@
         "write": true
       }
     },
-    "pdd-apply": {
-      "description": "Implement code changes from PDD plan",
-      "hidden": true,
-      "mode": "subagent",
-      "model": "opencode-go/mimo-v2-pro",
-      "prompt": "{file:/home/osmarg/.config/opencode/prompts/pdd/pdd-apply.md}",
-      "tools": {
-        "bash": true,
-        "edit": true,
-        "read": true,
-        "write": true
-      }
-    },
     "pdd-explorer": {
-      "description": "Investigate codebase and constraints for PDD",
+      "description": "Investigate codebase, constraints, and Engram context for PDD",
       "hidden": true,
       "mode": "subagent",
       "model": "openai/gpt-5.3-codex",
@@ -187,21 +174,8 @@
         "write": true
       }
     },
-    "pdd-init": {
-      "description": "Bootstrap PDD context and project configuration",
-      "hidden": true,
-      "mode": "subagent",
-      "model": "opencode-go/minimax-m2.7",
-      "prompt": "{file:/home/osmarg/.config/opencode/prompts/pdd/pdd-init.md}",
-      "tools": {
-        "bash": true,
-        "edit": true,
-        "read": true,
-        "write": true
-      }
-    },
     "pdd-orgm": {
-      "description": "PDD Orchestrator - coordinates PDD sub-agents and relays questions",
+      "description": "PDD Orchestrator - coordinates explorer, requirements, planner, builder, and reviewer",
       "mode": "primary",
       "model": "openai/gpt-5.4",
       "permission": {
@@ -221,8 +195,21 @@
         "write": true
       }
     },
+    "pdd-requirements": {
+      "description": "Clarify user requirements before PDD planning",
+      "hidden": true,
+      "mode": "subagent",
+      "model": "openai/gpt-5.4",
+      "prompt": "{file:/home/osmarg/.config/opencode/prompts/pdd/pdd-requirements.md}",
+      "tools": {
+        "bash": true,
+        "edit": true,
+        "read": true,
+        "write": true
+      }
+    },
     "pdd-planner": {
-      "description": "Create a complete implementation plan before PDD apply",
+      "description": "Create a complete implementation plan before PDD build",
       "hidden": true,
       "mode": "subagent",
       "model": "openai/gpt-5.4",
@@ -234,12 +221,12 @@
         "write": true
       }
     },
-    "pdd-prd": {
-      "description": "Create a product requirements document before planning",
+    "pdd-builder": {
+      "description": "Implement code changes from the approved PDD plan",
       "hidden": true,
       "mode": "subagent",
-      "model": "openai/gpt-5.4",
-      "prompt": "{file:/home/osmarg/.config/opencode/prompts/pdd/pdd-prd.md}",
+      "model": "opencode-go/mimo-v2-pro",
+      "prompt": "{file:/home/osmarg/.config/opencode/prompts/pdd/pdd-builder.md}",
       "tools": {
         "bash": true,
         "edit": true,
@@ -247,25 +234,12 @@
         "write": true
       }
     },
-    "pdd-verify": {
-      "description": "Validate implementation against the approved PDD plan",
+    "pdd-reviewer": {
+      "description": "Review implementation against approved PDD plan and requirements",
       "hidden": true,
       "mode": "subagent",
       "model": "openai/gpt-5.4",
-      "prompt": "{file:/home/osmarg/.config/opencode/prompts/pdd/pdd-verify.md}",
-      "tools": {
-        "bash": true,
-        "edit": true,
-        "read": true,
-        "write": true
-      }
-    },
-    "pdd-archive": {
-      "description": "Archive final PDD state for recovery and closure",
-      "hidden": true,
-      "mode": "subagent",
-      "model": "openai/gpt-5.4",
-      "prompt": "{file:/home/osmarg/.config/opencode/prompts/pdd/pdd-archive.md}",
+      "prompt": "{file:/home/osmarg/.config/opencode/prompts/pdd/pdd-reviewer.md}",
       "tools": {
         "bash": true,
         "edit": true,
@@ -315,16 +289,17 @@
       ],
       "enabled": true,
       "type": "local"
+    },
+    "gmail": {
+      "command": ["npx", "@gongrzhe/server-gmail-autoauth-mcp" ],
+      "enabled": true,
+      "type": "local"
     }
   },
   "plugin": [
-    "opencode-mystatus"
+    "opencode-mystatus", "@slkiser/opencode-quota"
   ],
   "command": {
-    "mystatus": {
-      "description": "Query quota usage for all AI accounts",
-      "template": "Use the mystatus tool to query quota usage. Return the result as-is without modification."
-    }
   },
   "permission": {
     "bash": {

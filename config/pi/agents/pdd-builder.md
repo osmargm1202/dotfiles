@@ -2,7 +2,7 @@
 name: pdd-builder
 description: Implement approved PDD plan
 tools: read, grep, find, ls, bash, edit, write
-model: opencode-go/mimo-v2-pro
+model: opencode/minimax-m2.5-free
 thinking: medium
 output: build.md
 defaultReads: context.md

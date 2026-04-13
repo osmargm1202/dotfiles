@@ -19,10 +19,12 @@ const WIDGET_KEY = "pdd-orgm-agents";
 const STATUS_KEY = "pdd-orgm-agents";
 const SUBAGENT_ENV_FLAG = "PI_PDD_SUBAGENT";
 const DEFAULT_CONTEXT_WINDOW = 200_000;
-const GLOBAL_FALLBACK_MODEL = process.env.PI_PDD_FALLBACK_MODEL ?? "openai-codex/gpt-5.4";
+const GLOBAL_FALLBACK_MODEL = process.env.PI_PDD_FALLBACK_MODEL?.trim() || undefined;
 const DEPLOYMENT_GRID_MAX_COLUMNS = 6;
 const DEPLOYMENT_CARD_MIN_WIDTH = 24;
 const DEPLOYMENT_GRID_GAP = 2;
+const SUBAGENT_COMPLETION_STALL_TIMEOUT_MS = 4_000;
+const SUBAGENT_FORCE_KILL_TIMEOUT_MS = 3_000;
 
 const IS_SUBAGENT_RUNTIME = process.env[SUBAGENT_ENV_FLAG] === "1";
 
@@ -320,6 +322,134 @@ function parseAwaitingUserInputPayload(text: string): AwaitingUserInputPayload |
 	return undefined;
 }
 
+function stringifyUnknown(value: unknown): string | undefined {
+	if (value === undefined || value === null) return undefined;
+	if (typeof value === "string") return value.trim() || undefined;
+	if (typeof value === "number" || typeof value === "boolean") return String(value);
+	try {
+		return JSON.stringify(value);
+	} catch {
+		return String(value);
+	}
+}
+
+function getErrorMessage(error: unknown): string {
+	if (error instanceof Error) return error.message || error.name || "Unknown error";
+	return stringifyUnknown(error) || "Unknown error";
+}
+
+function extractJsonLikeErrorMessage(text: string): string | undefined {
+	const keys = ["detail", "error", "message", "reason", "title", "description"];
+	for (const candidate of extractJsonObjectCandidates(text)) {
+		try {
+			const parsed = JSON.parse(candidate) as Record<string, unknown>;
+			if (!parsed || typeof parsed !== "object") continue;
+			for (const key of keys) {
+				const asText = stringifyUnknown(parsed[key]);
+				if (asText) return asText;
+			}
+		} catch {
+			// ignore invalid json candidates
+		}
+	}
+	return undefined;
+}
+
+function explainSubagentFailure(errorText: string): string | undefined {
+	const haystack = errorText.toLowerCase();
+	if (/unsupported model|invalid model|model.*not found/.test(haystack)) {
+		return "The deployed agent is configured with a model reference that the provider does not accept.";
+	}
+	if (/insufficient balance|billing|quota|credit|rate limit|too many requests/.test(haystack)) {
+		return "The provider likely rejected the request due to account limits or throttling.";
+	}
+	if (/api key|authentication|unauthorized|forbidden/.test(haystack)) {
+		return "The provider request failed authentication/authorization for the current credentials.";
+	}
+	if (/context window|token limit|maximum context/.test(haystack)) {
+		return "The delegated task likely exceeded the selected model context limits.";
+	}
+	if (/timed out|timeout/.test(haystack)) {
+		return "The delegated subprocess did not complete in time.";
+	}
+	return undefined;
+}
+
+function suggestSubagentFailureActions(params: {
+	errorText: string;
+	fallbackModel?: string;
+	fallbackUsed?: boolean;
+	attemptedModels?: string[];
+}): string[] {
+	const actions: string[] = [];
+	const haystack = params.errorText.toLowerCase();
+
+	if (/unsupported model|invalid model|model.*not found/.test(haystack)) {
+		actions.push("Update the subagent's model setting to a supported provider/model pair, then retry.");
+	}
+	if (/insufficient balance|billing|quota|credit|rate limit|too many requests/.test(haystack)) {
+		actions.push("Check provider quota/billing or wait for rate limits to reset, then rerun.");
+	}
+	if (/api key|authentication|unauthorized|forbidden/.test(haystack)) {
+		actions.push("Verify provider credentials/environment variables for this session and rerun.");
+	}
+	if (/context window|token limit|maximum context/.test(haystack)) {
+		actions.push("Reduce prompt/task size or switch to a model with a larger context window.");
+	}
+	if (!params.fallbackUsed && params.fallbackModel) {
+		actions.push(`Retry with fallback model \`${params.fallbackModel}\` if the primary model remains unavailable.`);
+	}
+	if (params.attemptedModels && params.attemptedModels.length > 1) {
+		actions.push("Inspect the chained model attempts and keep the first model that consistently succeeds.");
+	}
+	if (actions.length === 0) {
+		actions.push("Review subagent logs/details, adjust agent config or task constraints, and retry deployment.");
+	}
+	return Array.from(new Set(actions));
+}
+
+function buildSubagentFailureReport(params: {
+	agent: string;
+	deploymentId: string;
+	exitCode: number;
+	stopReason?: string;
+	errorMessage?: string;
+	stderr?: string;
+	finalText?: string;
+	fallbackModel?: string;
+	fallbackUsed?: boolean;
+	attemptedModels?: string[];
+}): string {
+	const jsonError =
+		extractJsonLikeErrorMessage(params.errorMessage || "") ||
+		extractJsonLikeErrorMessage(params.finalText || "") ||
+		extractJsonLikeErrorMessage(params.stderr || "");
+	const baseError = [
+		jsonError,
+		params.errorMessage?.trim(),
+		params.stderr?.trim(),
+		params.finalText?.trim(),
+		params.stopReason ? `stopReason=${params.stopReason}` : undefined,
+	].find((item) => Boolean(item && item.trim()));
+	const normalizedError = truncate(baseError || `exitCode=${params.exitCode}`, 500);
+	const explanation = explainSubagentFailure(normalizedError);
+	const actions = suggestSubagentFailureActions({
+		errorText: normalizedError,
+		fallbackModel: params.fallbackModel,
+		fallbackUsed: params.fallbackUsed,
+		attemptedModels: params.attemptedModels,
+	});
+	const failureState = `error (exitCode=${params.exitCode}${params.stopReason ? `, stopReason=${params.stopReason}` : ""})`;
+
+	return [
+		`Subagent: ${params.agent} (${params.deploymentId})`,
+		`Failure state: ${failureState}`,
+		`Error detail: ${normalizedError}`,
+		explanation ? `Explanation: ${explanation}` : undefined,
+		`Likely next actions:\n- ${actions.join("\n- ")}`,
+	].filter(Boolean).join("\n\n");
+}
+
 async function relayAwaitingUserInput(
 	payload: AwaitingUserInputPayload,
 	ctx: ExtensionContext,
@@ -516,6 +646,99 @@ function buildSelectorItems(currentPrimary: string): SelectorItem[] {
 		});
 	}
 	return items;
+}
+
+function collectConfiguredAgentModels(ctx: ExtensionContext, preferredModel?: string): string[] {
+	const models = new Set<string>();
+
+	for (const model of ctx.modelRegistry.getAvailable()) {
+		models.add(`${model.provider}/${model.id}`);
+	}
+
+	for (const agent of discoverAgents(ctx.cwd, "both")) {
+		if (agent.model?.trim()) models.add(agent.model.trim());
+	}
+
+	if (preferredModel?.trim()) models.add(preferredModel.trim());
+	return Array.from(models).sort((a, b) => a.localeCompare(b));
+}
+
+function upsertAgentModelFrontmatter(markdown: string, model: string): string {
+	const normalizedModel = model.trim();
+	const match = markdown.match(/^(---\n)([\s\S]*?)(\n---\n?)([\s\S]*)$/);
+	if (!match) {
+		return `---\nmodel: ${normalizedModel}\n---\n\n${markdown.trimStart()}`;
+	}
+
+	const [, opening, frontmatterBlock, closing, body] = match;
+	const lines = frontmatterBlock.split("\n");
+	const modelLineIndex = lines.findIndex((line) => /^model\s*:/i.test(line.trim()));
+
+	if (modelLineIndex >= 0) lines[modelLineIndex] = `model: ${normalizedModel}`;
+	else lines.push(`model: ${normalizedModel}`);
+
+	return `${opening}${lines.join("\n")}${closing}${body}`;
+}
+
+function saveAgentModel(agent: AgentConfig, model: string): AgentConfig {
+	const raw = readFileSync(agent.filePath, "utf8");
+	const next = upsertAgentModelFrontmatter(raw, model);
+	if (next !== raw) writeFileSync(agent.filePath, next, "utf8");
+	return { ...agent, model: model.trim() };
+}
+
+async function openSelectPalette(
+	ctx: ExtensionContext,
+	title: string,
+	subtitle: string,
+	items: SelectorItem[],
+): Promise<string | null> {
+	return await ctx.ui.custom<string | null>((tui, theme, _kb, done) => {
+		const container = new Container();
+
+		container.addChild(new DynamicBorder((s: string) => theme.fg("accent", s)));
+		container.addChild(new Text(theme.fg("accent", theme.bold(title)), 1, 0));
+		container.addChild(new Text(theme.fg("muted", subtitle), 1, 0));
+
+		const selectList = new SelectList(items, Math.min(items.length, 12), {
+			selectedPrefix: (t: string) => theme.fg("accent", t),
+			selectedText: (t: string) => theme.fg("accent", t),
+			description: (t: string) => theme.fg("muted", t),
+			scrollInfo: (t: string) => theme.fg("dim", t),
+			noMatch: (t: string) => theme.fg("warning", t),
+		});
+		selectList.onSelect = (item) => done(item.value);
+		selectList.onCancel = () => done(null);
+		container.addChild(selectList);
+
+		container.addChild(new Text(theme.fg("dim", "↑↓ navigate • enter select • esc cancel"), 1, 0));
+		container.addChild(new DynamicBorder((s: string) => theme.fg("accent", s)));
+
+		return {
+			render: (w: number) => container.render(w),
+			invalidate: () => container.invalidate(),
+			handleInput: (data: string) => {
+				selectList.handleInput(data);
+				tui.requestRender();
+			},
+		};
+	}, { overlay: true });
+}
+
+function buildAgentSelectionItems(cwd: string): SelectorItem[] {
+	return discoverAgents(cwd, "both").map((agent) => ({
+		value: agent.name,
+		label: agent.name,
+		description: `${agent.source} · ${agent.model ?? "no model"}`,
+	}));
+}
+
+function buildAgentModelItems(ctx: ExtensionContext, agent: AgentConfig): SelectorItem[] {
+	return collectConfiguredAgentModels(ctx, agent.model).map((model) => ({
+		value: model,
+		label: model === agent.model ? `${model}  ✓ current` : model,
+		description: model === agent.model ? `Current model for ${agent.name}` : `Assign to ${agent.name}`,
+	}));
 }
 
 // ─── Pi invocation & temp file helpers ──────────────────────────────────────
@@ -747,39 +970,12 @@ ${availableAgents}
 			return;
 		}
 
-		const items = buildSelectorItems(currentPrimary);
-
-		const result = await ctx.ui.custom<string | null>((tui, theme, _kb, done) => {
-			const container = new Container();
-
-			container.addChild(new DynamicBorder((s: string) => theme.fg("accent", s)));
-
-			container.addChild(new Text(theme.fg("accent", theme.bold("Select Primary Agent")), 1, 0));
-			container.addChild(new Text(theme.fg("muted", `Active: ${getPrimaryStatusLabel(currentPrimary)}`), 1, 0));
-
-			const selectList = new SelectList(items, Math.min(items.length, 10), {
-				selectedPrefix: (t: string) => theme.fg("accent", t),
-				selectedText: (t: string) => theme.fg("accent", t),
-				description: (t: string) => theme.fg("muted", t),
-				scrollInfo: (t: string) => theme.fg("dim", t),
-				noMatch: (t: string) => theme.fg("warning", t),
-			});
-			selectList.onSelect = (item) => done(item.value);
-			selectList.onCancel = () => done(null);
-			container.addChild(selectList);
-
-			container.addChild(new Text(theme.fg("dim", "↑↓ navigate • enter select • esc cancel"), 1, 0));
-			container.addChild(new DynamicBorder((s: string) => theme.fg("accent", s)));
-
-			return {
-				render: (w: number) => container.render(w),
-				invalidate: () => container.invalidate(),
-				handleInput: (data: string) => {
-					selectList.handleInput(data);
-					tui.requestRender();
-				},
-			};
-		}, { overlay: true });
+		const result = await openSelectPalette(
+			ctx,
+			"Select Primary Agent",
+			`Active: ${getPrimaryStatusLabel(currentPrimary)}`,
+			buildSelectorItems(currentPrimary),
+		);
 
 		if (result && result !== currentPrimary) {
 			currentPrimary = result;
@@ -789,6 +985,50 @@ ${availableAgents}
 		} else if (result === currentPrimary) {
 			ctx.ui.notify(`Already active: ${getPrimaryStatusLabel(currentPrimary)}`, "info");
 		}
+	}
+
+	async function openAgentsModelPalette(ctx: ExtensionContext): Promise<void> {
+		if (!ctx.hasUI) {
+			ctx.ui.notify("Visual selector requires interactive mode", "error");
+			return;
+		}
+
+		const agentItems = buildAgentSelectionItems(ctx.cwd);
+		if (agentItems.length === 0) {
+			ctx.ui.notify("No deployable agents found in agents/", "warning");
+			return;
+		}
+
+		const selectedAgentName = await openSelectPalette(
+			ctx,
+			"Select Agent",
+			"Deployable agents from agents/ only",
+			agentItems,
+		);
+		if (!selectedAgentName) return;
+
+		const agent = findAgent(ctx.cwd, selectedAgentName, "both");
+		if (!agent) {
+			ctx.ui.notify(`Agent not found: ${selectedAgentName}`, "error");
+			return;
+		}
+
+		const modelItems = buildAgentModelItems(ctx, agent);
+		if (modelItems.length === 0) {
+			ctx.ui.notify("No models configured in agents/ to choose from", "warning");
+			return;
+		}
+
+		const selectedModel = await openSelectPalette(
+			ctx,
+			`Select Model for ${agent.name}`,
+			`Current: ${agent.model ?? "no model"}`,
+			modelItems,
+		);
+		if (!selectedModel) return;
+
+		saveAgentModel(agent, selectedModel);
+		ctx.ui.notify(`Saved ${agent.name} → ${selectedModel}`, "success");
 	}
 
 	// ── Ctrl+\: open visual primary-agent palette ──
@@ -803,10 +1043,20 @@ ${availableAgents}
 		handler: openPrimaryAgentPalette,
 	});
 
+	pi.registerShortcut("ctrl+shift+\\", {
+		description: "Open deployable agent model selector",
+		handler: openAgentsModelPalette,
+	});
+
 	// ── Visual selector: palette/modal for primary agent ─────────────────
 	pi.registerCommand("primary-agent", {
 		description: "Open a visual palette to select the primary agent",
 		handler: async (_args, ctx) => openPrimaryAgentPalette(ctx),
+	});
+
+	pi.registerCommand("agents_model", {
+		description: "Select a deployable agent from agents/ and assign its model",
+		handler: async (_args, ctx) => openAgentsModelPalette(ctx),
 	});
 
 	// ── Register deploy_agent tool (unchanged contract) ──────────────────
@@ -881,40 +1131,45 @@ ${availableAgents}
 			let tmpPromptPath: string | null = null;
 
 			const emitProgress = () => {
-				onUpdate?.({
-					content: [
-						{
-							type: "text",
-							text: finalText || deployment.summary || `${deployment.agent} running...`,
-						},
-					],
-					details: {
-						deploymentId,
-						agent: deployment.agent,
-						source: deployment.source,
-						status: deployment.status,
-						summary: deployment.summary,
-						tools: deployment.tools,
-						model: deployment.model,
-						contextWindow: deployment.contextWindow,
-						usage: deployment.usage,
-						exitCode,
-						stopReason,
-						errorMessage,
-						expectedArtifactTopicKey: deployment.expectedArtifactTopicKey,
-						persistedArtifactTopicKey: deployment.persistedArtifactTopicKey,
-						persistedToEngram: deployment.persistedToEngram,
-						engramWrites: deployment.engramWrites,
-						attemptedModels: deployment.attemptedModels,
-						primaryModel: deployment.primaryModel,
-						fallbackModel: deployment.fallbackModel,
-						fallbackUsed: deployment.fallbackUsed,
-						interactionOutcome,
-						awaitingUserInput: Boolean(questionPayload),
-						questionPayload,
-						userResponse,
-					} as AgentRunDetails,
-				});
+				try {
+					onUpdate?.({
+						content: [
+							{
+								type: "text",
+								text: finalText || deployment.summary || `${deployment.agent} running...`,
+							},
+						],
+						details: {
+							deploymentId,
+							agent: deployment.agent,
+							source: deployment.source,
+							status: deployment.status,
+							summary: deployment.summary,
+							tools: deployment.tools,
+							model: deployment.model,
+							contextWindow: deployment.contextWindow,
+							usage: deployment.usage,
+							exitCode,
+							stopReason,
+							errorMessage,
+							expectedArtifactTopicKey: deployment.expectedArtifactTopicKey,
+							persistedArtifactTopicKey: deployment.persistedArtifactTopicKey,
+							persistedToEngram: deployment.persistedToEngram,
+							engramWrites: deployment.engramWrites,
+							attemptedModels: deployment.attemptedModels,
+							primaryModel: deployment.primaryModel,
+							fallbackModel: deployment.fallbackModel,
+							fallbackUsed: deployment.fallbackUsed,
+							interactionOutcome,
+							awaitingUserInput: Boolean(questionPayload),
+							questionPayload,
+							userResponse,
+						} as AgentRunDetails,
+					});
+				} catch (progressError) {
+					const progressMessage = getErrorMessage(progressError);
+					deployment.summary = truncate(`progress update failed: ${progressMessage}`);
+				}
 			};
 
 			const runAttempt = async (modelRef: string | undefined) => {
@@ -947,6 +1202,46 @@ ${availableAgents}
 					});
 					let stdoutBuffer = "";
 					let aborted = false;
+					let settled = false;
+					let closeWatchdog: NodeJS.Timeout | undefined;
+					let completionWatchdog: NodeJS.Timeout | undefined;
+					let forceKillWatchdog: NodeJS.Timeout | undefined;
+					let completionEventSeen = false;
+					let completionTerminationTriggered = false;
+
+					const clearWatchdogs = () => {
+						if (closeWatchdog) clearTimeout(closeWatchdog);
+						if (completionWatchdog) clearTimeout(completionWatchdog);
+						if (forceKillWatchdog) clearTimeout(forceKillWatchdog);
+						closeWatchdog = undefined;
+						completionWatchdog = undefined;
+						forceKillWatchdog = undefined;
+					};
+
+					const resolveExitCode = (code: number | null | undefined): number => {
+						if (typeof code === "number") return code;
+						if (aborted) return 1;
+						if (completionEventSeen && !attemptErrorMessage) return 0;
+						return 1;
+					};
+
+					const armCompletionWatchdog = () => {
+						if (!completionEventSeen || settled || aborted) return;
+						if (completionWatchdog) clearTimeout(completionWatchdog);
+						completionWatchdog = setTimeout(() => {
+							if (settled || aborted) return;
+							completionTerminationTriggered = true;
+							deployment.summary = truncate(`${deployment.summary || "final response received"} (forcing completion)`);
+							refreshUI(ctx);
+							emitProgress();
+							child.kill("SIGTERM");
+							forceKillWatchdog = setTimeout(() => {
+								if (!settled) child.kill("SIGKILL");
+							}, SUBAGENT_FORCE_KILL_TIMEOUT_MS);
+							forceKillWatchdog.unref?.();
+						}, SUBAGENT_COMPLETION_STALL_TIMEOUT_MS);
+						completionWatchdog.unref?.();
+					};
 
 					const parseLine = (line: string) => {
 						if (!line.trim()) return;
@@ -986,6 +1281,29 @@ ${availableAgents}
 							emitProgress();
 						}
 
+						if (event.type === "agent_end") {
+							const messages = Array.isArray(event.messages) ? event.messages : [];
+							const lastAssistant = [...messages].reverse().find((message: any) => message?.role === "assistant");
+							const text = extractAssistantText(lastAssistant);
+							if (text) {
+								attemptFinalText = text;
+								finalText = text;
+								deployment.summary = truncate(text);
+							}
+							if (lastAssistant?.usage) {
+								deployment.usage.contextTokens = lastAssistant.usage.totalTokens || deployment.usage.contextTokens;
+								deployment.contextTokens = deployment.usage.contextTokens;
+							}
+							attemptStopReason = lastAssistant?.stopReason ?? attemptStopReason;
+							attemptErrorMessage = lastAssistant?.errorMessage ?? attemptErrorMessage;
+							stopReason = attemptStopReason;
+							errorMessage = attemptErrorMessage;
+							completionEventSeen = !attemptErrorMessage && attemptStopReason !== "error";
+							refreshUI(ctx);
+							emitProgress();
+							if (completionEventSeen) armCompletionWatchdog();
+						}
+
 						if (event.type === "message_end" && event.message?.role === "toolResult") {
 							const toolName = event.message.toolName;
 							if (toolName === "engram_mem_save" || toolName === "engram_mem_update") {
@@ -1008,35 +1326,58 @@ ${availableAgents}
 						}
 					};
 
-					child.stdout.on("data", (chunk) => {
-						stdoutBuffer += chunk.toString();
-						const lines = stdoutBuffer.split("\n");
-						stdoutBuffer = lines.pop() || "";
-						for (const line of lines) parseLine(line);
-					});
-
-					child.stderr.on("data", (chunk) => {
-						attemptStderr += chunk.toString();
-					});
-
-					child.on("close", (code) => {
+					const flushStdoutBuffer = () => {
 						if (stdoutBuffer.trim()) parseLine(stdoutBuffer);
-						if (aborted) deployment.summary = "aborted";
-						resolve(code ?? 0);
-					});
-
-					child.on("error", (error) => {
-						attemptErrorMessage = error.message;
-						resolve(1);
-					});
+						stdoutBuffer = "";
+					};
 
 					const abortChild = () => {
 						aborted = true;
 						child.kill("SIGTERM");
 						setTimeout(() => {
 							if (!child.killed) child.kill("SIGKILL");
-						}, 3000);
+						}, SUBAGENT_FORCE_KILL_TIMEOUT_MS).unref?.();
 					};
+
+					const finalize = (code: number) => {
+						if (settled) return;
+						settled = true;
+						clearWatchdogs();
+						signal?.removeEventListener("abort", abortChild);
+						flushStdoutBuffer();
+						if (aborted) deployment.summary = "aborted";
+						if (completionTerminationTriggered && !aborted && code === 0) {
+							deployment.summary = truncate(attemptFinalText || deployment.summary || "completed");
+						}
+						resolve(code);
+					};
+
+					child.stdout.on("data", (chunk) => {
+						stdoutBuffer += chunk.toString();
+						const lines = stdoutBuffer.split("\n");
+						stdoutBuffer = lines.pop() || "";
+						for (const line of lines) parseLine(line);
+						if (completionEventSeen) armCompletionWatchdog();
+					});
+
+					child.stderr.on("data", (chunk) => {
+						attemptStderr += chunk.toString();
+						if (completionEventSeen) armCompletionWatchdog();
+					});
+
+					child.once("close", (code) => {
+						finalize(resolveExitCode(code));
+					});
+
+					child.once("exit", (code) => {
+						closeWatchdog = setTimeout(() => finalize(resolveExitCode(code)), 1_000);
+						closeWatchdog.unref?.();
+					});
+
+					child.once("error", (error) => {
+						attemptErrorMessage = error.message;
+						finalize(1);
+					});
 
 					if (signal?.aborted) abortChild();
 					else signal?.addEventListener("abort", abortChild, { once: true });
@@ -1052,96 +1393,122 @@ ${availableAgents}
 			};
 
 			try {
-				if (agent.systemPrompt) {
-					const tmp = writePromptToTempFile(agent.name, agent.systemPrompt);
-					tmpPromptDir = tmp.dir;
-					tmpPromptPath = tmp.filePath;
-				}
+				try {
+					if (agent.systemPrompt) {
+						const tmp = writePromptToTempFile(agent.name, agent.systemPrompt);
+						tmpPromptDir = tmp.dir;
+						tmpPromptPath = tmp.filePath;
+					}
 
-				let attempt = await runAttempt(agent.model);
-				finalText = attempt.finalText;
-				stopReason = attempt.stopReason;
-				errorMessage = attempt.errorMessage;
-				stderr = attempt.stderr;
-				exitCode = attempt.exitCode;
-
-				const shouldRetryWithFallback =
-					Boolean(fallbackModel) &&
-					exitCode !== 0 &&
-					isLikelyModelFailure({
-						exitCode,
-						stopReason,
-						errorMessage,
-						stderr,
-						finalText,
-					});
-
-				if (shouldRetryWithFallback && fallbackModel) {
-					deployment.fallbackUsed = true;
-					deployment.summary = `primary model failed, retrying with ${fallbackModel}`;
-					refreshUI(ctx);
-					emitProgress();
-
-					attempt = await runAttempt(fallbackModel);
+					let attempt = await runAttempt(agent.model);
 					finalText = attempt.finalText;
 					stopReason = attempt.stopReason;
 					errorMessage = attempt.errorMessage;
 					stderr = attempt.stderr;
 					exitCode = attempt.exitCode;
-				}
-			} finally {
-				if (tmpPromptPath) rmSync(tmpPromptPath, { force: true });
-				if (tmpPromptDir) rmSync(tmpPromptDir, { recursive: true, force: true });
-			}
 
-			questionPayload = parseAwaitingUserInputPayload(finalText);
-			if (exitCode === 0 && questionPayload) {
-				if (questionPayload.question) {
-					deployment.summary = truncate(questionPayload.executive_summary || questionPayload.question);
-					refreshUI(ctx);
-					emitProgress();
-					userResponse = await relayAwaitingUserInput(questionPayload, ctx);
-					if (userResponse.cancelled) {
-						interactionOutcome = "awaiting_user_input_cancelled";
-						finalText = [
-							questionPayload.executive_summary || "Subagent requires user input.",
-							"User cancelled or timed out while answering the relayed question.",
-						].filter(Boolean).join("\n\n");
-						exitCode = 1;
-						stopReason = "awaiting_user_input_cancelled";
-						errorMessage = "User cancelled or timed out while answering the relayed subagent question.";
-					} else {
-						interactionOutcome = "awaiting_user_input_relayed";
-						const responseSummary = typeof userResponse.selection === "string"
-							? userResponse.selection
-							: Array.isArray(userResponse.selection)
-								? userResponse.selection.join(", ")
-								: "answered";
-						finalText = [
-							questionPayload.executive_summary || "Subagent question relayed to user.",
-							`User response: ${responseSummary}`,
-							userResponse.comment ? `Comment: ${userResponse.comment}` : undefined,
-						].filter(Boolean).join("\n\n");
+					const shouldRetryWithFallback =
+						Boolean(fallbackModel) &&
+						exitCode !== 0 &&
+						isLikelyModelFailure({
+							exitCode,
+							stopReason,
+							errorMessage,
+							stderr,
+							finalText,
+						});
+
+					if (shouldRetryWithFallback && fallbackModel) {
+						deployment.fallbackUsed = true;
+						deployment.summary = `primary model failed, retrying with ${fallbackModel}`;
+						refreshUI(ctx);
+						emitProgress();
+
+						attempt = await runAttempt(fallbackModel);
+						finalText = attempt.finalText;
+						stopReason = attempt.stopReason;
+						errorMessage = attempt.errorMessage;
+						stderr = attempt.stderr;
+						exitCode = attempt.exitCode;
 					}
-				} else {
-					interactionOutcome = "awaiting_user_input_missing_payload";
-					finalText = [
-						questionPayload.executive_summary || "Subagent requested user input.",
-						"The subagent returned `status: awaiting_user_input` but did not include a structured `question` payload the orchestrator can relay.",
-						"Expected fields: question, optional context, optional options, allowMultiple, allowFreeform, allowComment, timeout.",
-					].join("\n\n");
-					exitCode = 1;
-					stopReason = "awaiting_user_input_missing_payload";
-					errorMessage = "Missing structured question payload for awaiting_user_input relay.";
+				} finally {
+					if (tmpPromptPath) rmSync(tmpPromptPath, { force: true });
+					if (tmpPromptDir) rmSync(tmpPromptDir, { recursive: true, force: true });
 				}
+
+				questionPayload = parseAwaitingUserInputPayload(finalText);
+				if (exitCode === 0 && questionPayload) {
+					if (questionPayload.question) {
+						deployment.summary = truncate(questionPayload.executive_summary || questionPayload.question);
+						refreshUI(ctx);
+						emitProgress();
+						userResponse = await relayAwaitingUserInput(questionPayload, ctx);
+						if (userResponse.cancelled) {
+							interactionOutcome = "awaiting_user_input_cancelled";
+							finalText = [
+								questionPayload.executive_summary || "Subagent requires user input.",
+								"User cancelled or timed out while answering the relayed question.",
+							].filter(Boolean).join("\n\n");
+							exitCode = 1;
+							stopReason = "awaiting_user_input_cancelled";
+							errorMessage = "User cancelled or timed out while answering the relayed subagent question.";
+						} else {
+							interactionOutcome = "awaiting_user_input_relayed";
+							const responseSummary = typeof userResponse.selection === "string"
+								? userResponse.selection
+								: Array.isArray(userResponse.selection)
+									? userResponse.selection.join(", ")
+									: "answered";
+							finalText = [
+								questionPayload.executive_summary || "Subagent question relayed to user.",
+								`User response: ${responseSummary}`,
+								userResponse.comment ? `Comment: ${userResponse.comment}` : undefined,
+							].filter(Boolean).join("\n\n");
+						}
+					} else {
+						interactionOutcome = "awaiting_user_input_missing_payload";
+						finalText = [
+							questionPayload.executive_summary || "Subagent requested user input.",
+							"The subagent returned `status: awaiting_user_input` but did not include a structured `question` payload the orchestrator can relay.",
+							"Expected fields: question, optional context, optional options, allowMultiple, allowFreeform, allowComment, timeout.",
+						].join("\n\n");
+						exitCode = 1;
+						stopReason = "awaiting_user_input_missing_payload";
+						errorMessage = "Missing structured question payload for awaiting_user_input relay.";
+					}
+				}
+			} catch (error) {
+				exitCode = 1;
+				stopReason = stopReason || "orchestrator_exception";
+				errorMessage = getErrorMessage(error);
+				if (!stderr.trim()) stderr = errorMessage;
 			}
 
 			deployment.exitCode = exitCode;
 			deployment.stopReason = stopReason;
 			deployment.errorMessage = errorMessage || (stderr.trim() ? truncate(stderr.trim(), 180) : undefined);
 			deployment.status = exitCode === 0 && stopReason !== "error" ? "done" : "error";
+
+			const failureReport = deployment.status === "error"
+				? buildSubagentFailureReport({
+					agent: deployment.agent,
+					deploymentId,
+					exitCode,
+					stopReason,
+					errorMessage: deployment.errorMessage,
+					stderr,
+					finalText,
+					fallbackModel: deployment.fallbackModel,
+					fallbackUsed: deployment.fallbackUsed,
+					attemptedModels: deployment.attemptedModels,
+				})
+				: undefined;
+
+			if (failureReport) finalText = failureReport;
 			deployment.summary = truncate(
-				finalText || deployment.errorMessage || stderr.trim() || deployment.summary || "finished without text output",
+				deployment.status === "error"
+					? deployment.errorMessage || stderr.trim() || "subagent failed"
+					: finalText || deployment.summary || "finished without text output",
 			);
 			refreshUI(ctx);
 			emitProgress();
@@ -1178,7 +1545,7 @@ ${availableAgents}
 					content: [
 						{
 							type: "text",
-							text: finalText || deployment.errorMessage || stderr.trim() || `${deployment.agent} failed.`,
+							text: failureReport || finalText || deployment.errorMessage || stderr.trim() || `${deployment.agent} failed.`,
 						},
 					],
 					isError: true,

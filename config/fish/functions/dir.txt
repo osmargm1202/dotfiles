@@ -38,3 +38,4 @@
 /home/osmarg/AI/analisis-edes
 /home/osmarg/Code/climatizacion
 /home/osmarg/Code/climatizacion
+/home/osmarg/Hobby/dotfiles
