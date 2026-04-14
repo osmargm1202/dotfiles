@@ -8,14 +8,6 @@
       ],
       "directTools": false
     },
-    "engram": {
-      "command": "/home/osmarg/go/bin/engram",
-      "args": [
-        "mcp",
-        "--tools=agent"
-      ],
-      "directTools": true
-    },
     "obsidian": {
       "command": "npx",
       "args": [
@@ -24,9 +16,20 @@
       ],
       "directTools": false
     },
+    "engram": {
+      "command": "/home/osmarg/go/bin/engram",
+      "args": [
+        "mcp",
+        "--tools=agent"
+      ],
+      "directTools": true
+    },
     "context7": {
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"]
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
     }
   }
 }

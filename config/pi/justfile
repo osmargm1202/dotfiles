@@ -1,0 +1,4 @@
+set shell := ["bash", "-cu"]
+
+caveman:
+	pi -e extensions/caveman.ts

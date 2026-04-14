@@ -1,12 +1,19 @@
 {
-  "lastChangelogVersion": "0.66.1",
+  "lastChangelogVersion": "0.67.1",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.4",
   "defaultThinkingLevel": "medium",
   "packages": [
-    "npm:pi-mcp-adapter",
-    "npm:pi-ask-user"
+    "npm:pi-ask-user",
+    "npm:pi-mcp-adapter"
   ],
   "theme": "midnight-ocean",
-  "hideThinkingBlock": false
+  "hideThinkingBlock": true,
+  "extensions": [
+    "~/.pi/agent/extensions/pi-mcp-adapter/index.ts",
+    "~/.pi/agent/extensions/model-primary.ts",
+    "~/.pi/agent/extensions/agent-selector.ts",
+    "~/.pi/agent/extensions/subagents.ts",
+    "~/.pi/agent/extensions/agent-status.ts"
+  ]
 }

@@ -39,3 +39,6 @@
 /home/osmarg/Code/climatizacion
 /home/osmarg/Code/climatizacion
 /home/osmarg/Hobby/dotfiles
+/home/osmarg/.pi/agent
+/home/osmarg/.pi/agent
+/home/osmarg/Code/calc

@@ -818,7 +818,7 @@
       "cachedAt": 1775898016732
     },
     "engram": {
-      "configHash": "e227c203f927a7de825160509f1d360f2ba2f185e334353b9da863c0b394437d",
+      "configHash": "a4db5a699739571d4e90aaed9ee7a06209f0c90eda87264415feb025fe1169b6",
       "tools": [
         {
           "name": "mem_capture_passive",
@@ -1117,7 +1117,7 @@
         }
       ],
       "resources": [],
-      "cachedAt": 1775957295673
+      "cachedAt": 1776208028708
     },
     "obsidian": {
       "configHash": "f31ad2945efb4593516d42e78ea543038110fd631e77ec67a110a3c6ffe975bf",

@@ -4,6 +4,13 @@ import type { AssistantMessage } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { getAgentDir, parseFrontmatter } from "@mariozechner/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
+import {
+	CAVEMAN_STATE_EVENT,
+	type CavemanLevel,
+	formatCavemanStatus,
+	loadCavemanConfig,
+	resolveInitialCavemanState,
+} from "./lib/caveman-state";
 
 // Must match the constants in pdd-orgm.ts
 const PRIMARY_STATE_ENTRY = "pdd-primary-agent";
@@ -74,9 +81,13 @@ function formatPrimaryLabel(name: string): string {
 
 export default function (pi: ExtensionAPI) {
 	let currentPrimary: string = SYSTEM_AGENT;
+	let currentCaveman: CavemanLevel = "off";
+	let showCavemanStatus = loadCavemanConfig().showStatus;
 
 	const installFooter = (ctx: ExtensionContext) => {
 		currentPrimary = restorePrimaryName(ctx.sessionManager.getEntries());
+		currentCaveman = resolveInitialCavemanState(ctx.sessionManager.getEntries()).level;
+		showCavemanStatus = loadCavemanConfig().showStatus;
 
 		ctx.ui.setFooter((tui, theme, footerData) => {
 			footerHandle = tui;
@@ -108,10 +119,16 @@ export default function (pi: ExtensionAPI) {
 					const tokenSummary = `↑${formatCompactNumber(inputTokens)} ↓${formatCompactNumber(outputTokens)}`;
 					const costSummary = `${tokenSummary} ${formatCurrency(totalCost)}`;
 					const primaryLabel = formatPrimaryLabel(currentPrimary);
+					const cavemanStatus = formatCavemanStatus(currentCaveman);
+					const cavemanStyled = currentCaveman === "off"
+						? theme.fg("dim", cavemanStatus)
+						: theme.fg("accent", cavemanStatus);
 
 					const left = theme.fg("accent", contextText);
 					const middle = theme.fg("text", modelName) + theme.fg("muted", ` · ${thinking} · ${primaryLabel}`);
-					const right = theme.fg("muted", `${tokenSummary} `) + theme.fg("warning", formatCurrency(totalCost));
+					const right = showCavemanStatus
+						? cavemanStyled + theme.fg("muted", ` · ${tokenSummary} `) + theme.fg("warning", formatCurrency(totalCost))
+						: theme.fg("muted", `${tokenSummary} `) + theme.fg("warning", formatCurrency(totalCost));
 
 					const minSpaces = 2;
 					const combinedWidth = visibleWidth(left) + visibleWidth(middle) + visibleWidth(right) + minSpaces * 2;
@@ -123,22 +140,35 @@ export default function (pi: ExtensionAPI) {
 						return [left + padLeft + middle + padMiddle + right];
 					}
 
-					const compact = `${contextText} ${modelName} · ${thinking} · ${primaryLabel} ${costSummary}`;
-					const styledCompact =
-						theme.fg("accent", `${contextText} `) +
-						theme.fg("text", modelName) +
-						theme.fg("muted", ` · ${thinking} · ${primaryLabel} ${tokenSummary} `) +
-						theme.fg("warning", formatCurrency(totalCost));
+					const compact = showCavemanStatus
+						? `${contextText} ${modelName} · ${thinking} · ${primaryLabel} · ${cavemanStatus} ${costSummary}`
+						: `${contextText} ${modelName} · ${thinking} · ${primaryLabel} ${costSummary}`;
+					const styledCompact = showCavemanStatus
+						? theme.fg("accent", `${contextText} `) +
+							theme.fg("text", modelName) +
+							theme.fg("muted", ` · ${thinking} · ${primaryLabel} · `) +
+							cavemanStyled +
+							theme.fg("muted", ` ${tokenSummary} `) +
+							theme.fg("warning", formatCurrency(totalCost))
+						: theme.fg("accent", `${contextText} `) +
+							theme.fg("text", modelName) +
+							theme.fg("muted", ` · ${thinking} · ${primaryLabel} ${tokenSummary} `) +
+							theme.fg("warning", formatCurrency(totalCost));
 
 					if (visibleWidth(compact) <= width) {
 						return [styledCompact];
 					}
 
 					const compactBar = theme.fg("accent", `${contextText} `);
-					const compactTail =
-						theme.fg("text", modelName) +
-						theme.fg("muted", ` · ${thinking} · ${primaryLabel} `) +
-						theme.fg("warning", formatCurrency(totalCost));
+					const compactTail = showCavemanStatus
+						? theme.fg("text", modelName) +
+							theme.fg("muted", ` · ${thinking} · ${primaryLabel} · `) +
+							cavemanStyled +
+							theme.fg("muted", " ") +
+							theme.fg("warning", formatCurrency(totalCost))
+						: theme.fg("text", modelName) +
+							theme.fg("muted", ` · ${thinking} · ${primaryLabel} `) +
+							theme.fg("warning", formatCurrency(totalCost));
 
 					const availableTailWidth = Math.max(0, width - visibleWidth(compactBar));
 					return [compactBar + truncateToWidth(compactTail, availableTailWidth)];
@@ -150,7 +180,12 @@ export default function (pi: ExtensionAPI) {
 	// Listen for live primary agent changes from pdd-orgm.ts
 	pi.events.on("pdd:primary-agent-changed", (data: { selectedName: string }) => {
 		currentPrimary = data?.selectedName ?? SYSTEM_AGENT;
-		// Force footer rerender so label updates immediately
+		if (footerHandle) footerHandle.requestRender();
+	});
+
+	pi.events.on(CAVEMAN_STATE_EVENT, (data: { level?: CavemanLevel }) => {
+		if (data?.level) currentCaveman = data.level;
+		showCavemanStatus = loadCavemanConfig().showStatus;
 		if (footerHandle) footerHandle.requestRender();
 	});
 
