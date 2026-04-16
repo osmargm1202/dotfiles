@@ -15,5 +15,6 @@
     "~/.pi/agent/extensions/agent-selector.ts",
     "~/.pi/agent/extensions/subagents.ts",
     "~/.pi/agent/extensions/agent-status.ts"
-  ]
+  ],
+  "treeFilterMode": "default"
 }

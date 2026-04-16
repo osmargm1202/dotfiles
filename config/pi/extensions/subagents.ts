@@ -5,7 +5,7 @@ import { dirname, join, parse } from "node:path";
 import { StringEnum } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { DynamicBorder, getAgentDir, parseFrontmatter } from "@mariozechner/pi-coding-agent";
-import { Container, type SelectItem, SelectList, Text, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
+import { Box, Container, type SelectItem, SelectList, Text, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 
 // ─── Primary agent constants ────────────────────────────────────────────────
@@ -25,6 +25,7 @@ const DEPLOYMENT_CARD_MIN_WIDTH = 24;
 const DEPLOYMENT_GRID_GAP = 2;
 const SUBAGENT_COMPLETION_STALL_TIMEOUT_MS = 4_000;
 const SUBAGENT_FORCE_KILL_TIMEOUT_MS = 3_000;
+const SUBAGENT_TRANSCRIPT_MAX_LINES = 400;
 const BUILTIN_TOOL_NAMES = new Set(["read", "bash", "edit", "write", "grep", "find", "ls"]);
 
 const IS_SUBAGENT_RUNTIME = process.env[SUBAGENT_ENV_FLAG] === "1";
@@ -289,6 +290,18 @@ function formatBar(percent: number): string {
 	const normalized = Math.max(0, Math.min(100, Math.round(percent)));
 	const filled = Math.max(0, Math.min(10, Math.round(normalized / 10)));
 	return `[${"#".repeat(filled)}${"-".repeat(10 - filled)}]${normalized}%`;
+}
+
+function getToolShellBg(theme: any, options: { isPartial?: boolean; isError?: boolean }) {
+	if (options.isPartial) return (text: string) => theme.bg("toolPendingBg", text);
+	if (options.isError) return (text: string) => theme.bg("toolErrorBg", text);
+	return (text: string) => theme.bg("toolSuccessBg", text);
+}
+
+function createToolShell(lines: Array<string | undefined | null>, theme: any, options: { isPartial?: boolean; isError?: boolean }) {
+	const box = new Box(1, 0, getToolShellBg(theme, options));
+	box.addChild(new Text(lines.filter((line): line is string => Boolean(line)).join("\n"), 0, 0));
+	return box;
 }
 
 function shortenMiddle(text: string, maxWidth: number): string {
@@ -1045,15 +1058,36 @@ function renderWidget(ctx: ExtensionContext, deployments: DeploymentState[]): vo
 export default function (pi: ExtensionAPI) {
 	let promptDeployments: DeploymentState[] = [];
 	let deploymentCountsByAgent = new Map<string, number>();
+	let deploymentTranscripts = new Map<string, string[]>();
+
+	const snapshotTranscripts = (): Record<string, string[]> => Object.fromEntries(
+		Array.from(deploymentTranscripts.entries()).map(([deploymentId, lines]) => [deploymentId, [...lines]]),
+	);
 
 	const refreshUI = (_ctx: ExtensionContext) => {
 		pi.events.emit("subagents:deployments-changed", {
 			deployments: promptDeployments.map((deployment) => ({ ...deployment })),
+			transcripts: snapshotTranscripts(),
 		});
 	};
 	const resetPromptDeployments = (ctx: ExtensionContext) => {
 		promptDeployments = [];
 		deploymentCountsByAgent = new Map<string, number>();
+		deploymentTranscripts = new Map<string, string[]>();
+		refreshUI(ctx);
+	};
+
+	const appendTranscript = (ctx: ExtensionContext, deploymentId: string, ...entries: Array<string | undefined | null>) => {
+		const lines = deploymentTranscripts.get(deploymentId) ?? [];
+		for (const entry of entries) {
+			if (!entry) continue;
+			for (const line of entry.split("\n")) {
+				const clean = line.trimEnd();
+				if (!clean.trim()) continue;
+				lines.push(clean);
+			}
+		}
+		deploymentTranscripts.set(deploymentId, lines.slice(-SUBAGENT_TRANSCRIPT_MAX_LINES));
 		refreshUI(ctx);
 	};
 
@@ -1108,7 +1142,13 @@ export default function (pi: ExtensionAPI) {
 		const deployment = buildDeploymentState(params.agent, params.deploymentId, params.task, params.instanceNumber);
 		deployment.contextWindow = getContextWindow(params.agent.model, params.ctx);
 		promptDeployments.push(deployment);
-		refreshUI(params.ctx);
+		appendTranscript(
+			params.ctx,
+			deployment.deploymentId,
+			`deploy ${deployment.deploymentId} · agent ${deployment.agent} (${deployment.source})`,
+			`task: ${params.task}`,
+			`tools: ${deployment.tools.join(", ") || "none"}`,
+		);
 
 		let finalText = "";
 		let stopReason: string | undefined;
@@ -1172,7 +1212,7 @@ export default function (pi: ExtensionAPI) {
 			deployment.summary = `running with ${modelLabel}`;
 			deployment.currentActivity = `thinking with ${modelLabel}`;
 			deployment.attemptedModels = [...deployment.attemptedModels, modelLabel];
-			refreshUI(params.ctx);
+			appendTranscript(params.ctx, deployment.deploymentId, `model: ${modelLabel}`, `cwd: ${params.cwd}`);
 			emitProgress();
 
 			const args = ["--mode", "json", "-p", "--no-session"];
@@ -1244,7 +1284,7 @@ export default function (pi: ExtensionAPI) {
 
 					if (event.type === "message_start" && event.message?.role === "assistant") {
 						deployment.currentActivity = "thinking...";
-						refreshUI(params.ctx);
+						appendTranscript(params.ctx, deployment.deploymentId, "assistant: thinking...");
 						emitProgress();
 					}
 
@@ -1256,7 +1296,7 @@ export default function (pi: ExtensionAPI) {
 
 					if (event.type === "tool_execution_start") {
 						deployment.currentActivity = formatActivity(event.toolName, event.args);
-						refreshUI(params.ctx);
+						appendTranscript(params.ctx, deployment.deploymentId, `tool start: ${deployment.currentActivity}`);
 						emitProgress();
 					}
 
@@ -1267,6 +1307,7 @@ export default function (pi: ExtensionAPI) {
 							finalText = text;
 							deployment.summary = truncate(text);
 							deployment.currentActivity = "final response";
+							appendTranscript(params.ctx, deployment.deploymentId, "assistant final:", text);
 						}
 						deployment.turns += 1;
 						deployment.usage.turns += 1;
@@ -1307,6 +1348,7 @@ export default function (pi: ExtensionAPI) {
 						stopReason = attemptStopReason;
 						errorMessage = attemptErrorMessage;
 						completionEventSeen = !attemptErrorMessage && attemptStopReason !== "error";
+						appendTranscript(params.ctx, deployment.deploymentId, `agent end: stopReason=${attemptStopReason ?? "unknown"}`);
 						refreshUI(params.ctx);
 						emitProgress();
 						if (completionEventSeen) armCompletionWatchdog();
@@ -1314,7 +1356,7 @@ export default function (pi: ExtensionAPI) {
 
 					if (event.type === "tool_execution_end" && deployment.status === "running") {
 						deployment.currentActivity = `finished ${event.toolName}`;
-						refreshUI(params.ctx);
+						appendTranscript(params.ctx, deployment.deploymentId, `tool end: ${event.toolName}`);
 						emitProgress();
 					}
 
@@ -1387,6 +1429,7 @@ export default function (pi: ExtensionAPI) {
 
 				child.stderr.on("data", (chunk) => {
 					attemptStderr += chunk.toString();
+					appendTranscript(params.ctx, deployment.deploymentId, chunk.toString().trim());
 					if (completionEventSeen) armCompletionWatchdog();
 				});
 
@@ -1401,6 +1444,7 @@ export default function (pi: ExtensionAPI) {
 
 				child.once("error", (error) => {
 					attemptErrorMessage = error.message;
+					appendTranscript(params.ctx, deployment.deploymentId, `spawn error: ${error.message}`);
 					finalize(1);
 				});
 
@@ -1408,6 +1452,7 @@ export default function (pi: ExtensionAPI) {
 				else params.signal?.addEventListener("abort", abortChild, { once: true });
 			});
 
+			appendTranscript(params.ctx, deployment.deploymentId, `attempt exit: ${attemptExitCode}`);
 			return {
 				finalText: attemptFinalText,
 				stopReason: attemptStopReason,
@@ -1514,6 +1559,7 @@ export default function (pi: ExtensionAPI) {
 		deployment.stopReason = stopReason;
 		deployment.errorMessage = errorMessage || (stderr.trim() ? truncate(stderr.trim(), 180) : undefined);
 		deployment.status = exitCode === 0 && stopReason !== "error" ? "done" : "error";
+		deployment.currentActivity = deployment.status === "done" ? "completed" : "failed";
 
 		const failureReport = deployment.status === "error"
 			? buildSubagentFailureReport({
@@ -1534,6 +1580,13 @@ export default function (pi: ExtensionAPI) {
 			deployment.status === "error"
 				? deployment.errorMessage || stderr.trim() || "subagent failed"
 				: finalText || deployment.summary || "finished without text output",
+		);
+		appendTranscript(
+			params.ctx,
+			deployment.deploymentId,
+			`status: ${deployment.status}`,
+			stopReason ? `stop reason: ${stopReason}` : undefined,
+			deployment.errorMessage ? `error: ${deployment.errorMessage}` : undefined,
 		);
 		refreshUI(params.ctx);
 		emitProgress();
@@ -1796,6 +1849,7 @@ ${finalText}`
 	// ── Register deploy_agent tool (unchanged contract) ──────────────────
 	pi.registerTool({
 		name: "deploy_agent",
+		renderShell: "self",
 		label: "Deploy Agent",
 		description:
 			"Run a named agent from ~/.pi/agent/agents or the nearest .pi/agents in an isolated pi subprocess and return its result.",
@@ -1837,23 +1891,37 @@ ${finalText}`
 			};
 		},
 
-		renderCall(args, theme) {
+		renderCall(args, theme, context) {
+			if (context.state.deployAgentHasResult) return new Container();
 			const taskPreview = truncate(args.task || "", 72);
 			const scope = args.scope ?? "both";
-			const text =
+			const header =
 				theme.fg("toolTitle", theme.bold("deploy_agent ")) +
 				theme.fg("accent", args.agent || "unknown") +
-				theme.fg("muted", ` [${scope}]`) +
-				(taskPreview ? `
-  ${theme.fg("dim", taskPreview)}` : "");
-			return new Text(text, 0, 0);
+				theme.fg("muted", ` [${scope}]`);
+			const taskLine = taskPreview ? `  ${theme.fg("dim", taskPreview)}` : undefined;
+			return createToolShell([header, taskLine], theme, {
+				isPartial: context.isPartial,
+				isError: context.isError,
+			});
 		},
 
-		renderResult(result, _options, theme) {
+		renderResult(result, options, theme, context) {
+			context.state.deployAgentHasResult = true;
+			const taskPreview = truncate(context.args.task || "", 72);
+			const scope = context.args.scope ?? "both";
+			const header =
+				theme.fg("toolTitle", theme.bold("deploy_agent ")) +
+				theme.fg("accent", context.args.agent || "unknown") +
+				theme.fg("muted", ` [${scope}]`);
+			const taskLine = taskPreview ? `  ${theme.fg("dim", taskPreview)}` : undefined;
 			const details = result.details as AgentRunDetails | undefined;
 			if (!details) {
 				const text = result.content[0];
-				return new Text(text?.type === "text" ? text.text : "(no output)", 0, 0);
+				return createToolShell([header, taskLine, text?.type === "text" ? text.text : "(no output)"], theme, {
+					isPartial: options.isPartial,
+					isError: result.isError,
+				});
 			}
 			const percent = details.contextWindow > 0 ? (details.usage.contextTokens / details.contextWindow) * 100 : 0;
 			const statusColor = details.status === "done" ? "success" : details.status === "error" ? "error" : "warning";
@@ -1872,9 +1940,21 @@ ${finalText}`
 			const interactionLine = details.interactionOutcome ? theme.fg("muted", `interaction: ${details.interactionOutcome}`) : "";
 			const activityLine = details.currentActivity ? theme.fg("muted", `activity: ${details.currentActivity}`) : "";
 			const summary = result.content[0]?.type === "text" ? result.content[0].text : details.summary;
-			const extra = details.errorMessage ? `
-${theme.fg("error", details.errorMessage)}` : "";
-			return new Text([statusLine, usageLine, toolsLine, modelsLine, interactionLine, activityLine, summary, extra].filter(Boolean).join("\n"), 0, 0);
+			return createToolShell([
+				header,
+				taskLine,
+				statusLine,
+				usageLine,
+				toolsLine,
+				modelsLine,
+				interactionLine,
+				activityLine,
+				summary,
+				details.errorMessage ? theme.fg("error", details.errorMessage) : "",
+			], theme, {
+				isPartial: options.isPartial,
+				isError: result.isError,
+			});
 		},
 	});
 }

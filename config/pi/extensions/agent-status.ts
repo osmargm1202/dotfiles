@@ -66,6 +66,8 @@ interface DeploymentState {
 	fallbackUsed: boolean;
 }
 
+type DeploymentTranscriptMap = Record<string, string[]>;
+
 function formatCompactNumber(value: number): string {
 	if (!Number.isFinite(value)) return "0";
 	if (value < 1000) return `${Math.round(value)}`;
@@ -299,11 +301,96 @@ function buildConfigOptions(config: AgentStatusConfig): Array<{ key: keyof Agent
 	];
 }
 
-function normalizeCommandAction(args: string): "settings" | "clear" | undefined {
+function normalizeCommandAction(args: string): "settings" | "clear" | "inspect" | undefined {
 	const value = args.trim().toLowerCase();
 	if (!value || value === "settings" || value === "config" || value === "menu") return "settings";
 	if (value === "clear") return "clear";
+	if (value === "inspect" || value === "view" || value === "logs" || value === "transcript") return "inspect";
 	return undefined;
+}
+
+function buildInspectOptions(deployments: DeploymentState[]): Array<{ label: string; deploymentId: string }> {
+	return withInstanceNumbers([...deployments])
+		.sort((a, b) => a.deploymentId.localeCompare(b.deploymentId))
+		.map((deployment) => ({
+			deploymentId: deployment.deploymentId,
+			label: `${formatDeploymentLabel(deployment)} · ${deployment.status} · ${truncate(deployment.currentActivity || deployment.summary || "idle", 56)}`,
+		}));
+}
+
+async function openTranscriptViewer(
+	ctx: ExtensionContext,
+	deploymentId: string,
+	getDeployment: () => DeploymentState | undefined,
+	getTranscriptLines: () => string[],
+	onOpen: (handle: { requestRender: () => void }) => void,
+	onClose: () => void,
+): Promise<void> {
+	if (!ctx.hasUI) return;
+	const WINDOW_LINES = 18;
+	await ctx.ui.custom<void>((tui, theme, _kb, done) => {
+		onOpen(tui);
+		let scrollOffset = 0;
+		const close = () => {
+			onClose();
+			done();
+		};
+		return {
+			render(width: number): string[] {
+				const deployment = getDeployment();
+				const transcript = getTranscriptLines();
+				const innerWidth = Math.max(20, width - 2);
+				const top = theme.fg("accent", `╭${"─".repeat(innerWidth)}╮`);
+				const bottom = theme.fg("accent", `╰${"─".repeat(innerWidth)}╯`);
+				const pad = (text: string) => {
+					const clipped = truncateToWidth(text, innerWidth);
+					return clipped + " ".repeat(Math.max(0, innerWidth - visibleWidth(clipped)));
+				};
+				const meta = deployment
+					? [
+						`${deployment.deploymentId} · ${deployment.status}`,
+						`${deployment.agent} · ${deployment.model ?? "default"}`,
+						`activity: ${deployment.currentActivity || deployment.summary || "idle"}`,
+					]
+					: [`${deploymentId} · finished/cleared`, "deployment metadata unavailable", "activity: n/a"];
+				const maxScroll = Math.max(0, transcript.length - WINDOW_LINES);
+				const clampedOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
+				if (clampedOffset !== scrollOffset) scrollOffset = clampedOffset;
+				const start = Math.max(0, transcript.length - WINDOW_LINES - scrollOffset);
+				const visible = transcript.slice(start, start + WINDOW_LINES);
+				const body = visible.length > 0 ? visible : [theme.fg("muted", "No transcript yet")];
+				const lines = [top];
+				for (const line of meta) {
+					lines.push(theme.fg("accent", "│") + pad(theme.fg("text", ` ${line}`)) + theme.fg("accent", "│"));
+				}
+				lines.push(theme.fg("accent", "│") + pad(theme.fg("muted", ` lines ${transcript.length} · offset ${scrollOffset}`)) + theme.fg("accent", "│"));
+				for (let i = 0; i < WINDOW_LINES; i += 1) {
+					const line = body[i] ?? "";
+					lines.push(theme.fg("accent", "│") + pad(line ? ` ${line}` : "") + theme.fg("accent", "│"));
+				}
+				lines.push(theme.fg("accent", "│") + pad(theme.fg("dim", " ↑↓/j/k scroll · esc/q close ")) + theme.fg("accent", "│"));
+				lines.push(bottom);
+				return lines.map((line) => truncateToWidth(line, width));
+			},
+			invalidate() {},
+			handleInput(data: string) {
+				if (data === "\u001b" || data === "q") return close();
+				if (data === "k" || data === "\u001b[A") {
+					scrollOffset = Math.min(scrollOffset + 1, Math.max(0, getTranscriptLines().length - WINDOW_LINES));
+					tui.requestRender();
+					return;
+				}
+				if (data === "j" || data === "\u001b[B") {
+					scrollOffset = Math.max(0, scrollOffset - 1);
+					tui.requestRender();
+				}
+			},
+		};
+	}, {
+		overlay: true,
+		overlayOptions: { anchor: "center", width: "90%", maxHeight: "85%", margin: 1 },
+	});
+	onClose();
 }
 
 export default function (pi: ExtensionAPI) {
@@ -311,19 +398,24 @@ export default function (pi: ExtensionAPI) {
 	let currentCaveman: CavemanLevel = "off";
 	let currentCtx: ExtensionContext | null = null;
 	let deployments: DeploymentState[] = [];
+	let transcripts: DeploymentTranscriptMap = {};
 	let footerHandle: { requestRender: () => void } | null = null;
+	let transcriptViewerHandle: { deploymentId: string; requestRender: () => void } | null = null;
 	let config = loadAgentStatusConfig();
 
 	const rerender = () => {
 		config = loadAgentStatusConfig();
 		if (currentCtx) renderWidget(currentCtx, deployments, config, currentCaveman);
 		if (footerHandle) footerHandle.requestRender();
+		if (transcriptViewerHandle) transcriptViewerHandle.requestRender();
 	};
 
 	const clearRuntimeState = (ctx: ExtensionContext) => {
 		deployments = [];
+		transcripts = {};
 		renderWidget(ctx, deployments, loadAgentStatusConfig(), currentCaveman);
 		if (footerHandle) footerHandle.requestRender();
+		if (transcriptViewerHandle) transcriptViewerHandle.requestRender();
 	};
 
 	const installFooter = (ctx: ExtensionContext) => {
@@ -393,6 +485,7 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_start", async (_event, ctx) => {
 		currentCtx = ctx;
 		deployments = [];
+		transcripts = {};
 		if (ctx.hasUI) {
 			installFooter(ctx);
 			renderWidget(ctx, deployments, config, currentCaveman);
@@ -414,17 +507,19 @@ export default function (pi: ExtensionAPI) {
 		rerender();
 	});
 
-	pi.events.on(SUBAGENTS_EVENT, (data: { deployments?: DeploymentState[] }) => {
+	pi.events.on(SUBAGENTS_EVENT, (data: { deployments?: DeploymentState[]; transcripts?: DeploymentTranscriptMap }) => {
 		deployments = Array.isArray(data?.deployments) ? data.deployments : [];
+		transcripts = data?.transcripts && typeof data.transcripts === "object" ? data.transcripts : {};
 		rerender();
 	});
 
 	pi.registerCommand("agent-status", {
-		description: "Manage agent status UI: /agent-status [settings|clear]",
+		description: "Manage agent status UI: /agent-status [settings|inspect|clear]",
 		getArgumentCompletions: (prefix) => {
 			const value = prefix.trim().toLowerCase();
 			const options = [
 				{ value: "settings", label: "settings — open status settings menu" },
+				{ value: "inspect", label: "inspect — open live transcript viewer for a deployment" },
 				{ value: "clear", label: "clear — clear current deployment runtime state" },
 			].filter((option) => option.value.startsWith(value));
 			return options.length > 0 ? options : null;
@@ -434,12 +529,34 @@ export default function (pi: ExtensionAPI) {
 			const action = normalizeCommandAction(args);
 			if (!action) {
 				ctx.ui.notify(`Unknown /agent-status arg: ${args.trim()}`, "error");
-				ctx.ui.notify("Usage: /agent-status [settings|clear]", "warning");
+				ctx.ui.notify("Usage: /agent-status [settings|inspect|clear]", "warning");
 				return;
 			}
 			if (action === "clear") {
 				clearRuntimeState(ctx);
 				ctx.ui.notify("Agent status runtime state cleared", "info");
+				return;
+			}
+			if (action === "inspect") {
+				const options = buildInspectOptions(deployments);
+				if (options.length === 0) {
+					ctx.ui.notify("No subagent deployments available to inspect", "warning");
+					return;
+				}
+				const selected = await ctx.ui.select("Inspect subagent transcript", options.map((option) => option.label));
+				if (!selected) return;
+				const match = options.find((option) => option.label === selected);
+				if (!match) return;
+				await openTranscriptViewer(
+					ctx,
+					match.deploymentId,
+					() => deployments.find((deployment) => deployment.deploymentId === match.deploymentId),
+					() => transcripts[match.deploymentId] ?? [],
+					(handle) => { transcriptViewerHandle = { deploymentId: match.deploymentId, requestRender: handle.requestRender }; },
+					() => {
+						if (transcriptViewerHandle?.deploymentId === match.deploymentId) transcriptViewerHandle = null;
+					},
+				);
 				return;
 			}
 			while (true) {
