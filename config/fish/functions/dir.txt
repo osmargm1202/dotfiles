@@ -42,3 +42,6 @@
 /home/osmarg/.pi/agent
 /home/osmarg/.pi/agent
 /home/osmarg/Code/calc
+/home/osmarg/Code/calc
+/home/osmarg/.pi/agent
+/home/osmarg/Hobby/dotfiles

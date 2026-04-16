@@ -6,3 +6,34 @@ nec-team:
   - nec-special-installations
   - nec-conditions-systems
   - nec-tables-annex-index
+
+pi-orchestrator:
+  - ext-expert
+  - theme-expert
+  - skill-expert
+  - config-expert
+  - tui-expert
+  - prompt-expert
+  - agent-expert
+  - cli-expert
+  - keybinding-expert
+
+pdd-orgm:
+  - pdd-explorer
+  - pdd-requirements
+  - pdd-planner
+  - pdd-builder
+  - pdd-reviewer
+
+skill-orchestrator:
+  - pdf-manager
+  - docx-manager
+  - xlsx-manager
+  - pptx-manager
+  - doc-conversion-manager
+  - diagram-creator
+  - skill-finder
+  - skill-creator
+  - mcp-creator
+  - deep-researcher
+  - brainstorm-developer
