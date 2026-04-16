@@ -210,7 +210,7 @@ ${primary.systemPrompt}
 		},
 	});
 
-	pi.registerShortcut("alt+down", {
+	pi.registerShortcut("alt+1", {
 		description: "Open primary agent selector",
 		handler: async (ctx) => {
 			if (!ctx.hasUI) return;

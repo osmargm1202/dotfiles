@@ -399,18 +399,25 @@ async function openDeploymentPanel(ctx: ExtensionContext, deployments: Deploymen
 	});
 }
 
+function normalizeDisplayText(text: string): string {
+	return text
+		.replace(/\t/g, "    ")
+		.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+}
+
 function wrapPlainText(text: string, width: number): string[] {
 	if (width <= 0) return [""];
 	const lines: string[] = [];
-	for (const rawLine of text.split("\n")) {
+	for (const rawLine of normalizeDisplayText(text).split("\n")) {
 		if (!rawLine) {
 			lines.push("");
 			continue;
 		}
 		let remaining = rawLine;
 		while (visibleWidth(remaining) > width) {
-			lines.push(remaining.slice(0, width));
-			remaining = remaining.slice(width);
+			const chunk = truncateToWidth(remaining, width);
+			lines.push(chunk);
+			remaining = remaining.slice(chunk.length);
 		}
 		lines.push(remaining);
 	}
@@ -682,7 +689,7 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerShortcut("ctrl+up", {
+	pi.registerShortcut("alt+down", {
 		description: "Open subagent deployments panel",
 		handler: async (ctx) => {
 			if (!ctx.hasUI) return;
