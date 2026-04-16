@@ -6,5 +6,6 @@
   "showCost": false,
   "showPersistence": true,
   "showSummary": true,
-  "showActivity": true
+  "showActivity": true,
+  "showCaveman": true
 }

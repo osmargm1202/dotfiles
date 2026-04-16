@@ -30,6 +30,9 @@
         "-y",
         "@upstash/context7-mcp"
       ]
+    },
+    "exa": {
+      "url": "https://mcp.exa.ai/mcp"
     }
   }
 }

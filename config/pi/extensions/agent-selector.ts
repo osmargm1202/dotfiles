@@ -348,7 +348,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerShortcut("ctrl+shift+m", {
 		description: "Open agent model selector",
-		handler: async (_event, ctx) => {
+		handler: async (ctx) => {
 			if (!ctx.hasUI) return;
 			await openAgentModelPalette(ctx);
 		},

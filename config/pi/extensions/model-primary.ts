@@ -209,4 +209,25 @@ ${primary.systemPrompt}
 			}
 		},
 	});
+
+	pi.registerShortcut("alt+down", {
+		description: "Open primary agent selector",
+		handler: async (ctx) => {
+			if (!ctx.hasUI) return;
+			const result = await openSelectPalette(
+				ctx,
+				"Select Primary Agent",
+				`Active: ${getPrimaryStatusLabel(currentPrimary)}`,
+				buildSelectorItems(currentPrimary),
+			);
+
+			if (result && result !== currentPrimary) {
+				currentPrimary = result;
+				setPrimaryAgent(pi, currentPrimary);
+				ctx.ui.notify(`Primary agent: ${getPrimaryStatusLabel(currentPrimary)}`, "success");
+			} else if (result === currentPrimary) {
+				ctx.ui.notify(`Already active: ${getPrimaryStatusLabel(currentPrimary)}`, "info");
+			}
+		},
+	});
 }

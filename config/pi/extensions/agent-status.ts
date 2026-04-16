@@ -3,6 +3,12 @@ import { join, parse } from "node:path";
 import type { AssistantMessage } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { getAgentDir, parseFrontmatter } from "@mariozechner/pi-coding-agent";
+import {
+	CAVEMAN_STATE_EVENT,
+	formatCavemanStatus,
+	resolveInitialCavemanState,
+	type CavemanLevel,
+} from "./lib/caveman-state";
 import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import {
 	type AgentStatusConfig,
@@ -164,7 +170,12 @@ function formatDeploymentLabel(deployment: DeploymentState): string {
 	return `${deployment.agent} ${deployment.instanceNumber ?? 1}`;
 }
 
-function renderWidget(ctx: ExtensionContext, deployments: DeploymentState[], config: AgentStatusConfig): void {
+function renderWidget(
+	ctx: ExtensionContext,
+	deployments: DeploymentState[],
+	config: AgentStatusConfig,
+	cavemanLevel: CavemanLevel,
+): void {
 	if (!ctx.hasUI) return;
 	if (!config.showWidget || deployments.length === 0) {
 		ctx.ui.setWidget(WIDGET_KEY, undefined);
@@ -207,17 +218,22 @@ function renderWidget(ctx: ExtensionContext, deployments: DeploymentState[], con
 		const titleWidth = Math.max(0, innerWidth - visibleWidth(titleText));
 		const usageTokens = `↑${formatTokens(deployment.usage.input)} ↓${formatTokens(deployment.usage.output)}`;
 		const usageCost = `$${deployment.usage.cost.toFixed(3)}`;
-		const borderColor = statusColor;
+		const cavemanLabel = shortenMiddle(formatCavemanStatus(cavemanLevel), Math.max(10, innerWidth - 5));
+		const borderColor = isActive ? "borderAccent" : "borderMuted";
 		const lines = [
 			ctx.ui.theme.fg(borderColor, `╭${titleText}${"─".repeat(titleWidth)}╮`),
 			ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("muted", padCell(` ${statusLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"),
 		];
 
 		if (config.showModel) {
-			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("muted", padCell(` model ${modelLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
+			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("muted", padCell(` ${modelLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
 		}
 		if (config.showActivity) {
-			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("accent", padCell(` act ${activityLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
+			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("accent", padCell(` ${activityLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
+		}
+		if (config.showCaveman) {
+			const cavemanColor = cavemanLevel === "off" ? "muted" : "accent";
+			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg(cavemanColor, padCell(` ${cavemanLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
 		}
 		lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("accent", padCell(` ${formatBar(percent)}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
 		if (config.showTokens) {
@@ -278,12 +294,21 @@ function buildConfigOptions(config: AgentStatusConfig): Array<{ key: keyof Agent
 		{ key: "showPersistence", title: `${mark(config.showPersistence)} Show memory persistence` },
 		{ key: "showSummary", title: `${mark(config.showSummary)} Show summary` },
 		{ key: "showActivity", title: `${mark(config.showActivity)} Show current activity` },
+		{ key: "showCaveman", title: `${mark(config.showCaveman)} Show caveman state` },
 		{ key: "close", title: "Done" },
 	];
 }
 
+function normalizeCommandAction(args: string): "settings" | "clear" | undefined {
+	const value = args.trim().toLowerCase();
+	if (!value || value === "settings" || value === "config" || value === "menu") return "settings";
+	if (value === "clear") return "clear";
+	return undefined;
+}
+
 export default function (pi: ExtensionAPI) {
 	let currentPrimary = SYSTEM_AGENT;
+	let currentCaveman: CavemanLevel = "off";
 	let currentCtx: ExtensionContext | null = null;
 	let deployments: DeploymentState[] = [];
 	let footerHandle: { requestRender: () => void } | null = null;
@@ -291,13 +316,20 @@ export default function (pi: ExtensionAPI) {
 
 	const rerender = () => {
 		config = loadAgentStatusConfig();
-		if (currentCtx) renderWidget(currentCtx, deployments, config);
+		if (currentCtx) renderWidget(currentCtx, deployments, config, currentCaveman);
+		if (footerHandle) footerHandle.requestRender();
+	};
+
+	const clearRuntimeState = (ctx: ExtensionContext) => {
+		deployments = [];
+		renderWidget(ctx, deployments, loadAgentStatusConfig(), currentCaveman);
 		if (footerHandle) footerHandle.requestRender();
 	};
 
 	const installFooter = (ctx: ExtensionContext) => {
 		currentCtx = ctx;
 		currentPrimary = restorePrimaryName(ctx.sessionManager.getEntries());
+		currentCaveman = resolveInitialCavemanState(ctx.sessionManager.getEntries()).level;
 		config = loadAgentStatusConfig();
 
 		ctx.ui.setFooter((tui, theme, footerData) => {
@@ -363,7 +395,7 @@ export default function (pi: ExtensionAPI) {
 		deployments = [];
 		if (ctx.hasUI) {
 			installFooter(ctx);
-			renderWidget(ctx, deployments, config);
+			renderWidget(ctx, deployments, config, currentCaveman);
 		}
 	});
 
@@ -377,15 +409,39 @@ export default function (pi: ExtensionAPI) {
 		rerender();
 	});
 
+	pi.events.on(CAVEMAN_STATE_EVENT, (data: { level?: CavemanLevel }) => {
+		currentCaveman = data?.level ?? "off";
+		rerender();
+	});
+
 	pi.events.on(SUBAGENTS_EVENT, (data: { deployments?: DeploymentState[] }) => {
 		deployments = Array.isArray(data?.deployments) ? data.deployments : [];
 		rerender();
 	});
 
 	pi.registerCommand("agent-status", {
-		description: "Configure footer and subagent status widgets",
-		handler: async (_args, ctx) => {
+		description: "Manage agent status UI: /agent-status [settings|clear]",
+		getArgumentCompletions: (prefix) => {
+			const value = prefix.trim().toLowerCase();
+			const options = [
+				{ value: "settings", label: "settings — open status settings menu" },
+				{ value: "clear", label: "clear — clear current deployment runtime state" },
+			].filter((option) => option.value.startsWith(value));
+			return options.length > 0 ? options : null;
+		},
+		handler: async (args, ctx) => {
 			if (!ctx.hasUI) return;
+			const action = normalizeCommandAction(args);
+			if (!action) {
+				ctx.ui.notify(`Unknown /agent-status arg: ${args.trim()}`, "error");
+				ctx.ui.notify("Usage: /agent-status [settings|clear]", "warning");
+				return;
+			}
+			if (action === "clear") {
+				clearRuntimeState(ctx);
+				ctx.ui.notify("Agent status runtime state cleared", "info");
+				return;
+			}
 			while (true) {
 				config = loadAgentStatusConfig();
 				const options = buildConfigOptions(config);
@@ -398,13 +454,13 @@ export default function (pi: ExtensionAPI) {
 				if (!chosen || chosen.key === "close") break;
 				config = { ...config, [chosen.key]: !config[chosen.key] };
 				saveAgentStatusConfig(config);
-				renderWidget(ctx, deployments, config);
+				renderWidget(ctx, deployments, config, currentCaveman);
 				installFooter(ctx);
 				ctx.ui.notify(`agent-status: ${chosen.key} ${config[chosen.key] ? "on" : "off"}`, "info");
 			}
-			renderWidget(ctx, deployments, loadAgentStatusConfig());
+			renderWidget(ctx, deployments, loadAgentStatusConfig(), currentCaveman);
 			installFooter(ctx);
-			ctx.ui.notify("Agent status config applied", "success");
+			ctx.ui.notify("Agent status settings applied", "success");
 		},
 	});
 }

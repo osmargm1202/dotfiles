@@ -11,6 +11,7 @@ export interface AgentStatusConfig {
 	showPersistence: boolean;
 	showSummary: boolean;
 	showActivity: boolean;
+	showCaveman: boolean;
 }
 
 export const AGENT_STATUS_CONFIG_DEFAULTS: AgentStatusConfig = {
@@ -22,6 +23,7 @@ export const AGENT_STATUS_CONFIG_DEFAULTS: AgentStatusConfig = {
 	showPersistence: true,
 	showSummary: true,
 	showActivity: true,
+	showCaveman: true,
 };
 
 export function getAgentStatusConfigPath(): string {
@@ -42,6 +44,7 @@ export function loadAgentStatusConfig(): AgentStatusConfig {
 			showPersistence: typeof parsed.showPersistence === "boolean" ? parsed.showPersistence : AGENT_STATUS_CONFIG_DEFAULTS.showPersistence,
 			showSummary: typeof parsed.showSummary === "boolean" ? parsed.showSummary : AGENT_STATUS_CONFIG_DEFAULTS.showSummary,
 			showActivity: typeof parsed.showActivity === "boolean" ? parsed.showActivity : AGENT_STATUS_CONFIG_DEFAULTS.showActivity,
+			showCaveman: typeof parsed.showCaveman === "boolean" ? parsed.showCaveman : AGENT_STATUS_CONFIG_DEFAULTS.showCaveman,
 		};
 	} catch {
 		return { ...AGENT_STATUS_CONFIG_DEFAULTS };
