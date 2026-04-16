@@ -2,14 +2,14 @@ import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
 import { join, parse } from "node:path";
 import type { AssistantMessage } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { getAgentDir, parseFrontmatter } from "@mariozechner/pi-coding-agent";
+import { DynamicBorder, getAgentDir, parseFrontmatter } from "@mariozechner/pi-coding-agent";
 import {
 	CAVEMAN_STATE_EVENT,
 	formatCavemanStatus,
 	resolveInitialCavemanState,
 	type CavemanLevel,
 } from "./lib/caveman-state";
-import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
+import { Container, SelectList, Text, type SelectItem, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import {
 	type AgentStatusConfig,
 	loadAgentStatusConfig,
@@ -26,6 +26,7 @@ const DEFAULT_PRIMARY_AGENT = "pdd-orgm";
 const DEPLOYMENT_GRID_MAX_COLUMNS = 6;
 const DEPLOYMENT_CARD_MIN_WIDTH = 24;
 const DEPLOYMENT_GRID_GAP = 2;
+const DEPLOYMENT_SELECTOR_MAX_HEIGHT = 12;
 
 type DeploymentStatus = "running" | "done" | "error";
 
@@ -66,7 +67,44 @@ interface DeploymentState {
 	fallbackUsed: boolean;
 }
 
-type DeploymentTranscriptMap = Record<string, string[]>;
+type DeploymentTranscriptKind = "task" | "assistant" | "thinking" | "tool_call" | "tool_result" | "status" | "stderr" | "error";
+
+interface DeploymentTranscriptEntry {
+	kind: DeploymentTranscriptKind;
+	title: string;
+	text?: string;
+	toolName?: string;
+	ts: number;
+}
+
+type DeploymentTranscriptMap = Record<string, DeploymentTranscriptEntry[]>;
+
+function normalizeTranscriptEntries(entries: unknown): DeploymentTranscriptEntry[] {
+	if (!Array.isArray(entries)) return [];
+	return entries.map((entry): DeploymentTranscriptEntry => {
+		if (typeof entry === "string") {
+			return { kind: "status", title: entry, ts: Date.now() };
+		}
+		const value = (entry && typeof entry === "object") ? entry as Partial<DeploymentTranscriptEntry> : {};
+		return {
+			kind: value.kind ?? "status",
+			title: typeof value.title === "string" && value.title.trim() ? value.title : "event",
+			text: typeof value.text === "string" ? value.text : undefined,
+			toolName: typeof value.toolName === "string" ? value.toolName : undefined,
+			ts: typeof value.ts === "number" ? value.ts : Date.now(),
+		};
+	});
+}
+
+function safeRequestRender(handle: { requestRender: () => void } | null | undefined): boolean {
+	if (!handle) return false;
+	try {
+		handle.requestRender();
+		return true;
+	} catch {
+		return false;
+	}
+}
 
 function formatCompactNumber(value: number): string {
 	if (!Number.isFinite(value)) return "0";
@@ -318,16 +356,111 @@ function buildInspectOptions(deployments: DeploymentState[]): Array<{ label: str
 		}));
 }
 
+async function openDeploymentPanel(ctx: ExtensionContext, deployments: DeploymentState[]): Promise<string | null> {
+	if (!ctx.hasUI) return null;
+	const options = buildInspectOptions(deployments);
+	if (options.length === 0) {
+		ctx.ui.notify("No subagent deployments available", "warning");
+		return null;
+	}
+	const items: SelectItem[] = options.map((option) => ({
+		value: option.deploymentId,
+		label: option.label,
+		description: option.deploymentId,
+	}));
+	return await ctx.ui.custom<string | null>((tui, theme, _kb, done) => {
+		const container = new Container();
+		container.addChild(new DynamicBorder((s: string) => theme.fg("accent", s)));
+		container.addChild(new Text(theme.fg("accent", theme.bold("Subagent Deployments")), 1, 0));
+		container.addChild(new Text(theme.fg("muted", "Select deployment · Enter inspect · Esc close"), 1, 0));
+		const selectList = new SelectList(items, Math.min(items.length, DEPLOYMENT_SELECTOR_MAX_HEIGHT), {
+			selectedPrefix: (text) => theme.fg("accent", text),
+			selectedText: (text) => theme.fg("accent", text),
+			description: (text) => theme.fg("muted", text),
+			scrollInfo: (text) => theme.fg("dim", text),
+			noMatch: (text) => theme.fg("warning", text),
+		});
+		selectList.onSelect = (item) => done(item.value);
+		selectList.onCancel = () => done(null);
+		container.addChild(selectList);
+		container.addChild(new Text(theme.fg("dim", "↑↓ navigate • enter inspect • esc close"), 1, 0));
+		container.addChild(new DynamicBorder((s: string) => theme.fg("accent", s)));
+		return {
+			render: (width: number) => container.render(width),
+			invalidate: () => container.invalidate(),
+			handleInput: (data: string) => {
+				selectList.handleInput(data);
+				tui.requestRender();
+			},
+		};
+	}, {
+		overlay: true,
+		overlayOptions: { anchor: "center", width: "80%", maxHeight: "70%", margin: 1 },
+	});
+}
+
+function wrapPlainText(text: string, width: number): string[] {
+	if (width <= 0) return [""];
+	const lines: string[] = [];
+	for (const rawLine of text.split("\n")) {
+		if (!rawLine) {
+			lines.push("");
+			continue;
+		}
+		let remaining = rawLine;
+		while (visibleWidth(remaining) > width) {
+			lines.push(remaining.slice(0, width));
+			remaining = remaining.slice(width);
+		}
+		lines.push(remaining);
+	}
+	return lines;
+}
+
+function flattenTranscriptEntries(entries: DeploymentTranscriptEntry[], width: number, theme: any): string[] {
+	const normalizedEntries = normalizeTranscriptEntries(entries);
+	const innerWidth = Math.max(20, width - 4);
+	const pad = (text: string) => {
+		const clipped = truncateToWidth(text, innerWidth);
+		return clipped + " ".repeat(Math.max(0, innerWidth - visibleWidth(clipped)));
+	};
+	const blocks: string[] = [];
+	const blockStyle = (kind: DeploymentTranscriptKind) => {
+		switch (kind) {
+			case "task": return { border: "accent", title: "accent", body: "text" };
+			case "assistant": return { border: "success", title: "success", body: "text" };
+			case "thinking": return { border: "warning", title: "warning", body: "muted" };
+			case "tool_call": return { border: "accent", title: "toolTitle", body: "muted" };
+			case "tool_result": return { border: "borderMuted", title: "text", body: "text" };
+			case "stderr": return { border: "warning", title: "warning", body: "warning" };
+			case "error": return { border: "error", title: "error", body: "error" };
+			default: return { border: "borderMuted", title: "muted", body: "muted" };
+		}
+	};
+	for (const entry of normalizedEntries) {
+		const style = blockStyle(entry.kind);
+		blocks.push(theme.fg(style.border, `╭${"─".repeat(innerWidth)}╮`));
+		blocks.push(theme.fg(style.border, "│") + pad(theme.fg(style.title, ` ${entry.title}`)) + theme.fg(style.border, "│"));
+		if (entry.text) {
+			for (const line of wrapPlainText(entry.text, innerWidth - 1)) {
+				blocks.push(theme.fg(style.border, "│") + pad(theme.fg(style.body, ` ${line}`)) + theme.fg(style.border, "│"));
+			}
+		}
+		blocks.push(theme.fg(style.border, `╰${"─".repeat(innerWidth)}╯`));
+	}
+	return blocks.length > 0 ? blocks : [theme.fg("muted", "No transcript yet")];
+}
+
 async function openTranscriptViewer(
 	ctx: ExtensionContext,
 	deploymentId: string,
 	getDeployment: () => DeploymentState | undefined,
-	getTranscriptLines: () => string[],
+	getTranscriptLines: () => DeploymentTranscriptEntry[],
 	onOpen: (handle: { requestRender: () => void }) => void,
 	onClose: () => void,
 ): Promise<void> {
 	if (!ctx.hasUI) return;
-	const WINDOW_LINES = 18;
+	const WINDOW_LINES = 26;
 	await ctx.ui.custom<void>((tui, theme, _kb, done) => {
 		onOpen(tui);
 		let scrollOffset = 0;
@@ -337,8 +470,9 @@ async function openTranscriptViewer(
 		};
 		return {
 			render(width: number): string[] {
-				const deployment = getDeployment();
-				const transcript = getTranscriptLines();
+				try {
+					const deployment = getDeployment();
+					const transcript = normalizeTranscriptEntries(getTranscriptLines());
 				const innerWidth = Math.max(20, width - 2);
 				const top = theme.fg("accent", `╭${"─".repeat(innerWidth)}╮`);
 				const bottom = theme.fg("accent", `╰${"─".repeat(innerWidth)}╯`);
@@ -353,30 +487,35 @@ async function openTranscriptViewer(
 						`activity: ${deployment.currentActivity || deployment.summary || "idle"}`,
 					]
 					: [`${deploymentId} · finished/cleared`, "deployment metadata unavailable", "activity: n/a"];
-				const maxScroll = Math.max(0, transcript.length - WINDOW_LINES);
+				const rendered = flattenTranscriptEntries(transcript, innerWidth, theme);
+				const maxScroll = Math.max(0, rendered.length - WINDOW_LINES);
 				const clampedOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
 				if (clampedOffset !== scrollOffset) scrollOffset = clampedOffset;
-				const start = Math.max(0, transcript.length - WINDOW_LINES - scrollOffset);
-				const visible = transcript.slice(start, start + WINDOW_LINES);
-				const body = visible.length > 0 ? visible : [theme.fg("muted", "No transcript yet")];
+				const start = Math.max(0, rendered.length - WINDOW_LINES - scrollOffset);
+				const visible = rendered.slice(start, start + WINDOW_LINES);
 				const lines = [top];
 				for (const line of meta) {
 					lines.push(theme.fg("accent", "│") + pad(theme.fg("text", ` ${line}`)) + theme.fg("accent", "│"));
 				}
-				lines.push(theme.fg("accent", "│") + pad(theme.fg("muted", ` lines ${transcript.length} · offset ${scrollOffset}`)) + theme.fg("accent", "│"));
+				lines.push(theme.fg("accent", "│") + pad(theme.fg("muted", ` events ${transcript.length} · lines ${rendered.length} · offset ${scrollOffset}`)) + theme.fg("accent", "│"));
 				for (let i = 0; i < WINDOW_LINES; i += 1) {
-					const line = body[i] ?? "";
-					lines.push(theme.fg("accent", "│") + pad(line ? ` ${line}` : "") + theme.fg("accent", "│"));
+					const line = visible[i] ?? "";
+					lines.push(theme.fg("accent", "│") + pad(line) + theme.fg("accent", "│"));
 				}
 				lines.push(theme.fg("accent", "│") + pad(theme.fg("dim", " ↑↓/j/k scroll · esc/q close ")) + theme.fg("accent", "│"));
-				lines.push(bottom);
-				return lines.map((line) => truncateToWidth(line, width));
+					lines.push(bottom);
+					return lines.map((line) => truncateToWidth(line, width));
+				} catch (error) {
+					const message = error instanceof Error ? error.message : String(error);
+					return [theme.fg("error", `Transcript viewer error: ${message}`)];
+				}
 			},
 			invalidate() {},
 			handleInput(data: string) {
 				if (data === "\u001b" || data === "q") return close();
+				const rendered = flattenTranscriptEntries(normalizeTranscriptEntries(getTranscriptLines()), 120, theme);
 				if (data === "k" || data === "\u001b[A") {
-					scrollOffset = Math.min(scrollOffset + 1, Math.max(0, getTranscriptLines().length - WINDOW_LINES));
+					scrollOffset = Math.min(scrollOffset + 1, Math.max(0, rendered.length - WINDOW_LINES));
 					tui.requestRender();
 					return;
 				}
@@ -406,16 +545,16 @@ export default function (pi: ExtensionAPI) {
 	const rerender = () => {
 		config = loadAgentStatusConfig();
 		if (currentCtx) renderWidget(currentCtx, deployments, config, currentCaveman);
-		if (footerHandle) footerHandle.requestRender();
-		if (transcriptViewerHandle) transcriptViewerHandle.requestRender();
+		if (!safeRequestRender(footerHandle)) footerHandle = null;
+		if (!safeRequestRender(transcriptViewerHandle)) transcriptViewerHandle = null;
 	};
 
 	const clearRuntimeState = (ctx: ExtensionContext) => {
 		deployments = [];
 		transcripts = {};
 		renderWidget(ctx, deployments, loadAgentStatusConfig(), currentCaveman);
-		if (footerHandle) footerHandle.requestRender();
-		if (transcriptViewerHandle) transcriptViewerHandle.requestRender();
+		if (!safeRequestRender(footerHandle)) footerHandle = null;
+		if (!safeRequestRender(transcriptViewerHandle)) transcriptViewerHandle = null;
 	};
 
 	const installFooter = (ctx: ExtensionContext) => {
@@ -425,7 +564,7 @@ export default function (pi: ExtensionAPI) {
 		config = loadAgentStatusConfig();
 
 		ctx.ui.setFooter((tui, theme, footerData) => {
-			footerHandle = tui;
+			footerHandle = { requestRender: () => tui.requestRender() };
 			const unsubscribeBranch = footerData.onBranchChange(() => tui.requestRender());
 			return {
 				dispose: () => { unsubscribeBranch(); footerHandle = null; },
@@ -509,8 +648,46 @@ export default function (pi: ExtensionAPI) {
 
 	pi.events.on(SUBAGENTS_EVENT, (data: { deployments?: DeploymentState[]; transcripts?: DeploymentTranscriptMap }) => {
 		deployments = Array.isArray(data?.deployments) ? data.deployments : [];
-		transcripts = data?.transcripts && typeof data.transcripts === "object" ? data.transcripts : {};
+		transcripts = data?.transcripts && typeof data.transcripts === "object"
+			? Object.fromEntries(Object.entries(data.transcripts).map(([deploymentId, entries]) => [deploymentId, normalizeTranscriptEntries(entries)]))
+			: {};
 		rerender();
+	});
+
+	const inspectDeployment = async (ctx: ExtensionContext, deploymentId?: string | null) => {
+		const selectedDeploymentId = deploymentId ?? await openDeploymentPanel(ctx, deployments);
+		if (!selectedDeploymentId) return;
+		await openTranscriptViewer(
+			ctx,
+			selectedDeploymentId,
+			() => deployments.find((deployment) => deployment.deploymentId === selectedDeploymentId),
+			() => transcripts[selectedDeploymentId] ?? [],
+			(handle) => {
+				transcriptViewerHandle = {
+					deploymentId: selectedDeploymentId,
+					requestRender: () => handle.requestRender(),
+				};
+			},
+			() => {
+				if (transcriptViewerHandle?.deploymentId === selectedDeploymentId) transcriptViewerHandle = null;
+			},
+		);
+	};
+
+	pi.registerCommand("agents", {
+		description: "Open subagent deployments panel",
+		handler: async (_args, ctx) => {
+			if (!ctx.hasUI) return;
+			await inspectDeployment(ctx);
+		},
+	});
+
+	pi.registerShortcut("ctrl+up", {
+		description: "Open subagent deployments panel",
+		handler: async (ctx) => {
+			if (!ctx.hasUI) return;
+			await inspectDeployment(ctx);
+		},
 	});
 
 	pi.registerCommand("agent-status", {
@@ -532,31 +709,17 @@ export default function (pi: ExtensionAPI) {
 				ctx.ui.notify("Usage: /agent-status [settings|inspect|clear]", "warning");
 				return;
 			}
+			if (!args.trim()) {
+				await inspectDeployment(ctx);
+				return;
+			}
 			if (action === "clear") {
 				clearRuntimeState(ctx);
 				ctx.ui.notify("Agent status runtime state cleared", "info");
 				return;
 			}
 			if (action === "inspect") {
-				const options = buildInspectOptions(deployments);
-				if (options.length === 0) {
-					ctx.ui.notify("No subagent deployments available to inspect", "warning");
-					return;
-				}
-				const selected = await ctx.ui.select("Inspect subagent transcript", options.map((option) => option.label));
-				if (!selected) return;
-				const match = options.find((option) => option.label === selected);
-				if (!match) return;
-				await openTranscriptViewer(
-					ctx,
-					match.deploymentId,
-					() => deployments.find((deployment) => deployment.deploymentId === match.deploymentId),
-					() => transcripts[match.deploymentId] ?? [],
-					(handle) => { transcriptViewerHandle = { deploymentId: match.deploymentId, requestRender: handle.requestRender }; },
-					() => {
-						if (transcriptViewerHandle?.deploymentId === match.deploymentId) transcriptViewerHandle = null;
-					},
-				);
+				await inspectDeployment(ctx);
 				return;
 			}
 			while (true) {

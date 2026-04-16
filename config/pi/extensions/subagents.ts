@@ -92,6 +92,16 @@ interface DeploymentState {
 	fallbackUsed: boolean;
 }
 
+type DeploymentTranscriptKind = "task" | "assistant" | "thinking" | "tool_call" | "tool_result" | "status" | "stderr" | "error";
+
+interface DeploymentTranscriptEntry {
+	kind: DeploymentTranscriptKind;
+	title: string;
+	text?: string;
+	toolName?: string;
+	ts: number;
+}
+
 interface AgentRunDetails {
 	deploymentId: string;
 	agent: string;
@@ -951,6 +961,24 @@ function extractAssistantText(message: any): string {
 		.trim();
 }
 
+function previewTranscriptText(text: string, maxLines = 12, maxChars = 1600): string {
+	const trimmed = text.trim();
+	if (!trimmed) return "";
+	const lines = trimmed.split("\n");
+	const sliced = lines.slice(0, maxLines).join("\n");
+	const clipped = sliced.length > maxChars ? `${sliced.slice(0, maxChars - 1)}…` : sliced;
+	return lines.length > maxLines ? `${clipped}\n… ${lines.length - maxLines} more lines` : clipped;
+}
+
+function extractToolResultText(message: any): string {
+	if (!message || !Array.isArray(message.content)) return "";
+	return message.content
+		.filter((part: any) => part?.type === "text" && typeof part.text === "string")
+		.map((part: any) => part.text)
+		.join("\n")
+		.trim();
+}
+
 // ─── Widget rendering ───────────────────────────────────────────────────────
 function renderWidget(ctx: ExtensionContext, deployments: DeploymentState[]): void {
 	if (!ctx.hasUI) return;
@@ -1058,10 +1086,10 @@ function renderWidget(ctx: ExtensionContext, deployments: DeploymentState[]): vo
 export default function (pi: ExtensionAPI) {
 	let promptDeployments: DeploymentState[] = [];
 	let deploymentCountsByAgent = new Map<string, number>();
-	let deploymentTranscripts = new Map<string, string[]>();
+	let deploymentTranscripts = new Map<string, DeploymentTranscriptEntry[]>();
 
-	const snapshotTranscripts = (): Record<string, string[]> => Object.fromEntries(
-		Array.from(deploymentTranscripts.entries()).map(([deploymentId, lines]) => [deploymentId, [...lines]]),
+	const snapshotTranscripts = (): Record<string, DeploymentTranscriptEntry[]> => Object.fromEntries(
+		Array.from(deploymentTranscripts.entries()).map(([deploymentId, entries]) => [deploymentId, entries.map((entry) => ({ ...entry }))]),
 	);
 
 	const refreshUI = (_ctx: ExtensionContext) => {
@@ -1077,17 +1105,23 @@ export default function (pi: ExtensionAPI) {
 		refreshUI(ctx);
 	};
 
-	const appendTranscript = (ctx: ExtensionContext, deploymentId: string, ...entries: Array<string | undefined | null>) => {
-		const lines = deploymentTranscripts.get(deploymentId) ?? [];
+	const appendTranscript = (
+		ctx: ExtensionContext,
+		deploymentId: string,
+		...entries: Array<DeploymentTranscriptEntry | string | undefined | null>
+	) => {
+		const items = deploymentTranscripts.get(deploymentId) ?? [];
 		for (const entry of entries) {
 			if (!entry) continue;
-			for (const line of entry.split("\n")) {
-				const clean = line.trimEnd();
-				if (!clean.trim()) continue;
-				lines.push(clean);
+			if (typeof entry === "string") {
+				const text = entry.trim();
+				if (!text) continue;
+				items.push({ kind: "status", title: text, ts: Date.now() });
+				continue;
 			}
+			items.push({ ...entry, ts: entry.ts || Date.now() });
 		}
-		deploymentTranscripts.set(deploymentId, lines.slice(-SUBAGENT_TRANSCRIPT_MAX_LINES));
+		deploymentTranscripts.set(deploymentId, items.slice(-SUBAGENT_TRANSCRIPT_MAX_LINES));
 		refreshUI(ctx);
 	};
 
@@ -1145,9 +1179,8 @@ export default function (pi: ExtensionAPI) {
 		appendTranscript(
 			params.ctx,
 			deployment.deploymentId,
-			`deploy ${deployment.deploymentId} · agent ${deployment.agent} (${deployment.source})`,
-			`task: ${params.task}`,
-			`tools: ${deployment.tools.join(", ") || "none"}`,
+			{ kind: "task", title: `Task · ${deployment.agent}`, text: params.task, ts: Date.now() },
+			{ kind: "status", title: `Deploy ${deployment.deploymentId} · ${deployment.source}`, text: `tools: ${deployment.tools.join(", ") || "none"}`, ts: Date.now() },
 		);
 
 		let finalText = "";
@@ -1206,13 +1239,18 @@ export default function (pi: ExtensionAPI) {
 			let attemptErrorMessage: string | undefined;
 			let attemptStderr = "";
 			let attemptExitCode = 0;
+			let lastAssistantPreview = "";
 			const modelLabel = modelRef ?? "default";
 			deployment.model = modelRef;
 			deployment.contextWindow = getContextWindow(modelRef, params.ctx);
 			deployment.summary = `running with ${modelLabel}`;
 			deployment.currentActivity = `thinking with ${modelLabel}`;
 			deployment.attemptedModels = [...deployment.attemptedModels, modelLabel];
-			appendTranscript(params.ctx, deployment.deploymentId, `model: ${modelLabel}`, `cwd: ${params.cwd}`);
+			appendTranscript(
+				params.ctx,
+				deployment.deploymentId,
+				{ kind: "status", title: `Model ${modelLabel}`, text: `cwd: ${params.cwd}`, ts: Date.now() },
+			);
 			emitProgress();
 
 			const args = ["--mode", "json", "-p", "--no-session"];
@@ -1284,19 +1322,38 @@ export default function (pi: ExtensionAPI) {
 
 					if (event.type === "message_start" && event.message?.role === "assistant") {
 						deployment.currentActivity = "thinking...";
-						appendTranscript(params.ctx, deployment.deploymentId, "assistant: thinking...");
+						appendTranscript(params.ctx, deployment.deploymentId, { kind: "thinking", title: "Assistant thinking", ts: Date.now() });
 						emitProgress();
 					}
 
 					if (event.type === "message_update" && deployment.status === "running") {
 						deployment.currentActivity = "thinking...";
+						const preview = extractAssistantText(event.message);
+						if (preview) {
+							const clipped = previewTranscriptText(preview, 6, 700);
+							if (clipped && clipped !== lastAssistantPreview) {
+								lastAssistantPreview = clipped;
+								appendTranscript(params.ctx, deployment.deploymentId, {
+									kind: "thinking",
+									title: "Assistant update",
+									text: clipped,
+									ts: Date.now(),
+								});
+							}
+						}
 						refreshUI(params.ctx);
 						emitProgress();
 					}
 
 					if (event.type === "tool_execution_start") {
 						deployment.currentActivity = formatActivity(event.toolName, event.args);
-						appendTranscript(params.ctx, deployment.deploymentId, `tool start: ${deployment.currentActivity}`);
+						appendTranscript(params.ctx, deployment.deploymentId, {
+							kind: "tool_call",
+							title: `Tool · ${event.toolName}`,
+							text: previewTranscriptText(JSON.stringify(event.args ?? {}, null, 2), 10, 1000),
+							toolName: event.toolName,
+							ts: Date.now(),
+						});
 						emitProgress();
 					}
 
@@ -1307,7 +1364,12 @@ export default function (pi: ExtensionAPI) {
 							finalText = text;
 							deployment.summary = truncate(text);
 							deployment.currentActivity = "final response";
-							appendTranscript(params.ctx, deployment.deploymentId, "assistant final:", text);
+							appendTranscript(params.ctx, deployment.deploymentId, {
+								kind: "assistant",
+								title: "Assistant",
+								text: previewTranscriptText(text, 18, 2200),
+								ts: Date.now(),
+							});
 						}
 						deployment.turns += 1;
 						deployment.usage.turns += 1;
@@ -1348,7 +1410,11 @@ export default function (pi: ExtensionAPI) {
 						stopReason = attemptStopReason;
 						errorMessage = attemptErrorMessage;
 						completionEventSeen = !attemptErrorMessage && attemptStopReason !== "error";
-						appendTranscript(params.ctx, deployment.deploymentId, `agent end: stopReason=${attemptStopReason ?? "unknown"}`);
+						appendTranscript(params.ctx, deployment.deploymentId, {
+							kind: "status",
+							title: `Agent end · stopReason=${attemptStopReason ?? "unknown"}`,
+							ts: Date.now(),
+						});
 						refreshUI(params.ctx);
 						emitProgress();
 						if (completionEventSeen) armCompletionWatchdog();
@@ -1356,12 +1422,24 @@ export default function (pi: ExtensionAPI) {
 
 					if (event.type === "tool_execution_end" && deployment.status === "running") {
 						deployment.currentActivity = `finished ${event.toolName}`;
-						appendTranscript(params.ctx, deployment.deploymentId, `tool end: ${event.toolName}`);
+						appendTranscript(params.ctx, deployment.deploymentId, {
+							kind: "status",
+							title: `Tool finished · ${event.toolName}`,
+							ts: Date.now(),
+						});
 						emitProgress();
 					}
 
 					if (event.type === "message_end" && event.message?.role === "toolResult") {
 						const toolName = event.message.toolName;
+						const toolText = extractToolResultText(event.message);
+						appendTranscript(params.ctx, deployment.deploymentId, {
+							kind: event.message.isError ? "error" : "tool_result",
+							title: `Result · ${toolName}`,
+							text: toolText ? previewTranscriptText(toolText, 14, 1800) : undefined,
+							toolName,
+							ts: Date.now(),
+						});
 						if (
 							toolName === "memory_save" ||
 							toolName === "memory_update" ||
@@ -1429,7 +1507,12 @@ export default function (pi: ExtensionAPI) {
 
 				child.stderr.on("data", (chunk) => {
 					attemptStderr += chunk.toString();
-					appendTranscript(params.ctx, deployment.deploymentId, chunk.toString().trim());
+					appendTranscript(params.ctx, deployment.deploymentId, {
+						kind: "stderr",
+						title: "stderr",
+						text: previewTranscriptText(chunk.toString(), 10, 1200),
+						ts: Date.now(),
+					});
 					if (completionEventSeen) armCompletionWatchdog();
 				});
 
@@ -1444,7 +1527,12 @@ export default function (pi: ExtensionAPI) {
 
 				child.once("error", (error) => {
 					attemptErrorMessage = error.message;
-					appendTranscript(params.ctx, deployment.deploymentId, `spawn error: ${error.message}`);
+					appendTranscript(params.ctx, deployment.deploymentId, {
+						kind: "error",
+						title: "Spawn error",
+						text: error.message,
+						ts: Date.now(),
+					});
 					finalize(1);
 				});
 
@@ -1452,7 +1540,11 @@ export default function (pi: ExtensionAPI) {
 				else params.signal?.addEventListener("abort", abortChild, { once: true });
 			});
 
-			appendTranscript(params.ctx, deployment.deploymentId, `attempt exit: ${attemptExitCode}`);
+			appendTranscript(params.ctx, deployment.deploymentId, {
+				kind: "status",
+				title: `Attempt exit ${attemptExitCode}`,
+				ts: Date.now(),
+			});
 			return {
 				finalText: attemptFinalText,
 				stopReason: attemptStopReason,
@@ -1584,9 +1676,12 @@ export default function (pi: ExtensionAPI) {
 		appendTranscript(
 			params.ctx,
 			deployment.deploymentId,
-			`status: ${deployment.status}`,
-			stopReason ? `stop reason: ${stopReason}` : undefined,
-			deployment.errorMessage ? `error: ${deployment.errorMessage}` : undefined,
+			{
+				kind: deployment.status === "error" ? "error" : "status",
+				title: `Status · ${deployment.status}`,
+				text: [stopReason ? `stop reason: ${stopReason}` : undefined, deployment.errorMessage ? `error: ${deployment.errorMessage}` : undefined].filter(Boolean).join("\n") || undefined,
+				ts: Date.now(),
+			},
 		);
 		refreshUI(params.ctx);
 		emitProgress();
