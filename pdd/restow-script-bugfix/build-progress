@@ -1,0 +1,21 @@
+# Build Progress — restow-script-bugfix
+
+## group: main
+**Status:** completed
+**Files changed:** [restow.sh]
+
+**Completed work**
+- Fixed malformed inotifywait events by building explicit `-e` args from `EVENTS` array before watcher start.
+- Replaced permissive positional handling with strict CLI check: only `--help` accepted.
+- Added clear error for unexpected args and usage hint.
+- Kept existing watcher loop, package mapping, debounce, and stow behavior unchanged.
+- Validated with `bash -n restow.sh`, `./restow.sh --help`, and `./restow.sh pi`.
+
+**Deviations**
+- Removed `-h` shortcut handling; only `--help` is now accepted as requested.
+
+**Blockers/Risks**
+- None.
+
+**Remaining**
+- None.

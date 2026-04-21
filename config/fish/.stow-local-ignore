@@ -1,0 +1,5 @@
+^/\.config/fish/fish_variables$
+^/\.config/fish/private-env\.fish$
+^/\.config/fish/functions/dir\.txt$
+^/\.config/fish/functions/alarm-clock-elapsed\.oga$
+^/\.config/fish/conf\.d/fish_frozen_key_bindings\.fish\.bak$

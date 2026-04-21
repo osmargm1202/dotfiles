@@ -1,0 +1,31 @@
+# Repo-level runtime/state exclusions
+**/auth.json
+**/sessions/
+**/*build-progress*
+**/*crash*
+
+# fish runtime/private files
+fish/.config/fish/private-env.fish
+fish/.config/fish/fish_variables
+fish/.config/fish/functions/dir.txt
+fish/.config/fish/functions/alarm-clock-elapsed.oga
+fish/.config/fish/conf.d/fish_frozen_key_bindings.fish.bak
+
+# engram runtime DB
+engram/.engram/engram.db
+engram/.engram/engram.db-shm
+engram/.engram/engram.db-wal
+
+# orgmenv runtime state
+orgmenv/.config/orgmenv/orgmenv.db
+orgmenv/.config/orgmenv/cache/
+orgmenv/.config/orgmenv/backups/
+
+# pi runtime/cache/session files
+pi/.pi/agent/auth.json
+pi/.pi/agent/agent-status.json
+pi/.pi/agent/mcp-cache.json
+pi/.pi/agent/mcp-npx-cache.json
+pi/.pi/agent/run-history.jsonl
+pi/.pi/agent/agent-sessions/
+pi/.pi/agent/sessions/

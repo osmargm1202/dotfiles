@@ -1,0 +1,7 @@
+# Build Progress — stow-layout-restructure-audit
+
+## group: main
+**Status:** completed-with-conflicts
+**Files changed:** [config/.gitignore, config/restow.sh, config/Kvantum/.config/Kvantum/kvantum.kvconfig, config/dolphin/.config/dolphinrc, config/dolphin/.config/kdeglobals, config/dunst/.config/dunst/**, config/engram/.stow-local-ignore, config/fastfetch/.config/fastfetch/**, config/fish/.config/fish/**, config/fish/.stow-local-ignore, config/i3/.config/i3/config, config/kitty/.config/kitty/kitty.conf, config/niri/.config/niri/config.kdl, config/nvim/.config/nvim/**, config/nvim/.stow-local-ignore, config/orgmenv/.stow-local-ignore, config/pi/.pi/**, config/pi/.stow-local-ignore, config/picom/.config/picom/picom.conf, config/polybar/.config/polybar/config.ini, config/rofi/.config/rofi/**, config/starship/.config/starship.toml, config/yazi/.config/yazi/**]
+
+**Notes:** Restowed packages with no conflicts or identical home targets. Remaining home-file conflicts: i3, picom, polybar.

@@ -1,0 +1,9 @@
+^/justfile$
+^/\.pi/agent/auth\.json$
+^/\.pi/agent/agent-status\.json$
+^/\.pi/agent/mcp-cache\.json$
+^/\.pi/agent/mcp-npx-cache\.json$
+^/\.pi/agent/run-history\.jsonl$
+^/\.pi/agent/sessions(?:/.*)?$
+^/\.pi/agent/agent-sessions(?:/.*)?$
+^/\.pi/agent/skills/deep-research/\.git(?:/.*)?$
