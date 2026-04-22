@@ -1,15 +1,12 @@
-function __tmux_init -d "Valida dependencias tmux e inicializa variables compartidas (herramienta_ia)"
+function __tmux_init -d "Valida dependencia tmux para helpers tmux"
     # Verificar entorno interactivo
     if not status is-interactive
         return 1
     end
 
-    # Herramienta IA compartida
-    set -gx herramienta_ia pi
-
     # Dependencias obligatorias comunes
     set -l missing 0
-    for cmd in tmux $herramienta_ia
+    for cmd in tmux
         if not type -q $cmd
             echo "Error: $cmd no está instalado."
             set missing 1

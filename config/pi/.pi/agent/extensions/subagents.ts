@@ -177,6 +177,27 @@ interface AgentRuntimeState {
 	lastErrorMessage?: string;
 }
 
+interface RuntimeSnapshot {
+	runtimeId: string;
+	agent: string;
+	source: AgentSource;
+	mode: AgentDeployMode;
+	model?: string;
+	sessionFilePath?: string;
+	contextWindow: number;
+	contextTokens: number;
+	status: RuntimeStatus;
+	busyDeploymentId?: string;
+	lastUsedAt: number;
+	createdAt: number;
+	runs: number;
+	reuseCount: number;
+	parentRuntimeId?: string;
+	depth: number;
+	lastStopReason?: string;
+	lastErrorMessage?: string;
+}
+
 interface QueryTeamQuery {
 	member?: string;
 	agent?: string;
@@ -1077,10 +1098,37 @@ export default function (pi: ExtensionAPI) {
 		Array.from(deploymentTranscripts.entries()).map(([deploymentId, entries]) => [deploymentId, entries.map((entry) => ({ ...entry }))]),
 	);
 
-	const refreshUI = (_ctx: ExtensionContext) => {
+	const snapshotRuntimes = (ctx: ExtensionContext): RuntimeSnapshot[] => {
+		const storage = getRuntimeStoragePaths(ctx.cwd);
+		return pruneRuntimeRegistry(loadRuntimeRegistry(storage.registryPath))
+			.sort((a, b) => b.lastUsedAt - a.lastUsedAt)
+			.map((runtime) => ({
+				runtimeId: runtime.runtimeId,
+				agent: runtime.agent,
+				source: runtime.source,
+				mode: runtime.mode,
+				model: runtime.model,
+				sessionFilePath: runtime.sessionFilePath,
+				contextWindow: runtime.contextWindow,
+				contextTokens: runtime.contextTokens,
+				status: runtime.status,
+				busyDeploymentId: runtime.busyDeploymentId,
+				lastUsedAt: runtime.lastUsedAt,
+				createdAt: runtime.createdAt,
+				runs: runtime.runs,
+				reuseCount: runtime.reuseCount,
+				parentRuntimeId: runtime.parentRuntimeId,
+				depth: runtime.depth,
+				lastStopReason: runtime.lastStopReason,
+				lastErrorMessage: runtime.lastErrorMessage,
+			}));
+	};
+
+	const refreshUI = (ctx: ExtensionContext) => {
 		pi.events.emit("subagents:deployments-changed", {
 			deployments: promptDeployments.map((deployment) => ({ ...deployment })),
 			transcripts: snapshotTranscripts(),
+			runtimes: snapshotRuntimes(ctx),
 		});
 	};
 	const resetPromptDeployments = (ctx: ExtensionContext) => {

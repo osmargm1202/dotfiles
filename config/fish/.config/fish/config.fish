@@ -1,10 +1,7 @@
-if status is-login
+if not set -q TMUX
     if type -q fastfetch
-        if set -q TMUX
-            fastfetch --logo auto 2>/dev/null; or fastfetch
-        else
-            fastfetch
-        end
+        # Fastfetch local disponible
+        fastfetch
     end
 end
 
@@ -111,11 +108,11 @@ if type -q gum; and type -q tmux
     source ~/.config/fish/functions/tmuxdel.fish
 end
 
-# Helper compartido (valida tmux + pi, exporta herramienta_ia)
+# Helper compartido (valida tmux para helpers tmux)
 source ~/.config/fish/functions/__tmux_init.fish
 source ~/.config/fish/functions/__tmux_shared.fish
 
-# Tmux new session con layout mc7 (herramienta_ia + 3 terminales)
+# Tmux new session (ventana única)
 source ~/.config/fish/functions/tmuxnew.fish
 
 # Tmux selector de directorios desde cwd con fzf + fd
@@ -138,9 +135,12 @@ if type -q curl; and type -q fzf; and type -q bat
 end
 
 if not set -q DISTROBOX_ENTER_PATH
-
     if string match -q "*arch*" (distrobox-list)
-        distrobox-enter arch -- fastfetch --logo arch --logo-padding 5 --logo-type builtin --logo-width 0 --logo-padding-top 0
+        distrobox-enter arch -- fastfetch --logo arch
+        if type -q distrobox-enter arch -- zoxide
+            distrobox-enter arch -- zoxide init fish | source
+            alias cd="z"
+        end
         function nvim
             distrobox-enter arch -- nvim $argv
         end

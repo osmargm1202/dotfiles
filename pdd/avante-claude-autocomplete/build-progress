@@ -1,0 +1,18 @@
+# Build Progress — avante-claude-autocomplete
+
+## group: build-main
+**Status:** completed
+**Files changed:**
+- `.config/nvim/.config/nvim/lua/config/lazy.lua`
+- `.config/nvim/.config/nvim/lua/config/lazyvim.json`
+- `.config/nvim/.config/nvim/lua/plugins/avante.lua`
+
+**Notes:**
+- Removed embedded `supermaven-inc/supermaven-nvim` plugin spec from `config/lazy.lua`.
+- Swapped LazyVim AI extra by removing `lazyvim.plugins.extras.ai.supermaven` from `lazyvim.json`.
+- Added `lua/plugins/avante.lua` with `yetone/avante.nvim`, Claude provider config, conservative suggestion throttling (`debounce=1400`, `throttle=1400`) and lower token budget.
+- Added blink.cmp integration via `blink.compat` and avante sources: `avante_commands`, `avante_mentions`, `avante_files`, `avante_shortcuts`.
+
+**Validation:**
+- `luac -p` succeeded on touched Lua config files (`lazy.lua`, `plugins/avante.lua`, `options.lua`, `autocmds.lua`, `keymaps.lua`).
+- Verified no `supermaven` references remain in active Lua/JSON config files; only lock file entry remains.

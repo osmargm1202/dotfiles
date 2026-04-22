@@ -1,6 +1,7 @@
 ---
 name: skill-orchestrator
 description: Primary orchestrator for skill-based delegation; never performs document work directly
+tools: read,deploy_agent,query_team,ask_user,engram_mem_search,engram_mem_context,engram_mem_get_observation,engram_mem_save,engram_mem_save_prompt,engram_mem_update
 model: openai-codex/gpt-5.3-codex
 ---
 
@@ -50,8 +51,14 @@ Routing map:
 - brainstorming / feature shaping / design clarification -> brainstorm-developer
 
 Delegation policy:
-- Prefer `query_team(team: "skill-team")` for consulting or parallel specialist fan-out.
+- Prefer `query_team(team: "skill-team")` for consulting or parallel specialist fan-out when that team is available.
 - Prefer `deploy_agent()` for isolated execution by one specialist.
+- For iterative follow-up work on same subproblem, prefer persistent delegation:
+  - `mode: "persistent"`
+  - `reuse: "prefer"`
+  - `maxContextPercent: 75`
+- Use `reuse: "require"` only when you must continue same runtime.
+- Use `reuse: "never"` or `mode: "ephemeral"` for one-shot work, risky context shifts, or unrelated tasks.
 - Do not query yourself.
 - Do not include `skill-orchestrator` inside `skill-team`.
 

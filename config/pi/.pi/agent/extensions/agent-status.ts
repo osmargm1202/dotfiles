@@ -24,7 +24,9 @@ const DEPLOYMENT_CARD_MIN_WIDTH = 24;
 const DEPLOYMENT_GRID_GAP = 2;
 const DEPLOYMENT_SELECTOR_MAX_HEIGHT = 12;
 
-type DeploymentStatus = "running" | "done" | "error";
+type DeploymentStatus = "running" | "idle" | "done" | "error";
+
+type RuntimeStatus = "idle" | "busy";
 
 interface UsageStats {
 	input: number;
@@ -68,6 +70,27 @@ interface DeploymentState {
 	primaryModel?: string;
 	fallbackModel?: string;
 	fallbackUsed: boolean;
+}
+
+interface RuntimeSnapshot {
+	runtimeId: string;
+	agent: string;
+	source: "user" | "project";
+	mode: "ephemeral" | "persistent";
+	model?: string;
+	sessionFilePath?: string;
+	contextWindow: number;
+	contextTokens: number;
+	status: RuntimeStatus;
+	busyDeploymentId?: string;
+	lastUsedAt: number;
+	createdAt: number;
+	runs: number;
+	reuseCount: number;
+	parentRuntimeId?: string;
+	depth?: number;
+	lastStopReason?: string;
+	lastErrorMessage?: string;
 }
 
 type DeploymentTranscriptKind = "task" | "assistant" | "thinking" | "tool_call" | "tool_result" | "status" | "stderr" | "error";
@@ -174,24 +197,93 @@ function formatDeploymentLabel(deployment: DeploymentState): string {
 	return `${deployment.agent} ${deployment.instanceNumber ?? 1}`;
 }
 
+function deriveDisplayDeployments(deployments: DeploymentState[], runtimes: RuntimeSnapshot[]): DeploymentState[] {
+	const runtimeById = new Map(runtimes.map((runtime) => [runtime.runtimeId, runtime]));
+	const lastDeploymentIndexByRuntime = new Map<string, number>();
+	for (let index = 0; index < deployments.length; index += 1) {
+		const runtimeId = deployments[index]?.runtimeId;
+		if (runtimeId) lastDeploymentIndexByRuntime.set(runtimeId, index);
+	}
+
+	const displayDeployments: DeploymentState[] = [];
+	const coveredRuntimeIds = new Set<string>();
+	for (let index = 0; index < deployments.length; index += 1) {
+		const deployment = deployments[index]!;
+		const runtime = deployment.runtimeId ? runtimeById.get(deployment.runtimeId) : undefined;
+		if (runtime?.runtimeId) coveredRuntimeIds.add(runtime.runtimeId);
+		if (runtime?.status === "idle" && deployment.runtimeId && lastDeploymentIndexByRuntime.get(deployment.runtimeId) === index) {
+			displayDeployments.push({
+				...deployment,
+				status: "idle",
+				contextTokens: runtime.contextTokens,
+				contextWindow: runtime.contextWindow,
+				summary: deployment.summary || `runtime ${runtime.runtimeId} idle`,
+				currentActivity: deployment.currentActivity === "completed"
+					? `idle · reusable · ${runtime.reuseCount} reuses`
+					: (deployment.currentActivity || `idle · reusable · ${runtime.reuseCount} reuses`),
+				reuseSummary: deployment.reuseSummary || `runtime ${runtime.runtimeId} idle`,
+			});
+			continue;
+		}
+		displayDeployments.push({ ...deployment });
+	}
+
+	for (const runtime of runtimes) {
+		if (runtime.mode !== "persistent" || runtime.status !== "idle") continue;
+		if (coveredRuntimeIds.has(runtime.runtimeId)) continue;
+		displayDeployments.push({
+			deploymentId: `runtime:${runtime.runtimeId}`,
+			agent: runtime.agent,
+			instanceNumber: 1,
+			source: runtime.source,
+			tools: [],
+			model: runtime.model,
+			mode: runtime.mode,
+			runtimeId: runtime.runtimeId,
+			reusedRuntime: runtime.reuseCount > 0,
+			reuseSummary: `runtime ${runtime.runtimeId} idle · ${runtime.reuseCount} reuses`,
+			sessionFilePath: runtime.sessionFilePath,
+			parentRuntimeId: runtime.parentRuntimeId,
+			depth: runtime.depth,
+			contextWindow: runtime.contextWindow,
+			contextTokens: runtime.contextTokens,
+			status: "idle",
+			summary: `persistent runtime idle · ${runtime.runs} runs`,
+			currentActivity: `idle · reusable · ${runtime.reuseCount} reuses`,
+			turns: 0,
+			usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: runtime.contextTokens, turns: 0 },
+			stopReason: runtime.lastStopReason,
+			errorMessage: runtime.lastErrorMessage,
+			pddMemoryWrites: 0,
+			attemptedModels: [],
+			fallbackUsed: false,
+		});
+	}
+
+	return displayDeployments;
+}
+
 function renderWidget(
 	ctx: ExtensionContext,
 	deployments: DeploymentState[],
+	runtimes: RuntimeSnapshot[],
 	config: AgentStatusConfig,
 	cavemanLevel: CavemanLevel,
 ): void {
 	if (!ctx.hasUI) return;
-	if (!config.showWidget || deployments.length === 0) {
+	const displayDeployments = deriveDisplayDeployments(deployments, runtimes);
+	if (!config.showWidget || displayDeployments.length === 0) {
 		ctx.ui.setWidget(WIDGET_KEY, undefined);
 		ctx.ui.setStatus(STATUS_KEY, undefined);
 		return;
 	}
 
-	const numberedDeployments = withInstanceNumbers(deployments);
+	const numberedDeployments = withInstanceNumbers(displayDeployments);
 	const statusRank = (status: DeploymentStatus): number => {
 		if (status === "running") return 0;
-		if (status === "error") return 1;
-		return 2;
+		if (status === "idle") return 1;
+		if (status === "error") return 2;
+		return 3;
 	};
 	const sortedDeployments = [...numberedDeployments].sort((a, b) => {
 		const rankDiff = statusRank(a.status) - statusRank(b.status);
@@ -200,6 +292,7 @@ function renderWidget(
 		return (a.instanceNumber ?? 0) - (b.instanceNumber ?? 0);
 	});
 	const running = sortedDeployments.filter((deployment) => deployment.status === "running").length;
+	const idle = sortedDeployments.filter((deployment) => deployment.status === "idle").length;
 	const padCell = (text: string, width: number) => {
 		const truncated = truncateToWidth(text, width);
 		const remaining = Math.max(0, width - visibleWidth(truncated));
@@ -208,28 +301,43 @@ function renderWidget(
 
 	const buildCard = (deployment: DeploymentState, cardWidth: number): string[] => {
 		const isActive = deployment.status === "running";
+		const isIdle = deployment.status === "idle";
 		const innerWidth = Math.max(8, cardWidth - 2);
 		const percent = deployment.contextWindow > 0 ? (deployment.contextTokens / deployment.contextWindow) * 100 : 0;
-		const statusColor = deployment.status === "done" ? "success" : deployment.status === "error" ? "error" : isActive ? "accent" : "warning";
-		const statusLabel = deployment.status === "done" ? "done" : deployment.status === "error" ? "error" : "running";
+		const statusColor = deployment.status === "done"
+			? "success"
+			: deployment.status === "error"
+				? "error"
+				: isActive
+					? "accent"
+					: "warning";
+		const statusLabel = deployment.status;
 		const modelLabel = shortenMiddle(deployment.model ?? "default-model", Math.max(10, innerWidth - 2));
 		const runtimeLabel = deployment.mode === "persistent"
 			? `${deployment.reusedRuntime ? "reuse" : "persist"} ${shortenMiddle(deployment.runtimeId ?? "session", Math.max(10, innerWidth - 9))}`
 			: "ephemeral";
 		const persistenceLabel = deployment.persistedToPddMemory
 			? `engram ✓ ${shortenMiddle(deployment.persistedArtifactTopicKey ?? "saved", Math.max(8, innerWidth - 11))}`
-			: `engram … ${shortenMiddle(deployment.expectedArtifactTopicKey ?? "pending", Math.max(8, innerWidth - 11))}`;
-		const summaryLabel = deployment.summary || (deployment.status === "running" ? "waiting for result..." : "done");
-		const activityLabel = deployment.currentActivity ? truncate(deployment.currentActivity, innerWidth - 1) : "thinking...";
+			: `engram … ${shortenMiddle(deployment.expectedArtifactTopicKey ?? (isIdle ? "idle" : "pending"), Math.max(8, innerWidth - 11))}`;
+		const summaryLabel = deployment.summary || (deployment.status === "running" ? "waiting for result..." : isIdle ? "idle persistent runtime" : "done");
+		const activityLabel = deployment.currentActivity ? truncate(deployment.currentActivity, innerWidth - 1) : isIdle ? "idle · reusable" : "thinking...";
 		const titleText = ` ${formatDeploymentLabel(deployment)} `;
 		const titleWidth = Math.max(0, innerWidth - visibleWidth(titleText));
-		const usageTokens = `↑${formatTokens(deployment.usage.input)} ↓${formatTokens(deployment.usage.output)}`;
-		const usageCost = `$${deployment.usage.cost.toFixed(3)}`;
+		const usageTokens = isIdle
+			? `ctx ${formatTokens(deployment.contextTokens)}`
+			: `↑${formatTokens(deployment.usage.input)} ↓${formatTokens(deployment.usage.output)}`;
+		const usageCost = isIdle ? `reuse ${deployment.reusedRuntime ? "yes" : "new"}` : `$${deployment.usage.cost.toFixed(3)}`;
 		const cavemanLabel = shortenMiddle(formatCavemanStatus(cavemanLevel), Math.max(10, innerWidth - 5));
-		const borderColor = isActive ? "borderAccent" : "borderMuted";
+		const borderColor = deployment.status === "error"
+			? "error"
+			: isActive
+				? "borderAccent"
+				: isIdle
+					? "warning"
+					: "borderMuted";
 		const lines = [
 			ctx.ui.theme.fg(borderColor, `╭${titleText}${"─".repeat(titleWidth)}╮`),
-			ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("muted", padCell(` ${statusLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"),
+			ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg(statusColor, padCell(` ${statusLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"),
 		];
 
 		if (config.showModel) {
@@ -287,8 +395,13 @@ function renderWidget(
 		}),
 	);
 
-	const status = running > 0 ? `🤖 ${running}/${deployments.length} running` : `🤖 ${deployments.length} used`;
-	ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg(running > 0 ? "warning" : "accent", status));
+	const status = running > 0
+		? `🤖 ${running} running${idle > 0 ? ` · ${idle} idle` : ""}`
+		: idle > 0
+			? `🤖 ${idle} idle`
+			: `🤖 ${displayDeployments.length} used`;
+	const statusColor = running > 0 ? "accent" : idle > 0 ? "warning" : "accent";
+	ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg(statusColor, status));
 }
 
 function buildConfigOptions(config: AgentStatusConfig): Array<{ key: keyof AgentStatusConfig | "close"; title: string }> {
@@ -514,6 +627,7 @@ export default function (pi: ExtensionAPI) {
 	let currentCaveman: CavemanLevel = "off";
 	let currentCtx: ExtensionContext | null = null;
 	let deployments: DeploymentState[] = [];
+	let runtimes: RuntimeSnapshot[] = [];
 	let transcripts: DeploymentTranscriptMap = {};
 	let footerHandle: { requestRender: () => void } | null = null;
 	let transcriptViewerHandle: { deploymentId: string; requestRender: () => void } | null = null;
@@ -521,15 +635,16 @@ export default function (pi: ExtensionAPI) {
 
 	const rerender = () => {
 		config = loadAgentStatusConfig();
-		if (currentCtx) renderWidget(currentCtx, deployments, config, currentCaveman);
+		if (currentCtx) renderWidget(currentCtx, deployments, runtimes, config, currentCaveman);
 		if (!safeRequestRender(footerHandle)) footerHandle = null;
 		if (!safeRequestRender(transcriptViewerHandle)) transcriptViewerHandle = null;
 	};
 
 	const clearRuntimeState = (ctx: ExtensionContext) => {
 		deployments = [];
+		runtimes = [];
 		transcripts = {};
-		renderWidget(ctx, deployments, loadAgentStatusConfig(), currentCaveman);
+		renderWidget(ctx, deployments, runtimes, loadAgentStatusConfig(), currentCaveman);
 		if (!safeRequestRender(footerHandle)) footerHandle = null;
 		if (!safeRequestRender(transcriptViewerHandle)) transcriptViewerHandle = null;
 	};
@@ -601,10 +716,11 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_start", async (_event, ctx) => {
 		currentCtx = ctx;
 		deployments = [];
+		runtimes = [];
 		transcripts = {};
 		if (ctx.hasUI) {
 			installFooter(ctx);
-			renderWidget(ctx, deployments, config, currentCaveman);
+			renderWidget(ctx, deployments, runtimes, config, currentCaveman);
 		}
 	});
 
@@ -623,8 +739,9 @@ export default function (pi: ExtensionAPI) {
 		rerender();
 	});
 
-	pi.events.on(SUBAGENTS_EVENT, (data: { deployments?: DeploymentState[]; transcripts?: DeploymentTranscriptMap }) => {
+	pi.events.on(SUBAGENTS_EVENT, (data: { deployments?: DeploymentState[]; runtimes?: RuntimeSnapshot[]; transcripts?: DeploymentTranscriptMap }) => {
 		deployments = Array.isArray(data?.deployments) ? data.deployments : [];
+		runtimes = Array.isArray(data?.runtimes) ? data.runtimes : [];
 		transcripts = data?.transcripts && typeof data.transcripts === "object"
 			? Object.fromEntries(Object.entries(data.transcripts).map(([deploymentId, entries]) => [deploymentId, normalizeTranscriptEntries(entries)]))
 			: {};
@@ -632,12 +749,13 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	const inspectDeployment = async (ctx: ExtensionContext, deploymentId?: string | null) => {
-		const selectedDeploymentId = deploymentId ?? await openDeploymentPanel(ctx, deployments);
+		const displayDeployments = deriveDisplayDeployments(deployments, runtimes);
+		const selectedDeploymentId = deploymentId ?? await openDeploymentPanel(ctx, displayDeployments);
 		if (!selectedDeploymentId) return;
 		await openTranscriptViewer(
 			ctx,
 			selectedDeploymentId,
-			() => deployments.find((deployment) => deployment.deploymentId === selectedDeploymentId),
+			() => displayDeployments.find((deployment) => deployment.deploymentId === selectedDeploymentId) ?? deployments.find((deployment) => deployment.deploymentId === selectedDeploymentId),
 			() => transcripts[selectedDeploymentId] ?? [],
 			(handle) => {
 				transcriptViewerHandle = {

@@ -1,8 +1,5 @@
 # __tmux_shared.fish — Helper functions compartidos para tmuxnew/tmuxnewz/tmuxfd
 
-# Pane que recibe foco tras crear la sesión (0-indexed)
-set -q TMUX_FOCUS_PANE; or set -g TMUX_FOCUS_PANE 1
-
 function __tmux_find_session -d "Busca sesión tmux existente por directorio @tmuxnew_dir"
     set -l target_dir $argv[1]
     for s in (tmux list-sessions -F '#{session_name}' 2>/dev/null)
@@ -54,27 +51,15 @@ function __tmux_session_name -d "Genera nombre de sesión tmux desde un director
     echo $session_name
 end
 
-function __tmux_create_session -d "Crea sesión tmux con layout 4 panes (herramienta_ia + 3 terminales)"
+function __tmux_create_session -d "Crea sesión tmux con una sola ventana en el directorio objetivo"
     set -l session_name $argv[1]
     set -l target_dir $argv[2]
 
     echo "Creando sesión tmux '$session_name' en: $target_dir"
 
-    # Primer pane lanza herramienta_ia
-    tmux new-session -d -s $session_name -c $target_dir "$herramienta_ia"
+    # Ventana inicial única en directorio objetivo
+    tmux new-session -d -s $session_name -c $target_dir
     tmux set-option -t $session_name @tmuxnew_dir "$target_dir" >/dev/null
-
-    # 4 panes: herramienta_ia + 3 terminales
-    set -l pane_ia (tmux display-message -p -t $session_name:0.0 '#{pane_id}')
-    tmux split-window -h -t $pane_ia -c $target_dir
-    tmux split-window -v -t $pane_ia -c $target_dir
-    tmux split-window -v -t (tmux display-message -p -t $session_name:0.1 '#{pane_id}') -c $target_dir
-
-    # Layout mc7 (main-vertical-mirrored)
-    tmux select-layout -t $session_name:0 main-vertical-mirrored
-
-    # Foco en pane configurado (TMUX_FOCUS_PANE, default 1)
-    tmux select-pane -t $session_name:0.$TMUX_FOCUS_PANE
 
     tmux attach-session -t $session_name
 end

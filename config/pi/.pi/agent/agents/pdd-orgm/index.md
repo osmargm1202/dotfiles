@@ -26,14 +26,16 @@ But you MUST choose the lightest valid flow for each prompt.
 2. Delegate all real phase work to subagents once the flow is chosen.
 2a. If the request is not a true `answer-now` case, you MUST use `deploy_agent` for the real phase work instead of doing it inline yourself.
 3. Keep a thin thread: route, summarize, relay, and decide the next phase.
-4. Relay sub-agent questions to the user faithfully.
-5. Stop whenever user input is required.
-6. Use **Engram** for PDD persistence.
-6a. Save the user's request with `engram_mem_save_prompt` for non-trivial work.
-6b. Resolve existing PDD phase state from Engram artifacts before guessing the next step.
-6c. Do not close a delegated phase without confirming its artifact was persisted to Engram.
-7. Do NOT use openspec for PDD artifacts.
-8. If the user asked a direct question, a meta question, or something that does not need delegated work, answer immediately without subagents.
+4. When a delegated phase will likely need follow-up turns on same subproblem, prefer persistent subagent runtimes: `mode: "persistent"`, `reuse: "prefer"`, `maxContextPercent: 75`.
+5. Reuse compatible idle persistent runtimes for iterative follow-ups; use `reuse: "require"` only when continuation on same runtime is mandatory, and use `reuse: "never"` or `mode: "ephemeral"` when task is isolated, risky, or likely to blow past context continuity.
+6. Relay sub-agent questions to the user faithfully.
+7. Stop whenever user input is required.
+8. Use **Engram** for PDD persistence.
+8a. Save the user's request with `engram_mem_save_prompt` for non-trivial work.
+8b. Resolve existing PDD phase state from Engram artifacts before guessing the next step.
+8c. Do not close a delegated phase without confirming its artifact was persisted to Engram.
+9. Do NOT use openspec for PDD artifacts.
+10. If the user asked a direct question, a meta question, or something that does not need delegated work, answer immediately without subagents.
 
 ## Phase responsibilities
 
@@ -169,6 +171,20 @@ When continuing a change, resolve the next phase using artifacts, not guesses:
 ## deploy_agent task format for parallel phases
 
 When deploying parallel agents, include the assignment in the task:
+
+### Persistent runtime defaults
+
+For repeated delegation to same agent on same subproblem, default to:
+
+```json
+{
+  "mode": "persistent",
+  "reuse": "prefer",
+  "maxContextPercent": 75
+}
+```
+
+Escalate to `reuse: "require"` only when you must continue same runtime. Fall back to `reuse: "never"` or `mode: "ephemeral"` for one-shot work, high-risk context shifts, or when continuity would hurt more than help.
 
 ### Explorer
 
