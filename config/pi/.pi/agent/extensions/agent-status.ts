@@ -24,9 +24,12 @@ const DEPLOYMENT_CARD_MIN_WIDTH = 24;
 const DEPLOYMENT_GRID_GAP = 2;
 const DEPLOYMENT_SELECTOR_MAX_HEIGHT = 12;
 
-type DeploymentStatus = "running" | "idle" | "done" | "error";
+type DeploymentStatus = "running" | "idle" | "done" | "error" | "paused_provider_error" | "awaiting_user_input";
 
 type RuntimeStatus = "idle" | "busy";
+type AgentLaunchBackend = "embedded";
+type TerminalState = "attached" | "missing" | "closed";
+type RecoverableReason = "provider_error";
 
 interface UsageStats {
 	input: number;
@@ -46,6 +49,7 @@ interface DeploymentState {
 	tools: string[];
 	model?: string;
 	mode?: "ephemeral" | "persistent";
+	launchBackend?: AgentLaunchBackend;
 	runtimeId?: string;
 	reusedRuntime?: boolean;
 	reuseSummary?: string;
@@ -62,6 +66,8 @@ interface DeploymentState {
 	exitCode?: number;
 	stopReason?: string;
 	errorMessage?: string;
+	failureKind?: "task_error" | "provider_error" | "orchestrator_error";
+	recoverableReason?: RecoverableReason;
 	expectedArtifactTopicKey?: string;
 	persistedArtifactTopicKey?: string;
 	persistedToPddMemory?: boolean;
@@ -77,6 +83,7 @@ interface RuntimeSnapshot {
 	agent: string;
 	source: "user" | "project";
 	mode: "ephemeral" | "persistent";
+	launchBackend: AgentLaunchBackend;
 	model?: string;
 	sessionFilePath?: string;
 	contextWindow: number;
@@ -91,6 +98,12 @@ interface RuntimeSnapshot {
 	depth?: number;
 	lastStopReason?: string;
 	lastErrorMessage?: string;
+	terminalState?: TerminalState;
+	tmuxWindowId?: string;
+	tmuxPaneId?: string;
+	recoverableReason?: RecoverableReason;
+	awaitingUserInput?: boolean;
+	lastVisibleState?: DeploymentStatus;
 }
 
 type DeploymentTranscriptKind = "task" | "assistant" | "thinking" | "tool_call" | "tool_result" | "status" | "stderr" | "error";
@@ -197,6 +210,46 @@ function formatDeploymentLabel(deployment: DeploymentState): string {
 	return `${deployment.agent} ${deployment.instanceNumber ?? 1}`;
 }
 
+function deriveRuntimePlaceholder(runtime: RuntimeSnapshot): DeploymentState {
+	return {
+		deploymentId: `runtime:${runtime.runtimeId}`,
+		agent: runtime.agent,
+		instanceNumber: 1,
+		source: runtime.source,
+		tools: [],
+		model: runtime.model,
+		mode: runtime.mode,
+		launchBackend: runtime.launchBackend,
+		runtimeId: runtime.runtimeId,
+		reusedRuntime: runtime.reuseCount > 0,
+		reuseSummary: `runtime ${runtime.runtimeId} idle · ${runtime.reuseCount} reuses`,
+		sessionFilePath: runtime.sessionFilePath,
+		parentRuntimeId: runtime.parentRuntimeId,
+		depth: runtime.depth ?? 0,
+		contextWindow: runtime.contextWindow,
+		contextTokens: runtime.contextTokens,
+		status: runtime.awaitingUserInput ? "awaiting_user_input" : runtime.recoverableReason === "provider_error" ? "paused_provider_error" : "idle",
+		summary: runtime.recoverableReason === "provider_error"
+			? `provider paused · ${runtime.agent}`
+			: runtime.awaitingUserInput
+				? `awaiting input · ${runtime.agent}`
+				: `persistent runtime idle · ${runtime.runs} runs`,
+		currentActivity: runtime.recoverableReason === "provider_error"
+			? `paused · provider error${runtime.tmuxPaneId ? ` · ${runtime.tmuxPaneId}` : ""}`
+			: runtime.awaitingUserInput
+				? "awaiting user input"
+				: `idle · reusable · ${runtime.reuseCount} reuses`,
+		turns: 0,
+		usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: runtime.contextTokens, turns: 0 },
+		stopReason: runtime.lastStopReason,
+		errorMessage: runtime.lastErrorMessage,
+		recoverableReason: runtime.recoverableReason,
+		pddMemoryWrites: 0,
+		attemptedModels: [],
+		fallbackUsed: false,
+	};
+}
+
 function deriveDisplayDeployments(deployments: DeploymentState[], runtimes: RuntimeSnapshot[]): DeploymentState[] {
 	const runtimeById = new Map(runtimes.map((runtime) => [runtime.runtimeId, runtime]));
 	const lastDeploymentIndexByRuntime = new Map<string, number>();
@@ -211,79 +264,60 @@ function deriveDisplayDeployments(deployments: DeploymentState[], runtimes: Runt
 		const deployment = deployments[index]!;
 		const runtime = deployment.runtimeId ? runtimeById.get(deployment.runtimeId) : undefined;
 		if (runtime?.runtimeId) coveredRuntimeIds.add(runtime.runtimeId);
+		if (deployment.status === "running" || deployment.status === "awaiting_user_input" || deployment.status === "paused_provider_error") {
+			displayDeployments.push({ ...deployment });
+			continue;
+		}
 		if (runtime?.status === "idle" && deployment.runtimeId && lastDeploymentIndexByRuntime.get(deployment.runtimeId) === index) {
 			displayDeployments.push({
 				...deployment,
-				status: "idle",
+				status: runtime.awaitingUserInput ? "awaiting_user_input" : runtime.recoverableReason === "provider_error" ? "paused_provider_error" : "idle",
 				contextTokens: runtime.contextTokens,
 				contextWindow: runtime.contextWindow,
-				summary: deployment.summary || `runtime ${runtime.runtimeId} idle`,
-				currentActivity: deployment.currentActivity === "completed"
-					? `idle · reusable · ${runtime.reuseCount} reuses`
-					: (deployment.currentActivity || `idle · reusable · ${runtime.reuseCount} reuses`),
+				summary: runtime.recoverableReason === "provider_error"
+					? deployment.summary || deployment.errorMessage || `provider paused · ${runtime.agent}`
+					: deployment.summary || `runtime ${runtime.runtimeId} idle`,
+				currentActivity: runtime.recoverableReason === "provider_error"
+					? deployment.currentActivity || `paused · provider error${runtime.tmuxPaneId ? ` · ${runtime.tmuxPaneId}` : ""}`
+					: runtime.awaitingUserInput
+						? "awaiting user input"
+						: (deployment.currentActivity === "completed" ? `idle · reusable · ${runtime.reuseCount} reuses` : (deployment.currentActivity || `idle · reusable · ${runtime.reuseCount} reuses`)),
 				reuseSummary: deployment.reuseSummary || `runtime ${runtime.runtimeId} idle`,
+				recoverableReason: runtime.recoverableReason,
 			});
-			continue;
 		}
-		displayDeployments.push({ ...deployment });
 	}
 
 	for (const runtime of runtimes) {
 		if (runtime.mode !== "persistent" || runtime.status !== "idle") continue;
 		if (coveredRuntimeIds.has(runtime.runtimeId)) continue;
-		displayDeployments.push({
-			deploymentId: `runtime:${runtime.runtimeId}`,
-			agent: runtime.agent,
-			instanceNumber: 1,
-			source: runtime.source,
-			tools: [],
-			model: runtime.model,
-			mode: runtime.mode,
-			runtimeId: runtime.runtimeId,
-			reusedRuntime: runtime.reuseCount > 0,
-			reuseSummary: `runtime ${runtime.runtimeId} idle · ${runtime.reuseCount} reuses`,
-			sessionFilePath: runtime.sessionFilePath,
-			parentRuntimeId: runtime.parentRuntimeId,
-			depth: runtime.depth,
-			contextWindow: runtime.contextWindow,
-			contextTokens: runtime.contextTokens,
-			status: "idle",
-			summary: `persistent runtime idle · ${runtime.runs} runs`,
-			currentActivity: `idle · reusable · ${runtime.reuseCount} reuses`,
-			turns: 0,
-			usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: runtime.contextTokens, turns: 0 },
-			stopReason: runtime.lastStopReason,
-			errorMessage: runtime.lastErrorMessage,
-			pddMemoryWrites: 0,
-			attemptedModels: [],
-			fallbackUsed: false,
-		});
+		displayDeployments.push(deriveRuntimePlaceholder(runtime));
 	}
 
 	return displayDeployments;
 }
 
-function renderWidget(
-	ctx: ExtensionContext,
-	deployments: DeploymentState[],
-	runtimes: RuntimeSnapshot[],
-	config: AgentStatusConfig,
-	cavemanLevel: CavemanLevel,
-): void {
-	if (!ctx.hasUI) return;
-	const displayDeployments = deriveDisplayDeployments(deployments, runtimes);
-	if (!config.showWidget || displayDeployments.length === 0) {
-		ctx.ui.setWidget(WIDGET_KEY, undefined);
-		ctx.ui.setStatus(STATUS_KEY, undefined);
-		return;
+function deriveInspectDeployments(deployments: DeploymentState[], runtimes: RuntimeSnapshot[]): DeploymentState[] {
+	const combined = [...deployments];
+	const runtimeIds = new Set(deployments.map((deployment) => deployment.runtimeId).filter(Boolean));
+	for (const runtime of runtimes) {
+		if (runtime.mode !== "persistent" || runtime.status !== "idle") continue;
+		if (runtimeIds.has(runtime.runtimeId)) continue;
+		combined.push(deriveRuntimePlaceholder(runtime));
 	}
+	return combined;
+}
 
+function getWidgetViewModel(deployments: DeploymentState[], runtimes: RuntimeSnapshot[]) {
+	const displayDeployments = deriveDisplayDeployments(deployments, runtimes);
 	const numberedDeployments = withInstanceNumbers(displayDeployments);
 	const statusRank = (status: DeploymentStatus): number => {
 		if (status === "running") return 0;
-		if (status === "idle") return 1;
-		if (status === "error") return 2;
-		return 3;
+		if (status === "awaiting_user_input") return 1;
+		if (status === "paused_provider_error") return 2;
+		if (status === "idle") return 3;
+		if (status === "error") return 4;
+		return 5;
 	};
 	const sortedDeployments = [...numberedDeployments].sort((a, b) => {
 		const rankDiff = statusRank(a.status) - statusRank(b.status);
@@ -292,116 +326,111 @@ function renderWidget(
 		return (a.instanceNumber ?? 0) - (b.instanceNumber ?? 0);
 	});
 	const running = sortedDeployments.filter((deployment) => deployment.status === "running").length;
+	const waiting = sortedDeployments.filter((deployment) => deployment.status === "awaiting_user_input").length;
+	const paused = sortedDeployments.filter((deployment) => deployment.status === "paused_provider_error").length;
 	const idle = sortedDeployments.filter((deployment) => deployment.status === "idle").length;
-	const padCell = (text: string, width: number) => {
-		const truncated = truncateToWidth(text, width);
-		const remaining = Math.max(0, width - visibleWidth(truncated));
+	return { displayDeployments, sortedDeployments, running, waiting, paused, idle };
+}
+
+function buildWidgetStatus(view: ReturnType<typeof getWidgetViewModel>): { text: string; color: string } {
+	const { running, waiting, paused, idle, displayDeployments } = view;
+	const text = running > 0
+		? `🤖 ${running} running${waiting > 0 ? ` · ${waiting} waiting` : ""}${paused > 0 ? ` · ${paused} paused` : ""}${idle > 0 ? ` · ${idle} idle` : ""}`
+		: waiting > 0
+			? `🤖 ${waiting} waiting${paused > 0 ? ` · ${paused} paused` : ""}${idle > 0 ? ` · ${idle} idle` : ""}`
+			: paused > 0
+				? `🤖 ${paused} paused${idle > 0 ? ` · ${idle} idle` : ""}`
+				: idle > 0
+					? `🤖 ${idle} idle`
+					: `🤖 ${displayDeployments.length} active`;
+	const color = running > 0 ? "accent" : waiting > 0 || idle > 0 ? "warning" : paused > 0 ? "error" : "accent";
+	return { text, color };
+}
+
+function buildWidgetLines(
+	theme: any,
+	width: number,
+	deployments: DeploymentState[],
+	runtimes: RuntimeSnapshot[],
+	config: AgentStatusConfig,
+	cavemanLevel: CavemanLevel,
+): string[] {
+	const view = getWidgetViewModel(deployments, runtimes);
+	if (view.sortedDeployments.length === 0) return [];
+	const padCell = (text: string, cellWidth: number) => {
+		const truncated = truncateToWidth(text, cellWidth);
+		const remaining = Math.max(0, cellWidth - visibleWidth(truncated));
 		return truncated + " ".repeat(remaining);
 	};
-
 	const buildCard = (deployment: DeploymentState, cardWidth: number): string[] => {
 		const isActive = deployment.status === "running";
 		const isIdle = deployment.status === "idle";
+		const isWaiting = deployment.status === "awaiting_user_input";
+		const isPaused = deployment.status === "paused_provider_error";
 		const innerWidth = Math.max(8, cardWidth - 2);
 		const percent = deployment.contextWindow > 0 ? (deployment.contextTokens / deployment.contextWindow) * 100 : 0;
 		const statusColor = deployment.status === "done"
 			? "success"
-			: deployment.status === "error"
+			: deployment.status === "error" || isPaused
 				? "error"
 				: isActive
 					? "accent"
 					: "warning";
-		const statusLabel = deployment.status;
 		const modelLabel = shortenMiddle(deployment.model ?? "default-model", Math.max(10, innerWidth - 2));
 		const runtimeLabel = deployment.mode === "persistent"
 			? `${deployment.reusedRuntime ? "reuse" : "persist"} ${shortenMiddle(deployment.runtimeId ?? "session", Math.max(10, innerWidth - 9))}`
 			: "ephemeral";
+		const backendLabel = "embedded";
 		const persistenceLabel = deployment.persistedToPddMemory
 			? `engram ✓ ${shortenMiddle(deployment.persistedArtifactTopicKey ?? "saved", Math.max(8, innerWidth - 11))}`
 			: `engram … ${shortenMiddle(deployment.expectedArtifactTopicKey ?? (isIdle ? "idle" : "pending"), Math.max(8, innerWidth - 11))}`;
-		const summaryLabel = deployment.summary || (deployment.status === "running" ? "waiting for result..." : isIdle ? "idle persistent runtime" : "done");
-		const activityLabel = deployment.currentActivity ? truncate(deployment.currentActivity, innerWidth - 1) : isIdle ? "idle · reusable" : "thinking...";
+		const summaryLabel = deployment.summary || (deployment.status === "running" ? "waiting for result..." : isWaiting ? "awaiting user input" : isPaused ? "provider paused" : isIdle ? "idle persistent runtime" : "done");
+		const activityLabel = deployment.currentActivity ? truncate(deployment.currentActivity, innerWidth - 1) : isWaiting ? "awaiting user input" : isPaused ? "paused · provider error" : isIdle ? "idle · reusable" : "thinking...";
 		const titleText = ` ${formatDeploymentLabel(deployment)} `;
 		const titleWidth = Math.max(0, innerWidth - visibleWidth(titleText));
-		const usageTokens = isIdle
-			? `ctx ${formatTokens(deployment.contextTokens)}`
-			: `↑${formatTokens(deployment.usage.input)} ↓${formatTokens(deployment.usage.output)}`;
-		const usageCost = isIdle ? `reuse ${deployment.reusedRuntime ? "yes" : "new"}` : `$${deployment.usage.cost.toFixed(3)}`;
+		const usageTokens = isIdle || isPaused || isWaiting ? `ctx ${formatTokens(deployment.contextTokens)}` : `↑${formatTokens(deployment.usage.input)} ↓${formatTokens(deployment.usage.output)}`;
+		const usageCost = isIdle || isPaused || isWaiting ? `reuse ${deployment.reusedRuntime ? "yes" : "new"}` : `$${deployment.usage.cost.toFixed(3)}`;
 		const cavemanLabel = shortenMiddle(formatCavemanStatus(cavemanLevel), Math.max(10, innerWidth - 5));
-		const borderColor = deployment.status === "error"
-			? "error"
-			: isActive
-				? "borderAccent"
-				: isIdle
-					? "warning"
-					: "borderMuted";
+		const borderColor = deployment.status === "error" || isPaused ? "error" : isActive ? "borderAccent" : isWaiting || isIdle ? "warning" : "borderMuted";
 		const lines = [
-			ctx.ui.theme.fg(borderColor, `╭${titleText}${"─".repeat(titleWidth)}╮`),
-			ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg(statusColor, padCell(` ${statusLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"),
+			theme.fg(borderColor, `╭${titleText}${"─".repeat(titleWidth)}╮`),
+			theme.fg(borderColor, "│") + theme.fg(statusColor, padCell(` ${deployment.status}`, innerWidth)) + theme.fg(borderColor, "│"),
 		];
-
-		if (config.showModel) {
-			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("muted", padCell(` ${modelLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
-		}
+		if (config.showModel) lines.push(theme.fg(borderColor, "│") + theme.fg("muted", padCell(` ${modelLabel}`, innerWidth)) + theme.fg(borderColor, "│"));
 		if (config.showActivity) {
-			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("accent", padCell(` ${activityLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
-			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("muted", padCell(` ${runtimeLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
+			lines.push(theme.fg(borderColor, "│") + theme.fg("accent", padCell(` ${activityLabel}`, innerWidth)) + theme.fg(borderColor, "│"));
+			lines.push(theme.fg(borderColor, "│") + theme.fg("muted", padCell(` ${runtimeLabel}`, innerWidth)) + theme.fg(borderColor, "│"));
+			lines.push(theme.fg(borderColor, "│") + theme.fg("dim", padCell(` ${backendLabel}`, innerWidth)) + theme.fg(borderColor, "│"));
 		}
 		if (config.showCaveman) {
 			const cavemanColor = cavemanLevel === "off" ? "muted" : "accent";
-			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg(cavemanColor, padCell(` ${cavemanLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
+			lines.push(theme.fg(borderColor, "│") + theme.fg(cavemanColor, padCell(` ${cavemanLabel}`, innerWidth)) + theme.fg(borderColor, "│"));
 		}
-		lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("accent", padCell(` ${formatBar(percent)}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
-		if (config.showTokens) {
-			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("muted", padCell(` ${usageTokens}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
-		}
-		if (config.showCost) {
-			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("warning", padCell(` cost ${usageCost}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
-		}
-		if (config.showPersistence) {
-			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg(deployment.persistedToPddMemory ? "success" : "warning", padCell(` ${persistenceLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
-		}
-		if (config.showSummary) {
-			lines.push(ctx.ui.theme.fg(borderColor, "│") + ctx.ui.theme.fg("text", padCell(` ${summaryLabel}`, innerWidth)) + ctx.ui.theme.fg(borderColor, "│"));
-		}
-		lines.push(ctx.ui.theme.fg(borderColor, `╰${"─".repeat(innerWidth)}╯`));
+		lines.push(theme.fg(borderColor, "│") + theme.fg("accent", padCell(` ${formatBar(percent)}`, innerWidth)) + theme.fg(borderColor, "│"));
+		if (config.showTokens) lines.push(theme.fg(borderColor, "│") + theme.fg("muted", padCell(` ${usageTokens}`, innerWidth)) + theme.fg(borderColor, "│"));
+		if (config.showCost) lines.push(theme.fg(borderColor, "│") + theme.fg("warning", padCell(` cost ${usageCost}`, innerWidth)) + theme.fg(borderColor, "│"));
+		if (config.showPersistence) lines.push(theme.fg(borderColor, "│") + theme.fg(deployment.persistedToPddMemory ? "success" : "warning", padCell(` ${persistenceLabel}`, innerWidth)) + theme.fg(borderColor, "│"));
+		if (config.showSummary) lines.push(theme.fg(borderColor, "│") + theme.fg("text", padCell(` ${summaryLabel}`, innerWidth)) + theme.fg(borderColor, "│"));
+		lines.push(theme.fg(borderColor, `╰${"─".repeat(innerWidth)}╯`));
 		return lines;
 	};
-
-	ctx.ui.setWidget(
-		WIDGET_KEY,
-		(_tui, theme) => ({
-			render(width: number): string[] {
-				const header = theme.fg("accent", "PDD agent deployments");
-				const gap = DEPLOYMENT_GRID_GAP;
-				const maxColumns = Math.min(DEPLOYMENT_GRID_MAX_COLUMNS, sortedDeployments.length);
-				const computedColumns = Math.max(1, Math.min(maxColumns, Math.floor((width + gap) / (DEPLOYMENT_CARD_MIN_WIDTH + gap)) || 1));
-				const cardWidth = Math.max(DEPLOYMENT_CARD_MIN_WIDTH, Math.floor((width - gap * (computedColumns - 1)) / computedColumns));
-				const cards = sortedDeployments.map((deployment) => buildCard(deployment, cardWidth));
-				const lines: string[] = [truncateToWidth(header, width)];
-
-				for (let rowStart = 0; rowStart < cards.length; rowStart += computedColumns) {
-					const rowCards = cards.slice(rowStart, rowStart + computedColumns);
-					const rowHeight = Math.max(...rowCards.map((card) => card.length));
-					for (let lineIndex = 0; lineIndex < rowHeight; lineIndex += 1) {
-						const rowLine = rowCards.map((card) => card[lineIndex] ?? " ".repeat(cardWidth)).join(" ".repeat(gap));
-						lines.push(truncateToWidth(rowLine, width));
-					}
-					if (rowStart + computedColumns < cards.length) lines.push("");
-				}
-				return lines;
-			},
-			invalidate() {},
-		}),
-	);
-
-	const status = running > 0
-		? `🤖 ${running} running${idle > 0 ? ` · ${idle} idle` : ""}`
-		: idle > 0
-			? `🤖 ${idle} idle`
-			: `🤖 ${displayDeployments.length} used`;
-	const statusColor = running > 0 ? "accent" : idle > 0 ? "warning" : "accent";
-	ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg(statusColor, status));
+	const header = theme.fg("accent", "PDD agent deployments");
+	const gap = DEPLOYMENT_GRID_GAP;
+	const cardWidth = DEPLOYMENT_CARD_MIN_WIDTH;
+	const maxColumns = Math.min(DEPLOYMENT_GRID_MAX_COLUMNS, view.sortedDeployments.length);
+	const computedColumns = Math.max(1, Math.min(maxColumns, Math.floor((width + gap) / (cardWidth + gap)) || 1));
+	const cards = view.sortedDeployments.map((deployment) => buildCard(deployment, cardWidth));
+	const lines: string[] = [truncateToWidth(header, width)];
+	for (let rowStart = 0; rowStart < cards.length; rowStart += computedColumns) {
+		const rowCards = cards.slice(rowStart, rowStart + computedColumns);
+		const rowHeight = Math.max(...rowCards.map((card) => card.length));
+		for (let lineIndex = 0; lineIndex < rowHeight; lineIndex += 1) {
+			const rowLine = rowCards.map((card) => card[lineIndex] ?? " ".repeat(cardWidth)).join(" ".repeat(gap));
+			lines.push(truncateToWidth(rowLine, width));
+		}
+		if (rowStart + computedColumns < cards.length) lines.push("");
+	}
+	return lines;
 }
 
 function buildConfigOptions(config: AgentStatusConfig): Array<{ key: keyof AgentStatusConfig | "close"; title: string }> {
@@ -428,12 +457,24 @@ function normalizeCommandAction(args: string): "settings" | "clear" | "inspect" 
 	return undefined;
 }
 
+function inspectStatusIcon(status: DeploymentStatus): string {
+	switch (status) {
+		case "running": return "⏳";
+		case "idle": return "◌";
+		case "awaiting_user_input": return "?";
+		case "paused_provider_error": return "⏸";
+		case "done": return "✓";
+		case "error": return "✗";
+		default: return "•";
+	}
+}
+
 function buildInspectOptions(deployments: DeploymentState[]): Array<{ label: string; deploymentId: string }> {
 	return withInstanceNumbers([...deployments])
 		.sort((a, b) => a.deploymentId.localeCompare(b.deploymentId))
 		.map((deployment) => ({
 			deploymentId: deployment.deploymentId,
-			label: `${formatDeploymentLabel(deployment)} · ${deployment.status} · ${truncate(deployment.currentActivity || deployment.summary || "idle", 56)}`,
+			label: `${inspectStatusIcon(deployment.status)} ${formatDeploymentLabel(deployment)} · ${deployment.status} · ${truncate(deployment.currentActivity || deployment.summary || "idle", 56)}`,
 		}));
 }
 
@@ -630,12 +671,50 @@ export default function (pi: ExtensionAPI) {
 	let runtimes: RuntimeSnapshot[] = [];
 	let transcripts: DeploymentTranscriptMap = {};
 	let footerHandle: { requestRender: () => void } | null = null;
+	let widgetHandle: { requestRender: () => void } | null = null;
+	let widgetMounted = false;
 	let transcriptViewerHandle: { deploymentId: string; requestRender: () => void } | null = null;
 	let config = loadAgentStatusConfig();
 
+	const syncWidget = (ctx: ExtensionContext) => {
+		if (!ctx.hasUI) return;
+		const view = getWidgetViewModel(deployments, runtimes);
+		if (!config.showWidget || view.sortedDeployments.length === 0) {
+			if (widgetMounted) {
+				ctx.ui.setWidget(WIDGET_KEY, undefined);
+				widgetMounted = false;
+				widgetHandle = null;
+			}
+			ctx.ui.setStatus(STATUS_KEY, undefined);
+			return;
+		}
+		if (!widgetMounted) {
+			ctx.ui.setWidget(
+				WIDGET_KEY,
+				(tui, theme) => {
+					widgetHandle = { requestRender: () => tui.requestRender() };
+					return {
+						render(width: number): string[] {
+							return buildWidgetLines(theme, width, deployments, runtimes, config, currentCaveman);
+						},
+						invalidate() {},
+					};
+				},
+			);
+			widgetMounted = true;
+		} else if (!safeRequestRender(widgetHandle)) {
+			widgetMounted = false;
+			widgetHandle = null;
+			syncWidget(ctx);
+			return;
+		}
+		const status = buildWidgetStatus(view);
+		ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg(status.color, status.text));
+	};
+
 	const rerender = () => {
 		config = loadAgentStatusConfig();
-		if (currentCtx) renderWidget(currentCtx, deployments, runtimes, config, currentCaveman);
+		if (currentCtx) syncWidget(currentCtx);
 		if (!safeRequestRender(footerHandle)) footerHandle = null;
 		if (!safeRequestRender(transcriptViewerHandle)) transcriptViewerHandle = null;
 	};
@@ -644,7 +723,7 @@ export default function (pi: ExtensionAPI) {
 		deployments = [];
 		runtimes = [];
 		transcripts = {};
-		renderWidget(ctx, deployments, runtimes, loadAgentStatusConfig(), currentCaveman);
+		syncWidget(ctx);
 		if (!safeRequestRender(footerHandle)) footerHandle = null;
 		if (!safeRequestRender(transcriptViewerHandle)) transcriptViewerHandle = null;
 	};
@@ -718,9 +797,11 @@ export default function (pi: ExtensionAPI) {
 		deployments = [];
 		runtimes = [];
 		transcripts = {};
+		widgetHandle = null;
+		widgetMounted = false;
 		if (ctx.hasUI) {
 			installFooter(ctx);
-			renderWidget(ctx, deployments, runtimes, config, currentCaveman);
+			syncWidget(ctx);
 		}
 	});
 
@@ -749,13 +830,13 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	const inspectDeployment = async (ctx: ExtensionContext, deploymentId?: string | null) => {
-		const displayDeployments = deriveDisplayDeployments(deployments, runtimes);
-		const selectedDeploymentId = deploymentId ?? await openDeploymentPanel(ctx, displayDeployments);
+		const inspectDeployments = deriveInspectDeployments(deployments, runtimes);
+		const selectedDeploymentId = deploymentId ?? await openDeploymentPanel(ctx, inspectDeployments);
 		if (!selectedDeploymentId) return;
 		await openTranscriptViewer(
 			ctx,
 			selectedDeploymentId,
-			() => displayDeployments.find((deployment) => deployment.deploymentId === selectedDeploymentId) ?? deployments.find((deployment) => deployment.deploymentId === selectedDeploymentId),
+			() => inspectDeployments.find((deployment) => deployment.deploymentId === selectedDeploymentId) ?? deployments.find((deployment) => deployment.deploymentId === selectedDeploymentId),
 			() => transcripts[selectedDeploymentId] ?? [],
 			(handle) => {
 				transcriptViewerHandle = {
@@ -829,11 +910,11 @@ export default function (pi: ExtensionAPI) {
 				if (!chosen || chosen.key === "close") break;
 				config = { ...config, [chosen.key]: !config[chosen.key] };
 				saveAgentStatusConfig(config);
-				renderWidget(ctx, deployments, config, currentCaveman);
+				syncWidget(ctx);
 				installFooter(ctx);
 				ctx.ui.notify(`agent-status: ${chosen.key} ${config[chosen.key] ? "on" : "off"}`, "info");
 			}
-			renderWidget(ctx, deployments, loadAgentStatusConfig(), currentCaveman);
+			syncWidget(ctx);
 			installFooter(ctx);
 			ctx.ui.notify("Agent status settings applied", "success");
 		},

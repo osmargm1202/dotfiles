@@ -6,7 +6,7 @@ import { StringEnum } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { DynamicBorder, getAgentDir } from "@mariozechner/pi-coding-agent";
 import { Box, Container, type SelectItem, SelectList, Text, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 
 import {
 	discoverDeployableAgents,
@@ -18,6 +18,8 @@ import {
 const WIDGET_KEY = "pdd-orgm-agents";
 const STATUS_KEY = "pdd-orgm-agents";
 const SUBAGENT_ENV_FLAG = "PI_PDD_SUBAGENT";
+const SUBAGENTS_EVENT = "subagents:deployments-changed";
+const SUBAGENT_PROVIDER_STOP_EVENT = "subagents:provider-stop";
 const DEFAULT_CONTEXT_WINDOW = 200_000;
 const GLOBAL_FALLBACK_MODEL = process.env.PI_PDD_FALLBACK_MODEL?.trim() || undefined;
 const DEPLOYMENT_GRID_MAX_COLUMNS = 6;
@@ -26,12 +28,29 @@ const DEPLOYMENT_GRID_GAP = 2;
 const SUBAGENT_COMPLETION_STALL_TIMEOUT_MS = 4_000;
 const SUBAGENT_FORCE_KILL_TIMEOUT_MS = 3_000;
 const SUBAGENT_TRANSCRIPT_MAX_LINES = 400;
+const SUBAGENT_UI_REFRESH_DEBOUNCE_MS = 120;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
-type DeploymentStatus = "running" | "done" | "error";
+type DeploymentStatus = "running" | "done" | "error" | "paused_provider_error" | "awaiting_user_input";
 type AgentDeployMode = "ephemeral" | "persistent";
 type AgentReuseMode = "prefer" | "require" | "never";
+type AgentLaunchBackend = "embedded";
 type RuntimeStatus = "idle" | "busy";
+type TerminalState = "attached" | "missing" | "closed";
+type RecoverableReason = "provider_error";
+type FailureKind = "task_error" | "provider_error" | "orchestrator_error";
+
+interface ProviderStopDetails {
+	deploymentId?: string;
+	runtimeId?: string;
+	agent?: string;
+	summary?: string;
+	stopReason?: string;
+	failureKind?: "provider_error";
+	recoverableReason?: "provider_error";
+	tmuxPaneId?: string;
+	tmuxWindowId?: string;
+}
 
 interface UsageStats {
 	input: number;
@@ -51,6 +70,7 @@ interface DeploymentState {
 	tools: string[];
 	model?: string;
 	mode: AgentDeployMode;
+	launchBackend: AgentLaunchBackend;
 	runtimeId?: string;
 	reusedRuntime: boolean;
 	reuseSummary?: string;
@@ -67,6 +87,8 @@ interface DeploymentState {
 	exitCode?: number;
 	stopReason?: string;
 	errorMessage?: string;
+	failureKind?: FailureKind;
+	recoverableReason?: RecoverableReason;
 	expectedArtifactTopicKey?: string;
 	persistedArtifactTopicKey?: string;
 	persistedToPddMemory?: boolean;
@@ -95,6 +117,7 @@ interface AgentRunDetails {
 	tools: string[];
 	model?: string;
 	mode: AgentDeployMode;
+	launchBackend: AgentLaunchBackend;
 	runtimeId?: string;
 	reusedRuntime: boolean;
 	reuseSummary?: string;
@@ -109,6 +132,8 @@ interface AgentRunDetails {
 	exitCode: number;
 	stopReason?: string;
 	errorMessage?: string;
+	failureKind?: FailureKind;
+	recoverableReason?: RecoverableReason;
 	expectedArtifactTopicKey?: string;
 	persistedArtifactTopicKey?: string;
 	persistedToPddMemory?: boolean;
@@ -158,6 +183,7 @@ interface AgentRuntimeState {
 	agent: string;
 	source: AgentSource;
 	mode: AgentDeployMode;
+	launchBackend: AgentLaunchBackend;
 	cwd: string;
 	scope: "user" | "project" | "both";
 	model?: string;
@@ -175,6 +201,12 @@ interface AgentRuntimeState {
 	compatibilityKey: string;
 	lastStopReason?: string;
 	lastErrorMessage?: string;
+	terminalState?: TerminalState;
+	tmuxWindowId?: string;
+	tmuxPaneId?: string;
+	recoverableReason?: RecoverableReason;
+	awaitingUserInput?: boolean;
+	lastVisibleState?: DeploymentStatus;
 }
 
 interface RuntimeSnapshot {
@@ -182,6 +214,7 @@ interface RuntimeSnapshot {
 	agent: string;
 	source: AgentSource;
 	mode: AgentDeployMode;
+	launchBackend: AgentLaunchBackend;
 	model?: string;
 	sessionFilePath?: string;
 	contextWindow: number;
@@ -196,6 +229,12 @@ interface RuntimeSnapshot {
 	depth: number;
 	lastStopReason?: string;
 	lastErrorMessage?: string;
+	terminalState?: TerminalState;
+	tmuxWindowId?: string;
+	tmuxPaneId?: string;
+	recoverableReason?: RecoverableReason;
+	awaitingUserInput?: boolean;
+	lastVisibleState?: DeploymentStatus;
 }
 
 interface QueryTeamQuery {
@@ -231,6 +270,7 @@ interface QueryTeamDetails {
 	team: string;
 	execution: "parallel" | "serial";
 	scope: "user" | "project" | "both";
+	launchBackend: AgentLaunchBackend;
 	resolvedMembers: string[];
 	requestedQueries: ExpandedTeamQuery[];
 	completed: number;
@@ -264,6 +304,12 @@ const DeployAgentParams = Type.Object({
 		}),
 	),
 	maxContextPercent: Type.Optional(Type.Number({ description: "Maximum context usage percent allowed for runtime reuse. Default: 75", default: 75 })),
+	launchBackend: Type.Optional(
+		StringEnum(["embedded"] as const, {
+			description: "Launch backend. Only `embedded` is supported.",
+			default: "embedded",
+		}),
+	),
 });
 
 const QueryTeamParams = Type.Object({
@@ -287,6 +333,12 @@ const QueryTeamParams = Type.Object({
 	),
 	cwd: Type.Optional(Type.String({ description: "Optional working directory for subprocess execution and project discovery" })),
 	continueOnError: Type.Optional(Type.Boolean({ description: "In serial mode, continue after member failures. Default: true", default: true })),
+	launchBackend: Type.Optional(
+		StringEnum(["embedded"] as const, {
+			description: "Launch backend for team members. Only `embedded` is supported.",
+			default: "embedded",
+		}),
+	),
 });
 
 // ─── Utility functions ──────────────────────────────────────────────────────
@@ -367,7 +419,17 @@ function safeReadJsonFile<T>(filePath: string, fallback: T): T {
 function loadRuntimeRegistry(registryPath: string): AgentRuntimeState[] {
 	const raw = safeReadJsonFile<unknown>(registryPath, []);
 	if (!Array.isArray(raw)) return [];
-	return raw.filter((item): item is AgentRuntimeState => Boolean(item && typeof item === "object" && typeof (item as AgentRuntimeState).runtimeId === "string"));
+	return raw
+		.filter((item): item is AgentRuntimeState => Boolean(item && typeof item === "object" && typeof (item as AgentRuntimeState).runtimeId === "string"))
+		.map((runtime) => {
+			const launchBackend = runtime.launchBackend ?? "embedded";
+			return {
+				...runtime,
+				launchBackend,
+				terminalState: runtime.terminalState ?? "closed",
+				awaitingUserInput: runtime.awaitingUserInput ?? false,
+			};
+		});
 }
 
 function saveRuntimeRegistry(registryPath: string, runtimes: AgentRuntimeState[]): void {
@@ -380,8 +442,9 @@ function buildRuntimeCompatibilityKey(params: {
 	cwd: string;
 	scope: "user" | "project" | "both";
 	mode: AgentDeployMode;
+	launchBackend: AgentLaunchBackend;
 }): string {
-	return [params.agent.name, params.agent.source, params.agent.model || "default", params.cwd, params.scope, params.mode].join("|");
+	return [params.agent.name, params.agent.source, params.agent.model || "default", params.cwd, params.scope, params.mode, params.launchBackend].join("|");
 }
 
 function pruneRuntimeRegistry(runtimes: AgentRuntimeState[]): AgentRuntimeState[] {
@@ -410,6 +473,7 @@ function reservePersistentRuntime(params: {
 	reuse: AgentReuseMode;
 	maxContextPercent: number;
 	contextWindow: number;
+	launchBackend: AgentLaunchBackend;
 }): { runtime: AgentRuntimeState; reused: boolean; reuseSummary: string; registryPath: string } {
 	const storage = getRuntimeStoragePaths(params.cwd);
 	const compatibilityKey = buildRuntimeCompatibilityKey(params);
@@ -455,6 +519,7 @@ function reservePersistentRuntime(params: {
 		cwd: params.cwd,
 		scope: params.scope,
 		model: params.agent.model,
+		launchBackend: params.launchBackend,
 		sessionFilePath: join(storage.sessionsDir, `${runtimeId}.jsonl`),
 		contextWindow: params.contextWindow,
 		contextTokens: 0,
@@ -469,6 +534,12 @@ function reservePersistentRuntime(params: {
 		compatibilityKey,
 		lastStopReason: undefined,
 		lastErrorMessage: undefined,
+		terminalState: "closed",
+		tmuxWindowId: undefined,
+		tmuxPaneId: undefined,
+		recoverableReason: undefined,
+		awaitingUserInput: false,
+		lastVisibleState: "running",
 	};
 	runtimes.push(runtime);
 	saveRuntimeRegistry(storage.registryPath, runtimes);
@@ -489,6 +560,12 @@ function finalizePersistentRuntime(params: {
 	errorMessage?: string;
 	status: RuntimeStatus;
 	busyDeploymentId?: string;
+	recoverableReason?: RecoverableReason;
+	awaitingUserInput?: boolean;
+	lastVisibleState?: DeploymentStatus;
+	terminalState?: TerminalState;
+	tmuxWindowId?: string;
+	tmuxPaneId?: string;
 }): AgentRuntimeState | undefined {
 	const runtimes = pruneRuntimeRegistry(loadRuntimeRegistry(params.registryPath));
 	const runtime = runtimes.find((item) => item.runtimeId === params.runtimeId);
@@ -500,6 +577,12 @@ function finalizePersistentRuntime(params: {
 	runtime.lastUsedAt = Date.now();
 	runtime.lastStopReason = params.stopReason;
 	runtime.lastErrorMessage = params.errorMessage;
+	runtime.recoverableReason = params.recoverableReason;
+	runtime.awaitingUserInput = params.awaitingUserInput ?? false;
+	runtime.lastVisibleState = params.lastVisibleState;
+	if (params.terminalState) runtime.terminalState = params.terminalState;
+	if (params.tmuxWindowId !== undefined) runtime.tmuxWindowId = params.tmuxWindowId;
+	if (params.tmuxPaneId !== undefined) runtime.tmuxPaneId = params.tmuxPaneId;
 	saveRuntimeRegistry(params.registryPath, runtimes);
 	return runtime;
 }
@@ -585,34 +668,6 @@ function getContextWindow(modelRef: string | undefined, ctx: ExtensionContext): 
 function getFallbackModel(primaryModel: string | undefined): string | undefined {
 	if (!primaryModel) return undefined;
 	return primaryModel === GLOBAL_FALLBACK_MODEL ? undefined : GLOBAL_FALLBACK_MODEL;
-}
-
-function isLikelyModelFailure(params: {
-	exitCode: number;
-	stopReason?: string;
-	errorMessage?: string;
-	stderr?: string;
-	finalText?: string;
-}): boolean {
-	if (params.stopReason === "abort") return false;
-	const haystack = [params.errorMessage, params.stderr, params.finalText].filter(Boolean).join("\n").toLowerCase();
-	if (!haystack.trim()) return params.exitCode !== 0;
-	return [
-		/insufficient balance/,
-		/billing/,
-		/quota/,
-		/rate limit/,
-		/too many requests/,
-		/model.*not found/,
-		/provider.*error/,
-		/authentication/,
-		/api key/,
-		/credit/,
-		/overloaded/,
-		/service unavailable/,
-		/context window/,
-		/invalid model/,
-	].some((pattern) => pattern.test(haystack));
 }
 
 function extractJsonObjectCandidates(text: string): string[] {
@@ -952,6 +1007,128 @@ function writePromptToTempFile(agentName: string, prompt: string): { dir: string
 	return { dir, filePath };
 }
 
+function shellEscape(value: string): string {
+	return `'${value.replace(/'/g, `'"'"'`)}'`;
+}
+
+function buildShellEnvPrefix(env: Record<string, string | undefined>): string {
+	const blocked = new Set([
+		"UID",
+		"EUID",
+		"PPID",
+		"SHELLOPTS",
+		"BASHOPTS",
+		"BASH_VERSINFO",
+		"BASH_VERSION",
+	]);
+	const assignments = Object.entries(env)
+		.filter(([key, value]) => Boolean(key) && !blocked.has(key) && value !== undefined)
+		.map(([key, value]) => `${key}=${shellEscape(String(value ?? ""))}`);
+	return assignments.length > 0 ? `env ${assignments.join(" ")}` : "env";
+}
+
+function runCommand(command: string, args: string[], cwd: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+	return new Promise((resolve) => {
+		const child = spawn(command, args, { cwd, stdio: ["ignore", "pipe", "pipe"], shell: false });
+		let stdout = "";
+		let stderr = "";
+		child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
+		child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+		child.once("error", (error) => resolve({ stdout, stderr: `${stderr}${error.message}`, exitCode: 1 }));
+		child.once("close", (code) => resolve({ stdout, stderr, exitCode: typeof code === "number" ? code : 1 }));
+	});
+}
+
+function hasTmuxPaneContext(): boolean {
+	return Boolean(process.env.TMUX?.trim() && process.env.TMUX_PANE?.trim());
+}
+
+function resolveLaunchBackend(_requested?: AgentLaunchBackend): AgentLaunchBackend {
+	return "embedded";
+}
+
+async function getCurrentTmuxWindowId(cwd: string): Promise<string> {
+	const paneId = process.env.TMUX_PANE?.trim();
+	if (!process.env.TMUX || !paneId) throw new Error("tmux-pane launch requires running inside tmux with TMUX_PANE set.");
+	const result = await runCommand("tmux", ["display-message", "-p", "-t", paneId, "#{window_id}"], cwd);
+	const windowId = result.stdout.trim();
+	if (result.exitCode !== 0 || !windowId) {
+		throw new Error((result.stderr || result.stdout || "failed to resolve current tmux window").trim());
+	}
+	return windowId;
+}
+
+async function createTmuxPane(params: {
+	cwd: string;
+	command: string;
+}): Promise<{ paneId: string; windowId: string }> {
+	const windowId = await getCurrentTmuxWindowId(params.cwd);
+	const split = await runCommand("tmux", ["split-window", "-d", "-P", "-F", "#{pane_id}\t#{window_id}", "-t", windowId, "-c", params.cwd, params.command], params.cwd);
+	if (split.exitCode !== 0) throw new Error((split.stderr || split.stdout || "tmux split-window failed").trim());
+	const [paneId, actualWindowId] = split.stdout.trim().split("\t");
+	if (!paneId) throw new Error("tmux split-window did not return pane id.");
+	await runCommand("tmux", ["set-option", "-pt", paneId, "remain-on-exit", "on"], params.cwd);
+	return { paneId, windowId: actualWindowId || windowId };
+}
+
+function classifyFailure(params: {
+	exitCode: number;
+	stopReason?: string;
+	errorMessage?: string;
+	stderr?: string;
+	finalText?: string;
+}): FailureKind {
+	if (params.exitCode === 0 && params.stopReason !== "error") return "task_error";
+	const haystack = [params.stopReason, params.errorMessage, params.stderr, params.finalText].filter(Boolean).join("\n").toLowerCase();
+	if (!haystack.trim()) return "task_error";
+	if (/tmux|split-window|session file|registry|orchestrator|spawn error|enoent/.test(haystack)) return "orchestrator_error";
+	if ([
+		/rate limit/,
+		/too many requests/,
+		/quota/,
+		/provider/,
+		/upstream/,
+		/overloaded/,
+		/capacity/,
+		/temporarily unavailable/,
+		/authentication/,
+		/api key/,
+		/model not available/,
+		/connection reset/,
+		/timeout/,
+		/\b5\d\d\b/,
+	].some((pattern) => pattern.test(haystack))) return "provider_error";
+	return "task_error";
+}
+
+function isLikelyRetryableModelFailure(params: {
+	exitCode: number;
+	stopReason?: string;
+	errorMessage?: string;
+	stderr?: string;
+	finalText?: string;
+}): boolean {
+	if (params.stopReason === "abort") return false;
+	const haystack = [params.errorMessage, params.stderr, params.finalText].filter(Boolean).join("\n").toLowerCase();
+	if (!haystack.trim()) return false;
+	return [
+		/model.*not found/,
+		/unknown model/,
+		/model.*does not exist/,
+	].some((pattern) => pattern.test(haystack));
+}
+
+function buildManualResumeRequiredText(details: ProviderStopDetails): string {
+	return [
+		"Manual resume required.",
+		`Subagent flow stopped because ${details.agent || "subagent"} emitted provider-stop.`,
+		details.summary ? `Reason: ${details.summary}` : undefined,
+		details.runtimeId ? `Runtime: ${details.runtimeId}` : undefined,
+		details.tmuxPaneId ? `Tmux pane: ${details.tmuxPaneId}` : undefined,
+		"Resume provider/runtime manually, then retry.",
+	].filter(Boolean).join("\n");
+}
+
 function extractAssistantText(message: any): string {
 	if (!message || !Array.isArray(message.content)) return "";
 	return message.content
@@ -1107,6 +1284,7 @@ export default function (pi: ExtensionAPI) {
 				agent: runtime.agent,
 				source: runtime.source,
 				mode: runtime.mode,
+				launchBackend: runtime.launchBackend,
 				model: runtime.model,
 				sessionFilePath: runtime.sessionFilePath,
 				contextWindow: runtime.contextWindow,
@@ -1121,21 +1299,48 @@ export default function (pi: ExtensionAPI) {
 				depth: runtime.depth,
 				lastStopReason: runtime.lastStopReason,
 				lastErrorMessage: runtime.lastErrorMessage,
+				terminalState: runtime.terminalState,
+				tmuxWindowId: runtime.tmuxWindowId,
+				tmuxPaneId: runtime.tmuxPaneId,
+				recoverableReason: runtime.recoverableReason,
+				awaitingUserInput: runtime.awaitingUserInput,
+				lastVisibleState: runtime.lastVisibleState,
 			}));
 	};
 
-	const refreshUI = (ctx: ExtensionContext) => {
-		pi.events.emit("subagents:deployments-changed", {
+	let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+	let pendingRefreshCtx: ExtensionContext | null = null;
+	const emitUISnapshot = (ctx: ExtensionContext) => {
+		pi.events.emit(SUBAGENTS_EVENT, {
 			deployments: promptDeployments.map((deployment) => ({ ...deployment })),
 			transcripts: snapshotTranscripts(),
 			runtimes: snapshotRuntimes(ctx),
 		});
 	};
+	const refreshUI = (ctx: ExtensionContext, immediate = false) => {
+		pendingRefreshCtx = ctx;
+		if (immediate) {
+			if (refreshTimer) {
+				clearTimeout(refreshTimer);
+				refreshTimer = null;
+			}
+			emitUISnapshot(ctx);
+			return;
+		}
+		if (refreshTimer) return;
+		refreshTimer = setTimeout(() => {
+			const nextCtx = pendingRefreshCtx;
+			refreshTimer = null;
+			pendingRefreshCtx = null;
+			if (nextCtx) emitUISnapshot(nextCtx);
+		}, SUBAGENT_UI_REFRESH_DEBOUNCE_MS);
+		refreshTimer.unref?.();
+	};
 	const resetPromptDeployments = (ctx: ExtensionContext) => {
 		promptDeployments = [];
 		deploymentCountsByAgent = new Map<string, number>();
 		deploymentTranscripts = new Map<string, DeploymentTranscriptEntry[]>();
-		refreshUI(ctx);
+		refreshUI(ctx, true);
 	};
 
 	const appendTranscript = (
@@ -1174,6 +1379,7 @@ export default function (pi: ExtensionAPI) {
 		task: string;
 		instanceNumber: number;
 		mode: AgentDeployMode;
+		launchBackend: AgentLaunchBackend;
 		runtimeId?: string;
 		reusedRuntime: boolean;
 		reuseSummary?: string;
@@ -1190,6 +1396,7 @@ export default function (pi: ExtensionAPI) {
 			tools: params.agent.tools,
 			model: params.agent.model,
 			mode: params.mode,
+			launchBackend: params.launchBackend,
 			runtimeId: params.runtimeId,
 			reusedRuntime: params.reusedRuntime,
 			reuseSummary: params.reuseSummary,
@@ -1223,6 +1430,7 @@ export default function (pi: ExtensionAPI) {
 		scope: "user" | "project" | "both";
 		mode: AgentDeployMode;
 		reuse: AgentReuseMode;
+		launchBackend: AgentLaunchBackend;
 		maxContextPercent: number;
 		signal?: AbortSignal;
 		onUpdate?: (payload: { text: string; details: AgentRunDetails }) => void;
@@ -1244,6 +1452,7 @@ export default function (pi: ExtensionAPI) {
 				reuse: params.reuse,
 				maxContextPercent: params.maxContextPercent,
 				contextWindow: baseContextWindow,
+				launchBackend: params.launchBackend,
 			});
 			reservedRuntime = reservation.runtime;
 			runtimeRegistryPath = reservation.registryPath;
@@ -1256,6 +1465,7 @@ export default function (pi: ExtensionAPI) {
 			task: params.task,
 			instanceNumber: params.instanceNumber,
 			mode: params.mode,
+			launchBackend: params.launchBackend,
 			runtimeId: reservedRuntime?.runtimeId,
 			reusedRuntime,
 			reuseSummary,
@@ -1302,6 +1512,7 @@ export default function (pi: ExtensionAPI) {
 				tools: deployment.tools,
 				model: deployment.model,
 				mode: deployment.mode,
+				launchBackend: deployment.launchBackend,
 				runtimeId: deployment.runtimeId,
 				reusedRuntime: deployment.reusedRuntime,
 				reuseSummary: deployment.reuseSummary,
@@ -1316,6 +1527,8 @@ export default function (pi: ExtensionAPI) {
 				exitCode,
 				stopReason,
 				errorMessage,
+				failureKind: deployment.failureKind,
+				recoverableReason: deployment.recoverableReason,
 				expectedArtifactTopicKey: deployment.expectedArtifactTopicKey,
 				persistedArtifactTopicKey: deployment.persistedArtifactTopicKey,
 				persistedToPddMemory: deployment.persistedToPddMemory,
@@ -1369,248 +1582,233 @@ export default function (pi: ExtensionAPI) {
 			args.push(`Task: ${params.task}`);
 
 			const invocation = getPiInvocation(args);
+			const env = {
+				...process.env,
+				[SUBAGENT_ENV_FLAG]: "1",
+				PI_SUBAGENT_RUNTIME_ID: deployment.runtimeId || "",
+				PI_SUBAGENT_RUNTIME_DEPTH: String(deployment.depth),
+				PI_SUBAGENT_PARENT_RUNTIME_ID: deployment.parentRuntimeId || "",
+			};
+			let stdoutBuffer = "";
+			let settled = false;
+			let aborted = false;
+			let completionEventSeen = false;
+			let completionTerminationTriggered = false;
+			let closeWatchdog: NodeJS.Timeout | undefined;
+			let completionWatchdog: NodeJS.Timeout | undefined;
+			let forceKillWatchdog: NodeJS.Timeout | undefined;
+			let pollInterval: NodeJS.Timeout | undefined;
+			let forceCompleteAttempt: (() => void) | undefined;
+			let stdoutOffset = 0;
+			let stderrOffset = 0;
+			const clearWatchdogs = () => {
+				if (closeWatchdog) clearTimeout(closeWatchdog);
+				if (completionWatchdog) clearTimeout(completionWatchdog);
+				if (forceKillWatchdog) clearTimeout(forceKillWatchdog);
+				if (pollInterval) clearInterval(pollInterval);
+			};
+			const resolveExitCode = (code: number | null | undefined): number => {
+				if (typeof code === "number") return code;
+				if (aborted) return 1;
+				if (completionEventSeen && !attemptErrorMessage) return 0;
+				return 1;
+			};
+			const parseLine = (line: string) => {
+				if (!line.trim()) return;
+				let event: any;
+				try {
+					event = JSON.parse(line);
+				} catch {
+					return;
+				}
+				if (event.type === "message_start" && event.message?.role === "assistant") {
+					deployment.currentActivity = "thinking...";
+					appendTranscript(params.ctx, deployment.deploymentId, { kind: "thinking", title: "Assistant thinking", ts: Date.now() });
+					emitProgress();
+				}
+				if (event.type === "message_update" && deployment.status === "running") {
+					deployment.currentActivity = "thinking...";
+					const preview = extractAssistantText(event.message);
+					if (preview) {
+						const clipped = previewTranscriptText(preview, 6, 700);
+						if (clipped && clipped !== lastAssistantPreview) {
+							lastAssistantPreview = clipped;
+							appendTranscript(params.ctx, deployment.deploymentId, { kind: "thinking", title: "Assistant update", text: clipped, ts: Date.now() });
+						}
+					}
+					refreshUI(params.ctx);
+					emitProgress();
+				}
+				if (event.type === "tool_execution_start") {
+					deployment.currentActivity = formatActivity(event.toolName, event.args);
+					appendTranscript(params.ctx, deployment.deploymentId, { kind: "tool_call", title: `Tool · ${event.toolName}`, text: previewTranscriptText(JSON.stringify(event.args ?? {}, null, 2), 10, 1000), toolName: event.toolName, ts: Date.now() });
+					emitProgress();
+				}
+				if (event.type === "message_end" && event.message?.role === "assistant") {
+					const text = extractAssistantText(event.message);
+					if (text) {
+						attemptFinalText = text;
+						finalText = text;
+						deployment.summary = truncate(text);
+						deployment.currentActivity = "final response";
+						appendTranscript(params.ctx, deployment.deploymentId, { kind: "assistant", title: "Assistant", text: previewTranscriptText(text, 18, 2200), ts: Date.now() });
+					}
+					deployment.turns += 1;
+					deployment.usage.turns += 1;
+					const usage = event.message.usage;
+					if (usage) {
+						deployment.usage.input += usage.input || 0;
+						deployment.usage.output += usage.output || 0;
+						deployment.usage.cacheRead += usage.cacheRead || 0;
+						deployment.usage.cacheWrite += usage.cacheWrite || 0;
+						deployment.usage.cost += usage.cost?.total || 0;
+						deployment.usage.contextTokens = usage.totalTokens || deployment.usage.contextTokens;
+						deployment.contextTokens = deployment.usage.contextTokens;
+					}
+					attemptStopReason = event.message.stopReason;
+					attemptErrorMessage = event.message.errorMessage;
+					stopReason = attemptStopReason;
+					errorMessage = attemptErrorMessage;
+					refreshUI(params.ctx);
+					emitProgress();
+				}
+				if (event.type === "agent_end") {
+					const messages = Array.isArray(event.messages) ? event.messages : [];
+					const lastAssistant = [...messages].reverse().find((message: any) => message?.role === "assistant");
+					const text = extractAssistantText(lastAssistant);
+					if (text) {
+						attemptFinalText = text;
+						finalText = text;
+						deployment.summary = truncate(text);
+						deployment.currentActivity = "final response";
+					}
+					if (lastAssistant?.usage) {
+						deployment.usage.contextTokens = lastAssistant.usage.totalTokens || deployment.usage.contextTokens;
+						deployment.contextTokens = deployment.usage.contextTokens;
+					}
+					attemptStopReason = lastAssistant?.stopReason ?? attemptStopReason;
+					attemptErrorMessage = lastAssistant?.errorMessage ?? attemptErrorMessage;
+					stopReason = attemptStopReason;
+					errorMessage = attemptErrorMessage;
+					completionEventSeen = !attemptErrorMessage && attemptStopReason !== "error";
+					appendTranscript(params.ctx, deployment.deploymentId, { kind: "status", title: `Agent end · stopReason=${attemptStopReason ?? "unknown"}`, ts: Date.now() });
+					refreshUI(params.ctx);
+					emitProgress();
+					if (completionEventSeen) armCompletionWatchdog();
+				}
+				if (event.type === "tool_execution_end" && deployment.status === "running") {
+					deployment.currentActivity = `finished ${event.toolName}`;
+					appendTranscript(params.ctx, deployment.deploymentId, { kind: "status", title: `Tool finished · ${event.toolName}`, ts: Date.now() });
+					emitProgress();
+				}
+				if (event.type === "message_end" && event.message?.role === "toolResult") {
+					const toolName = event.message.toolName;
+					const toolText = extractToolResultText(event.message);
+					appendTranscript(params.ctx, deployment.deploymentId, { kind: event.message.isError ? "error" : "tool_result", title: `Result · ${toolName}`, text: toolText ? previewTranscriptText(toolText, 14, 1800) : undefined, toolName, ts: Date.now() });
+					if (["memory_save", "memory_update", "memory_session_summary", "memory_summary_end", "engram_mem_save", "engram_mem_update", "engram_mem_session_summary"].includes(toolName)) {
+						deployment.pddMemoryWrites += 1;
+						deployment.persistedToPddMemory = !event.message.isError;
+						if (Array.isArray(event.message.content)) {
+							const contentText = event.message.content.filter((part: any) => part?.type === "text" && typeof part.text === "string").map((part: any) => part.text).join("\n");
+							const topicMatch = contentText.match(/topic_key[:\s]+([^\n]+)/i);
+							if (topicMatch?.[1]) deployment.persistedArtifactTopicKey = topicMatch[1].trim();
+						}
+						if (!deployment.persistedArtifactTopicKey) deployment.persistedArtifactTopicKey = deployment.expectedArtifactTopicKey;
+						refreshUI(params.ctx);
+						emitProgress();
+					}
+				}
+			};
+			const flushStdoutBuffer = () => {
+				if (stdoutBuffer.trim()) parseLine(stdoutBuffer);
+				stdoutBuffer = "";
+			};
+			const armCompletionWatchdog = () => {
+				if (!completionEventSeen || settled || aborted) return;
+				if (completionWatchdog) clearTimeout(completionWatchdog);
+				completionWatchdog = setTimeout(() => {
+					if (settled || aborted) return;
+					completionTerminationTriggered = true;
+					deployment.summary = truncate(`${deployment.summary || "final response received"} (forcing completion)`);
+					refreshUI(params.ctx);
+					emitProgress();
+					forceCompleteAttempt?.();
+				}, SUBAGENT_COMPLETION_STALL_TIMEOUT_MS);
+				completionWatchdog.unref?.();
+			};
+			const readIncremental = (filePath: string, offset: number): { text: string; nextOffset: number } => {
+				if (!existsSync(filePath)) return { text: "", nextOffset: offset };
+				const content = readFileSync(filePath, "utf8");
+				if (content.length <= offset) return { text: "", nextOffset: offset };
+				return { text: content.slice(offset), nextOffset: content.length };
+			};
 			attemptExitCode = await new Promise<number>((resolve) => {
-				const child = spawn(invocation.command, invocation.args, {
-					cwd: params.cwd,
-					env: {
-						...process.env,
-						[SUBAGENT_ENV_FLAG]: "1",
-						PI_SUBAGENT_RUNTIME_ID: deployment.runtimeId || "",
-						PI_SUBAGENT_RUNTIME_DEPTH: String(deployment.depth),
-						PI_SUBAGENT_PARENT_RUNTIME_ID: deployment.parentRuntimeId || "",
-					},
-					stdio: ["ignore", "pipe", "pipe"],
-					shell: false,
-				});
-				let stdoutBuffer = "";
-				let aborted = false;
-				let settled = false;
-				let closeWatchdog: NodeJS.Timeout | undefined;
-				let completionWatchdog: NodeJS.Timeout | undefined;
-				let forceKillWatchdog: NodeJS.Timeout | undefined;
-				let completionEventSeen = false;
-				let completionTerminationTriggered = false;
-
-				const clearWatchdogs = () => {
-					if (closeWatchdog) clearTimeout(closeWatchdog);
-					if (completionWatchdog) clearTimeout(completionWatchdog);
-					if (forceKillWatchdog) clearTimeout(forceKillWatchdog);
-					closeWatchdog = undefined;
-					completionWatchdog = undefined;
-					forceKillWatchdog = undefined;
-				};
-
-				const resolveExitCode = (code: number | null | undefined): number => {
-					if (typeof code === "number") return code;
-					if (aborted) return 1;
-					if (completionEventSeen && !attemptErrorMessage) return 0;
-					return 1;
-				};
-
-				const armCompletionWatchdog = () => {
-					if (!completionEventSeen || settled || aborted) return;
-					if (completionWatchdog) clearTimeout(completionWatchdog);
-					completionWatchdog = setTimeout(() => {
-						if (settled || aborted) return;
-						completionTerminationTriggered = true;
-						deployment.summary = truncate(`${deployment.summary || "final response received"} (forcing completion)`);
-						refreshUI(params.ctx);
-						emitProgress();
-						child.kill("SIGTERM");
-						forceKillWatchdog = setTimeout(() => {
-							if (!settled) child.kill("SIGKILL");
-						}, SUBAGENT_FORCE_KILL_TIMEOUT_MS);
-						forceKillWatchdog.unref?.();
-					}, SUBAGENT_COMPLETION_STALL_TIMEOUT_MS);
-					completionWatchdog.unref?.();
-				};
-
-				const parseLine = (line: string) => {
-					if (!line.trim()) return;
-					let event: any;
-					try {
-						event = JSON.parse(line);
-					} catch {
-						return;
-					}
-
-					if (event.type === "message_start" && event.message?.role === "assistant") {
-						deployment.currentActivity = "thinking...";
-						appendTranscript(params.ctx, deployment.deploymentId, { kind: "thinking", title: "Assistant thinking", ts: Date.now() });
-						emitProgress();
-					}
-
-					if (event.type === "message_update" && deployment.status === "running") {
-						deployment.currentActivity = "thinking...";
-						const preview = extractAssistantText(event.message);
-						if (preview) {
-							const clipped = previewTranscriptText(preview, 6, 700);
-							if (clipped && clipped !== lastAssistantPreview) {
-								lastAssistantPreview = clipped;
-								appendTranscript(params.ctx, deployment.deploymentId, {
-									kind: "thinking",
-									title: "Assistant update",
-									text: clipped,
-									ts: Date.now(),
-								});
-							}
-						}
-						refreshUI(params.ctx);
-						emitProgress();
-					}
-
-					if (event.type === "tool_execution_start") {
-						deployment.currentActivity = formatActivity(event.toolName, event.args);
-						appendTranscript(params.ctx, deployment.deploymentId, {
-							kind: "tool_call",
-							title: `Tool · ${event.toolName}`,
-							text: previewTranscriptText(JSON.stringify(event.args ?? {}, null, 2), 10, 1000),
-							toolName: event.toolName,
-							ts: Date.now(),
-						});
-						emitProgress();
-					}
-
-					if (event.type === "message_end" && event.message?.role === "assistant") {
-						const text = extractAssistantText(event.message);
-						if (text) {
-							attemptFinalText = text;
-							finalText = text;
-							deployment.summary = truncate(text);
-							deployment.currentActivity = "final response";
-							appendTranscript(params.ctx, deployment.deploymentId, {
-								kind: "assistant",
-								title: "Assistant",
-								text: previewTranscriptText(text, 18, 2200),
-								ts: Date.now(),
-							});
-						}
-						deployment.turns += 1;
-						deployment.usage.turns += 1;
-						const usage = event.message.usage;
-						if (usage) {
-							deployment.usage.input += usage.input || 0;
-							deployment.usage.output += usage.output || 0;
-							deployment.usage.cacheRead += usage.cacheRead || 0;
-							deployment.usage.cacheWrite += usage.cacheWrite || 0;
-							deployment.usage.cost += usage.cost?.total || 0;
-							deployment.usage.contextTokens = usage.totalTokens || deployment.usage.contextTokens;
-							deployment.contextTokens = deployment.usage.contextTokens;
-						}
-						attemptStopReason = event.message.stopReason;
-						attemptErrorMessage = event.message.errorMessage;
-						stopReason = attemptStopReason;
-						errorMessage = attemptErrorMessage;
-						refreshUI(params.ctx);
-						emitProgress();
-					}
-
-					if (event.type === "agent_end") {
-						const messages = Array.isArray(event.messages) ? event.messages : [];
-						const lastAssistant = [...messages].reverse().find((message: any) => message?.role === "assistant");
-						const text = extractAssistantText(lastAssistant);
-						if (text) {
-							attemptFinalText = text;
-							finalText = text;
-							deployment.summary = truncate(text);
-							deployment.currentActivity = "final response";
-						}
-						if (lastAssistant?.usage) {
-							deployment.usage.contextTokens = lastAssistant.usage.totalTokens || deployment.usage.contextTokens;
-							deployment.contextTokens = deployment.usage.contextTokens;
-						}
-						attemptStopReason = lastAssistant?.stopReason ?? attemptStopReason;
-						attemptErrorMessage = lastAssistant?.errorMessage ?? attemptErrorMessage;
-						stopReason = attemptStopReason;
-						errorMessage = attemptErrorMessage;
-						completionEventSeen = !attemptErrorMessage && attemptStopReason !== "error";
-						appendTranscript(params.ctx, deployment.deploymentId, {
-							kind: "status",
-							title: `Agent end · stopReason=${attemptStopReason ?? "unknown"}`,
-							ts: Date.now(),
-						});
-						refreshUI(params.ctx);
-						emitProgress();
-						if (completionEventSeen) armCompletionWatchdog();
-					}
-
-					if (event.type === "tool_execution_end" && deployment.status === "running") {
-						deployment.currentActivity = `finished ${event.toolName}`;
-						appendTranscript(params.ctx, deployment.deploymentId, {
-							kind: "status",
-							title: `Tool finished · ${event.toolName}`,
-							ts: Date.now(),
-						});
-						emitProgress();
-					}
-
-					if (event.type === "message_end" && event.message?.role === "toolResult") {
-						const toolName = event.message.toolName;
-						const toolText = extractToolResultText(event.message);
-						appendTranscript(params.ctx, deployment.deploymentId, {
-							kind: event.message.isError ? "error" : "tool_result",
-							title: `Result · ${toolName}`,
-							text: toolText ? previewTranscriptText(toolText, 14, 1800) : undefined,
-							toolName,
-							ts: Date.now(),
-						});
-						if (
-							toolName === "memory_save" ||
-							toolName === "memory_update" ||
-							toolName === "memory_session_summary" ||
-							toolName === "memory_summary_end" ||
-							toolName === "engram_mem_save" ||
-							toolName === "engram_mem_update" ||
-							toolName === "engram_mem_session_summary"
-						) {
-							deployment.pddMemoryWrites += 1;
-							deployment.persistedToPddMemory = !event.message.isError;
-							if (Array.isArray(event.message.content)) {
-								const contentText = event.message.content
-									.filter((part: any) => part?.type === "text" && typeof part.text === "string")
-									.map((part: any) => part.text)
-									.join("\n");
-								const topicMatch = contentText.match(/topic_key[:\s]+([^\n]+)/i);
-								if (topicMatch?.[1]) deployment.persistedArtifactTopicKey = topicMatch[1].trim();
-							}
-							if (!deployment.persistedArtifactTopicKey) {
-								deployment.persistedArtifactTopicKey = deployment.expectedArtifactTopicKey;
-							}
-							refreshUI(params.ctx);
-							emitProgress();
-						}
-					}
-				};
-
-				const flushStdoutBuffer = () => {
-					if (stdoutBuffer.trim()) parseLine(stdoutBuffer);
-					stdoutBuffer = "";
-				};
-
-				const abortChild = () => {
-					aborted = true;
-					child.kill("SIGTERM");
-					setTimeout(() => {
-						if (!child.killed) child.kill("SIGKILL");
-					}, SUBAGENT_FORCE_KILL_TIMEOUT_MS).unref?.();
-				};
-
 				const finalize = (code: number) => {
 					if (settled) return;
 					settled = true;
 					clearWatchdogs();
-					params.signal?.removeEventListener("abort", abortChild);
 					flushStdoutBuffer();
 					if (aborted) {
 						deployment.summary = "aborted";
 						deployment.currentActivity = "aborted";
 					}
-					if (completionTerminationTriggered && !aborted && code === 0) {
-						deployment.summary = truncate(attemptFinalText || deployment.summary || "completed");
-					}
+					if (completionTerminationTriggered && !aborted && code === 0) deployment.summary = truncate(attemptFinalText || deployment.summary || "completed");
 					resolve(code);
 				};
-
+				forceCompleteAttempt = () => finalize(0);
+				if (false) {
+					const logDir = ensureDir(join(getRuntimeStoragePaths(params.cwd).sessionsDir, `${deployment.runtimeId || sanitizeFileLabel(deployment.deploymentId)}-logs`));
+					const stdoutPath = join(logDir, "stdout.jsonl");
+					const stderrPath = join(logDir, "stderr.log");
+					const exitPath = join(logDir, "exit.code");
+					const envPrefix = buildShellEnvPrefix(env);
+					const shellCommand = `${envPrefix} bash -lc ${shellEscape(`${shellEscape(invocation.command)} ${invocation.args.map(shellEscape).join(" ")} > ${shellEscape(stdoutPath)} 2> ${shellEscape(stderrPath)}; code=$?; printf '%s\n' "$code" > ${shellEscape(exitPath)}`)}`;
+					createTmuxPane({ cwd: params.cwd, command: shellCommand }).then(({ paneId, windowId }) => {
+						deployment.currentActivity = `running in ${paneId}`;
+						deployment.summary = `running in tmux pane ${paneId}`;
+						if (deployment.runtimeId && runtimeRegistryPath) {
+							finalizePersistentRuntime({ registryPath: runtimeRegistryPath, runtimeId: deployment.runtimeId, contextTokens: deployment.contextTokens, contextWindow: deployment.contextWindow, status: "busy", terminalState: "attached", tmuxPaneId: paneId, tmuxWindowId: windowId, lastVisibleState: "running" });
+						}
+						refreshUI(params.ctx);
+						emitProgress();
+						pollInterval = setInterval(() => {
+							const stdoutRead = readIncremental(stdoutPath, stdoutOffset);
+							stdoutOffset = stdoutRead.nextOffset;
+							if (stdoutRead.text) {
+								stdoutBuffer += stdoutRead.text;
+								const lines = stdoutBuffer.split("\n");
+								stdoutBuffer = lines.pop() || "";
+								for (const line of lines) parseLine(line);
+								if (completionEventSeen) armCompletionWatchdog();
+							}
+							const stderrRead = readIncremental(stderrPath, stderrOffset);
+							stderrOffset = stderrRead.nextOffset;
+							if (stderrRead.text) {
+								attemptStderr += stderrRead.text;
+								appendTranscript(params.ctx, deployment.deploymentId, { kind: "stderr", title: "stderr", text: previewTranscriptText(stderrRead.text, 10, 1200), ts: Date.now() });
+							}
+							if (existsSync(exitPath)) {
+								const code = Number.parseInt(readFileSync(exitPath, "utf8").trim() || "1", 10);
+								finalize(resolveExitCode(Number.isFinite(code) ? code : 1));
+							}
+						}, 250);
+						pollInterval.unref?.();
+					}).catch((error) => {
+						attemptErrorMessage = getErrorMessage(error);
+						attemptStderr = attemptErrorMessage;
+						appendTranscript(params.ctx, deployment.deploymentId, { kind: "error", title: "tmux launch error", text: attemptErrorMessage, ts: Date.now() });
+						finalize(1);
+					});
+					if (params.signal?.aborted) aborted = true;
+					else params.signal?.addEventListener("abort", () => { aborted = true; }, { once: true });
+					return;
+				}
+				const child = spawn(invocation.command, invocation.args, { cwd: params.cwd, env, stdio: ["ignore", "pipe", "pipe"], shell: false });
+				const abortChild = () => {
+					aborted = true;
+					child.kill("SIGTERM");
+					setTimeout(() => { if (!child.killed) child.kill("SIGKILL"); }, SUBAGENT_FORCE_KILL_TIMEOUT_MS).unref?.();
+				};
 				child.stdout.on("data", (chunk) => {
 					stdoutBuffer += chunk.toString();
 					const lines = stdoutBuffer.split("\n");
@@ -1618,54 +1816,26 @@ export default function (pi: ExtensionAPI) {
 					for (const line of lines) parseLine(line);
 					if (completionEventSeen) armCompletionWatchdog();
 				});
-
 				child.stderr.on("data", (chunk) => {
 					attemptStderr += chunk.toString();
-					appendTranscript(params.ctx, deployment.deploymentId, {
-						kind: "stderr",
-						title: "stderr",
-						text: previewTranscriptText(chunk.toString(), 10, 1200),
-						ts: Date.now(),
-					});
+					appendTranscript(params.ctx, deployment.deploymentId, { kind: "stderr", title: "stderr", text: previewTranscriptText(chunk.toString(), 10, 1200), ts: Date.now() });
 					if (completionEventSeen) armCompletionWatchdog();
 				});
-
-				child.once("close", (code) => {
-					finalize(resolveExitCode(code));
-				});
-
+				child.once("close", (code) => finalize(resolveExitCode(code)));
 				child.once("exit", (code) => {
 					closeWatchdog = setTimeout(() => finalize(resolveExitCode(code)), 1_000);
 					closeWatchdog.unref?.();
 				});
-
 				child.once("error", (error) => {
 					attemptErrorMessage = error.message;
-					appendTranscript(params.ctx, deployment.deploymentId, {
-						kind: "error",
-						title: "Spawn error",
-						text: error.message,
-						ts: Date.now(),
-					});
+					appendTranscript(params.ctx, deployment.deploymentId, { kind: "error", title: "Spawn error", text: error.message, ts: Date.now() });
 					finalize(1);
 				});
-
 				if (params.signal?.aborted) abortChild();
 				else params.signal?.addEventListener("abort", abortChild, { once: true });
 			});
-
-			appendTranscript(params.ctx, deployment.deploymentId, {
-				kind: "status",
-				title: `Attempt exit ${attemptExitCode}`,
-				ts: Date.now(),
-			});
-			return {
-				finalText: attemptFinalText,
-				stopReason: attemptStopReason,
-				errorMessage: attemptErrorMessage,
-				stderr: attemptStderr,
-				exitCode: attemptExitCode,
-			};
+			appendTranscript(params.ctx, deployment.deploymentId, { kind: "status", title: `Attempt exit ${attemptExitCode}`, ts: Date.now() });
+			return { finalText: attemptFinalText, stopReason: attemptStopReason, errorMessage: attemptErrorMessage, stderr: attemptStderr, exitCode: attemptExitCode };
 		};
 
 		try {
@@ -1685,7 +1855,7 @@ export default function (pi: ExtensionAPI) {
 				const shouldRetryWithFallback =
 					Boolean(deployment.fallbackModel) &&
 					exitCode !== 0 &&
-					isLikelyModelFailure({ exitCode, stopReason, errorMessage, stderr, finalText });
+					isLikelyRetryableModelFailure({ exitCode, stopReason, errorMessage, stderr, finalText });
 
 				if (shouldRetryWithFallback && deployment.fallbackModel) {
 					deployment.fallbackUsed = true;
@@ -1716,7 +1886,21 @@ export default function (pi: ExtensionAPI) {
 					stopReason = "awaiting_user_input_deferred";
 					errorMessage = "Subagent requested user input during non-interactive team execution.";
 				} else if (questionPayload.question) {
+					deployment.status = "awaiting_user_input";
 					deployment.summary = truncate(questionPayload.executive_summary || questionPayload.question);
+					deployment.currentActivity = "awaiting user input";
+					if (deployment.runtimeId && runtimeRegistryPath) {
+						finalizePersistentRuntime({
+							registryPath: runtimeRegistryPath,
+							runtimeId: deployment.runtimeId,
+							contextTokens: deployment.usage.contextTokens,
+							contextWindow: deployment.contextWindow,
+							status: "idle",
+							awaitingUserInput: true,
+							lastVisibleState: "awaiting_user_input",
+							recoverableReason: undefined,
+						});
+					}
 					refreshUI(params.ctx);
 					emitProgress();
 					userResponse = await relayAwaitingUserInput(questionPayload, params.ctx);
@@ -1764,8 +1948,18 @@ export default function (pi: ExtensionAPI) {
 		deployment.exitCode = exitCode;
 		deployment.stopReason = stopReason;
 		deployment.errorMessage = errorMessage || (stderr.trim() ? truncate(stderr.trim(), 180) : undefined);
-		deployment.status = exitCode === 0 && stopReason !== "error" ? "done" : "error";
-		deployment.currentActivity = deployment.status === "done" ? "completed" : "failed";
+		deployment.failureKind = classifyFailure({ exitCode, stopReason, errorMessage: deployment.errorMessage, stderr, finalText });
+		deployment.recoverableReason = deployment.failureKind === "provider_error" ? "provider_error" : undefined;
+		deployment.status = exitCode === 0 && stopReason !== "error"
+			? "done"
+			: deployment.failureKind === "provider_error"
+				? "paused_provider_error"
+				: "error";
+		deployment.currentActivity = deployment.status === "done"
+			? "completed"
+			: deployment.status === "paused_provider_error"
+				? "paused · provider error"
+				: "failed";
 
 		if (deployment.runtimeId && runtimeRegistryPath) {
 			const runtime = finalizePersistentRuntime({
@@ -1776,6 +1970,10 @@ export default function (pi: ExtensionAPI) {
 				stopReason,
 				errorMessage: deployment.errorMessage,
 				status: "idle",
+				recoverableReason: deployment.recoverableReason,
+				awaitingUserInput: false,
+				lastVisibleState: deployment.status,
+				terminalState: "closed",
 			});
 			if (runtime) {
 				deployment.contextTokens = runtime.contextTokens;
@@ -1783,8 +1981,25 @@ export default function (pi: ExtensionAPI) {
 				deployment.reuseSummary = deployment.reuseSummary || `runtime ${runtime.runtimeId} idle`;
 			}
 		}
+		if (deployment.failureKind === "provider_error") {
+			const providerStopDetails: ProviderStopDetails = {
+				deploymentId: deployment.deploymentId,
+				runtimeId: deployment.runtimeId,
+				agent: deployment.agent,
+				summary: deployment.errorMessage || deployment.summary,
+				stopReason,
+				failureKind: "provider_error",
+				recoverableReason: deployment.recoverableReason,
+			};
+			if (deployment.runtimeId && runtimeRegistryPath) {
+				const runtime = pruneRuntimeRegistry(loadRuntimeRegistry(runtimeRegistryPath)).find((item) => item.runtimeId === deployment.runtimeId);
+				providerStopDetails.tmuxPaneId = runtime?.tmuxPaneId;
+				providerStopDetails.tmuxWindowId = runtime?.tmuxWindowId;
+			}
+			pi.events.emit(SUBAGENT_PROVIDER_STOP_EVENT, providerStopDetails);
+		}
 
-		const failureReport = deployment.status === "error"
+		const failureReport = deployment.status === "error" || deployment.status === "paused_provider_error"
 			? buildSubagentFailureReport({
 				agent: deployment.agent,
 				deploymentId: deployment.deploymentId,
@@ -1800,15 +2015,15 @@ export default function (pi: ExtensionAPI) {
 			: undefined;
 		if (failureReport) finalText = failureReport;
 		deployment.summary = truncate(
-			deployment.status === "error"
-				? deployment.errorMessage || stderr.trim() || "subagent failed"
+			deployment.status === "error" || deployment.status === "paused_provider_error"
+				? deployment.errorMessage || stderr.trim() || (deployment.status === "paused_provider_error" ? "provider paused" : "subagent failed")
 				: finalText || deployment.summary || "finished without text output",
 		);
 		appendTranscript(
 			params.ctx,
 			deployment.deploymentId,
 			{
-				kind: deployment.status === "error" ? "error" : "status",
+				kind: deployment.status === "error" || deployment.status === "paused_provider_error" ? "error" : "status",
 				title: `Status · ${deployment.status}`,
 				text: [stopReason ? `stop reason: ${stopReason}` : undefined, deployment.errorMessage ? `error: ${deployment.errorMessage}` : undefined].filter(Boolean).join("\n") || undefined,
 				ts: Date.now(),
@@ -1825,6 +2040,7 @@ export default function (pi: ExtensionAPI) {
 			tools: deployment.tools,
 			model: deployment.model,
 			mode: deployment.mode,
+			launchBackend: deployment.launchBackend,
 			runtimeId: deployment.runtimeId,
 			reusedRuntime: deployment.reusedRuntime,
 			reuseSummary: deployment.reuseSummary,
@@ -1839,6 +2055,8 @@ export default function (pi: ExtensionAPI) {
 			exitCode,
 			stopReason,
 			errorMessage: deployment.errorMessage,
+			failureKind: deployment.failureKind,
+			recoverableReason: deployment.recoverableReason,
 			expectedArtifactTopicKey: deployment.expectedArtifactTopicKey,
 			persistedArtifactTopicKey: deployment.persistedArtifactTopicKey,
 			persistedToPddMemory: deployment.persistedToPddMemory,
@@ -1853,13 +2071,13 @@ export default function (pi: ExtensionAPI) {
 			userResponse,
 		};
 
-		const outputText = deployment.status === "error"
+		const outputText = deployment.status === "error" || deployment.status === "paused_provider_error"
 			? failureReport || finalText || deployment.errorMessage || stderr.trim() || `${deployment.agent} failed.`
 			: deployment.fallbackUsed && finalText
 				? `Fallback ${deployment.primaryModel} → ${deployment.model} succeeded.
 ${finalText}`
 				: finalText || deployment.summary;
-		return { text: outputText, details, isError: deployment.status === "error" };
+		return { text: outputText, details, isError: deployment.status === "error" || deployment.status === "paused_provider_error" };
 	}
 
 	function emitQueryTeamProgress(onUpdate: any, details: QueryTeamDetails) {
@@ -1893,6 +2111,7 @@ ${finalText}`
 			const execution = params.execution ?? "parallel";
 			const continueOnError = params.continueOnError ?? true;
 			const runtimeCwd = params.cwd || ctx.cwd;
+			const launchBackend = resolveLaunchBackend(params.launchBackend);
 			const team = findTeam(runtimeCwd, params.team, scope);
 			if (!team) {
 				const availableTeams = discoverTeams(runtimeCwd, scope).map((item) => item.name).join(", ");
@@ -1937,6 +2156,7 @@ ${finalText}`
 				team: team.name,
 				execution,
 				scope,
+				launchBackend,
 				resolvedMembers: team.members,
 				requestedQueries,
 				completed: 0,
@@ -1947,6 +2167,17 @@ ${finalText}`
 				teamsFilePath: team.filePath,
 			};
 			emitQueryTeamProgress(onUpdate, details);
+			const localAbort = new AbortController();
+			const forwardAbort = () => localAbort.abort(signal?.reason ?? new Error("query_team aborted"));
+			if (signal?.aborted) forwardAbort();
+			else signal?.addEventListener("abort", forwardAbort, { once: true });
+			let providerStopDetails: ProviderStopDetails | undefined;
+			const onProviderStop = (data: ProviderStopDetails) => {
+				if (providerStopDetails) return;
+				providerStopDetails = data;
+				localAbort.abort(new Error(data?.summary || "provider error from subagent"));
+			};
+			pi.events.on(SUBAGENT_PROVIDER_STOP_EVENT, onProviderStop);
 
 			const runOne = async (query: ExpandedTeamQuery, index: number): Promise<QueryTeamResultItem> => {
 				const memberAgent = agentCatalog.get(query.member)!;
@@ -1960,8 +2191,9 @@ ${finalText}`
 					scope,
 					mode: "ephemeral",
 					reuse: "prefer",
+					launchBackend,
 					maxContextPercent: 75,
-					signal,
+					signal: localAbort.signal,
 					onUpdate: () => emitQueryTeamProgress(onUpdate, details),
 					ctx,
 					relayUserInput: execution === "serial",
@@ -1988,10 +2220,11 @@ ${finalText}`
 			const acceptResult = (result: QueryTeamResultItem) => {
 				details.results.push(result);
 				details.completed += 1;
-				if (result.status === "error") details.failed += 1;
+				if (result.status === "error" || result.status === "paused_provider_error") details.failed += 1;
 				emitQueryTeamProgress(onUpdate, details);
 			};
 
+			try {
 			if (execution === "parallel") {
 				const settled = await Promise.allSettled(requestedQueries.map((query, index) => runOne(query, index)));
 				for (let i = 0; i < settled.length; i += 1) {
@@ -2046,20 +2279,32 @@ ${finalText}`
 				const icon = result.status === "done" ? "✓" : "✗";
 				return `${icon} ${result.member}: ${result.summary}`;
 			});
+			if (providerStopDetails) {
+				return {
+					content: [{ type: "text", text: [statusLine, buildManualResumeRequiredText(providerStopDetails), ...resultLines].filter(Boolean).join("\n\n") }],
+					isError: true,
+					details: { ...details, providerStopDetails },
+				};
+			}
 			return {
 				content: [{ type: "text", text: [statusLine, ...resultLines].join("\n") }],
 				isError: details.results.length === 0 || details.failed === details.results.length,
 				details,
 			};
+			} finally {
+				signal?.removeEventListener("abort", forwardAbort);
+				pi.events.off?.(SUBAGENT_PROVIDER_STOP_EVENT, onProviderStop);
+			}
 		},
 
 		renderCall(args, theme) {
 			const execution = args.execution ?? "parallel";
+			const launchBackend = resolveLaunchBackend(args.launchBackend);
 			const queries = (args.queries || []) as QueryTeamQuery[];
 			return new Text(
 				theme.fg("toolTitle", theme.bold("query_team ")) +
 				theme.fg("accent", args.team || "unknown") +
-				theme.fg("muted", ` [${execution}]`) +
+				theme.fg("muted", ` [${execution} · ${launchBackend}]`) +
 				theme.fg("dim", ` · ${queries.length} quer${queries.length === 1 ? "y" : "ies"}`),
 				0,
 				0,
@@ -2076,7 +2321,7 @@ ${finalText}`
 				theme.fg(result.isError ? "error" : "success", result.isError ? "✗" : "✓") +
 				" " +
 				theme.fg("toolTitle", theme.bold(`team ${details.team}`)) +
-				theme.fg("muted", ` · ${details.execution} · ${details.completed}/${details.requestedQueries.length} completed · ${details.failed} failed`);
+				theme.fg("muted", ` · ${details.execution} · ${details.launchBackend} · ${details.completed}/${details.requestedQueries.length} completed · ${details.failed} failed`);
 			const meta = theme.fg("muted", `resolved: ${details.resolvedMembers.join(", ")} · teams: ${details.teamsFilePath ?? "n/a"}`);
 			const members = details.results.map((item) => `${item.status === "done" ? "✓" : "✗"} ${item.member} · ${item.summary}`).join("\n");
 			return new Text([header, meta, members || "(no results)"].join("\n"), 0, 0);
@@ -2103,6 +2348,7 @@ ${finalText}`
 			const runtimeCwd = params.cwd || ctx.cwd;
 			const mode = params.mode ?? "ephemeral";
 			const reuse = params.reuse ?? "prefer";
+			const launchBackend = resolveLaunchBackend(params.launchBackend);
 			const maxContextPercent = Math.max(1, Math.min(100, params.maxContextPercent ?? 75));
 			const agent = findAgent(runtimeCwd, params.agent, scope);
 			if (!agent) {
@@ -2114,6 +2360,17 @@ ${finalText}`
 				};
 			}
 			const instanceNumber = nextDeploymentNumber(agent.name);
+			const localAbort = new AbortController();
+			const forwardAbort = () => localAbort.abort(signal?.reason ?? new Error("deploy_agent aborted"));
+			if (signal?.aborted) forwardAbort();
+			else signal?.addEventListener("abort", forwardAbort, { once: true });
+			let providerStopDetails: ProviderStopDetails | undefined;
+			const onProviderStop = (data: ProviderStopDetails) => {
+				if (providerStopDetails) return;
+				providerStopDetails = data;
+				localAbort.abort(new Error(data?.summary || "provider error from subagent"));
+			};
+			pi.events.on(SUBAGENT_PROVIDER_STOP_EVENT, onProviderStop);
 			try {
 				const run = await runAgentTask({
 					agent,
@@ -2124,12 +2381,20 @@ ${finalText}`
 					scope,
 					mode,
 					reuse,
+					launchBackend,
 					maxContextPercent,
-					signal,
+					signal: localAbort.signal,
 					onUpdate: onUpdate ? ({ text, details }) => onUpdate({ content: [{ type: "text", text }], details }) : undefined,
 					ctx,
 					relayUserInput: true,
 				});
+				if (providerStopDetails) {
+					return {
+						content: [{ type: "text", text: buildManualResumeRequiredText(providerStopDetails) }],
+						isError: true,
+						details: { ...run.details, providerStopDetails },
+					};
+				}
 				return {
 					content: [{ type: "text", text: run.text }],
 					isError: run.isError,
@@ -2137,17 +2402,22 @@ ${finalText}`
 				};
 			} catch (error) {
 				return {
-					content: [{ type: "text", text: getErrorMessage(error) }],
+					content: [{ type: "text", text: providerStopDetails ? buildManualResumeRequiredText(providerStopDetails) : getErrorMessage(error) }],
 					isError: true,
 					details: {
 						agent: agent.name,
 						requestedAgent: params.agent,
 						mode,
 						reuse,
+						launchBackend,
 						maxContextPercent,
 						errorMessage: getErrorMessage(error),
+						providerStopDetails,
 					},
 				};
+			} finally {
+				signal?.removeEventListener("abort", forwardAbort);
+				pi.events.off?.(SUBAGENT_PROVIDER_STOP_EVENT, onProviderStop);
 			}
 		},
 
@@ -2156,10 +2426,11 @@ ${finalText}`
 			const taskPreview = truncate(args.task || "", 72);
 			const scope = args.scope ?? "both";
 			const mode = args.mode ?? "ephemeral";
+			const launchBackend = resolveLaunchBackend(args.launchBackend);
 			const header =
 				theme.fg("toolTitle", theme.bold("deploy_agent ")) +
 				theme.fg("accent", args.agent || "unknown") +
-				theme.fg("muted", ` [${scope} · ${mode}]`);
+				theme.fg("muted", ` [${scope} · ${mode} · ${launchBackend}]`);
 			const taskLine = taskPreview ? `  ${theme.fg("dim", taskPreview)}` : undefined;
 			return createToolShell([header, taskLine], theme, {
 				isPartial: context.isPartial,
@@ -2172,10 +2443,11 @@ ${finalText}`
 			const taskPreview = truncate(context.args.task || "", 72);
 			const scope = context.args.scope ?? "both";
 			const mode = context.args.mode ?? "ephemeral";
+			const launchBackend = resolveLaunchBackend(context.args.launchBackend);
 			const header =
 				theme.fg("toolTitle", theme.bold("deploy_agent ")) +
 				theme.fg("accent", context.args.agent || "unknown") +
-				theme.fg("muted", ` [${scope} · ${mode}]`);
+				theme.fg("muted", ` [${scope} · ${mode} · ${launchBackend}]`);
 			const taskLine = taskPreview ? `  ${theme.fg("dim", taskPreview)}` : undefined;
 			const details = result.details as AgentRunDetails | undefined;
 			if (!details) {
@@ -2186,9 +2458,10 @@ ${finalText}`
 				});
 			}
 			const percent = details.contextWindow > 0 ? (details.usage.contextTokens / details.contextWindow) * 100 : 0;
-			const statusColor = details.status === "done" ? "success" : details.status === "error" ? "error" : "warning";
+			const statusColor = details.status === "done" ? "success" : details.status === "error" || details.status === "paused_provider_error" ? "error" : "warning";
+			const statusIcon = details.status === "done" ? "✓" : details.status === "error" ? "✗" : details.status === "paused_provider_error" ? "⏸" : details.status === "awaiting_user_input" ? "?" : "⏳";
 			const statusLine =
-				theme.fg(statusColor, details.status === "done" ? "✓" : details.status === "error" ? "✗" : "⏳") +
+				theme.fg(statusColor, statusIcon) +
 				" " +
 				theme.fg("toolTitle", theme.bold(details.deploymentId)) +
 				theme.fg("muted", ` · ${details.agent} (${details.source})`);

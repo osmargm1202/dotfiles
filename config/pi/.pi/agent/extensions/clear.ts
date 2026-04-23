@@ -7,20 +7,18 @@ export default function (pi: ExtensionAPI) {
 			await ctx.waitForIdle();
 
 			const currentSessionFile = ctx.sessionManager.getSessionFile();
+			const successMessage = currentSessionFile
+				? "Started a fresh session. Previous session preserved for /sessions recovery."
+				: "Started a fresh session";
 			const result = await ctx.newSession({
 				parentSession: currentSessionFile,
+				withSession: async (replacementCtx) => {
+					replacementCtx.ui.notify(successMessage, "success");
+				},
 			});
 			if (result.cancelled) {
 				ctx.ui.notify("Clear cancelled", "info");
-				return;
 			}
-
-			ctx.ui.notify(
-				currentSessionFile
-					? "Started a fresh session. Previous session preserved for /sessions recovery."
-					: "Started a fresh session",
-				"success",
-			);
 		},
 	});
 }

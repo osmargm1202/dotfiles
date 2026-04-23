@@ -107,13 +107,15 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
-			const result = await ctx.switchSession(selectedSession);
+			const recoveredMessage = `Recovered session: ${basename(selectedSession)}`;
+			const result = await ctx.switchSession(selectedSession, {
+				withSession: async (replacementCtx) => {
+					replacementCtx.ui.notify(recoveredMessage, "success");
+				},
+			});
 			if (result.cancelled) {
 				ctx.ui.notify("Session switch cancelled", "info");
-				return;
 			}
-
-			ctx.ui.notify(`Recovered session: ${basename(selectedSession)}`, "success");
 		},
 	});
 }
