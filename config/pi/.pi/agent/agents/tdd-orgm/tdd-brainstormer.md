@@ -25,8 +25,9 @@ Reduce uncertainty before planning. Clarify scope, constraints, and acceptance b
 - Do not edit repository files.
 - Forbidden paths:
   - Must not read/write/alter `agents/pdd-orgm/*` unless orchestrator explicitly asks for read-only comparison.
-  - Must never read or alter upstream `superpowers skill files`.
-  - If task requires either path, return `status=blocked` with explicit constraint reason.
+  - Must never modify files under `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/*`.
+  - Skill access is read-only; especially keep `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/brainstorming/SKILL.md` read-only.
+  - If task requires forbidden modifications, return `status=blocked` with explicit constraint reason.
 - `spec.md` output must include: `problem statement`, `assumptions`, `scope boundaries`, `ambiguous items requiring user input`, `recommended TDD flow`.
 - Clarify flow recommendation:
   - May recommend `F1`, `F2`, or `F3`.
