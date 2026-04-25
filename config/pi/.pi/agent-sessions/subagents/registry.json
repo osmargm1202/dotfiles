@@ -1,0 +1,26 @@
+[
+  {
+    "runtimeId": "tui-expert-1777108545022-bztshc",
+    "agent": "tui-expert",
+    "source": "user",
+    "mode": "persistent",
+    "cwd": "/home/osmarg/Hobby/dotfiles/config/pi/.pi/agent",
+    "scope": "both",
+    "launchBackend": "embedded",
+    "sessionFilePath": "/home/osmarg/Hobby/dotfiles/config/pi/.pi/agent-sessions/subagents/tui-expert-1777108545022-bztshc.jsonl",
+    "ownerSessionFile": "/home/osmarg/.pi/agent/sessions/--home-osmarg-Hobby-dotfiles-config-pi-.pi-agent--/2026-04-25T07-21-08-364Z_019dc383-800c-75a6-bed7-230c95b6b51b.jsonl",
+    "contextWindow": 200000,
+    "contextTokens": 39047,
+    "status": "idle",
+    "lastUsedAt": 1777109498175,
+    "createdAt": 1777108545022,
+    "runs": 2,
+    "reuseCount": 1,
+    "depth": 1,
+    "compatibilityKey": "tui-expert|user|default|/home/osmarg/Hobby/dotfiles/config/pi/.pi/agent|both|persistent|embedded",
+    "terminalState": "closed",
+    "awaitingUserInput": false,
+    "lastVisibleState": "done",
+    "lastStopReason": "stop"
+  }
+]

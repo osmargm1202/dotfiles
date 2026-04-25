@@ -1,17 +1,16 @@
 import { spawn } from "node:child_process";
-import type { ExtensionAPI, ExtensionContext, KeybindingsManager } from "@mariozechner/pi-coding-agent";
-import { CustomEditor } from "@mariozechner/pi-coding-agent";
-import type { EditorTheme, TUI } from "@mariozechner/pi-tui";
+import { stat } from "node:fs/promises";
+import { join } from "node:path";
+import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 
-const PANEL_KEY = "git-diff-panel";
-const STATUS_KEY = "git-diff-panel";
-const MIN_WIDTH = 110;
-const PANEL_WIDTH = 38;
-const GAP = 1;
-const PANEL_MIN_HEIGHT = 16;
+const WIDGET_KEY = "git-diff-panel";
+const WIDGET_MIN_HEIGHT = 6;
+const WIDGET_MAX_HEIGHT = 12;
+const WIDGET_MAX_WIDTH = 110;
 const REFRESH_DEBOUNCE_MS = 1_000;
 const GIT_TIMEOUT_MS = 5_000;
+const SIZE_LOOKUP_CONCURRENCY = 4;
 
 type FileStatus = "M" | "A" | "D" | "R" | "C" | "?" | "!" | "U";
 
@@ -21,6 +20,8 @@ interface DiffFile {
 	added: number | null;
 	deleted: number | null;
 	binary: boolean;
+	binaryOldBytes?: number | null;
+	binaryNewBytes?: number | null;
 }
 
 interface DiffState {
@@ -136,6 +137,7 @@ async function loadGitDiff(cwd: string): Promise<Omit<DiffState, "scrollOffset" 
 		};
 	}
 
+	const gitRoot = root.stdout.trim();
 	const [statusResult, numstatResult] = await Promise.all([
 		runGit(cwd, ["status", "--porcelain=v1", "--untracked-files=normal"]),
 		runGit(cwd, ["diff", "--numstat", "HEAD", "--"]),
@@ -147,7 +149,7 @@ async function loadGitDiff(cwd: string): Promise<Omit<DiffState, "scrollOffset" 
 			totalAdded: 0,
 			totalDeleted: 0,
 			binaryFiles: 0,
-			gitRoot: root.stdout.trim(),
+			gitRoot,
 			lastRefresh: Date.now(),
 			error: statusResult.stderr.trim() || "git status failed",
 		};
@@ -170,12 +172,14 @@ async function loadGitDiff(cwd: string): Promise<Omit<DiffState, "scrollOffset" 
 		return rank(a) - rank(b) || a.path.localeCompare(b.path);
 	});
 
+	await annotateBinarySizes(cwd, gitRoot, files);
+
 	return {
 		files,
 		totalAdded: files.reduce((sum, file) => sum + (file.added ?? 0), 0),
 		totalDeleted: files.reduce((sum, file) => sum + (file.deleted ?? 0), 0),
 		binaryFiles: files.filter((file) => file.binary).length,
-		gitRoot: root.stdout.trim(),
+		gitRoot,
 		lastRefresh: Date.now(),
 		error: numstatResult.exitCode === 0 ? undefined : (numstatResult.stderr.trim() || undefined),
 	};
@@ -195,8 +199,60 @@ function shortenPath(path: string, width: number): string {
 	return truncateToWidth(`…/${file}`, width);
 }
 
-function formatCount(value: number | null, binary: boolean): string {
-	if (binary) return "bin";
+async function mapLimit<T>(items: T[], limit: number, worker: (item: T) => Promise<void>): Promise<void> {
+	let next = 0;
+	const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+		while (next < items.length) {
+			const item = items[next++];
+			if (item === undefined) continue;
+			await worker(item);
+		}
+	});
+	await Promise.all(workers);
+}
+
+async function getWorktreeFileSize(gitRoot: string, path: string): Promise<number | null> {
+	try {
+		const info = await stat(join(gitRoot, path));
+		return info.isFile() ? info.size : null;
+	} catch {
+		return null;
+	}
+}
+
+async function getHeadFileSize(cwd: string, path: string): Promise<number | null> {
+	const result = await runGit(cwd, ["cat-file", "-s", `HEAD:${path}`]);
+	if (result.exitCode !== 0) return null;
+	const size = Number.parseInt(result.stdout.trim(), 10);
+	return Number.isFinite(size) ? size : null;
+}
+
+async function annotateBinarySizes(cwd: string, gitRoot: string, files: DiffFile[]): Promise<void> {
+	const binaryFiles = files.filter((file) => file.binary);
+	await mapLimit(binaryFiles, SIZE_LOOKUP_CONCURRENCY, async (file) => {
+		const [oldBytes, newBytes] = await Promise.all([
+			file.status === "A" || file.status === "?" ? Promise.resolve(null) : getHeadFileSize(cwd, file.path),
+			file.status === "D" ? Promise.resolve(null) : getWorktreeFileSize(gitRoot, file.path),
+		]);
+		file.binaryOldBytes = oldBytes;
+		file.binaryNewBytes = newBytes;
+	});
+}
+
+function formatBinarySize(value: number | null | undefined): string {
+	if (value === null || value === undefined) return "bin";
+	if (value < 1024) return `${value}B`;
+	const kib = value / 1024;
+	if (kib < 10) return `${kib.toFixed(1)}K`;
+	if (kib < 1000) return `${Math.round(kib)}K`;
+	return `${Math.round(kib / 1024)}M`;
+}
+
+function formatBinaryColumn(value: number | null | undefined, applicable: boolean): string {
+	return applicable ? formatBinarySize(value) : "-";
+}
+
+function formatCount(value: number | null): string {
 	if (value === null) return "-";
 	if (value > 9999) return `${Math.round(value / 1000)}k`;
 	return String(value);
@@ -255,8 +311,10 @@ function renderPanel(state: DiffState, theme: any, width: number, height: number
 			const countsWidth = 11;
 			const pathWidth = Math.max(4, rowWidth - 2 - countsWidth);
 			const path = theme.fg("text", padAnsi(shortenPath(file.path, pathWidth), pathWidth));
-			const plus = theme.fg("success", padAnsi(`+${formatCount(file.added, file.binary)}`, 5));
-			const minus = theme.fg("error", padAnsi(`-${formatCount(file.deleted, file.binary)}`, 5));
+			const plusText = file.binary ? formatBinaryColumn(file.binaryNewBytes, file.status !== "D") : formatCount(file.added);
+			const minusText = file.binary ? formatBinaryColumn(file.binaryOldBytes, file.status !== "A" && file.status !== "?") : formatCount(file.deleted);
+			const plus = theme.fg("success", padAnsi(`+${plusText}`, 5));
+			const minus = theme.fg("error", padAnsi(`-${minusText}`, 5));
 			row = status + path + " " + plus + minus;
 		} else {
 			row = padAnsi("", rowWidth);
@@ -268,78 +326,84 @@ function renderPanel(state: DiffState, theme: any, width: number, height: number
 	return lines.slice(0, height).map((line) => truncateToWidth(line, width));
 }
 
-class GitDiffEditor extends CustomEditor {
-	private diffState: DiffState;
-	private themeProvider: () => any;
-	private tuiRef: TUI;
+function renderWidget(state: DiffState, theme: any, width: number): string[] {
+	const panelWidth = Math.max(10, Math.min(WIDGET_MAX_WIDTH, width));
+	const maxRows = Math.max(1, WIDGET_MAX_HEIGHT - 4);
+	const fileRows = Math.min(state.files.length, maxRows);
+	const height = Math.min(WIDGET_MAX_HEIGHT, Math.max(WIDGET_MIN_HEIGHT, fileRows + 4));
+	return renderPanel(state, theme, panelWidth, height);
+}
 
-	constructor(tui: TUI, editorTheme: EditorTheme, keybindings: KeybindingsManager, state: DiffState, themeProvider: () => any) {
-		super(tui, editorTheme, keybindings);
-		this.diffState = state;
-		this.themeProvider = themeProvider;
-		this.tuiRef = tui;
-	}
-
-	requestRender(): void {
-		this.tuiRef.requestRender();
-	}
-
-	scroll(delta: number): void {
-		this.diffState.scrollOffset = Math.max(0, this.diffState.scrollOffset + delta);
-		this.requestRender();
-	}
-
-	render(width: number): string[] {
-		if (!this.diffState.enabled || width < MIN_WIDTH) return super.render(width);
-		const panelWidth = Math.min(PANEL_WIDTH, Math.max(28, Math.floor(width * 0.38)));
-		const leftWidth = Math.max(20, width - panelWidth - GAP);
-		const editorLines = super.render(leftWidth).map((line) => padAnsi(line, leftWidth));
-		const height = Math.max(PANEL_MIN_HEIGHT, editorLines.length);
-		while (editorLines.length < height) editorLines.push(padAnsi("", leftWidth));
-		const panelLines = renderPanel(this.diffState, this.themeProvider(), panelWidth, height);
-		const gap = " ".repeat(GAP);
-		return editorLines.map((line, index) => truncateToWidth(line + gap + (panelLines[index] ?? padAnsi("", panelWidth)), width));
+function safeRequestRender(handle: { requestRender: () => void } | undefined): boolean {
+	if (!handle) return false;
+	try {
+		handle.requestRender();
+		return true;
+	} catch {
+		return false;
 	}
 }
 
 export default function (pi: ExtensionAPI) {
 	const state = zeroState();
 	let currentCtx: ExtensionContext | undefined;
-	let editor: GitDiffEditor | undefined;
+	let widgetHandle: { requestRender: () => void } | undefined;
+	let widgetMounted = false;
 	let refreshTimer: NodeJS.Timeout | undefined;
 	let refreshInFlight = false;
 
-	const updateStatus = (ctx: ExtensionContext) => {
+	const syncWidget = (ctx: ExtensionContext) => {
 		if (!ctx.hasUI) return;
-		if (!state.enabled) {
-			ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg("dim", "Δ off"));
+		if (!state.enabled || state.error || state.files.length === 0) {
+			if (widgetMounted) {
+				ctx.ui.setWidget(WIDGET_KEY, undefined);
+				widgetMounted = false;
+				widgetHandle = undefined;
+			}
 			return;
 		}
-		if (state.error) {
-			ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg("warning", `Δ ${state.error}`));
+		if (!widgetMounted) {
+			ctx.ui.setWidget(WIDGET_KEY, (tui, theme) => {
+				widgetHandle = { requestRender: () => tui.requestRender() };
+				return {
+					render(width: number): string[] {
+						return renderWidget(state, theme, width);
+					},
+					invalidate() {},
+				};
+			});
+			widgetMounted = true;
 			return;
 		}
-		const text = `Δ ${state.files.length} +${state.totalAdded} -${state.totalDeleted}`;
-		ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg(state.files.length > 0 ? "accent" : "dim", text));
+		if (!safeRequestRender(widgetHandle)) {
+			widgetMounted = false;
+			widgetHandle = undefined;
+			syncWidget(ctx);
+		}
 	};
 
 	const refreshNow = async (ctx = currentCtx) => {
 		if (!ctx || refreshInFlight) return;
 		refreshInFlight = true;
 		state.loading = true;
-		editor?.requestRender();
+		syncWidget(ctx);
 		try {
 			const next = await loadGitDiff(ctx.cwd);
 			const previousOffset = state.scrollOffset;
 			Object.assign(state, next, { loading: false, enabled: state.enabled });
 			state.scrollOffset = previousOffset;
 		} catch (error) {
-			state.error = error instanceof Error ? error.message : String(error);
-			state.loading = false;
+			Object.assign(state, {
+				files: [],
+				totalAdded: 0,
+				totalDeleted: 0,
+				binaryFiles: 0,
+				error: error instanceof Error ? error.message : String(error),
+				loading: false,
+			});
 		} finally {
 			refreshInFlight = false;
-			updateStatus(ctx);
-			editor?.requestRender();
+			syncWidget(ctx);
 		}
 	};
 
@@ -353,11 +417,7 @@ export default function (pi: ExtensionAPI) {
 	const install = (ctx: ExtensionContext) => {
 		if (!ctx.hasUI) return;
 		currentCtx = ctx;
-		ctx.ui.setEditorComponent((tui, editorTheme, keybindings) => {
-			editor = new GitDiffEditor(tui, editorTheme, keybindings, state, () => ctx.ui.theme);
-			return editor;
-		});
-		updateStatus(ctx);
+		syncWidget(ctx);
 		scheduleRefresh(ctx, 0);
 	};
 
@@ -367,35 +427,42 @@ export default function (pi: ExtensionAPI) {
 	pi.on("turn_end", async (_event, ctx) => scheduleRefresh(ctx));
 	pi.on("session_shutdown", async (_event, ctx) => {
 		if (refreshTimer) clearTimeout(refreshTimer);
-		if (ctx.hasUI) ctx.ui.setStatus(STATUS_KEY, undefined);
+		if (ctx.hasUI) ctx.ui.setWidget(WIDGET_KEY, undefined);
+		widgetMounted = false;
+		widgetHandle = undefined;
 	});
 
 	pi.registerCommand("diff-panel-toggle", {
-		description: "Toggle the right-side git diff editor panel",
+		description: "Toggle the git diff widget",
 		handler: async (_args, ctx) => {
 			state.enabled = !state.enabled;
-			updateStatus(ctx);
-			editor?.requestRender();
+			syncWidget(ctx);
 			if (state.enabled) scheduleRefresh(ctx, 0);
-			ctx.ui.notify(`Git diff panel ${state.enabled ? "enabled" : "disabled"}`, "info");
+			ctx.ui.notify(`Git diff widget ${state.enabled ? "enabled" : "disabled"}`, "info");
 		},
 	});
 
 	pi.registerCommand("diff-panel-refresh", {
-		description: "Refresh the git diff panel",
+		description: "Refresh the git diff widget",
 		handler: async (_args, ctx) => {
 			await refreshNow(ctx);
-			ctx.ui.notify("Git diff panel refreshed", state.error ? "warning" : "success");
+			ctx.ui.notify("Git diff widget refreshed", state.error ? "warning" : "success");
 		},
 	});
 
 	pi.registerCommand("diff-panel-up", {
-		description: "Scroll the git diff panel up",
-		handler: async () => { editor?.scroll(-1); },
+		description: "Scroll the git diff widget up",
+		handler: async () => {
+			state.scrollOffset = Math.max(0, state.scrollOffset - 1);
+			if (!safeRequestRender(widgetHandle) && currentCtx) syncWidget(currentCtx);
+		},
 	});
 
 	pi.registerCommand("diff-panel-down", {
-		description: "Scroll the git diff panel down",
-		handler: async () => { editor?.scroll(1); },
+		description: "Scroll the git diff widget down",
+		handler: async () => {
+			state.scrollOffset = Math.max(0, state.scrollOffset + 1);
+			if (!safeRequestRender(widgetHandle) && currentCtx) syncWidget(currentCtx);
+		},
 	});
 }

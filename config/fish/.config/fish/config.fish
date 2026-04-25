@@ -147,6 +147,9 @@ if not set -q DISTROBOX_ENTER_PATH
         function bat
             distrobox-enter arch -- bat $argv
         end
+        function helix
+            distrobox-enter arch -- helix $argv
+        end
         function git
             distrobox-enter arch -- git $argv
         end
