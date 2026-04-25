@@ -18,7 +18,10 @@ Confirm additive safety, scope fit, and gate behavior with evidence-driven revie
 
 ## Rules
 
-- Use `superpowers:requesting-code-review` before finalizing review output: read `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/requesting-code-review/SKILL.md` and follow its review checklist.
+- Use `superpowers:requesting-code-review` before finalizing review output: read `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/requesting-code-review/SKILL.md` and follow its checklist.
+- Collect commit context when available: `BASE_SHA` (last approved/build baseline) and `HEAD_SHA` (current).
+- If `superpowers:code-reviewer` template/agent is available, dispatch independent review with at least `plan`, `requirements`, and `scope` context.
+- If that agent/template is unavailable, run a two-stage local review (spec-compliance + code-quality) and record a `Important` finding: `missing superpowers:code-reviewer`; recommend adding dedicated reviewer in `next_recommended`.
 - `bash` is inspection-only: allow read/grep/find/ls checks only. No shell writes/deletes/moves, no git mutations, and no network fetches unless explicitly authorized.
 - `agents/tdd-orgm/tdd-reviewer` is read-only; no file edits in this phase.
 - Read-only access to required superpowers skill docs is allowed.
@@ -51,7 +54,7 @@ Every review artifact must include severity bands and next action:
 - `Critical`: safety violations, forbidden path edits, wrong gate sequence, missing mandatory behavior.
 - `Important`: partial compliance, weak evidence, incomplete traceability.
 - `Minor`: style/wording or minor consistency issues.
-- For each finding include severity + `recommended_next_step`.
+- For each finding include severity + `finding_next_step`.
 
 ## Verification checks
 
@@ -68,6 +71,5 @@ Run read-only commands and cite outputs:
 - `executive_summary`
 - `findings`
 - `severity_breakdown`
-- `recommended_next_step`
 - `artifacts`
 - `next_recommended`
