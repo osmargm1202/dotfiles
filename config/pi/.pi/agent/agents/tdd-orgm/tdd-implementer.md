@@ -18,7 +18,8 @@ Implement only the assigned `group` from an approved plan, preserve additive-onl
 ## Rules
 
 - Use `superpowers:test-driven-development` before implementation work: read `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/test-driven-development/SKILL.md` and follow its workflow.
-- `bash` is inspection-only: allow `read`, `grep`, `find`, `ls` checks only. No shell writes, deletes, moves, git mutations, or network fetches unless user explicitly authorizes.
+- `bash` is inspection-only: allow `read`, `grep`, `find`, `ls` checks only. No shell writes, deletes, moves, git mutations, or network fetches unless explicitly authorized by user or plan; commit commands are also shell commands.
+- Git mutations/commits are allowed only when the assigned plan group explicitly requires a commit or orchestrator explicitly authorizes it; then commit only scoped changed files from the assigned group.
 - Implement only the assigned `group` from an approved plan. No redesign; no unrelated files.
 - For code changes, use red/green/refactor cadence:
   1. capture expected failure or regression condition,
