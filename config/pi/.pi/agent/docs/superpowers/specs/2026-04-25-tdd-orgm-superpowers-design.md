@@ -7,7 +7,7 @@ Status: approved (scope A: Skeleton seguro)
 
 Create a new additive `tdd-orgm` variant of `pdd-orgm` that follows superpowers philosophy by default, without modifying `pdd-orgm` or superpowers skill files.
 
-` tdd-orgm ` must:
+`tdd-orgm` must:
 - orchestrate safe design-first → plan-first → implementation flows
 - support both `query_team` and `deploy_agent`
 - allow subagent roster expansion beyond current PDD roles when a required superpowers skill needs a dedicated agent
@@ -22,7 +22,7 @@ Create a new additive `tdd-orgm` variant of `pdd-orgm` that follows superpowers 
 
 ## Architecture
 
-## 1) Additive primary-agent package
+### 1) Additive primary-agent package
 
 Introduce new folder:
 
@@ -32,7 +32,7 @@ Introduce new folder:
 
 Existing `pdd-orgm` stays untouched and remains selectable.
 
-## 2) Orchestrator model
+### 2) Orchestrator model
 
 `tdd-orgm` is coordinator-only by default:
 - performs request triage and flow selection
@@ -40,7 +40,7 @@ Existing `pdd-orgm` stays untouched and remains selectable.
 - synthesizes outputs and drives next step
 - avoids direct implementation except true direct-answer/meta cases
 
-## 3) Coordination channels
+### 3) Coordination channels
 
 - `query_team` for parallel consultation and skill-routing fan-out
 - `deploy_agent` for concrete execution ownership and stateful continuation
@@ -66,14 +66,14 @@ Minimum safe roster under `agents/tdd-orgm/`:
 Roster is extensible. If a required skill does not map cleanly to existing agents, create a dedicated subagent in `agents/tdd-orgm/` and add it to `teams.yaml` under `tdd-orgm`.
 
 Naming convention:
-- `tdd-<skill-purpose>.md` (example: `tdd-executing-plans-runner.md`)
+- Prefix `tdd-` plus concise purpose slug (example: `tdd-executing-plans-runner.md`)
 
 Safety rule:
 - Additive creation only. Never repurpose or mutate `pdd-orgm` agents to satisfy `tdd-orgm` needs.
 
 ## Tools model
 
-## Orchestrator (`tdd-orgm`)
+### Orchestrator (`tdd-orgm`)
 
 Required tools:
 - `read, grep, find, ls, bash`
@@ -85,7 +85,7 @@ Optional (if memory parity desired later):
 Constraint:
 - no `write`/`edit` in orchestrator for skeleton-safe posture
 
-## Execution subagents
+### Execution subagents
 
 - Planning/review roles: read-only + shell inspection tools
 - Implementation roles: include `edit` and `write`
@@ -163,19 +163,19 @@ Skeleton safety rules:
 
 ## Testing and verification strategy
 
-## A) Static/config checks
+### A) Static/config checks
 - Validate every new agent frontmatter (`name`, `description`, `tools`)
 - Validate `teams.yaml` membership for `tdd-orgm`
 - Validate no diffs in `agents/pdd-orgm/*`
 
-## B) Prompt-behavior checks
+### B) Prompt-behavior checks
 Run scripted prompt scenarios to confirm:
 - direct/meta questions stay in F0
 - build requests enter design + plan + TDD gates
 - orchestrator can use both `query_team` and `deploy_agent`
 - missing skill-agent path triggers additive roster extension path
 
-## C) Safety checks
+### C) Safety checks
 - orchestrator does not edit product files directly
 - completion path requires review + verification gates
 - no superpowers skill file changes required
@@ -191,7 +191,7 @@ Design considered satisfied when implementation demonstrates:
 
 ## Spec self-review
 
-- Placeholder scan: no TODO/TBD placeholders
+- Placeholder scan: no unresolved TODO/TBD items; naming/path templates are intentional conventions
 - Consistency scan: additive-only architecture matches safety constraints and non-goals
 - Ambiguity scan: flow gates, tool boundaries, and roster-extension trigger made explicit
 - Scope scan: confined to scope A skeleton (design + structure + safety), no implementation details beyond implementation-ready contracts
