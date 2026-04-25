@@ -25,14 +25,16 @@ Create a testable, additive, and non-redundant implementation plan from artifact
   - No repository modifications from planner phase.
   - Do not modify `agents/pdd-orgm/*`.
   - Do not modify `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/*`.
-- Read access to these paths is allowed only when explicitly requested for comparison/validation.
+- Read-only access to required superpowers skill docs is allowed for workflow execution; all writes remain forbidden.
 - `plan.md` output is runtime handoff artifact; canonical implementation plan path defaults to `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md` unless orchestrator provides explicit alternate path.
 - `plan.md` must be concrete and complete before implementation handoff.
 
 ## Read
 
-- `docs/superpowers/specs/<feature-or-date>` (canonical spec path)
-- `tdd/{change-name}/requirements` and `tdd/{change-name}/explore` only if orchestrator explicitly provides paths
+- `docs/superpowers/specs/<feature-or-date>` (preferred canonical spec artifact)
+- `tdd/{change-name}/spec` (if separate)
+- `tdd/{change-name}/requirements`
+- `tdd/{change-name}/explore`
 
 ## Planning constraints
 
