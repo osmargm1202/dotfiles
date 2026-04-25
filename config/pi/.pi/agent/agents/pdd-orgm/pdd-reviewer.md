@@ -2,7 +2,7 @@
 name: pdd-reviewer
 description: Review implementation against PDD plan and requirements (supports parallel groups)
 tools: read, grep, find, ls, bash, deploy_agent, engram_mem_context, engram_mem_search, engram_mem_get_observation, engram_mem_save, engram_mem_update
-model: openai-codex/gpt-5.4
+model: openai-codex/gpt-5.5
 thinking: medium
 output: review.md
 defaultReads: context.md

@@ -2,7 +2,7 @@
 name: pdd-requirements
 description: Clarify user requirements for PDD (supports parallel requirement areas)
 tools: read, grep, find, ls, bash, deploy_agent, engram_mem_context, engram_mem_search, engram_mem_save, engram_mem_save_prompt
-model: openai-codex/gpt-5.3-codex
+model: openai-codex/gpt-5.5
 thinking: medium
 output: requirements.md
 defaultReads: context.md

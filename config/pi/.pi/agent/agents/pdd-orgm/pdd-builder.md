@@ -2,7 +2,7 @@
 name: pdd-builder
 description: Implement approved PDD plan with full-capacity builder model (supports parallel groups)
 tools: read, grep, find, ls, bash, edit, write, deploy_agent, engram_mem_context, engram_mem_search, engram_mem_get_observation, engram_mem_save, engram_mem_update, engram_mem_session_summary, engram_mem_capture_passive
-model: openai-codex/gpt-5.3-codex
+model: openai-codex/gpt-5.5
 thinking: medium
 output: build.md
 defaultReads: context.md

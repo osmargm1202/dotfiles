@@ -4,7 +4,6 @@ import { getAgentDir } from "@mariozechner/pi-coding-agent";
 
 export interface AgentStatusConfig {
 	showWidget: boolean;
-	showFooter: boolean;
 	showModel: boolean;
 	showTokens: boolean;
 	showCost: boolean;
@@ -16,7 +15,6 @@ export interface AgentStatusConfig {
 
 export const AGENT_STATUS_CONFIG_DEFAULTS: AgentStatusConfig = {
 	showWidget: true,
-	showFooter: true,
 	showModel: true,
 	showTokens: true,
 	showCost: false,
@@ -37,7 +35,6 @@ export function loadAgentStatusConfig(): AgentStatusConfig {
 		const parsed = JSON.parse(readFileSync(path, "utf8")) as Partial<AgentStatusConfig>;
 		return {
 			showWidget: typeof parsed.showWidget === "boolean" ? parsed.showWidget : AGENT_STATUS_CONFIG_DEFAULTS.showWidget,
-			showFooter: typeof parsed.showFooter === "boolean" ? parsed.showFooter : AGENT_STATUS_CONFIG_DEFAULTS.showFooter,
 			showModel: typeof parsed.showModel === "boolean" ? parsed.showModel : AGENT_STATUS_CONFIG_DEFAULTS.showModel,
 			showTokens: typeof parsed.showTokens === "boolean" ? parsed.showTokens : AGENT_STATUS_CONFIG_DEFAULTS.showTokens,
 			showCost: typeof parsed.showCost === "boolean" ? parsed.showCost : AGENT_STATUS_CONFIG_DEFAULTS.showCost,

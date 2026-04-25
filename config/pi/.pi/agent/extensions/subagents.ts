@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { StringEnum } from "@mariozechner/pi-ai";
@@ -29,6 +29,10 @@ const SUBAGENT_COMPLETION_STALL_TIMEOUT_MS = 4_000;
 const SUBAGENT_FORCE_KILL_TIMEOUT_MS = 3_000;
 const SUBAGENT_TRANSCRIPT_MAX_LINES = 400;
 const SUBAGENT_UI_REFRESH_DEBOUNCE_MS = 120;
+const RUNTIME_REGISTRY_LOCK_TIMEOUT_MS = 5_000;
+const RUNTIME_REGISTRY_LOCK_RETRY_MS = 25;
+const RUNTIME_REGISTRY_STALE_LOCK_MS = 30_000;
+const RUNTIME_BUSY_STALE_TIMEOUT_MS = 60_000;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 type DeploymentStatus = "running" | "done" | "error" | "paused_provider_error" | "awaiting_user_input";
@@ -75,6 +79,7 @@ interface DeploymentState {
 	reusedRuntime: boolean;
 	reuseSummary?: string;
 	sessionFilePath?: string;
+	ownerSessionFile?: string;
 	parentRuntimeId?: string;
 	depth: number;
 	contextWindow: number;
@@ -122,6 +127,7 @@ interface AgentRunDetails {
 	reusedRuntime: boolean;
 	reuseSummary?: string;
 	sessionFilePath?: string;
+	ownerSessionFile?: string;
 	parentRuntimeId?: string;
 	depth: number;
 	contextWindow: number;
@@ -188,6 +194,7 @@ interface AgentRuntimeState {
 	scope: "user" | "project" | "both";
 	model?: string;
 	sessionFilePath?: string;
+	ownerSessionFile?: string;
 	contextWindow: number;
 	contextTokens: number;
 	status: RuntimeStatus;
@@ -202,6 +209,8 @@ interface AgentRuntimeState {
 	lastStopReason?: string;
 	lastErrorMessage?: string;
 	terminalState?: TerminalState;
+	pid?: number;
+	processStartedAt?: number;
 	tmuxWindowId?: string;
 	tmuxPaneId?: string;
 	recoverableReason?: RecoverableReason;
@@ -217,6 +226,7 @@ interface RuntimeSnapshot {
 	launchBackend: AgentLaunchBackend;
 	model?: string;
 	sessionFilePath?: string;
+	ownerSessionFile?: string;
 	contextWindow: number;
 	contextTokens: number;
 	status: RuntimeStatus;
@@ -230,6 +240,8 @@ interface RuntimeSnapshot {
 	lastStopReason?: string;
 	lastErrorMessage?: string;
 	terminalState?: TerminalState;
+	pid?: number;
+	processStartedAt?: number;
 	tmuxWindowId?: string;
 	tmuxPaneId?: string;
 	recoverableReason?: RecoverableReason;
@@ -271,6 +283,9 @@ interface QueryTeamDetails {
 	execution: "parallel" | "serial";
 	scope: "user" | "project" | "both";
 	launchBackend: AgentLaunchBackend;
+	mode: AgentDeployMode;
+	reuse: AgentReuseMode;
+	maxContextPercent: number;
 	resolvedMembers: string[];
 	requestedQueries: ExpandedTeamQuery[];
 	completed: number;
@@ -293,8 +308,8 @@ const DeployAgentParams = Type.Object({
 	),
 	mode: Type.Optional(
 		StringEnum(["ephemeral", "persistent"] as const, {
-			description: "Deployment mode. `ephemeral` starts a fresh one-shot run. `persistent` reuses or creates a session-backed runtime.",
-			default: "ephemeral",
+			description: "Deployment mode. `ephemeral` starts a fresh one-shot run. `persistent` reuses or creates a session-backed runtime. Default: persistent",
+			default: "persistent",
 		}),
 	),
 	reuse: Type.Optional(
@@ -332,6 +347,19 @@ const QueryTeamParams = Type.Object({
 		}),
 	),
 	cwd: Type.Optional(Type.String({ description: "Optional working directory for subprocess execution and project discovery" })),
+	mode: Type.Optional(
+		StringEnum(["ephemeral", "persistent"] as const, {
+			description: "Deployment mode for team members. `persistent` reuses compatible idle runtimes when possible. Default: persistent",
+			default: "persistent",
+		}),
+	),
+	reuse: Type.Optional(
+		StringEnum(["prefer", "require", "never"] as const, {
+			description: "Reuse policy for persistent team member deployments. Default: prefer",
+			default: "prefer",
+		}),
+	),
+	maxContextPercent: Type.Optional(Type.Number({ description: "Maximum context usage percent allowed for runtime reuse. Default: 75", default: 75 })),
 	continueOnError: Type.Optional(Type.Boolean({ description: "In serial mode, continue after member failures. Default: true", default: true })),
 	launchBackend: Type.Optional(
 		StringEnum(["embedded"] as const, {
@@ -437,6 +465,95 @@ function saveRuntimeRegistry(registryPath: string, runtimes: AgentRuntimeState[]
 	writeFileSync(registryPath, JSON.stringify(runtimes, null, 2), "utf8");
 }
 
+function sleepSync(ms: number): void {
+	Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function withRuntimeRegistryLock<T>(registryPath: string, fn: () => T): T {
+	ensureDir(dirname(registryPath));
+	const lockPath = `${registryPath}.lock`;
+	const startedAt = Date.now();
+	let fd: number | undefined;
+	while (fd === undefined) {
+		try {
+			fd = openSync(lockPath, "wx");
+			writeFileSync(fd, JSON.stringify({ pid: process.pid, createdAt: Date.now() }));
+		} catch (error: any) {
+			if (error?.code !== "EEXIST") throw error;
+			try {
+				const age = Date.now() - statSync(lockPath).mtimeMs;
+				if (age > RUNTIME_REGISTRY_STALE_LOCK_MS) rmSync(lockPath, { force: true });
+			} catch {
+				// Retry lock acquisition after transient stat/remove failure.
+			}
+			if (Date.now() - startedAt > RUNTIME_REGISTRY_LOCK_TIMEOUT_MS) {
+				throw new Error(`Timed out acquiring subagent runtime registry lock: ${lockPath}`);
+			}
+			sleepSync(RUNTIME_REGISTRY_LOCK_RETRY_MS);
+		}
+	}
+	try {
+		return fn();
+	} finally {
+		try { if (fd !== undefined) closeSync(fd); } catch { /* ignore */ }
+		try { unlinkSync(lockPath); } catch { /* ignore */ }
+	}
+}
+
+function isPidAlive(pid?: number): boolean {
+	if (!pid || pid <= 0) return false;
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch (error: any) {
+		return error?.code === "EPERM";
+	}
+}
+
+function isRuntimeProcessAlive(runtime: AgentRuntimeState): boolean {
+	if (isPidAlive(runtime.pid)) return true;
+	if (!runtime.runtimeId || !existsSync("/proc")) return false;
+	try {
+		for (const pid of readdirSync("/proc")) {
+			if (!/^\d+$/.test(pid)) continue;
+			try {
+				const environ = readFileSync(join("/proc", pid, "environ"), "utf8");
+				if (environ.includes(`PI_SUBAGENT_RUNTIME_ID=${runtime.runtimeId}`)) return true;
+			} catch {
+				// Processes can exit or deny environ while scanning.
+			}
+		}
+	} catch {
+		// /proc is best-effort; pid tracking covers new deployments.
+	}
+	return false;
+}
+
+function cleanupStaleRuntimeRegistry(runtimes: AgentRuntimeState[], now = Date.now()): AgentRuntimeState[] {
+	let changed = false;
+	const cleaned = runtimes.map((runtime) => {
+		if (runtime.mode !== "persistent" || runtime.status !== "busy") return runtime;
+		const age = now - (runtime.lastUsedAt || runtime.createdAt || now);
+		const hasTrackedProcess = Boolean(runtime.pid);
+		const shouldCheck = hasTrackedProcess || age > RUNTIME_BUSY_STALE_TIMEOUT_MS;
+		if (!shouldCheck || isRuntimeProcessAlive(runtime)) return runtime;
+		changed = true;
+		return {
+			...runtime,
+			status: "idle" as RuntimeStatus,
+			busyDeploymentId: undefined,
+			pid: undefined,
+			processStartedAt: undefined,
+			lastUsedAt: now,
+			lastStopReason: runtime.lastStopReason ?? "stale_process_cleaned",
+			lastErrorMessage: runtime.lastErrorMessage ?? "Runtime was marked busy but no live subagent process was found.",
+			terminalState: "closed" as TerminalState,
+			lastVisibleState: runtime.lastVisibleState ?? ("error" as DeploymentStatus),
+		};
+	});
+	return changed ? cleaned : runtimes;
+}
+
 function buildRuntimeCompatibilityKey(params: {
 	agent: AgentConfig;
 	cwd: string;
@@ -459,6 +576,10 @@ function getCurrentParentRuntimeId(): string | undefined {
 	return process.env.PI_SUBAGENT_RUNTIME_ID?.trim() || undefined;
 }
 
+function getCurrentOwnerSessionFile(): string | undefined {
+	return process.env.PI_SUBAGENT_OWNER_SESSION_FILE?.trim() || undefined;
+}
+
 function getCurrentRuntimeDepth(): number {
 	const value = Number.parseInt(process.env.PI_SUBAGENT_RUNTIME_DEPTH || "0", 10);
 	return Number.isFinite(value) && value >= 0 ? value : 0;
@@ -474,81 +595,103 @@ function reservePersistentRuntime(params: {
 	maxContextPercent: number;
 	contextWindow: number;
 	launchBackend: AgentLaunchBackend;
+	ownerSessionFile?: string;
 }): { runtime: AgentRuntimeState; reused: boolean; reuseSummary: string; registryPath: string } {
 	const storage = getRuntimeStoragePaths(params.cwd);
 	const compatibilityKey = buildRuntimeCompatibilityKey(params);
 	const maxContextPercent = Math.max(1, Math.min(100, params.maxContextPercent || 75));
-	const runtimes = pruneRuntimeRegistry(loadRuntimeRegistry(storage.registryPath));
-	const reusable = params.reuse === "never"
-		? undefined
-		: runtimes.find((runtime) =>
-			runtime.compatibilityKey === compatibilityKey &&
-			runtime.status === "idle" &&
-			(runtime.contextWindow <= 0 || ((runtime.contextTokens / runtime.contextWindow) * 100) < maxContextPercent),
-		);
+	return withRuntimeRegistryLock(storage.registryPath, () => {
+		const runtimes = cleanupStaleRuntimeRegistry(pruneRuntimeRegistry(loadRuntimeRegistry(storage.registryPath)));
+		const reusable = params.reuse === "never"
+			? undefined
+			: runtimes.find((runtime) =>
+				runtime.compatibilityKey === compatibilityKey &&
+				runtime.status === "idle" &&
+				(runtime.contextWindow <= 0 || ((runtime.contextTokens / runtime.contextWindow) * 100) < maxContextPercent),
+			);
 
-	if (!reusable && params.reuse === "require") {
-		throw new Error(`No compatible idle persistent runtime found for ${params.agent.name} below ${maxContextPercent}% context.`);
-	}
+		if (!reusable && params.reuse === "require") {
+			throw new Error(`No compatible idle persistent runtime found for ${params.agent.name} below ${maxContextPercent}% context.`);
+		}
 
-	const now = Date.now();
-	if (reusable) {
-		reusable.status = "busy";
-		reusable.busyDeploymentId = params.deploymentId;
-		reusable.lastUsedAt = now;
-		reusable.runs += 1;
-		reusable.reuseCount += 1;
+		const now = Date.now();
+		if (reusable) {
+			reusable.status = "busy";
+			reusable.busyDeploymentId = params.deploymentId;
+			reusable.pid = undefined;
+			reusable.processStartedAt = undefined;
+			reusable.lastUsedAt = now;
+			reusable.runs += 1;
+			reusable.reuseCount += 1;
+			reusable.ownerSessionFile = params.ownerSessionFile;
+			saveRuntimeRegistry(storage.registryPath, runtimes);
+			const percent = reusable.contextWindow > 0 ? Math.round((reusable.contextTokens / reusable.contextWindow) * 100) : 0;
+			return {
+				runtime: reusable,
+				reused: true,
+				reuseSummary: `reused ${reusable.runtimeId} at ${percent}% ctx`,
+				registryPath: storage.registryPath,
+			};
+		}
+
+		const parentRuntimeId = getCurrentParentRuntimeId();
+		const depth = getCurrentRuntimeDepth() + 1;
+		const runtimeId = `${sanitizeFileLabel(params.agent.name)}-${now}-${Math.random().toString(36).slice(2, 8)}`;
+		const runtime: AgentRuntimeState = {
+			runtimeId,
+			agent: params.agent.name,
+			source: params.agent.source,
+			mode: "persistent",
+			cwd: params.cwd,
+			scope: params.scope,
+			model: params.agent.model,
+			launchBackend: params.launchBackend,
+			sessionFilePath: join(storage.sessionsDir, `${runtimeId}.jsonl`),
+			ownerSessionFile: params.ownerSessionFile,
+			contextWindow: params.contextWindow,
+			contextTokens: 0,
+			status: "busy",
+			busyDeploymentId: params.deploymentId,
+			lastUsedAt: now,
+			createdAt: now,
+			runs: 1,
+			reuseCount: 0,
+			parentRuntimeId,
+			depth,
+			compatibilityKey,
+			lastStopReason: undefined,
+			lastErrorMessage: undefined,
+			terminalState: "closed",
+			pid: undefined,
+			processStartedAt: undefined,
+			tmuxWindowId: undefined,
+			tmuxPaneId: undefined,
+			recoverableReason: undefined,
+			awaitingUserInput: false,
+			lastVisibleState: "running",
+		};
+		runtimes.push(runtime);
 		saveRuntimeRegistry(storage.registryPath, runtimes);
-		const percent = reusable.contextWindow > 0 ? Math.round((reusable.contextTokens / reusable.contextWindow) * 100) : 0;
 		return {
-			runtime: reusable,
-			reused: true,
-			reuseSummary: `reused ${reusable.runtimeId} at ${percent}% ctx`,
+			runtime,
+			reused: false,
+			reuseSummary: `created ${runtime.runtimeId}`,
 			registryPath: storage.registryPath,
 		};
-	}
+	});
+}
 
-	const parentRuntimeId = getCurrentParentRuntimeId();
-	const depth = getCurrentRuntimeDepth() + 1;
-	const runtimeId = `${sanitizeFileLabel(params.agent.name)}-${now}-${Math.random().toString(36).slice(2, 8)}`;
-	const runtime: AgentRuntimeState = {
-		runtimeId,
-		agent: params.agent.name,
-		source: params.agent.source,
-		mode: "persistent",
-		cwd: params.cwd,
-		scope: params.scope,
-		model: params.agent.model,
-		launchBackend: params.launchBackend,
-		sessionFilePath: join(storage.sessionsDir, `${runtimeId}.jsonl`),
-		contextWindow: params.contextWindow,
-		contextTokens: 0,
-		status: "busy",
-		busyDeploymentId: params.deploymentId,
-		lastUsedAt: now,
-		createdAt: now,
-		runs: 1,
-		reuseCount: 0,
-		parentRuntimeId,
-		depth,
-		compatibilityKey,
-		lastStopReason: undefined,
-		lastErrorMessage: undefined,
-		terminalState: "closed",
-		tmuxWindowId: undefined,
-		tmuxPaneId: undefined,
-		recoverableReason: undefined,
-		awaitingUserInput: false,
-		lastVisibleState: "running",
-	};
-	runtimes.push(runtime);
-	saveRuntimeRegistry(storage.registryPath, runtimes);
-	return {
-		runtime,
-		reused: false,
-		reuseSummary: `created ${runtime.runtimeId}`,
-		registryPath: storage.registryPath,
-	};
+function markPersistentRuntimeProcess(registryPath: string, runtimeId: string, pid: number): void {
+	withRuntimeRegistryLock(registryPath, () => {
+		const runtimes = cleanupStaleRuntimeRegistry(pruneRuntimeRegistry(loadRuntimeRegistry(registryPath)));
+		const runtime = runtimes.find((item) => item.runtimeId === runtimeId);
+		if (!runtime) return;
+		runtime.pid = pid;
+		runtime.processStartedAt = Date.now();
+		runtime.status = "busy";
+		runtime.lastUsedAt = Date.now();
+		saveRuntimeRegistry(registryPath, runtimes);
+	});
 }
 
 function finalizePersistentRuntime(params: {
@@ -564,27 +707,45 @@ function finalizePersistentRuntime(params: {
 	awaitingUserInput?: boolean;
 	lastVisibleState?: DeploymentStatus;
 	terminalState?: TerminalState;
+	pid?: number;
+	processStartedAt?: number;
 	tmuxWindowId?: string;
 	tmuxPaneId?: string;
 }): AgentRuntimeState | undefined {
-	const runtimes = pruneRuntimeRegistry(loadRuntimeRegistry(params.registryPath));
-	const runtime = runtimes.find((item) => item.runtimeId === params.runtimeId);
-	if (!runtime) return undefined;
-	runtime.contextTokens = params.contextTokens;
-	runtime.contextWindow = params.contextWindow || runtime.contextWindow;
-	runtime.status = params.status;
-	runtime.busyDeploymentId = params.busyDeploymentId;
-	runtime.lastUsedAt = Date.now();
-	runtime.lastStopReason = params.stopReason;
-	runtime.lastErrorMessage = params.errorMessage;
-	runtime.recoverableReason = params.recoverableReason;
-	runtime.awaitingUserInput = params.awaitingUserInput ?? false;
-	runtime.lastVisibleState = params.lastVisibleState;
-	if (params.terminalState) runtime.terminalState = params.terminalState;
-	if (params.tmuxWindowId !== undefined) runtime.tmuxWindowId = params.tmuxWindowId;
-	if (params.tmuxPaneId !== undefined) runtime.tmuxPaneId = params.tmuxPaneId;
-	saveRuntimeRegistry(params.registryPath, runtimes);
-	return runtime;
+	return withRuntimeRegistryLock(params.registryPath, () => {
+		const runtimes = cleanupStaleRuntimeRegistry(pruneRuntimeRegistry(loadRuntimeRegistry(params.registryPath)));
+		const runtime = runtimes.find((item) => item.runtimeId === params.runtimeId);
+		if (!runtime) return undefined;
+		runtime.contextTokens = params.contextTokens;
+		runtime.contextWindow = params.contextWindow || runtime.contextWindow;
+		runtime.status = params.status;
+		runtime.busyDeploymentId = params.busyDeploymentId;
+		if (params.status === "busy") {
+			if (params.pid !== undefined) runtime.pid = params.pid;
+			if (params.processStartedAt !== undefined) runtime.processStartedAt = params.processStartedAt;
+		} else {
+			runtime.pid = undefined;
+			runtime.processStartedAt = undefined;
+		}
+		runtime.lastUsedAt = Date.now();
+		runtime.lastStopReason = params.stopReason;
+		runtime.lastErrorMessage = params.errorMessage;
+		runtime.recoverableReason = params.recoverableReason;
+		runtime.awaitingUserInput = params.awaitingUserInput ?? false;
+		runtime.lastVisibleState = params.lastVisibleState;
+		if (params.terminalState) runtime.terminalState = params.terminalState;
+		if (params.tmuxWindowId !== undefined) runtime.tmuxWindowId = params.tmuxWindowId;
+		if (params.tmuxPaneId !== undefined) runtime.tmuxPaneId = params.tmuxPaneId;
+		saveRuntimeRegistry(params.registryPath, runtimes);
+		return runtime;
+	});
+}
+
+function retirePersistentRuntime(registryPath: string, runtimeId: string): void {
+	withRuntimeRegistryLock(registryPath, () => {
+		const runtimes = pruneRuntimeRegistry(loadRuntimeRegistry(registryPath)).filter((item) => item.runtimeId !== runtimeId);
+		saveRuntimeRegistry(registryPath, runtimes);
+	});
 }
 
 function truncate(text: string, max = 96): string {
@@ -1287,6 +1448,7 @@ export default function (pi: ExtensionAPI) {
 				launchBackend: runtime.launchBackend,
 				model: runtime.model,
 				sessionFilePath: runtime.sessionFilePath,
+				ownerSessionFile: runtime.ownerSessionFile,
 				contextWindow: runtime.contextWindow,
 				contextTokens: runtime.contextTokens,
 				status: runtime.status,
@@ -1300,6 +1462,8 @@ export default function (pi: ExtensionAPI) {
 				lastStopReason: runtime.lastStopReason,
 				lastErrorMessage: runtime.lastErrorMessage,
 				terminalState: runtime.terminalState,
+				pid: runtime.pid,
+				processStartedAt: runtime.processStartedAt,
 				tmuxWindowId: runtime.tmuxWindowId,
 				tmuxPaneId: runtime.tmuxPaneId,
 				recoverableReason: runtime.recoverableReason,
@@ -1384,6 +1548,7 @@ export default function (pi: ExtensionAPI) {
 		reusedRuntime: boolean;
 		reuseSummary?: string;
 		sessionFilePath?: string;
+		ownerSessionFile?: string;
 		parentRuntimeId?: string;
 		depth: number;
 	}): DeploymentState {
@@ -1401,6 +1566,7 @@ export default function (pi: ExtensionAPI) {
 			reusedRuntime: params.reusedRuntime,
 			reuseSummary: params.reuseSummary,
 			sessionFilePath: params.sessionFilePath,
+			ownerSessionFile: params.ownerSessionFile,
 			parentRuntimeId: params.parentRuntimeId,
 			depth: params.depth,
 			contextWindow: 0,
@@ -1438,6 +1604,7 @@ export default function (pi: ExtensionAPI) {
 		relayUserInput: boolean;
 	}): Promise<{ text: string; details: AgentRunDetails; isError: boolean }> {
 		const baseContextWindow = getContextWindow(params.agent.model, params.ctx);
+		const ownerSessionFile = getCurrentOwnerSessionFile() ?? params.ctx.sessionManager.getSessionFile() ?? undefined;
 		let reservedRuntime: AgentRuntimeState | undefined;
 		let runtimeRegistryPath: string | undefined;
 		let reusedRuntime = false;
@@ -1453,6 +1620,7 @@ export default function (pi: ExtensionAPI) {
 				maxContextPercent: params.maxContextPercent,
 				contextWindow: baseContextWindow,
 				launchBackend: params.launchBackend,
+				ownerSessionFile,
 			});
 			reservedRuntime = reservation.runtime;
 			runtimeRegistryPath = reservation.registryPath;
@@ -1470,6 +1638,7 @@ export default function (pi: ExtensionAPI) {
 			reusedRuntime,
 			reuseSummary,
 			sessionFilePath: reservedRuntime?.sessionFilePath,
+			ownerSessionFile: reservedRuntime?.ownerSessionFile ?? ownerSessionFile,
 			parentRuntimeId: reservedRuntime?.parentRuntimeId ?? getCurrentParentRuntimeId(),
 			depth: reservedRuntime?.depth ?? (getCurrentRuntimeDepth() + 1),
 		});
@@ -1517,6 +1686,7 @@ export default function (pi: ExtensionAPI) {
 				reusedRuntime: deployment.reusedRuntime,
 				reuseSummary: deployment.reuseSummary,
 				sessionFilePath: deployment.sessionFilePath,
+				ownerSessionFile: deployment.ownerSessionFile,
 				parentRuntimeId: deployment.parentRuntimeId,
 				depth: deployment.depth,
 				contextWindow: deployment.contextWindow,
@@ -1588,6 +1758,7 @@ export default function (pi: ExtensionAPI) {
 				PI_SUBAGENT_RUNTIME_ID: deployment.runtimeId || "",
 				PI_SUBAGENT_RUNTIME_DEPTH: String(deployment.depth),
 				PI_SUBAGENT_PARENT_RUNTIME_ID: deployment.parentRuntimeId || "",
+				PI_SUBAGENT_OWNER_SESSION_FILE: deployment.ownerSessionFile || "",
 			};
 			let stdoutBuffer = "";
 			let settled = false;
@@ -1608,6 +1779,7 @@ export default function (pi: ExtensionAPI) {
 				if (pollInterval) clearInterval(pollInterval);
 			};
 			const resolveExitCode = (code: number | null | undefined): number => {
+				if (completionEventSeen && completionTerminationTriggered && !attemptErrorMessage) return 0;
 				if (typeof code === "number") return code;
 				if (aborted) return 1;
 				if (completionEventSeen && !attemptErrorMessage) return 0;
@@ -1804,11 +1976,23 @@ export default function (pi: ExtensionAPI) {
 					return;
 				}
 				const child = spawn(invocation.command, invocation.args, { cwd: params.cwd, env, stdio: ["ignore", "pipe", "pipe"], shell: false });
-				const abortChild = () => {
-					aborted = true;
-					child.kill("SIGTERM");
-					setTimeout(() => { if (!child.killed) child.kill("SIGKILL"); }, SUBAGENT_FORCE_KILL_TIMEOUT_MS).unref?.();
+				let childClosed = false;
+				let terminationRequested = false;
+				if (deployment.runtimeId && runtimeRegistryPath && child.pid) markPersistentRuntimeProcess(runtimeRegistryPath, deployment.runtimeId, child.pid);
+				const terminateChild = (reason: "abort" | "completion") => {
+					if (childClosed || terminationRequested) return;
+					terminationRequested = true;
+					if (reason === "abort") aborted = true;
+					try { child.kill("SIGTERM"); } catch { /* ignore */ }
+					forceKillWatchdog = setTimeout(() => {
+						if (!childClosed) {
+							try { child.kill("SIGKILL"); } catch { /* ignore */ }
+						}
+					}, SUBAGENT_FORCE_KILL_TIMEOUT_MS);
+					forceKillWatchdog.unref?.();
 				};
+				forceCompleteAttempt = () => terminateChild("completion");
+				const abortChild = () => terminateChild("abort");
 				child.stdout.on("data", (chunk) => {
 					stdoutBuffer += chunk.toString();
 					const lines = stdoutBuffer.split("\n");
@@ -1821,14 +2005,21 @@ export default function (pi: ExtensionAPI) {
 					appendTranscript(params.ctx, deployment.deploymentId, { kind: "stderr", title: "stderr", text: previewTranscriptText(chunk.toString(), 10, 1200), ts: Date.now() });
 					if (completionEventSeen) armCompletionWatchdog();
 				});
-				child.once("close", (code) => finalize(resolveExitCode(code)));
+				child.once("close", (code) => {
+					childClosed = true;
+					finalize(resolveExitCode(code));
+				});
 				child.once("exit", (code) => {
-					closeWatchdog = setTimeout(() => finalize(resolveExitCode(code)), 1_000);
+					closeWatchdog = setTimeout(() => {
+						childClosed = true;
+						finalize(resolveExitCode(code));
+					}, 1_000);
 					closeWatchdog.unref?.();
 				});
 				child.once("error", (error) => {
 					attemptErrorMessage = error.message;
 					appendTranscript(params.ctx, deployment.deploymentId, { kind: "error", title: "Spawn error", text: error.message, ts: Date.now() });
+					childClosed = true;
 					finalize(1);
 				});
 				if (params.signal?.aborted) abortChild();
@@ -1978,7 +2169,14 @@ export default function (pi: ExtensionAPI) {
 			if (runtime) {
 				deployment.contextTokens = runtime.contextTokens;
 				deployment.contextWindow = runtime.contextWindow;
-				deployment.reuseSummary = deployment.reuseSummary || `runtime ${runtime.runtimeId} idle`;
+				const contextPercent = runtime.contextWindow > 0 ? (runtime.contextTokens / runtime.contextWindow) * 100 : 0;
+				if (deployment.status === "done" && contextPercent >= params.maxContextPercent) {
+					retirePersistentRuntime(runtimeRegistryPath, runtime.runtimeId);
+					deployment.reuseSummary = `retired ${runtime.runtimeId} at ${Math.round(contextPercent)}% ctx`;
+					deployment.currentActivity = `completed · retired at ${Math.round(contextPercent)}% ctx`;
+				} else {
+					deployment.reuseSummary = deployment.reuseSummary || `runtime ${runtime.runtimeId} idle`;
+				}
 			}
 		}
 		if (deployment.failureKind === "provider_error") {
@@ -2045,6 +2243,7 @@ export default function (pi: ExtensionAPI) {
 			reusedRuntime: deployment.reusedRuntime,
 			reuseSummary: deployment.reuseSummary,
 			sessionFilePath: deployment.sessionFilePath,
+			ownerSessionFile: deployment.ownerSessionFile,
 			parentRuntimeId: deployment.parentRuntimeId,
 			depth: deployment.depth,
 			contextWindow: deployment.contextWindow,
@@ -2101,7 +2300,8 @@ ${finalText}`
 		promptSnippet: "Query a team of agents defined in agents/teams.yaml. Use parallel for research fan-out and serial when interaction or deterministic ordering matters.",
 		promptGuidelines: [
 			"Use query_team for research/consultation across a named team, not for persistent PDD phase delegation.",
-			"Use execution=parallel for independent research questions and fan-out.",
+			"Defaults to persistent runtime reuse with reuse=prefer and maxContextPercent=75; pass mode=ephemeral only when continuity is unwanted.",
+			"Use execution=parallel for independent research questions and fan-out; compatible persistent runtimes are serialized internally to avoid concurrent writes to one session.",
 			"Use execution=serial when a member may need user interaction or when stable ordering matters.",
 		],
 		parameters: QueryTeamParams,
@@ -2109,6 +2309,9 @@ ${finalText}`
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
 			const scope = params.scope ?? "both";
 			const execution = params.execution ?? "parallel";
+			const mode = params.mode ?? "persistent";
+			const reuse = params.reuse ?? "prefer";
+			const maxContextPercent = Math.max(1, Math.min(100, params.maxContextPercent ?? 75));
 			const continueOnError = params.continueOnError ?? true;
 			const runtimeCwd = params.cwd || ctx.cwd;
 			const launchBackend = resolveLaunchBackend(params.launchBackend);
@@ -2157,6 +2360,9 @@ ${finalText}`
 				execution,
 				scope,
 				launchBackend,
+				mode,
+				reuse,
+				maxContextPercent,
 				resolvedMembers: team.members,
 				requestedQueries,
 				completed: 0,
@@ -2189,10 +2395,10 @@ ${finalText}`
 					instanceNumber,
 					cwd: runtimeCwd,
 					scope,
-					mode: "ephemeral",
-					reuse: "prefer",
+					mode,
+					reuse,
 					launchBackend,
-					maxContextPercent: 75,
+					maxContextPercent,
 					signal: localAbort.signal,
 					onUpdate: () => emitQueryTeamProgress(onUpdate, details),
 					ctx,
@@ -2224,57 +2430,60 @@ ${finalText}`
 				emitQueryTeamProgress(onUpdate, details);
 			};
 
-			try {
-			if (execution === "parallel") {
-				const settled = await Promise.allSettled(requestedQueries.map((query, index) => runOne(query, index)));
-				for (let i = 0; i < settled.length; i += 1) {
-					const settledResult = settled[i];
-					if (settledResult.status === "fulfilled") {
-						acceptResult(settledResult.value);
-						continue;
-					}
-					const query = requestedQueries[i];
-					acceptResult({
-						member: query.member,
-						question: query.question,
-						status: "error",
-						exitCode: 1,
-						summary: truncate(getErrorMessage(settledResult.reason)),
-						fullOutput: getErrorMessage(settledResult.reason),
-						usage: zeroUsage(),
-						model: agentCatalog.get(query.member)?.model,
-						source: agentCatalog.get(query.member)?.source ?? team.source,
-						filePath: agentCatalog.get(query.member)?.filePath ?? team.filePath,
-						deploymentId: `${team.name}/${query.member}#${i + 1}`,
-						errorMessage: getErrorMessage(settledResult.reason),
-					});
-				}
-			} else {
-				for (let i = 0; i < requestedQueries.length; i += 1) {
-					const query = requestedQueries[i];
-					try {
-						acceptResult(await runOne(query, i));
-					} catch (error) {
-						acceptResult({
-							member: query.member,
-							question: query.question,
-							status: "error",
-							exitCode: 1,
-							summary: truncate(getErrorMessage(error)),
-							fullOutput: getErrorMessage(error),
-							usage: zeroUsage(),
-							model: agentCatalog.get(query.member)?.model,
-							source: agentCatalog.get(query.member)?.source ?? team.source,
-							filePath: agentCatalog.get(query.member)?.filePath ?? team.filePath,
-							deploymentId: `${team.name}/${query.member}#${i + 1}`,
-							errorMessage: getErrorMessage(error),
-						});
-					}
-					if (!continueOnError && details.failed > 0) break;
-				}
-			}
+			const errorResult = (query: ExpandedTeamQuery, index: number, error: unknown): QueryTeamResultItem => ({
+				member: query.member,
+				question: query.question,
+				status: "error",
+				exitCode: 1,
+				summary: truncate(getErrorMessage(error)),
+				fullOutput: getErrorMessage(error),
+				usage: zeroUsage(),
+				model: agentCatalog.get(query.member)?.model,
+				source: agentCatalog.get(query.member)?.source ?? team.source,
+				filePath: agentCatalog.get(query.member)?.filePath ?? team.filePath,
+				deploymentId: `${team.name}/${query.member}#${index + 1}`,
+				errorMessage: getErrorMessage(error),
+			});
 
-			const statusLine = `team ${team.name} (${execution}) — ${details.completed} completed, ${details.failed} failed`;
+			try {
+				if (execution === "parallel") {
+					const groups = new Map<string, Array<{ query: ExpandedTeamQuery; index: number }>>();
+					for (let i = 0; i < requestedQueries.length; i += 1) {
+						const query = requestedQueries[i];
+						const memberAgent = agentCatalog.get(query.member)!;
+						const key = mode === "persistent"
+							? buildRuntimeCompatibilityKey({ agent: memberAgent, cwd: runtimeCwd, scope, mode, launchBackend })
+							: `${memberAgent.name}#${i}`;
+						const group = groups.get(key) ?? [];
+						group.push({ query, index: i });
+						groups.set(key, group);
+					}
+					const indexedResults: QueryTeamResultItem[] = [];
+					await Promise.all([...groups.values()].map(async (group) => {
+						for (const item of group) {
+							try {
+								indexedResults[item.index] = await runOne(item.query, item.index);
+							} catch (error) {
+								indexedResults[item.index] = errorResult(item.query, item.index, error);
+							}
+						}
+					}));
+					for (const result of indexedResults) {
+						if (result) acceptResult(result);
+					}
+				} else {
+					for (let i = 0; i < requestedQueries.length; i += 1) {
+						const query = requestedQueries[i];
+						try {
+							acceptResult(await runOne(query, i));
+						} catch (error) {
+							acceptResult(errorResult(query, i, error));
+						}
+						if (!continueOnError && details.failed > 0) break;
+					}
+				}
+
+			const statusLine = `team ${team.name} (${execution} · ${mode}) — ${details.completed} completed, ${details.failed} failed`;
 			const resultLines = details.results.map((result) => {
 				const icon = result.status === "done" ? "✓" : "✗";
 				return `${icon} ${result.member}: ${result.summary}`;
@@ -2299,12 +2508,13 @@ ${finalText}`
 
 		renderCall(args, theme) {
 			const execution = args.execution ?? "parallel";
+			const mode = args.mode ?? "persistent";
 			const launchBackend = resolveLaunchBackend(args.launchBackend);
 			const queries = (args.queries || []) as QueryTeamQuery[];
 			return new Text(
 				theme.fg("toolTitle", theme.bold("query_team ")) +
 				theme.fg("accent", args.team || "unknown") +
-				theme.fg("muted", ` [${execution} · ${launchBackend}]`) +
+				theme.fg("muted", ` [${execution} · ${mode} · ${launchBackend}]`) +
 				theme.fg("dim", ` · ${queries.length} quer${queries.length === 1 ? "y" : "ies"}`),
 				0,
 				0,
@@ -2321,7 +2531,7 @@ ${finalText}`
 				theme.fg(result.isError ? "error" : "success", result.isError ? "✗" : "✓") +
 				" " +
 				theme.fg("toolTitle", theme.bold(`team ${details.team}`)) +
-				theme.fg("muted", ` · ${details.execution} · ${details.launchBackend} · ${details.completed}/${details.requestedQueries.length} completed · ${details.failed} failed`);
+				theme.fg("muted", ` · ${details.execution} · ${details.mode} · reuse ${details.reuse} <${details.maxContextPercent}% · ${details.launchBackend} · ${details.completed}/${details.requestedQueries.length} completed · ${details.failed} failed`);
 			const meta = theme.fg("muted", `resolved: ${details.resolvedMembers.join(", ")} · teams: ${details.teamsFilePath ?? "n/a"}`);
 			const members = details.results.map((item) => `${item.status === "done" ? "✓" : "✗"} ${item.member} · ${item.summary}`).join("\n");
 			return new Text([header, meta, members || "(no results)"].join("\n"), 0, 0);
@@ -2339,6 +2549,7 @@ ${finalText}`
 			"Deploy a named agent with isolated context. Use this for pdd-explorer, pdd-requirements, pdd-planner, pdd-builder, and pdd-reviewer after you decide the minimal flow.",
 		promptGuidelines: [
 			"Use deploy_agent only after you, the orchestrator, decide whether the request needs no flow, a partial flow, or the full PDD flow.",
+			"Defaults to persistent runtime reuse with reuse=prefer and maxContextPercent=75; pass mode=ephemeral only for one-shot isolation.",
 			"Prefer the smallest valid flow. Do not deploy explorer/requirements/planner/reviewer automatically.",
 		],
 		parameters: DeployAgentParams,
@@ -2346,7 +2557,7 @@ ${finalText}`
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
 			const scope = params.scope ?? "both";
 			const runtimeCwd = params.cwd || ctx.cwd;
-			const mode = params.mode ?? "ephemeral";
+			const mode = params.mode ?? "persistent";
 			const reuse = params.reuse ?? "prefer";
 			const launchBackend = resolveLaunchBackend(params.launchBackend);
 			const maxContextPercent = Math.max(1, Math.min(100, params.maxContextPercent ?? 75));
@@ -2425,7 +2636,7 @@ ${finalText}`
 			if (context.state.deployAgentHasResult) return new Container();
 			const taskPreview = truncate(args.task || "", 72);
 			const scope = args.scope ?? "both";
-			const mode = args.mode ?? "ephemeral";
+			const mode = args.mode ?? "persistent";
 			const launchBackend = resolveLaunchBackend(args.launchBackend);
 			const header =
 				theme.fg("toolTitle", theme.bold("deploy_agent ")) +
@@ -2442,7 +2653,7 @@ ${finalText}`
 			context.state.deployAgentHasResult = true;
 			const taskPreview = truncate(context.args.task || "", 72);
 			const scope = context.args.scope ?? "both";
-			const mode = context.args.mode ?? "ephemeral";
+			const mode = context.args.mode ?? "persistent";
 			const launchBackend = resolveLaunchBackend(context.args.launchBackend);
 			const header =
 				theme.fg("toolTitle", theme.bold("deploy_agent ")) +

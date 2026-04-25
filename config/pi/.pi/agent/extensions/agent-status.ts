@@ -1,4 +1,3 @@
-import type { AssistantMessage } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { DynamicBorder } from "@mariozechner/pi-coding-agent";
 import {
@@ -14,7 +13,6 @@ import {
 	saveAgentStatusConfig,
 } from "./lib/agent-status-config";
 
-import { PRIMARY_STATE_EVENT, restorePrimaryState, SYSTEM_AGENT } from "./lib/agent-discovery";
 
 const SUBAGENTS_EVENT = "subagents:deployments-changed";
 const WIDGET_KEY = "pdd-orgm-agents";
@@ -54,6 +52,7 @@ interface DeploymentState {
 	reusedRuntime?: boolean;
 	reuseSummary?: string;
 	sessionFilePath?: string;
+	ownerSessionFile?: string;
 	parentRuntimeId?: string;
 	depth?: number;
 	contextWindow: number;
@@ -86,6 +85,7 @@ interface RuntimeSnapshot {
 	launchBackend: AgentLaunchBackend;
 	model?: string;
 	sessionFilePath?: string;
+	ownerSessionFile?: string;
 	contextWindow: number;
 	contextTokens: number;
 	status: RuntimeStatus;
@@ -145,25 +145,6 @@ function safeRequestRender(handle: { requestRender: () => void } | null | undefi
 	}
 }
 
-function formatCompactNumber(value: number): string {
-	if (!Number.isFinite(value)) return "0";
-	if (value < 1000) return `${Math.round(value)}`;
-	if (value < 1_000_000) return `${(value / 1000).toFixed(value < 10_000 ? 1 : 0)}k`;
-	return `${(value / 1_000_000).toFixed(1)}m`;
-}
-
-function formatCurrency(value: number): string {
-	if (!Number.isFinite(value) || value <= 0) return "$0.000";
-	if (value < 0.001) return `$${value.toFixed(4)}`;
-	return `$${value.toFixed(3)}`;
-}
-
-function buildContextBar(percent: number, width = 10): string {
-	const clamped = Math.max(0, Math.min(100, percent));
-	const filled = Math.max(0, Math.min(width, Math.round((clamped / 100) * width)));
-	return `[${"#".repeat(filled)}${"-".repeat(width - filled)}]${Math.round(clamped)}%`;
-}
-
 function truncate(text: string, max = 96): string {
 	const clean = text.replace(/\s+/g, " ").trim();
 	if (clean.length <= max) return clean;
@@ -193,10 +174,6 @@ function shortenMiddle(text: string, maxWidth: number): string {
 }
 
 
-function formatPrimaryLabel(name: string): string {
-	return name === SYSTEM_AGENT ? "pi" : `primary:${name}`;
-}
-
 function withInstanceNumbers(deployments: DeploymentState[]): DeploymentState[] {
 	const counters = new Map<string, number>();
 	return deployments.map((deployment) => {
@@ -224,6 +201,7 @@ function deriveRuntimePlaceholder(runtime: RuntimeSnapshot): DeploymentState {
 		reusedRuntime: runtime.reuseCount > 0,
 		reuseSummary: `runtime ${runtime.runtimeId} idle · ${runtime.reuseCount} reuses`,
 		sessionFilePath: runtime.sessionFilePath,
+		ownerSessionFile: runtime.ownerSessionFile,
 		parentRuntimeId: runtime.parentRuntimeId,
 		depth: runtime.depth ?? 0,
 		contextWindow: runtime.contextWindow,
@@ -247,6 +225,23 @@ function deriveRuntimePlaceholder(runtime: RuntimeSnapshot): DeploymentState {
 		pddMemoryWrites: 0,
 		attemptedModels: [],
 		fallbackUsed: false,
+	};
+}
+
+function belongsToSession(entity: { ownerSessionFile?: string }, currentSessionFile?: string | null): boolean {
+	if (!currentSessionFile) return true;
+	return entity.ownerSessionFile === currentSessionFile;
+}
+
+function filterSessionState(
+	deployments: DeploymentState[],
+	runtimes: RuntimeSnapshot[],
+	currentSessionFile?: string | null,
+): { deployments: DeploymentState[]; runtimes: RuntimeSnapshot[] } {
+	if (!currentSessionFile) return { deployments, runtimes };
+	return {
+		deployments: deployments.filter((deployment) => belongsToSession(deployment, currentSessionFile)),
+		runtimes: runtimes.filter((runtime) => belongsToSession(runtime, currentSessionFile)),
 	};
 }
 
@@ -308,8 +303,13 @@ function deriveInspectDeployments(deployments: DeploymentState[], runtimes: Runt
 	return combined;
 }
 
-function getWidgetViewModel(deployments: DeploymentState[], runtimes: RuntimeSnapshot[]) {
-	const displayDeployments = deriveDisplayDeployments(deployments, runtimes);
+function getWidgetViewModel(
+	deployments: DeploymentState[],
+	runtimes: RuntimeSnapshot[],
+	currentSessionFile?: string | null,
+) {
+	const sessionState = filterSessionState(deployments, runtimes, currentSessionFile);
+	const displayDeployments = deriveDisplayDeployments(sessionState.deployments, sessionState.runtimes);
 	const numberedDeployments = withInstanceNumbers(displayDeployments);
 	const statusRank = (status: DeploymentStatus): number => {
 		if (status === "running") return 0;
@@ -354,8 +354,9 @@ function buildWidgetLines(
 	runtimes: RuntimeSnapshot[],
 	config: AgentStatusConfig,
 	cavemanLevel: CavemanLevel,
+	currentSessionFile?: string | null,
 ): string[] {
-	const view = getWidgetViewModel(deployments, runtimes);
+	const view = getWidgetViewModel(deployments, runtimes, currentSessionFile);
 	if (view.sortedDeployments.length === 0) return [];
 	const padCell = (text: string, cellWidth: number) => {
 		const truncated = truncateToWidth(text, cellWidth);
@@ -437,7 +438,6 @@ function buildConfigOptions(config: AgentStatusConfig): Array<{ key: keyof Agent
 	const mark = (value: boolean) => (value ? "[on]" : "[off]");
 	return [
 		{ key: "showWidget", title: `${mark(config.showWidget)} Widget cards` },
-		{ key: "showFooter", title: `${mark(config.showFooter)} Footer` },
 		{ key: "showModel", title: `${mark(config.showModel)} Show model` },
 		{ key: "showTokens", title: `${mark(config.showTokens)} Show tokens` },
 		{ key: "showCost", title: `${mark(config.showCost)} Show cost` },
@@ -664,21 +664,29 @@ async function openTranscriptViewer(
 }
 
 export default function (pi: ExtensionAPI) {
-	let currentPrimary = SYSTEM_AGENT;
 	let currentCaveman: CavemanLevel = "off";
 	let currentCtx: ExtensionContext | null = null;
 	let deployments: DeploymentState[] = [];
 	let runtimes: RuntimeSnapshot[] = [];
 	let transcripts: DeploymentTranscriptMap = {};
-	let footerHandle: { requestRender: () => void } | null = null;
 	let widgetHandle: { requestRender: () => void } | null = null;
 	let widgetMounted = false;
 	let transcriptViewerHandle: { deploymentId: string; requestRender: () => void } | null = null;
 	let config = loadAgentStatusConfig();
+	let lastWidgetStateSignature = "";
 
 	const syncWidget = (ctx: ExtensionContext) => {
 		if (!ctx.hasUI) return;
-		const view = getWidgetViewModel(deployments, runtimes);
+		const nextSignature = JSON.stringify({
+			config,
+			caveman: currentCaveman,
+			sessionFile: ctx.sessionManager.getSessionFile() ?? null,
+			deployments,
+			runtimes,
+		});
+		if (lastWidgetStateSignature === nextSignature) return;
+		lastWidgetStateSignature = nextSignature;
+		const view = getWidgetViewModel(deployments, runtimes, ctx.sessionManager.getSessionFile());
 		if (!config.showWidget || view.sortedDeployments.length === 0) {
 			if (widgetMounted) {
 				ctx.ui.setWidget(WIDGET_KEY, undefined);
@@ -695,16 +703,18 @@ export default function (pi: ExtensionAPI) {
 					widgetHandle = { requestRender: () => tui.requestRender() };
 					return {
 						render(width: number): string[] {
-							return buildWidgetLines(theme, width, deployments, runtimes, config, currentCaveman);
+							return buildWidgetLines(theme, width, deployments, runtimes, config, currentCaveman, currentCtx?.sessionManager.getSessionFile());
 						},
 						invalidate() {},
 					};
 				},
+				{ placement: "belowEditor" },
 			);
 			widgetMounted = true;
 		} else if (!safeRequestRender(widgetHandle)) {
 			widgetMounted = false;
 			widgetHandle = null;
+			lastWidgetStateSignature = "";
 			syncWidget(ctx);
 			return;
 		}
@@ -712,10 +722,13 @@ export default function (pi: ExtensionAPI) {
 		ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg(status.color, status.text));
 	};
 
-	const rerender = () => {
+	const rerenderWidget = () => {
 		config = loadAgentStatusConfig();
+		lastWidgetStateSignature = "";
 		if (currentCtx) syncWidget(currentCtx);
-		if (!safeRequestRender(footerHandle)) footerHandle = null;
+	};
+
+	const rerenderTranscriptViewer = () => {
 		if (!safeRequestRender(transcriptViewerHandle)) transcriptViewerHandle = null;
 	};
 
@@ -723,73 +736,9 @@ export default function (pi: ExtensionAPI) {
 		deployments = [];
 		runtimes = [];
 		transcripts = {};
+		lastWidgetStateSignature = "";
 		syncWidget(ctx);
-		if (!safeRequestRender(footerHandle)) footerHandle = null;
-		if (!safeRequestRender(transcriptViewerHandle)) transcriptViewerHandle = null;
-	};
-
-	const installFooter = (ctx: ExtensionContext) => {
-		currentCtx = ctx;
-		currentPrimary = restorePrimaryState(ctx.sessionManager.getEntries(), ctx.cwd, "both");
-		currentCaveman = resolveInitialCavemanState(ctx.sessionManager.getEntries()).level;
-		config = loadAgentStatusConfig();
-
-		ctx.ui.setFooter((tui, theme, footerData) => {
-			footerHandle = { requestRender: () => tui.requestRender() };
-			const unsubscribeBranch = footerData.onBranchChange(() => tui.requestRender());
-			return {
-				dispose: () => { unsubscribeBranch(); footerHandle = null; },
-				invalidate() {},
-				render(width: number): string[] {
-					if (!config.showFooter) return [];
-					const usage = ctx.getContextUsage();
-					const percent = usage?.percent ?? 0;
-					const contextText = buildContextBar(percent);
-
-					let inputTokens = 0;
-					let outputTokens = 0;
-					let totalCost = 0;
-					for (const entry of ctx.sessionManager.getBranch()) {
-						if (entry.type === "message" && entry.message.role === "assistant") {
-							const message = entry.message as AssistantMessage;
-							inputTokens += message.usage?.input ?? 0;
-							outputTokens += message.usage?.output ?? 0;
-							totalCost += message.usage?.cost?.total ?? 0;
-						}
-					}
-
-					const modelName = ctx.model?.name || ctx.model?.id || "no-model";
-					const thinking = pi.getThinkingLevel();
-					const tokenSummary = `↑${formatCompactNumber(inputTokens)} ↓${formatCompactNumber(outputTokens)}`;
-					const primaryLabel = formatPrimaryLabel(currentPrimary);
-					const left = theme.fg("accent", contextText);
-					const middle = [
-						config.showModel ? theme.fg("text", modelName) : "",
-						theme.fg("muted", `${config.showModel ? " · " : ""}${thinking} · ${primaryLabel}`),
-					].join("");
-					const rightParts = [
-						config.showTokens ? theme.fg("muted", tokenSummary) : "",
-						config.showCost ? theme.fg("warning", formatCurrency(totalCost)) : "",
-					].filter(Boolean);
-					const right = rightParts.join(theme.fg("muted", " · "));
-					const combinedWidth = visibleWidth(left) + visibleWidth(middle) + visibleWidth(right) + 4;
-
-					if (combinedWidth <= width) {
-						const free = width - combinedWidth;
-						return [left + "  " + middle + " ".repeat(2 + free) + right];
-					}
-
-					const compactBar = theme.fg("accent", `${contextText} `);
-					const compactTail = [
-						config.showModel ? theme.fg("text", modelName) : "",
-						theme.fg("muted", `${config.showModel ? " · " : ""}${thinking} · ${primaryLabel}`),
-						config.showTokens ? theme.fg("muted", ` · ${tokenSummary}`) : "",
-						config.showCost ? theme.fg("warning", ` · ${formatCurrency(totalCost)}`) : "",
-					].join("");
-					return [compactBar + truncateToWidth(compactTail, Math.max(0, width - visibleWidth(compactBar)))];
-				},
-			};
-		});
+		rerenderTranscriptViewer();
 	};
 
 	pi.on("session_start", async (_event, ctx) => {
@@ -799,38 +748,41 @@ export default function (pi: ExtensionAPI) {
 		transcripts = {};
 		widgetHandle = null;
 		widgetMounted = false;
-		if (ctx.hasUI) {
-			installFooter(ctx);
-			syncWidget(ctx);
-		}
+		lastWidgetStateSignature = "";
+		currentCaveman = resolveInitialCavemanState(ctx.sessionManager.getEntries()).level;
+		if (ctx.hasUI) syncWidget(ctx);
 	});
 
 	pi.on("model_select", async (_event, ctx) => {
+		currentCtx = ctx;
 		if (!ctx.hasUI) return;
-		installFooter(ctx);
-	});
-
-	pi.events.on(PRIMARY_STATE_EVENT, (data: { selectedName: string }) => {
-		currentPrimary = data?.selectedName ?? SYSTEM_AGENT;
-		rerender();
+		rerenderWidget();
 	});
 
 	pi.events.on(CAVEMAN_STATE_EVENT, (data: { level?: CavemanLevel }) => {
 		currentCaveman = data?.level ?? "off";
-		rerender();
+		rerenderWidget();
 	});
 
 	pi.events.on(SUBAGENTS_EVENT, (data: { deployments?: DeploymentState[]; runtimes?: RuntimeSnapshot[]; transcripts?: DeploymentTranscriptMap }) => {
-		deployments = Array.isArray(data?.deployments) ? data.deployments : [];
-		runtimes = Array.isArray(data?.runtimes) ? data.runtimes : [];
-		transcripts = data?.transcripts && typeof data.transcripts === "object"
+		const nextDeployments = Array.isArray(data?.deployments) ? data.deployments : [];
+		const nextRuntimes = Array.isArray(data?.runtimes) ? data.runtimes : [];
+		const nextTranscripts = data?.transcripts && typeof data.transcripts === "object"
 			? Object.fromEntries(Object.entries(data.transcripts).map(([deploymentId, entries]) => [deploymentId, normalizeTranscriptEntries(entries)]))
 			: {};
-		rerender();
+		const widgetStateChanged = JSON.stringify(nextDeployments) !== JSON.stringify(deployments)
+			|| JSON.stringify(nextRuntimes) !== JSON.stringify(runtimes);
+		const transcriptStateChanged = JSON.stringify(nextTranscripts) !== JSON.stringify(transcripts);
+		deployments = nextDeployments;
+		runtimes = nextRuntimes;
+		transcripts = nextTranscripts;
+		if (widgetStateChanged) rerenderWidget();
+		if (transcriptStateChanged) rerenderTranscriptViewer();
 	});
 
 	const inspectDeployment = async (ctx: ExtensionContext, deploymentId?: string | null) => {
-		const inspectDeployments = deriveInspectDeployments(deployments, runtimes);
+		const sessionState = filterSessionState(deployments, runtimes, ctx.sessionManager.getSessionFile());
+		const inspectDeployments = deriveInspectDeployments(sessionState.deployments, sessionState.runtimes);
 		const selectedDeploymentId = deploymentId ?? await openDeploymentPanel(ctx, inspectDeployments);
 		if (!selectedDeploymentId) return;
 		await openTranscriptViewer(
@@ -910,12 +862,12 @@ export default function (pi: ExtensionAPI) {
 				if (!chosen || chosen.key === "close") break;
 				config = { ...config, [chosen.key]: !config[chosen.key] };
 				saveAgentStatusConfig(config);
+				lastWidgetStateSignature = "";
 				syncWidget(ctx);
-				installFooter(ctx);
 				ctx.ui.notify(`agent-status: ${chosen.key} ${config[chosen.key] ? "on" : "off"}`, "info");
 			}
+			lastWidgetStateSignature = "";
 			syncWidget(ctx);
-			installFooter(ctx);
 			ctx.ui.notify("Agent status settings applied", "success");
 		},
 	});

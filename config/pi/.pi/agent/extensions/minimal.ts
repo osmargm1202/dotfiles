@@ -1,3 +1,4 @@
+import { basename } from "node:path";
 import type { AssistantMessage } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
@@ -34,6 +35,11 @@ function buildContextBar(percent: number, width = 10): string {
 	return `[${"#".repeat(filled)}${"-".repeat(width - filled)}]${Math.round(clamped)}%`;
 }
 
+function getFolderLabel(cwd: string): string {
+	const trimmed = cwd.replace(/[\\/]+$/, "");
+	const folder = basename(trimmed) || trimmed || ".";
+	return ` ${folder}`;
+}
 
 export default function (pi: ExtensionAPI) {
 	let currentPrimary: string = SYSTEM_AGENT;
@@ -47,6 +53,7 @@ export default function (pi: ExtensionAPI) {
 
 		ctx.ui.setFooter((tui, theme, footerData) => {
 			footerHandle = tui;
+			const folderLabel = getFolderLabel(ctx.cwd);
 			const unsubscribeBranch = footerData.onBranchChange(() => tui.requestRender());
 
 			return {
@@ -73,42 +80,59 @@ export default function (pi: ExtensionAPI) {
 					const modelName = ctx.model?.name || ctx.model?.id || "no-model";
 					const thinking = pi.getThinkingLevel();
 					const tokenSummary = `↑${formatCompactNumber(inputTokens)} ↓${formatCompactNumber(outputTokens)}`;
-					const costSummary = `${tokenSummary} ${formatCurrency(totalCost)}`;
 					const primaryLabel = formatPrimaryLabel(currentPrimary);
 					const cavemanStatus = formatCavemanStatus(currentCaveman);
 					const cavemanStyled = currentCaveman === "off"
 						? theme.fg("dim", cavemanStatus)
 						: theme.fg("accent", cavemanStatus);
 
-					const left = theme.fg("accent", contextText);
-					const middle = theme.fg("text", modelName) + theme.fg("muted", ` · ${thinking} · ${primaryLabel}`);
-					const right = showCavemanStatus
-						? cavemanStyled + theme.fg("muted", ` · ${tokenSummary} `) + theme.fg("warning", formatCurrency(totalCost))
-						: theme.fg("muted", `${tokenSummary} `) + theme.fg("warning", formatCurrency(totalCost));
+					const leftParts = [
+						theme.fg("accent", contextText),
+						theme.fg("text", modelName),
+						theme.fg("muted", `${thinking} · ${primaryLabel}`),
+					];
+					const left = leftParts.join(theme.fg("muted", " · "));
+					const centerRaw = folderLabel;
+					const rightParts = [
+						showCavemanStatus ? cavemanStyled : "",
+						theme.fg("muted", tokenSummary),
+						theme.fg("warning", formatCurrency(totalCost)),
+					].filter(Boolean);
+					const right = rightParts.join(theme.fg("muted", " · "));
 
 					const minSpaces = 2;
-					const combinedWidth = visibleWidth(left) + visibleWidth(middle) + visibleWidth(right) + minSpaces * 2;
+					const leftWidth = visibleWidth(left);
+					const rightWidth = visibleWidth(right);
+					const reservedWidth = leftWidth + rightWidth + minSpaces * 2;
+					const centerAvailable = width - reservedWidth;
 
-					if (combinedWidth <= width) {
-						const free = width - combinedWidth;
-						const padLeft = " ".repeat(minSpaces);
-						const padMiddle = " ".repeat(minSpaces + free);
-						return [left + padLeft + middle + padMiddle + right];
+					if (centerAvailable >= 1) {
+						const centerText = truncateToWidth(centerRaw, centerAvailable);
+						const centerWidth = visibleWidth(centerText);
+						const extra = centerAvailable - centerWidth;
+						const padBefore = " ".repeat(minSpaces + Math.floor(extra / 2));
+						const padAfter = " ".repeat(minSpaces + Math.ceil(extra / 2));
+						const center = theme.fg("text", centerText);
+						return [left + padBefore + center + padAfter + right];
 					}
 
 					const compact = showCavemanStatus
-						? `${contextText} ${modelName} · ${thinking} · ${primaryLabel} · ${cavemanStatus} ${costSummary}`
-						: `${contextText} ${modelName} · ${thinking} · ${primaryLabel} ${costSummary}`;
+						? `${contextText} ${modelName} · ${thinking} · ${primaryLabel} · ${folderLabel} · ${cavemanStatus} · ${tokenSummary} ${formatCurrency(totalCost)}`
+						: `${contextText} ${modelName} · ${thinking} · ${primaryLabel} · ${folderLabel} · ${tokenSummary} ${formatCurrency(totalCost)}`;
 					const styledCompact = showCavemanStatus
 						? theme.fg("accent", `${contextText} `) +
 							theme.fg("text", modelName) +
 							theme.fg("muted", ` · ${thinking} · ${primaryLabel} · `) +
+							theme.fg("text", folderLabel) +
+							theme.fg("muted", " · ") +
 							cavemanStyled +
-							theme.fg("muted", ` ${tokenSummary} `) +
+							theme.fg("muted", ` · ${tokenSummary} `) +
 							theme.fg("warning", formatCurrency(totalCost))
 						: theme.fg("accent", `${contextText} `) +
 							theme.fg("text", modelName) +
-							theme.fg("muted", ` · ${thinking} · ${primaryLabel} ${tokenSummary} `) +
+							theme.fg("muted", ` · ${thinking} · ${primaryLabel} · `) +
+							theme.fg("text", folderLabel) +
+							theme.fg("muted", ` · ${tokenSummary} `) +
 							theme.fg("warning", formatCurrency(totalCost));
 
 					if (visibleWidth(compact) <= width) {
@@ -119,12 +143,12 @@ export default function (pi: ExtensionAPI) {
 					const compactTail = showCavemanStatus
 						? theme.fg("text", modelName) +
 							theme.fg("muted", ` · ${thinking} · ${primaryLabel} · `) +
-							cavemanStyled +
-							theme.fg("muted", " ") +
-							theme.fg("warning", formatCurrency(totalCost))
+							theme.fg("text", folderLabel) +
+							theme.fg("muted", " · ") +
+							cavemanStyled
 						: theme.fg("text", modelName) +
-							theme.fg("muted", ` · ${thinking} · ${primaryLabel} `) +
-							theme.fg("warning", formatCurrency(totalCost));
+							theme.fg("muted", ` · ${thinking} · ${primaryLabel} · `) +
+							theme.fg("text", folderLabel);
 
 					const availableTailWidth = Math.max(0, width - visibleWidth(compactBar));
 					return [compactBar + truncateToWidth(compactTail, availableTailWidth)];

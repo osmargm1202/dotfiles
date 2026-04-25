@@ -46,7 +46,7 @@
       "env": {
         "STITCH_API_KEY": "${STITCH_API_KEY}"
       },
-      "directTools": true
+      "directTools": false
     }
   }
 }

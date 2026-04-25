@@ -1,14 +1,15 @@
 {
-  "lastChangelogVersion": "0.69.0",
+  "lastChangelogVersion": "0.70.2",
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.4",
-  "defaultThinkingLevel": "medium",
+  "defaultModel": "gpt-5.5",
+  "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-ask-user",
     "npm:pi-mcp-adapter",
     "npm:pi-annotate",
     "npm:pi-markdown-preview",
-    "npm:pi-image-preview"
+    "npm:pi-image-preview",
+    "git:github.com/obra/superpowers"
   ],
   "theme": "midnight-ocean",
   "hideThinkingBlock": false,
@@ -17,7 +18,9 @@
     "~/.pi/agent/extensions/model-primary.ts",
     "~/.pi/agent/extensions/agent-selector.ts",
     "~/.pi/agent/extensions/subagents.ts",
-    "~/.pi/agent/extensions/agent-status.ts"
+    "~/.pi/agent/extensions/agent-status.ts",
+    "~/.pi/agent/extensions/panel.ts",
+    "~/.pi/agent/extensions/minimal.ts"
   ],
   "treeFilterMode": "default",
   "transport": "sse",
