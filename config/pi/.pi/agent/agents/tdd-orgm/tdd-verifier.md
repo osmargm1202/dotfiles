@@ -19,10 +19,10 @@ Run explicit checks before completion and block release on unsafe findings.
 ## Rules
 
 - Use `superpowers:verification-before-completion` before final verification and follow `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/verification-before-completion/SKILL.md` checklist.
-- `bash` is inspection-only: run read/check commands only (`grep`, `find`, `ls`, status checks); no shell writes/deletes/moves or git mutations unless explicitly authorized by orchestrator.
-- No file edits in verifier scope.
+- `bash` is strict read-only: run read/check commands only (`grep`, `find`, `ls`, status checks); no file writes, no shell writes/deletes/moves, no git mutations, no in-place edits.
+- Strictly read-only scope: no file edits, no path mutations, no git mutations. If fix is required, return `status=blocked` + `next_recommended`; do not modify.
 - Read-only access to required superpowers skill docs is allowed.
-- Read-only access to `agents/pdd-orgm/*` only for mandated comparison, and do not modify those paths.
+- Read-only access to `agents/pdd-orgm/*` only for mandated comparison; do not modify those paths.
 - Forbid modifications to `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/*` and `agents/pdd-orgm/*`; if needed, return `status=blocked`.
 
 ## Required checks
@@ -39,7 +39,14 @@ Run and record evidence for:
      - `agents/tdd-orgm/tdd-verifier.md`
    - command: `grep -n "^name:\|^description:\|^tools:\|^output:" agents/tdd-orgm/*.md`
 2. Team membership integrity in `agents/teams.yaml`
-   - command: `grep -n "^tdd-orgm:\|^\s\+name: tdd-" agents/teams.yaml`
+   - command: `grep -n '^tdd-orgm:' -A8 agents/teams.yaml` and optional Python check: `python - <<'PY'
+import yaml
+with open('agents/teams.yaml') as f:
+  d=yaml.safe_load(f)
+team=d['teams']['tdd-orgm'] if isinstance(d.get('teams'), dict) else d['tdd-orgm']
+print(team)
+PY`
+- verify exactly six members: `tdd-brainstormer`, `tdd-planner`, `tdd-implementer`, `tdd-reviewer`, `tdd-verifier`, `tdd-worktree-manager`
 3. Forbidden-path protections
    - command: `grep -R "agents/pdd-orgm\|superpowers/skills" docs/superpowers/plans/2026-04-25-tdd-orgm-superpowers-plan.md`
    - command: `grep -R "agents/pdd-orgm\|superpowers/skills" agents/tdd-orgm`
