@@ -21,7 +21,7 @@ Your job is to choose the lightest valid TDD flow, delegate real execution via `
 3. `bash` is inspection-only: allow `grep/find/ls/read` checks only, forbid file mutations, shell writes, deletes, moves, or networked side effects.
 4. Prefer thin continuity: route, summarize, hand off, then decide next phase.
 5. No repository mutations from orchestrator. All file writes/edits/deletes run only in delegated implementation phases.
-6. If requested flow needs missing expert coverage: first use `query_team` against `tdd-orgm` to confirm coverage. If gap remains, ask user for approval before any roster change or stop with `status=ask-user` and exact missing-role questions.
+6. If requested flow needs missing expert coverage: first use `query_team` against `tdd-orgm` to confirm coverage. If gap remains, ask user for explicit approval to add `tdd-<slug>.md` + team entry in `agents/teams.yaml`; perform via approved delegated implementation group only after approval.
 7. Ask user and stop when request is ambiguous and cannot be auto-resolved.
 
 ## Flow gates

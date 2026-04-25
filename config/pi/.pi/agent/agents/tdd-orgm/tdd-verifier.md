@@ -2,10 +2,10 @@
 name: tdd-verifier
 description: Run final verification gates for tdd-orgm, including safety and regression checks
 tools: read, grep, find, ls, bash
+defaultReads: context.md
 model: openai-codex/gpt-5.4
 thinking: medium
 output: verification.md
-defaultReads: context.md
 defaultProgress: true
 interactive: true
 ---
@@ -37,18 +37,13 @@ Run and record evidence for:
      - `agents/tdd-orgm/tdd-implementer.md`
      - `agents/tdd-orgm/tdd-reviewer.md`
      - `agents/tdd-orgm/tdd-verifier.md`
+     - `agents/tdd-orgm/tdd-worktree-manager.md`
    - command: `grep -n "^name:\|^description:\|^tools:\|^output:" agents/tdd-orgm/*.md`
 2. Team membership integrity in `agents/teams.yaml`
-   - command: `grep -n '^tdd-orgm:' -A8 agents/teams.yaml` and optional Python check: `python - <<'PY'
-import yaml
-with open('agents/teams.yaml') as f:
-  d=yaml.safe_load(f)
-team=d['teams']['tdd-orgm'] if isinstance(d.get('teams'), dict) else d['tdd-orgm']
-print(team)
-PY`
-- verify exactly six members: `tdd-brainstormer`, `tdd-planner`, `tdd-implementer`, `tdd-reviewer`, `tdd-verifier`, `tdd-worktree-manager`
+   - command: `grep -n '^tdd-orgm:' -A8 agents/teams.yaml` and optional Python check if YAML lib is available.
+   - verify exactly six members: `tdd-brainstormer`, `tdd-planner`, `tdd-implementer`, `tdd-reviewer`, `tdd-verifier`, `tdd-worktree-manager`
 3. Forbidden-path protections
-   - command: `grep -R "agents/pdd-orgm\|superpowers/skills" docs/superpowers/plans/2026-04-25-tdd-orgm-superpowers-plan.md`
+   - command: `PLAN_PATH=${PLAN_PATH:-docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md}; grep -R "agents/pdd-orgm\|superpowers/skills" "$PLAN_PATH"`
    - command: `grep -R "agents/pdd-orgm\|superpowers/skills" agents/tdd-orgm`
 4. Gate contract consistency between orchestrator and subagents
    - command: `grep -n "F0\|F1\|F2\|F3" agents/tdd-orgm/index.md agents/tdd-orgm/tdd-*.md`

@@ -20,14 +20,17 @@ Use `superpowers:using-git-worktrees` to isolate heavy work when requested by fl
 
 - Use `superpowers:using-git-worktrees` before recommendations: read `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/using-git-worktrees/SKILL.md` and follow directory selection + safety checks.
 - Default mode is inspection/planning only; no repository mutation unless explicitly requested by user or approved plan.
-- `bash` is inspection-only: run checks only (`read`, `grep`, `find`, `ls`), no file edits by default.
+- `bash` is inspection/check mode by default: allow read commands (`read`, `grep`, `find`, `ls`) and required git inspection commands (`git check-ignore`, `git status`, `git rev-parse`, `git worktree list`, optional `git worktree add` only after explicit approval and gate pass).
 - Run ignore safety gate before creation: `git check-ignore -v .worktrees worktrees`
   - If ignore output is missing and `.gitignore` update is required, return `status=needs_user`.
-  - Require explicit USER approval for `.gitignore` mutation; orchestrator approval alone is insufficient.
+  - Explicit USER approval is required for any `.gitignore` mutation; orchestrator approval alone is insufficient.
 - Actual worktree creation is allowed only after:
   1. user explicitly approves target location,
   2. all safety gates pass.
-  - Otherwise return `needs_user` or `blocked`.
+  - if not met, return `needs_user` or `blocked`.
+- Approved creation command path:
+  - run `git worktree add <target_path> <branch>` only with explicit user location approval and successful gate checks.
+  - do not skip to implementation when safety gate fails.
 - After safe creation, use `deploy_agent` only to delegate implementation inside the prepared worktree; do not use it to bypass safety/user approval.
 - For missing project-local worktree utility or config (for example no `.git` worktree layout), return `status=needs_user` or delegate config change via approved plan; do not edit blindly.
 - Forbid modifications to:
