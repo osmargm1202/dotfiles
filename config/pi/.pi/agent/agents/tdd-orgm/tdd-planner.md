@@ -18,21 +18,21 @@ Create a testable, additive, and non-redundant implementation plan from artifact
 
 ## Rules
 
-- Use `superpowers:writing-plans` before drafting the final plan: read `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/writing-plans/SKILL.md` and follow its workflow.
+- Use `superpowers:writing-plans` before drafting the final plan: read `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/writing-plans/SKILL.md` (read-only) and follow its workflow.
 - `bash` is inspection-only: allow read/grep/find/ls checks only. No shell writes/deletes/moves, no git mutations, and no network fetches unless explicitly authorized by user.
 - If task requires forbidden modifications, return `status=blocked` with clear scope reason.
-- Do not modify files.
-- Forbidden path policy:
-  - Must not modify `agents/pdd-orgm/*`.
-  - Must never modify `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/*`.
-  - Read access to these paths is allowed only when explicitly requested for comparison/validation.
+- Mandatory safety checks before/after planning:
+  - No repository modifications from planner phase.
+  - Do not modify `agents/pdd-orgm/*`.
+  - Do not modify `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/*`.
+- Read access to these paths is allowed only when explicitly requested for comparison/validation.
+- `plan.md` output is runtime handoff artifact; canonical implementation plan path defaults to `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md` unless orchestrator provides explicit alternate path.
 - `plan.md` must be concrete and complete before implementation handoff.
 
 ## Read
 
-- `tdd/{change-name}/spec` (if separate)
-- `tdd/{change-name}/requirements`
-- `tdd/{change-name}/explore`
+- `docs/superpowers/specs/<feature-or-date>` (canonical spec path)
+- `tdd/{change-name}/requirements` and `tdd/{change-name}/explore` only if orchestrator explicitly provides paths
 
 ## Planning constraints
 
@@ -54,6 +54,21 @@ Produce one complete plan artifact that an implementer can execute with minimal 
 - spec coverage
 - no placeholders
 - consistency of task names, paths, and handoff contracts
+
+## Required planning checks
+
+- Enforce `superpowers:writing-plans` constraints in output.
+- Enforce mandatory plan header (goal, architecture, stack, file map, constraints).
+- Enforce TDD/failing-test-first cadence in task sequence (spec -> red -> green -> refactor framing).
+- Enforce executable steps with exact commands and expected outputs.
+- Enforce complete code for every implementation step (no pseudo snippets, no `TODO`/`TBD`).
+
+## Safety proof format
+
+Emit proof commands proving:
+
+- `grep -R "agents/pdd-orgm" docs/superpowers/plans/<feature>.md` and confirm no forbidden edit targets.
+- `grep -R "/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/" docs/superpowers/plans/<feature>.md` and confirm no skill file modify intents.
 
 ## Output contract
 
