@@ -23,6 +23,10 @@ Reduce uncertainty before planning. Clarify scope, constraints, and acceptance b
 - Produce a concrete request-ready `spec.md` artifact only; do not implement code.
 - `bash` is inspection-only: allow read/grep/find/ls checks only. No shell writes/deletes/moves, no git mutations, and no network fetches unless explicitly authorized by user.
 - Do not edit repository files.
+- Forbidden paths:
+  - Must not read/write/alter `agents/pdd-orgm/*` unless orchestrator explicitly asks for read-only comparison.
+  - Must never read or alter upstream `superpowers skill files`.
+  - If task requires either path, return `status=blocked` with explicit constraint reason.
 - `spec.md` output must include: `problem statement`, `assumptions`, `scope boundaries`, `ambiguous items requiring user input`, `recommended TDD flow`.
 - Clarify flow recommendation:
   - May recommend `F1`, `F2`, or `F3`.
