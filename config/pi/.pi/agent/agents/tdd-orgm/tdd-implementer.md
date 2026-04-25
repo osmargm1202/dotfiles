@@ -2,7 +2,7 @@
 name: tdd-implementer
 description: Execute approved tdd-orgm plan groups with TDD-first approach
 tools: read, grep, find, ls, bash, edit, write, deploy_agent
-model: openai-codex/gpt-5.5
+model: openai-codex/gpt-5.4
 thinking: medium
 output: build.md
 defaultProgress: true

@@ -2,7 +2,7 @@
 name: tdd-orgm
 description: superpowers-first TDD orchestrator with additive, coordinator-only defaults
 tools: read, grep, find, ls, bash, query_team, deploy_agent
-model: openai-codex/gpt-5.4
+model: openai-codex/gpt-5.5
 thinking: medium
 output: result.md
 defaultReads: context.md
