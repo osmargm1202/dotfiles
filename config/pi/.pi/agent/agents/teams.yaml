@@ -25,6 +25,14 @@ pdd-orgm:
   - pdd-builder-fast
   - pdd-reviewer
 
+tdd-orgm:
+  - tdd-brainstormer
+  - tdd-planner
+  - tdd-implementer
+  - tdd-reviewer
+  - tdd-verifier
+  - tdd-worktree-manager
+
 skill-orchestrator:
   - pdf-manager
   - docx-manager
