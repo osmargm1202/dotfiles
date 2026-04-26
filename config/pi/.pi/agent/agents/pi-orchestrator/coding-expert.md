@@ -34,6 +34,13 @@ When `pi-orchestrator` delegates work, expect a task containing:
 
 If any of those are missing and the work is ambiguous, stop and return a clarification request instead of guessing.
 
+## RTK Command Output Compression
+
+- RTK is available as `rtk` via `~/.cargo/bin`/`~/.local/bin`.
+- Prefer shell commands through RTK for token-heavy inspection/verification: `rtk git status`, `rtk git diff`, `rtk rg ...`, `rtk find ...`, `rtk cargo test`, `rtk npm test`.
+- Pi built-in tools (`read`, `grep`, `find`, `ls`) do not pass through RTK; use shell `rtk read/grep/find` when compact output matters.
+- Do not use RTK where raw output is required; use normal built-in/read or `rtk proxy <cmd>`.
+
 ## Workflow
 
 1. Inspect current state.

@@ -20,9 +20,8 @@
     "~/.pi/agent/extensions/agent-selector.ts",
     "~/.pi/agent/extensions/subagents.ts",
     "~/.pi/agent/extensions/agent-status.ts",
-    "~/.pi/agent/extensions/plan.ts",
-    "~/.pi/agent/extensions/panel.ts",
-    "~/.pi/agent/extensions/minimal.ts"
+    "~/.pi/agent/extensions/minimal.ts",
+    "~/.pi/agent/extensions/rtk.ts"
   ],
   "treeFilterMode": "default",
   "transport": "sse",

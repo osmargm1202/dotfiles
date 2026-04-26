@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "files": {
+    "config/pi/.pi/agent/extensions/plan.ts": {
+      "latest": {
+        "commit": "a811b73",
+        "timestamp": "2026-04-26T11:42:41.330Z",
+        "mi": 15.1,
+        "cognitive": 217,
+        "nesting": 5,
+        "lines": 406,
+        "maxCyclomatic": 114,
+        "entropy": 6.92
+      },
+      "history": [
+        {
+          "commit": "a811b73",
+          "timestamp": "2026-04-26T11:42:41.330Z",
+          "mi": 15.1,
+          "cognitive": 217,
+          "nesting": 5,
+          "lines": 406,
+          "maxCyclomatic": 114,
+          "entropy": 6.92
+        }
+      ],
+      "trend": "stable"
+    }
+  },
+  "capturedAt": "2026-04-26T11:42:46.330Z"
+}

@@ -324,13 +324,13 @@
     {
       "fileA": "extensions/agent-status.ts",
       "startA": 698,
-      "fileB": "extensions/panel.ts",
+      "fileB": "extensions/bk/panel.ts",
       "startB": 363,
       "lines": 10,
       "tokens": 0
     }
   ],
   "duplicatedLines": 5866,
-  "totalLines": 20828,
-  "percentage": 28.16
+  "totalLines": 22596,
+  "percentage": 25.96
 }
