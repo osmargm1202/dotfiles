@@ -4,29 +4,31 @@
   "status": "completed",
   "files_changed": [
     "flake.nix",
-    "flake.lock",
+    "nixos/common.nix",
     "nixos/configuration.nix",
-    "nixos/hosts/orgm/common.nix",
     "nixos/hosts/orgm/gnome.nix",
-    "nixos/hosts/orgm/hyprland.nix",
-    "nixos/profiles/hyprland.nix"
+    "nixos/hosts/orgm/hyprland.nix"
   ],
-  "tdd_applicability_reason": "Config-heavy NixOS flake migration. Behavior verified with red/green flake eval and non-activation nixos-rebuild build checks instead of unit tests.",
+  "tdd_applicability_reason": "Config-only NixOS host-composition refactor. Used red/green-style static scope checks plus flake eval/build verification instead of unit tests.",
   "verification": [
-    "RED: /nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' flake show -> failed before flake existed",
-    "GREEN: /nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' flake show",
-    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval --raw .#nixosConfigurations.orgm-gnome.config.networking.hostName -> orgm",
-    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval --raw .#nixosConfigurations.orgm-hyprland.config.networking.hostName -> orgm",
-    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval .#nixosConfigurations.orgm-gnome.config.services.displayManager.gdm.enable -> true",
-    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval .#nixosConfigurations.orgm-hyprland.config.services.displayManager.gdm.enable -> true",
-    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval .#nixosConfigurations.orgm-gnome.config.programs.hyprland.enable -> false",
-    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval .#nixosConfigurations.orgm-hyprland.config.programs.hyprland.enable -> true",
-    "NIX_CONFIG='experimental-features = nix-command flakes' /nix/store/wsa9yww3n72yw8krd5xy8dmms830pbw3-nixos-rebuild-ng-25.11/bin/nixos-rebuild build --flake .#orgm-gnome -> success",
-    "NIX_CONFIG='experimental-features = nix-command flakes' /nix/store/wsa9yww3n72yw8krd5xy8dmms830pbw3-nixos-rebuild-ng-25.11/bin/nixos-rebuild build --flake .#orgm-hyprland -> success"
+    "RED: git diff --cached --name-status -> staged scope limited to flake.nix, nixos/common.nix (rename), nixos/configuration.nix (delete), nixos/hosts/orgm/gnome.nix (delete), nixos/hosts/orgm/hyprland.nix (delete)",
+    "distrobox-host-exec sh -lc 'cd /home/osmarg/Hobby/dotfiles && nix eval --option eval-cache false .#nixosConfigurations.orgm-gnome.config.hardware.nvidia.modesetting.enable' -> true",
+    "distrobox-host-exec sh -lc 'cd /home/osmarg/Hobby/dotfiles && nix eval --option eval-cache false .#nixosConfigurations.orgm-hyprland.config.hardware.nvidia.modesetting.enable' -> true",
+    "distrobox-host-exec sh -lc 'cd /home/osmarg/Hobby/dotfiles && nix eval --option eval-cache false .#nixosConfigurations.orgm-gnome.config.services.displayManager.gdm.enable' -> true",
+    "distrobox-host-exec sh -lc 'cd /home/osmarg/Hobby/dotfiles && nix eval --option eval-cache false .#nixosConfigurations.orgm-gnome.config.services.displayManager.sddm.enable' -> false",
+    "distrobox-host-exec sh -lc 'cd /home/osmarg/Hobby/dotfiles && nix eval --option eval-cache false .#nixosConfigurations.orgm-gnome.config.programs.hyprland.enable' -> false",
+    "distrobox-host-exec sh -lc 'cd /home/osmarg/Hobby/dotfiles && nix eval --option eval-cache false .#nixosConfigurations.orgm-hyprland.config.services.displayManager.gdm.enable' -> false",
+    "distrobox-host-exec sh -lc 'cd /home/osmarg/Hobby/dotfiles && nix eval --option eval-cache false .#nixosConfigurations.orgm-hyprland.config.services.displayManager.sddm.enable' -> true",
+    "distrobox-host-exec sh -lc 'cd /home/osmarg/Hobby/dotfiles && nix eval --option eval-cache false .#nixosConfigurations.orgm-hyprland.config.programs.hyprland.enable' -> true",
+    "distrobox-host-exec sh -lc 'cd /home/osmarg/Hobby/dotfiles && nixos-rebuild build --flake .#orgm-gnome --no-link' -> Done. /nix/store/bjlkckmv7sv8v1zh7lml2jh8h3fpbxn9-nixos-system-orgm-25.11.20260421.10e7ad5",
+    "distrobox-host-exec sh -lc 'cd /home/osmarg/Hobby/dotfiles && nixos-rebuild build --flake .#orgm-hyprland --no-link' -> Done. /nix/store/0i7syhv86dl7rnfa9s4k018gqmz5wl6q-nixos-system-orgm-25.11.20260421.10e7ad5",
+    "git commit -m 'refactor(nixos): compose hosts in flake' -> c64a8f0",
+    "git branch -vv -> master tracks origin/master",
+    "git push origin HEAD -> success (HEAD -> master)"
   ],
   "risks": [
-    "Formatter not run; skipped as optional step to avoid extra shell-driven file rewrites.",
-    "Repo still has unrelated dirty files outside Nix scope (.pi-lens cache, config/engram db files, build result symlink); preserve and leave uncommitted.",
-    "nixos/hardware-configuration.nix unchanged."
+    "Local git tree dirty outside scope; Nix eval/build emitted dirty-tree warnings but all requested checks passed.",
+    "tdd/nixos-flake-migration/build-progress updated after commit to preserve scoped Nix commit; progress file remains uncommitted unless separately staged later.",
+    "Repo still contains unrelated dirty/untracked paths outside Nix scope; left untouched."
   ]
 }

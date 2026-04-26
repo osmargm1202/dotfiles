@@ -1,43 +1,48 @@
 # Lista de aplicaciones Flatpak organizadas por categorías
 
+# === NAVEGADORES ===
+app.zen_browser.zen
+org.chromium.Chromium
+
 # === JUEGOS Y GAMING ===
+com.pokemmo.PokeMMO
 com.valvesoftware.Steam
-com.valvesoftware.Steam.CompatibilityTool.Proton-GE
 
-# === MULTIMEDIA - REPRODUCTORES ===
-org.videolan.VLC
-
-# === MULTIMEDIA - EDICIÓN ===
+# === MULTIMEDIA - EDICIÓN Y CAPTURA ===
+be.alexandervanhee.gradia
 com.obsproject.Studio
-io.gitlab.theevilskeleton.Upscaler    # escalador de imágenes con IA
+io.gitlab.theevilskeleton.Upscaler
+
+# === MULTIMEDIA - AUDIO ===
+com.spotify.Client
+org.pulseaudio.pavucontrol
 
 # === PRODUCTIVIDAD Y OFICINA ===
-com.wps.Office
-# org.gnome.Papers                       # visor de documentos GNOME opcional
-org.gnome.SimpleScan                   # escáner de documentos GNOME
+md.obsidian.Obsidian
+org.gnome.Papers
+org.gnome.gitlab.somas.Apostrophe
+org.libreoffice.LibreOffice
 
 # === COMUNICACIÓN ===
 com.discordapp.Discord
+net.thunderbird.Thunderbird
 
 # === DESARROLLO ===
-io.dbeaver.DBeaverCommunity
-org.sqlitebrowser.sqlitebrowser
+fr.arnaudmichel.launcherstudio
+io.podman_desktop.PodmanDesktop
 
 # === DISEÑO Y CREATIVIDAD ===
+org.blender.Blender
 org.gimp.GIMP
 org.inkscape.Inkscape
-org.blender.Blender
+
+# === MAPAS Y GEOGRAFÍA ===
+com.google.EarthPro
 
 # === UTILIDADES DEL SISTEMA ===
+best.ellie.StartupConfiguration
+com.vixalien.sticky
 io.github.flattool.Warehouse
-io.gitlab.adhami3310.Impression
-org.gnome.eog                          # visor de imágenes Eye of GNOME
-
-# === ADMINISTRADORES DE ARCHIVOS ===
-org.kde.kwrite                         # editor de texto KDE
-
-# === SEGURIDAD Y PRIVACIDAD ===
-com.bitwarden.desktop
-
-
-
+io.github.realmazharhussain.GdmSettings
+org.gnome.FileRoller
+org.gnome.SimpleScan

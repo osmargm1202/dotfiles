@@ -1,0 +1,336 @@
+{
+  "success": true,
+  "clones": [
+    {
+      "fileA": "git/github.com/obra/superpowers/skills/systematic-debugging/condition-based-waiting-example.ts",
+      "startA": 115,
+      "fileB": "git/github.com/obra/superpowers/skills/systematic-debugging/condition-based-waiting-example.ts",
+      "startB": 23,
+      "lines": 9,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/xlsx/scripts/office/validators/redlining.py",
+      "startA": 171,
+      "fileB": "skills/xlsx/scripts/office/validators/redlining.py",
+      "startB": 143,
+      "lines": 21,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/xlsx/scripts/office/validators/docx.py",
+      "startA": 202,
+      "fileB": "skills/xlsx/scripts/office/validators/docx.py",
+      "startB": 112,
+      "lines": 12,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/xlsx/scripts/office/validators/base.py",
+      "startA": 115,
+      "fileB": "skills/xlsx/scripts/office/validators/docx.py",
+      "startB": 391,
+      "lines": 11,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/xlsx/scripts/office/helpers/simplify_redlines.py",
+      "startA": 158,
+      "fileB": "skills/xlsx/scripts/office/helpers/simplify_redlines.py",
+      "startB": 136,
+      "lines": 11,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/xlsx/scripts/office/helpers/merge_runs.py",
+      "startA": 16,
+      "fileB": "skills/xlsx/scripts/office/helpers/simplify_redlines.py",
+      "startB": 22,
+      "lines": 11,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/xlsx/scripts/office/helpers/merge_runs.py",
+      "startA": 44,
+      "fileB": "skills/xlsx/scripts/office/helpers/simplify_redlines.py",
+      "startB": 111,
+      "lines": 16,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/office/validators/redlining.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/validators/redlining.py",
+      "startB": 1,
+      "lines": 247,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/office/validators/pptx.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/validators/pptx.py",
+      "startB": 1,
+      "lines": 275,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/office/validators/docx.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/validators/docx.py",
+      "startB": 1,
+      "lines": 446,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/office/validators/base.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/validators/base.py",
+      "startB": 1,
+      "lines": 847,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/office/helpers/simplify_redlines.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/helpers/simplify_redlines.py",
+      "startB": 1,
+      "lines": 197,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/office/helpers/merge_runs.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/helpers/merge_runs.py",
+      "startB": 1,
+      "lines": 199,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/docx/scripts/office/validators/redlining.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/validators/redlining.py",
+      "startB": 1,
+      "lines": 247,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/docx/scripts/office/validators/pptx.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/validators/pptx.py",
+      "startB": 1,
+      "lines": 275,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/docx/scripts/office/validators/docx.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/validators/docx.py",
+      "startB": 1,
+      "lines": 446,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/docx/scripts/office/validators/base.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/validators/base.py",
+      "startB": 1,
+      "lines": 847,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/docx/scripts/office/helpers/simplify_redlines.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/helpers/simplify_redlines.py",
+      "startB": 1,
+      "lines": 197,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/docx/scripts/office/helpers/merge_runs.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/helpers/merge_runs.py",
+      "startB": 1,
+      "lines": 199,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/office/validate.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/validate.py",
+      "startB": 1,
+      "lines": 111,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/office/unpack.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/unpack.py",
+      "startB": 1,
+      "lines": 132,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/office/soffice.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/soffice.py",
+      "startB": 1,
+      "lines": 183,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/office/pack.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/pack.py",
+      "startB": 1,
+      "lines": 159,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/docx/scripts/office/validate.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/validate.py",
+      "startB": 1,
+      "lines": 111,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/docx/scripts/office/unpack.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/unpack.py",
+      "startB": 1,
+      "lines": 132,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/docx/scripts/office/soffice.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/soffice.py",
+      "startB": 1,
+      "lines": 183,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/docx/scripts/office/pack.py",
+      "startA": 1,
+      "fileB": "skills/xlsx/scripts/office/pack.py",
+      "startB": 1,
+      "lines": 159,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/clean.py",
+      "startA": 34,
+      "fileB": "skills/pptx/scripts/thumbnail.py",
+      "startB": 98,
+      "lines": 10,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/pptx/scripts/clean.py",
+      "startA": 156,
+      "fileB": "skills/pptx/scripts/clean.py",
+      "startB": 113,
+      "lines": 16,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/mcp-builder/scripts/evaluation.py",
+      "startA": 137,
+      "fileB": "skills/mcp-builder/scripts/evaluation.py",
+      "startB": 96,
+      "lines": 11,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/excalidraw-diagram-generator/scripts/add-arrow.py",
+      "startA": 33,
+      "fileB": "skills/excalidraw-diagram-generator/scripts/add-icon-to-diagram.py",
+      "startB": 180,
+      "lines": 37,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/excalidraw-diagram-generator/scripts/add-arrow.py",
+      "startA": 278,
+      "fileB": "skills/excalidraw-diagram-generator/scripts/add-icon-to-diagram.py",
+      "startB": 365,
+      "lines": 25,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/deep-research/scripts/extract_claims.py",
+      "startA": 57,
+      "fileB": "skills/deep-research/scripts/verify_claim_support.py",
+      "startB": 29,
+      "lines": 13,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/deep-research/scripts/evidence_store.py",
+      "startA": 46,
+      "fileB": "skills/deep-research/scripts/extract_claims.py",
+      "startB": 50,
+      "lines": 21,
+      "tokens": 0
+    },
+    {
+      "fileA": "skills/deep-research/scripts/citation_manager.py",
+      "startA": 77,
+      "fileB": "skills/deep-research/scripts/extract_claims.py",
+      "startB": 45,
+      "lines": 29,
+      "tokens": 0
+    },
+    {
+      "fileA": "extensions/model-primary.ts",
+      "startA": 63,
+      "fileB": "extensions/sessions.ts",
+      "startB": 75,
+      "lines": 6,
+      "tokens": 0
+    },
+    {
+      "fileA": "extensions/model-primary.ts",
+      "startA": 152,
+      "fileB": "extensions/model-primary.ts",
+      "startB": 131,
+      "lines": 17,
+      "tokens": 0
+    },
+    {
+      "fileA": "extensions/agent-status.ts",
+      "startA": 492,
+      "fileB": "extensions/sessions.ts",
+      "startB": 61,
+      "lines": 6,
+      "tokens": 0
+    },
+    {
+      "fileA": "extensions/agent-status.ts",
+      "startA": 499,
+      "fileB": "extensions/sessions.ts",
+      "startB": 70,
+      "lines": 11,
+      "tokens": 0
+    },
+    {
+      "fileA": "extensions/agent-status.ts",
+      "startA": 509,
+      "fileB": "extensions/sessions.ts",
+      "startB": 81,
+      "lines": 12,
+      "tokens": 0
+    },
+    {
+      "fileA": "extensions/agent-status.ts",
+      "startA": 698,
+      "fileB": "extensions/panel.ts",
+      "startB": 363,
+      "lines": 10,
+      "tokens": 0
+    }
+  ],
+  "duplicatedLines": 5866,
+  "totalLines": 20828,
+  "percentage": 28.16
+}

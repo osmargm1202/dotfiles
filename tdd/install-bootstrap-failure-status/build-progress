@@ -1,0 +1,13 @@
+path: tdd/install-bootstrap-failure-status/build-progress
+group: Important issue #1
+status: complete
+files_changed:
+  - packages/arch/install.sh
+  - packages/arch/test_install.sh
+verification:
+  - command: ./test_install.sh
+    result: pass
+  - command: bash -n install.sh test_install.sh
+    result: pass
+risks:
+  - Files are currently untracked in git within packages/arch; review/staging should scope only intended paths.
