@@ -1,0 +1,32 @@
+{
+  "path": "tdd/nixos-flake-migration/build-progress",
+  "group": "F3",
+  "status": "completed",
+  "files_changed": [
+    "flake.nix",
+    "flake.lock",
+    "nixos/configuration.nix",
+    "nixos/hosts/orgm/common.nix",
+    "nixos/hosts/orgm/gnome.nix",
+    "nixos/hosts/orgm/hyprland.nix",
+    "nixos/profiles/hyprland.nix"
+  ],
+  "tdd_applicability_reason": "Config-heavy NixOS flake migration. Behavior verified with red/green flake eval and non-activation nixos-rebuild build checks instead of unit tests.",
+  "verification": [
+    "RED: /nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' flake show -> failed before flake existed",
+    "GREEN: /nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' flake show",
+    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval --raw .#nixosConfigurations.orgm-gnome.config.networking.hostName -> orgm",
+    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval --raw .#nixosConfigurations.orgm-hyprland.config.networking.hostName -> orgm",
+    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval .#nixosConfigurations.orgm-gnome.config.services.displayManager.gdm.enable -> true",
+    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval .#nixosConfigurations.orgm-hyprland.config.services.displayManager.gdm.enable -> true",
+    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval .#nixosConfigurations.orgm-gnome.config.programs.hyprland.enable -> false",
+    "/nix/store/qd67vi2j6q7skvwqnypd3jlgk6p37pfr-nix-2.31.2/bin/nix --extra-experimental-features 'nix-command flakes' eval .#nixosConfigurations.orgm-hyprland.config.programs.hyprland.enable -> true",
+    "NIX_CONFIG='experimental-features = nix-command flakes' /nix/store/wsa9yww3n72yw8krd5xy8dmms830pbw3-nixos-rebuild-ng-25.11/bin/nixos-rebuild build --flake .#orgm-gnome -> success",
+    "NIX_CONFIG='experimental-features = nix-command flakes' /nix/store/wsa9yww3n72yw8krd5xy8dmms830pbw3-nixos-rebuild-ng-25.11/bin/nixos-rebuild build --flake .#orgm-hyprland -> success"
+  ],
+  "risks": [
+    "Formatter not run; skipped as optional step to avoid extra shell-driven file rewrites.",
+    "Repo still has unrelated dirty files outside Nix scope (.pi-lens cache, config/engram db files, build result symlink); preserve and leave uncommitted.",
+    "nixos/hardware-configuration.nix unchanged."
+  ]
+}
