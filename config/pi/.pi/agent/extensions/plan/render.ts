@@ -107,6 +107,17 @@ function stateCounts(tasks: PlanTask[], state: PlanTaskState): number {
 	return tasks.filter((task) => task.state === state).length;
 }
 
+function unfinishedCount(state: PlanWidgetState): number {
+	return state.pending + state.active + state.blocked;
+}
+
+function countSummary(state: PlanWidgetState): string {
+	const completed = state.done + state.implemented;
+	const active = state.active > 0 ? ` · ${state.active} active` : "";
+	const blocked = state.blocked > 0 ? ` · ${state.blocked} blocked` : "";
+	return `${state.total} tasks · ${completed} done · ${unfinishedCount(state)} unfinished${active}${blocked}`;
+}
+
 function lineHeight(): number {
 	return PLAN_WIDGET_MIN_HEIGHT;
 }
@@ -172,11 +183,7 @@ export function buildPlanStatus(
 ): string | undefined {
 	if (state.tasks.length === 0) return undefined;
 
-	const completed = state.done + state.implemented;
-	const active = state.active > 0 ? ` · ${state.active} active` : "";
-	const blocked = state.blocked > 0 ? ` · ${state.blocked} blocked` : "";
-	const text = `📋 ${state.total} tasks · ${completed} done · ${state.pending} pending${active}${blocked}`;
-	return paint(theme, statusColor(state), text);
+	return paint(theme, statusColor(state), `📋 ${countSummary(state)}`);
 }
 
 export function buildPlanWidgetLines(
@@ -190,7 +197,6 @@ export function buildPlanWidgetLines(
 	const height = lineHeight();
 	const innerWidth = Math.max(0, width - 2);
 	const frameColor = borderColor(state);
-	const completed = state.done + state.implemented;
 	const planName = state.activePlanPath
 		? basename(state.activePlanPath)
 		: "detected";
@@ -202,7 +208,7 @@ export function buildPlanWidgetLines(
 		`╭${title}${"─".repeat(Math.max(0, innerWidth - visibleWidth(title)))}╮`,
 	);
 	const bottom = paint(theme, frameColor, `╰${"─".repeat(innerWidth)}╯`);
-	const metaRaw = ` ${state.total} tasks · ${completed} done · ${state.pending} pending`;
+	const metaRaw = ` ${countSummary(state)}`;
 	const bodySlots = Math.max(0, height - 3);
 	const hasOverflow = state.tasks.length > bodySlots;
 	const taskCapacity = hasOverflow ? Math.max(0, bodySlots - 1) : bodySlots;

@@ -248,6 +248,73 @@ function evidenceState(text: string): PlanTaskState | undefined {
 	return undefined;
 }
 
+function hasTaskScopeMarker(text: string): boolean {
+	return (
+		/^\s*(?:[-*]\s*)?\[[ xX!~/-]\]/.test(text) ||
+		/^\s*(?:[-*]\s*)?(?:task|todo|step|item)\b/i.test(text) ||
+		/\b(?:current|active|completed|done|next)\s+(?:task|todo|step|item)\b/i.test(
+			text,
+		) ||
+		/\b(?:task|todo|step|item)\s*(?:\d+|[:#=-])/i.test(text)
+	);
+}
+
+function exactTitleIndex(text: string, task: PlanTask): number {
+	const title = normalize(task.title);
+	if (title.length <= 8) return -1;
+	return normalize(text).indexOf(title);
+}
+
+function stateAfterTitle(
+	text: string,
+	task: PlanTask,
+): PlanTaskState | undefined {
+	const titleIndex = exactTitleIndex(text, task);
+	if (titleIndex < 0) return undefined;
+
+	const normalizedText = normalize(text);
+	const title = normalize(task.title);
+	const afterTitle = normalizedText.slice(
+		titleIndex + title.length,
+		titleIndex + title.length + 80,
+	);
+	return evidenceState(afterTitle);
+}
+
+function statusTiedToTitle(text: string, task: PlanTask): boolean {
+	const normalizedText = normalize(text);
+	const title = normalize(task.title);
+	if (title.length <= 8) return false;
+	return (
+		normalizedText.includes(`status ${title}`) ||
+		normalizedText.includes(`${title} status`)
+	);
+}
+
+function scopedEvidenceState(
+	text: string,
+	task: PlanTask,
+): PlanTaskState | undefined {
+	const lines = text
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
+
+	for (const line of lines) {
+		if (!titleMatches(line, task)) continue;
+
+		if (hasTaskScopeMarker(line) || statusTiedToTitle(line, task)) {
+			const state = evidenceState(line);
+			if (state) return state;
+		}
+
+		const state = stateAfterTitle(line, task);
+		if (state) return state;
+	}
+
+	return undefined;
+}
+
 function stateRank(state: PlanTaskState): number {
 	switch (state) {
 		case "blocked":
@@ -293,7 +360,7 @@ export function overlayEvidence(
 
 		for (const signal of signals) {
 			if (!titleMatches(signal.text, task)) continue;
-			const state = evidenceState(signal.text);
+			const state = scopedEvidenceState(signal.text, task);
 			if (!state) continue;
 
 			evidence.push({

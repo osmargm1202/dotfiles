@@ -21,9 +21,8 @@ const here = fileURLToPath(new URL(".", import.meta.url));
 const { parsePlanMarkdown } = await jiti.import(join(here, "parser.ts"));
 const { chooseActivePlan, extractMentionedPaths, overlayEvidence } =
 	await jiti.import(join(here, "evidence.ts"));
-const { buildPlanWidgetLines, summarizePlan } = await jiti.import(
-	join(here, "render.ts"),
-);
+const { buildPlanStatus, buildPlanWidgetLines, summarizePlan } =
+	await jiti.import(join(here, "render.ts"));
 const { visibleWidth } = await jiti.import("@mariozechner/pi-tui");
 
 const theme = {};
@@ -128,6 +127,141 @@ assert.deepEqual(
 	extractMentionedPaths("modified ./extensions/plan.ts."),
 	["extensions/plan.ts"],
 	"relative path with trailing period normalizes",
+);
+
+function taskFixture(title, state = "pending", line = 1) {
+	return {
+		id: `fixture-${line}`,
+		planPath,
+		line,
+		depth: 0,
+		title,
+		state,
+		evidence: [
+			{
+				source: "markdown",
+				state,
+				confidence: "high",
+				summary: "fixture",
+			},
+		],
+	};
+}
+
+const parserTask = taskFixture("Add parser");
+const globalBlockedOverlay = overlayEvidence(
+	[parserTask],
+	[
+		{
+			text: "status: BLOCKED\nreview: Add parser tokens appeared in a handoff summary only",
+			timestamp: 40,
+			source: "handoff",
+		},
+	],
+);
+assert.equal(
+	globalBlockedOverlay[0]?.state,
+	"pending",
+	"global blocked handoff text without task context does not mark task blocked",
+);
+
+const reviewFailedOverlay = overlayEvidence(
+	[parserTask],
+	[
+		{
+			text: "Review failed overall while discussing Add parser tokens, no task marker here",
+			timestamp: 41,
+			source: "session",
+		},
+	],
+);
+assert.equal(
+	reviewFailedOverlay[0]?.state,
+	"pending",
+	"review failure text without task context does not mark task blocked",
+);
+
+const exactTitleBlockedOverlay = overlayEvidence(
+	[parserTask],
+	[
+		{
+			text: "Add parser blocked",
+			timestamp: 42,
+			source: "session",
+		},
+	],
+);
+assert.equal(
+	exactTitleBlockedOverlay[0]?.state,
+	"blocked",
+	"exact title followed by blocked marks task blocked",
+);
+
+const explicitTaskBlockedOverlay = overlayEvidence(
+	[parserTask],
+	[
+		{
+			text: "Task: Add parser blocked",
+			timestamp: 42,
+			source: "session",
+		},
+	],
+);
+assert.equal(
+	explicitTaskBlockedOverlay[0]?.state,
+	"blocked",
+	"explicit task-scoped blocked evidence marks task blocked",
+);
+
+const currentTaskBlockedOverlay = overlayEvidence(
+	[parserTask],
+	[
+		{
+			text: "Current task Add parser blocked",
+			timestamp: 43,
+			source: "session",
+		},
+	],
+);
+assert.equal(
+	currentTaskBlockedOverlay[0]?.state,
+	"blocked",
+	"current task blocked evidence marks task blocked",
+);
+
+const mixedState = summarizePlan(
+	[
+		taskFixture("Done task", "done", 1),
+		taskFixture("Blocked task", "blocked", 2),
+		taskFixture("Pending task", "pending", 3),
+	],
+	planPath,
+	456,
+);
+const mixedStatus = buildPlanStatus(mixedState, theme) ?? "";
+assert.match(
+	mixedStatus,
+	/2 unfinished/,
+	"status reports unfinished work including blocked tasks",
+);
+assert.match(mixedStatus, /1 blocked/, "status reports blocked count");
+assert.doesNotMatch(
+	mixedStatus,
+	/0 pending/,
+	"status avoids misleading 0 pending",
+);
+const mixedLines = buildPlanWidgetLines(mixedState, theme, 80);
+assert.ok(
+	mixedLines.some((line) => /2 unfinished/.test(line)),
+	"widget meta reports unfinished work including blocked tasks",
+);
+assert.ok(
+	mixedLines.some((line) => /1 blocked/.test(line)),
+	"widget meta reports blocked count",
+);
+assert.ok(
+	mixedLines.every((line) => !/0 pending/.test(line)),
+	"widget meta avoids misleading 0 pending",
 );
 
 function makeTask(index, state = "pending") {
