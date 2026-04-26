@@ -1,10 +1,10 @@
 import { spawn } from "node:child_process";
-import { closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { StringEnum } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { DynamicBorder, getAgentDir } from "@mariozechner/pi-coding-agent";
+import { DynamicBorder, getAgentDir, keyHint } from "@mariozechner/pi-coding-agent";
 import { Box, Container, type SelectItem, SelectList, Text, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import { Type } from "typebox";
 
@@ -29,10 +29,6 @@ const SUBAGENT_COMPLETION_STALL_TIMEOUT_MS = 4_000;
 const SUBAGENT_FORCE_KILL_TIMEOUT_MS = 3_000;
 const SUBAGENT_TRANSCRIPT_MAX_LINES = 400;
 const SUBAGENT_UI_REFRESH_DEBOUNCE_MS = 120;
-const RUNTIME_REGISTRY_LOCK_TIMEOUT_MS = 5_000;
-const RUNTIME_REGISTRY_LOCK_RETRY_MS = 25;
-const RUNTIME_REGISTRY_STALE_LOCK_MS = 30_000;
-const RUNTIME_BUSY_STALE_TIMEOUT_MS = 60_000;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 type DeploymentStatus = "running" | "done" | "error" | "paused_provider_error" | "awaiting_user_input";
@@ -114,6 +110,17 @@ interface DeploymentTranscriptEntry {
 	ts: number;
 }
 
+interface AgentPromptAudit {
+	agent: string;
+	cwd: string;
+	task: string;
+	promptText: string;
+	systemPrompt?: string;
+	tools: string[];
+	mode: AgentDeployMode;
+	launchBackend: AgentLaunchBackend;
+}
+
 interface AgentRunDetails {
 	deploymentId: string;
 	agent: string;
@@ -152,6 +159,7 @@ interface AgentRunDetails {
 	awaitingUserInput?: boolean;
 	questionPayload?: AwaitingUserInputPayload;
 	userResponse?: RelayUserResponse;
+	auditPrompt?: AgentPromptAudit;
 }
 
 interface AwaitingUserInputPayload {
@@ -182,40 +190,6 @@ interface TeamConfig {
 	members: string[];
 	source: AgentSource;
 	filePath: string;
-}
-
-interface AgentRuntimeState {
-	runtimeId: string;
-	agent: string;
-	source: AgentSource;
-	mode: AgentDeployMode;
-	launchBackend: AgentLaunchBackend;
-	cwd: string;
-	scope: "user" | "project" | "both";
-	model?: string;
-	sessionFilePath?: string;
-	ownerSessionFile?: string;
-	contextWindow: number;
-	contextTokens: number;
-	status: RuntimeStatus;
-	busyDeploymentId?: string;
-	lastUsedAt: number;
-	createdAt: number;
-	runs: number;
-	reuseCount: number;
-	parentRuntimeId?: string;
-	depth: number;
-	compatibilityKey: string;
-	lastStopReason?: string;
-	lastErrorMessage?: string;
-	terminalState?: TerminalState;
-	pid?: number;
-	processStartedAt?: number;
-	tmuxWindowId?: string;
-	tmuxPaneId?: string;
-	recoverableReason?: RecoverableReason;
-	awaitingUserInput?: boolean;
-	lastVisibleState?: DeploymentStatus;
 }
 
 interface RuntimeSnapshot {
@@ -276,6 +250,7 @@ interface QueryTeamResultItem {
 	errorMessage?: string;
 	interactionOutcome?: AgentRunDetails["interactionOutcome"];
 	awaitingUserInput?: boolean;
+	auditPrompt?: AgentPromptAudit;
 }
 
 interface QueryTeamDetails {
@@ -308,17 +283,17 @@ const DeployAgentParams = Type.Object({
 	),
 	mode: Type.Optional(
 		StringEnum(["ephemeral", "persistent"] as const, {
-			description: "Deployment mode. `ephemeral` starts a fresh one-shot run. `persistent` reuses or creates a session-backed runtime. Default: persistent",
-			default: "persistent",
+			description: "Deployment mode. `ephemeral` starts a fresh one-shot run. `persistent` is accepted for compatibility but executed as one-shot (no reusable runtime state).",
+			default: "ephemeral",
 		}),
 	),
 	reuse: Type.Optional(
 		StringEnum(["prefer", "require", "never"] as const, {
-			description: "Reuse policy for persistent deployments. `prefer` reuses compatible idle runtimes when possible, `require` fails if none match, `never` forces a new persistent runtime.",
+			description: "Reuse policy (kept for compatibility). One-shot runs ignore reuse settings.",
 			default: "prefer",
 		}),
 	),
-	maxContextPercent: Type.Optional(Type.Number({ description: "Maximum context usage percent allowed for runtime reuse. Default: 75", default: 75 })),
+	maxContextPercent: Type.Optional(Type.Number({ description: "Maximum context usage percent allowed for reusable runtime state. One-shot mode ignores this. Default: 75", default: 75 })),
 	launchBackend: Type.Optional(
 		StringEnum(["embedded"] as const, {
 			description: "Launch backend. Only `embedded` is supported.",
@@ -349,17 +324,17 @@ const QueryTeamParams = Type.Object({
 	cwd: Type.Optional(Type.String({ description: "Optional working directory for subprocess execution and project discovery" })),
 	mode: Type.Optional(
 		StringEnum(["ephemeral", "persistent"] as const, {
-			description: "Deployment mode for team members. `persistent` reuses compatible idle runtimes when possible. Default: persistent",
-			default: "persistent",
+			description: "Deployment mode for team members. `persistent` is accepted for compatibility but executed as one-shot.",
+			default: "ephemeral",
 		}),
 	),
 	reuse: Type.Optional(
 		StringEnum(["prefer", "require", "never"] as const, {
-			description: "Reuse policy for persistent team member deployments. Default: prefer",
+			description: "Reuse policy (kept for compatibility). One-shot runs ignore reuse settings.",
 			default: "prefer",
 		}),
 	),
-	maxContextPercent: Type.Optional(Type.Number({ description: "Maximum context usage percent allowed for runtime reuse. Default: 75", default: 75 })),
+	maxContextPercent: Type.Optional(Type.Number({ description: "Maximum context usage percent allowed for reusable runtime state. One-shot mode ignores this. Default: 75", default: 75 })),
 	continueOnError: Type.Optional(Type.Boolean({ description: "In serial mode, continue after member failures. Default: true", default: true })),
 	launchBackend: Type.Optional(
 		StringEnum(["embedded"] as const, {
@@ -386,36 +361,6 @@ function parseTools(value: unknown): string[] {
 	return value.split(",").map((tool) => tool.trim()).filter(Boolean);
 }
 
-function findNearestProjectAgentsDir(cwd: string): string | null {
-	let current = cwd;
-	while (true) {
-		const candidate = join(current, ".pi", "agents");
-		try {
-			if (statSync(candidate).isDirectory()) return candidate;
-		} catch {
-			// keep walking up
-		}
-		const parent = dirname(current);
-		if (parent === current) return null;
-		current = parent;
-	}
-}
-
-function findNearestPiDir(cwd: string): string {
-	let current = cwd;
-	while (true) {
-		const candidate = join(current, ".pi");
-		try {
-			if (statSync(candidate).isDirectory()) return candidate;
-		} catch {
-			// keep walking up
-		}
-		const parent = dirname(current);
-		if (parent === current) return join(cwd, ".pi");
-		current = parent;
-	}
-}
-
 function ensureDir(path: string): string {
 	mkdirSync(path, { recursive: true });
 	return path;
@@ -423,329 +368,6 @@ function ensureDir(path: string): string {
 
 function sanitizeFileLabel(value: string): string {
 	return value.replace(/[^a-z0-9._-]+/gi, "-").replace(/^-+|-+$/g, "") || "runtime";
-}
-
-function getRuntimeStoragePaths(cwd: string): { piDir: string; sessionsDir: string; registryPath: string } {
-	const piDir = ensureDir(findNearestPiDir(cwd));
-	const sessionsDir = ensureDir(join(piDir, "agent-sessions", "subagents"));
-	return {
-		piDir,
-		sessionsDir,
-		registryPath: join(sessionsDir, "registry.json"),
-	};
-}
-
-function safeReadJsonFile<T>(filePath: string, fallback: T): T {
-	try {
-		if (!existsSync(filePath)) return fallback;
-		return JSON.parse(readFileSync(filePath, "utf8")) as T;
-	} catch {
-		return fallback;
-	}
-}
-
-function loadRuntimeRegistry(registryPath: string): AgentRuntimeState[] {
-	const raw = safeReadJsonFile<unknown>(registryPath, []);
-	if (!Array.isArray(raw)) return [];
-	return raw
-		.filter((item): item is AgentRuntimeState => Boolean(item && typeof item === "object" && typeof (item as AgentRuntimeState).runtimeId === "string"))
-		.map((runtime) => {
-			const launchBackend = runtime.launchBackend ?? "embedded";
-			return {
-				...runtime,
-				launchBackend,
-				terminalState: runtime.terminalState ?? "closed",
-				awaitingUserInput: runtime.awaitingUserInput ?? false,
-			};
-		});
-}
-
-function saveRuntimeRegistry(registryPath: string, runtimes: AgentRuntimeState[]): void {
-	ensureDir(dirname(registryPath));
-	writeFileSync(registryPath, JSON.stringify(runtimes, null, 2), "utf8");
-}
-
-function sleepSync(ms: number): void {
-	Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-}
-
-function withRuntimeRegistryLock<T>(registryPath: string, fn: () => T): T {
-	ensureDir(dirname(registryPath));
-	const lockPath = `${registryPath}.lock`;
-	const startedAt = Date.now();
-	let fd: number | undefined;
-	while (fd === undefined) {
-		try {
-			fd = openSync(lockPath, "wx");
-			writeFileSync(fd, JSON.stringify({ pid: process.pid, createdAt: Date.now() }));
-		} catch (error: any) {
-			if (error?.code !== "EEXIST") throw error;
-			try {
-				const age = Date.now() - statSync(lockPath).mtimeMs;
-				if (age > RUNTIME_REGISTRY_STALE_LOCK_MS) rmSync(lockPath, { force: true });
-			} catch {
-				// Retry lock acquisition after transient stat/remove failure.
-			}
-			if (Date.now() - startedAt > RUNTIME_REGISTRY_LOCK_TIMEOUT_MS) {
-				throw new Error(`Timed out acquiring subagent runtime registry lock: ${lockPath}`);
-			}
-			sleepSync(RUNTIME_REGISTRY_LOCK_RETRY_MS);
-		}
-	}
-	try {
-		return fn();
-	} finally {
-		try { if (fd !== undefined) closeSync(fd); } catch { /* ignore */ }
-		try { unlinkSync(lockPath); } catch { /* ignore */ }
-	}
-}
-
-function isPidAlive(pid?: number): boolean {
-	if (!pid || pid <= 0) return false;
-	try {
-		process.kill(pid, 0);
-		return true;
-	} catch (error: any) {
-		return error?.code === "EPERM";
-	}
-}
-
-function isRuntimeProcessAlive(runtime: AgentRuntimeState): boolean {
-	if (isPidAlive(runtime.pid)) return true;
-	if (!runtime.runtimeId || !existsSync("/proc")) return false;
-	try {
-		for (const pid of readdirSync("/proc")) {
-			if (!/^\d+$/.test(pid)) continue;
-			try {
-				const environ = readFileSync(join("/proc", pid, "environ"), "utf8");
-				if (environ.includes(`PI_SUBAGENT_RUNTIME_ID=${runtime.runtimeId}`)) return true;
-			} catch {
-				// Processes can exit or deny environ while scanning.
-			}
-		}
-	} catch {
-		// /proc is best-effort; pid tracking covers new deployments.
-	}
-	return false;
-}
-
-function cleanupStaleRuntimeRegistry(runtimes: AgentRuntimeState[], now = Date.now()): AgentRuntimeState[] {
-	let changed = false;
-	const cleaned = runtimes.map((runtime) => {
-		if (runtime.mode !== "persistent" || runtime.status !== "busy") return runtime;
-		const age = now - (runtime.lastUsedAt || runtime.createdAt || now);
-		const hasTrackedProcess = Boolean(runtime.pid);
-		const shouldCheck = hasTrackedProcess || age > RUNTIME_BUSY_STALE_TIMEOUT_MS;
-		if (!shouldCheck || isRuntimeProcessAlive(runtime)) return runtime;
-		changed = true;
-		return {
-			...runtime,
-			status: "idle" as RuntimeStatus,
-			busyDeploymentId: undefined,
-			pid: undefined,
-			processStartedAt: undefined,
-			lastUsedAt: now,
-			lastStopReason: runtime.lastStopReason ?? "stale_process_cleaned",
-			lastErrorMessage: runtime.lastErrorMessage ?? "Runtime was marked busy but no live subagent process was found.",
-			terminalState: "closed" as TerminalState,
-			lastVisibleState: runtime.lastVisibleState ?? ("error" as DeploymentStatus),
-		};
-	});
-	return changed ? cleaned : runtimes;
-}
-
-function buildRuntimeCompatibilityKey(params: {
-	agent: AgentConfig;
-	cwd: string;
-	scope: "user" | "project" | "both";
-	mode: AgentDeployMode;
-	launchBackend: AgentLaunchBackend;
-}): string {
-	return [params.agent.name, params.agent.source, params.agent.model || "default", params.cwd, params.scope, params.mode, params.launchBackend].join("|");
-}
-
-function pruneRuntimeRegistry(runtimes: AgentRuntimeState[]): AgentRuntimeState[] {
-	return runtimes.filter((runtime) => {
-		if (runtime.mode !== "persistent") return false;
-		if (!runtime.sessionFilePath) return false;
-		return existsSync(runtime.sessionFilePath);
-	});
-}
-
-function getCurrentParentRuntimeId(): string | undefined {
-	return process.env.PI_SUBAGENT_RUNTIME_ID?.trim() || undefined;
-}
-
-function getCurrentOwnerSessionFile(): string | undefined {
-	return process.env.PI_SUBAGENT_OWNER_SESSION_FILE?.trim() || undefined;
-}
-
-function getCurrentRuntimeDepth(): number {
-	const value = Number.parseInt(process.env.PI_SUBAGENT_RUNTIME_DEPTH || "0", 10);
-	return Number.isFinite(value) && value >= 0 ? value : 0;
-}
-
-function reservePersistentRuntime(params: {
-	agent: AgentConfig;
-	cwd: string;
-	scope: "user" | "project" | "both";
-	deploymentId: string;
-	mode: AgentDeployMode;
-	reuse: AgentReuseMode;
-	maxContextPercent: number;
-	contextWindow: number;
-	launchBackend: AgentLaunchBackend;
-	ownerSessionFile?: string;
-}): { runtime: AgentRuntimeState; reused: boolean; reuseSummary: string; registryPath: string } {
-	const storage = getRuntimeStoragePaths(params.cwd);
-	const compatibilityKey = buildRuntimeCompatibilityKey(params);
-	const maxContextPercent = Math.max(1, Math.min(100, params.maxContextPercent || 75));
-	return withRuntimeRegistryLock(storage.registryPath, () => {
-		const runtimes = cleanupStaleRuntimeRegistry(pruneRuntimeRegistry(loadRuntimeRegistry(storage.registryPath)));
-		const reusable = params.reuse === "never"
-			? undefined
-			: runtimes.find((runtime) =>
-				runtime.compatibilityKey === compatibilityKey &&
-				runtime.status === "idle" &&
-				(runtime.contextWindow <= 0 || ((runtime.contextTokens / runtime.contextWindow) * 100) < maxContextPercent),
-			);
-
-		if (!reusable && params.reuse === "require") {
-			throw new Error(`No compatible idle persistent runtime found for ${params.agent.name} below ${maxContextPercent}% context.`);
-		}
-
-		const now = Date.now();
-		if (reusable) {
-			reusable.status = "busy";
-			reusable.busyDeploymentId = params.deploymentId;
-			reusable.pid = undefined;
-			reusable.processStartedAt = undefined;
-			reusable.lastUsedAt = now;
-			reusable.runs += 1;
-			reusable.reuseCount += 1;
-			reusable.ownerSessionFile = params.ownerSessionFile;
-			saveRuntimeRegistry(storage.registryPath, runtimes);
-			const percent = reusable.contextWindow > 0 ? Math.round((reusable.contextTokens / reusable.contextWindow) * 100) : 0;
-			return {
-				runtime: reusable,
-				reused: true,
-				reuseSummary: `reused ${reusable.runtimeId} at ${percent}% ctx`,
-				registryPath: storage.registryPath,
-			};
-		}
-
-		const parentRuntimeId = getCurrentParentRuntimeId();
-		const depth = getCurrentRuntimeDepth() + 1;
-		const runtimeId = `${sanitizeFileLabel(params.agent.name)}-${now}-${Math.random().toString(36).slice(2, 8)}`;
-		const runtime: AgentRuntimeState = {
-			runtimeId,
-			agent: params.agent.name,
-			source: params.agent.source,
-			mode: "persistent",
-			cwd: params.cwd,
-			scope: params.scope,
-			model: params.agent.model,
-			launchBackend: params.launchBackend,
-			sessionFilePath: join(storage.sessionsDir, `${runtimeId}.jsonl`),
-			ownerSessionFile: params.ownerSessionFile,
-			contextWindow: params.contextWindow,
-			contextTokens: 0,
-			status: "busy",
-			busyDeploymentId: params.deploymentId,
-			lastUsedAt: now,
-			createdAt: now,
-			runs: 1,
-			reuseCount: 0,
-			parentRuntimeId,
-			depth,
-			compatibilityKey,
-			lastStopReason: undefined,
-			lastErrorMessage: undefined,
-			terminalState: "closed",
-			pid: undefined,
-			processStartedAt: undefined,
-			tmuxWindowId: undefined,
-			tmuxPaneId: undefined,
-			recoverableReason: undefined,
-			awaitingUserInput: false,
-			lastVisibleState: "running",
-		};
-		runtimes.push(runtime);
-		saveRuntimeRegistry(storage.registryPath, runtimes);
-		return {
-			runtime,
-			reused: false,
-			reuseSummary: `created ${runtime.runtimeId}`,
-			registryPath: storage.registryPath,
-		};
-	});
-}
-
-function markPersistentRuntimeProcess(registryPath: string, runtimeId: string, pid: number): void {
-	withRuntimeRegistryLock(registryPath, () => {
-		const runtimes = cleanupStaleRuntimeRegistry(pruneRuntimeRegistry(loadRuntimeRegistry(registryPath)));
-		const runtime = runtimes.find((item) => item.runtimeId === runtimeId);
-		if (!runtime) return;
-		runtime.pid = pid;
-		runtime.processStartedAt = Date.now();
-		runtime.status = "busy";
-		runtime.lastUsedAt = Date.now();
-		saveRuntimeRegistry(registryPath, runtimes);
-	});
-}
-
-function finalizePersistentRuntime(params: {
-	registryPath: string;
-	runtimeId: string;
-	contextTokens: number;
-	contextWindow: number;
-	stopReason?: string;
-	errorMessage?: string;
-	status: RuntimeStatus;
-	busyDeploymentId?: string;
-	recoverableReason?: RecoverableReason;
-	awaitingUserInput?: boolean;
-	lastVisibleState?: DeploymentStatus;
-	terminalState?: TerminalState;
-	pid?: number;
-	processStartedAt?: number;
-	tmuxWindowId?: string;
-	tmuxPaneId?: string;
-}): AgentRuntimeState | undefined {
-	return withRuntimeRegistryLock(params.registryPath, () => {
-		const runtimes = cleanupStaleRuntimeRegistry(pruneRuntimeRegistry(loadRuntimeRegistry(params.registryPath)));
-		const runtime = runtimes.find((item) => item.runtimeId === params.runtimeId);
-		if (!runtime) return undefined;
-		runtime.contextTokens = params.contextTokens;
-		runtime.contextWindow = params.contextWindow || runtime.contextWindow;
-		runtime.status = params.status;
-		runtime.busyDeploymentId = params.busyDeploymentId;
-		if (params.status === "busy") {
-			if (params.pid !== undefined) runtime.pid = params.pid;
-			if (params.processStartedAt !== undefined) runtime.processStartedAt = params.processStartedAt;
-		} else {
-			runtime.pid = undefined;
-			runtime.processStartedAt = undefined;
-		}
-		runtime.lastUsedAt = Date.now();
-		runtime.lastStopReason = params.stopReason;
-		runtime.lastErrorMessage = params.errorMessage;
-		runtime.recoverableReason = params.recoverableReason;
-		runtime.awaitingUserInput = params.awaitingUserInput ?? false;
-		runtime.lastVisibleState = params.lastVisibleState;
-		if (params.terminalState) runtime.terminalState = params.terminalState;
-		if (params.tmuxWindowId !== undefined) runtime.tmuxWindowId = params.tmuxWindowId;
-		if (params.tmuxPaneId !== undefined) runtime.tmuxPaneId = params.tmuxPaneId;
-		saveRuntimeRegistry(params.registryPath, runtimes);
-		return runtime;
-	});
-}
-
-function retirePersistentRuntime(registryPath: string, runtimeId: string): void {
-	withRuntimeRegistryLock(registryPath, () => {
-		const runtimes = pruneRuntimeRegistry(loadRuntimeRegistry(registryPath)).filter((item) => item.runtimeId !== runtimeId);
-		saveRuntimeRegistry(registryPath, runtimes);
-	});
 }
 
 function truncate(text: string, max = 96): string {
@@ -829,6 +451,50 @@ function getContextWindow(modelRef: string | undefined, ctx: ExtensionContext): 
 function getFallbackModel(primaryModel: string | undefined): string | undefined {
 	if (!primaryModel) return undefined;
 	return primaryModel === GLOBAL_FALLBACK_MODEL ? undefined : GLOBAL_FALLBACK_MODEL;
+}
+
+function buildAgentPromptAudit(params: {
+	agent: AgentConfig;
+	task: string;
+	cwd: string;
+	mode: AgentDeployMode;
+	launchBackend: AgentLaunchBackend;
+}): AgentPromptAudit {
+	return {
+		agent: params.agent.name,
+		cwd: params.cwd,
+		task: params.task,
+		promptText: `Task: ${params.task}`,
+		systemPrompt: params.agent.systemPrompt?.trim() || undefined,
+		tools: params.agent.tools,
+		mode: params.mode,
+		launchBackend: params.launchBackend,
+	};
+}
+
+function formatPromptAuditLines(theme: any, audit: AgentPromptAudit | undefined): string[] {
+	if (!audit) return [];
+	return [
+		theme.fg("accent", "Prompt audit"),
+		theme.fg("muted", `agent: ${audit.agent} · mode: ${audit.mode} · ${audit.launchBackend}`),
+		theme.fg("muted", `cwd: ${audit.cwd}`),
+		theme.fg("muted", `tools: ${audit.tools.join(", ") || "none"}`),
+		theme.fg("toolTitle", "Task prompt:"),
+		audit.promptText,
+		audit.systemPrompt ? theme.fg("toolTitle", "System prompt:") : undefined,
+		audit.systemPrompt,
+	].filter((line): line is string => Boolean(line));
+}
+
+function formatQueryAuditLines(theme: any, queries: QueryTeamQuery[] | ExpandedTeamQuery[] | undefined): string[] {
+	if (!queries?.length) return [];
+	const lines = [theme.fg("accent", "Subagent prompts")];
+	queries.forEach((query, index) => {
+		const member = "member" in query ? query.member : query.agent;
+		lines.push(theme.fg("toolTitle", `${index + 1}. ${member || "all members"}`));
+		lines.push(`Task: ${query.question}`);
+	});
+	return lines;
 }
 
 function extractJsonObjectCandidates(text: string): string[] {
@@ -1436,49 +1102,17 @@ export default function (pi: ExtensionAPI) {
 		Array.from(deploymentTranscripts.entries()).map(([deploymentId, entries]) => [deploymentId, entries.map((entry) => ({ ...entry }))]),
 	);
 
-	const snapshotRuntimes = (ctx: ExtensionContext): RuntimeSnapshot[] => {
-		const storage = getRuntimeStoragePaths(ctx.cwd);
-		return pruneRuntimeRegistry(loadRuntimeRegistry(storage.registryPath))
-			.sort((a, b) => b.lastUsedAt - a.lastUsedAt)
-			.map((runtime) => ({
-				runtimeId: runtime.runtimeId,
-				agent: runtime.agent,
-				source: runtime.source,
-				mode: runtime.mode,
-				launchBackend: runtime.launchBackend,
-				model: runtime.model,
-				sessionFilePath: runtime.sessionFilePath,
-				ownerSessionFile: runtime.ownerSessionFile,
-				contextWindow: runtime.contextWindow,
-				contextTokens: runtime.contextTokens,
-				status: runtime.status,
-				busyDeploymentId: runtime.busyDeploymentId,
-				lastUsedAt: runtime.lastUsedAt,
-				createdAt: runtime.createdAt,
-				runs: runtime.runs,
-				reuseCount: runtime.reuseCount,
-				parentRuntimeId: runtime.parentRuntimeId,
-				depth: runtime.depth,
-				lastStopReason: runtime.lastStopReason,
-				lastErrorMessage: runtime.lastErrorMessage,
-				terminalState: runtime.terminalState,
-				pid: runtime.pid,
-				processStartedAt: runtime.processStartedAt,
-				tmuxWindowId: runtime.tmuxWindowId,
-				tmuxPaneId: runtime.tmuxPaneId,
-				recoverableReason: runtime.recoverableReason,
-				awaitingUserInput: runtime.awaitingUserInput,
-				lastVisibleState: runtime.lastVisibleState,
-			}));
-	};
+	const snapshotRuntimes = (): RuntimeSnapshot[] => [];
 
 	let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 	let pendingRefreshCtx: ExtensionContext | null = null;
-	const emitUISnapshot = (ctx: ExtensionContext) => {
+	const emitUISnapshot = (_ctx: ExtensionContext) => {
 		pi.events.emit(SUBAGENTS_EVENT, {
-			deployments: promptDeployments.map((deployment) => ({ ...deployment })),
+			deployments: promptDeployments
+				.filter((deployment) => deployment.status !== "done")
+				.map((deployment) => ({ ...deployment })),
 			transcripts: snapshotTranscripts(),
-			runtimes: snapshotRuntimes(ctx),
+			runtimes: snapshotRuntimes(),
 		});
 	};
 	const refreshUI = (ctx: ExtensionContext, immediate = false) => {
@@ -1605,44 +1239,30 @@ export default function (pi: ExtensionAPI) {
 	}): Promise<{ text: string; details: AgentRunDetails; isError: boolean }> {
 		const baseContextWindow = getContextWindow(params.agent.model, params.ctx);
 		const ownerSessionFile = getCurrentOwnerSessionFile() ?? params.ctx.sessionManager.getSessionFile() ?? undefined;
-		let reservedRuntime: AgentRuntimeState | undefined;
-		let runtimeRegistryPath: string | undefined;
-		let reusedRuntime = false;
-		let reuseSummary: string | undefined;
-		if (params.mode === "persistent") {
-			const reservation = reservePersistentRuntime({
-				agent: params.agent,
-				cwd: params.cwd,
-				scope: params.scope,
-				deploymentId: params.deploymentId,
-				mode: params.mode,
-				reuse: params.reuse,
-				maxContextPercent: params.maxContextPercent,
-				contextWindow: baseContextWindow,
-				launchBackend: params.launchBackend,
-				ownerSessionFile,
-			});
-			reservedRuntime = reservation.runtime;
-			runtimeRegistryPath = reservation.registryPath;
-			reusedRuntime = reservation.reused;
-			reuseSummary = reservation.reuseSummary;
-		}
+		const deploymentMode: AgentDeployMode = params.mode === "persistent" ? "ephemeral" : params.mode;
 		const deployment = buildDeploymentState({
 			agent: params.agent,
 			deploymentId: params.deploymentId,
 			task: params.task,
 			instanceNumber: params.instanceNumber,
-			mode: params.mode,
+			mode: deploymentMode,
 			launchBackend: params.launchBackend,
-			runtimeId: reservedRuntime?.runtimeId,
-			reusedRuntime,
-			reuseSummary,
-			sessionFilePath: reservedRuntime?.sessionFilePath,
-			ownerSessionFile: reservedRuntime?.ownerSessionFile ?? ownerSessionFile,
-			parentRuntimeId: reservedRuntime?.parentRuntimeId ?? getCurrentParentRuntimeId(),
-			depth: reservedRuntime?.depth ?? (getCurrentRuntimeDepth() + 1),
+			runtimeId: undefined,
+			reusedRuntime: false,
+			reuseSummary: undefined,
+			sessionFilePath: undefined,
+			ownerSessionFile,
+			parentRuntimeId: getCurrentParentRuntimeId(),
+			depth: getCurrentRuntimeDepth() + 1,
 		});
-		deployment.contextWindow = reservedRuntime?.contextWindow || baseContextWindow;
+		deployment.contextWindow = baseContextWindow;
+		const auditPrompt = buildAgentPromptAudit({
+			agent: params.agent,
+			task: params.task,
+			cwd: params.cwd,
+			mode: deployment.mode,
+			launchBackend: deployment.launchBackend,
+		});
 		promptDeployments.push(deployment);
 		appendTranscript(
 			params.ctx,
@@ -1711,6 +1331,7 @@ export default function (pi: ExtensionAPI) {
 				awaitingUserInput: Boolean(questionPayload),
 				questionPayload,
 				userResponse,
+				auditPrompt,
 			};
 			try {
 				params.onUpdate?.({
@@ -1743,7 +1364,7 @@ export default function (pi: ExtensionAPI) {
 			emitProgress();
 
 			const args = ["--mode", "json", "-p"];
-			if (params.mode === "persistent" && deployment.sessionFilePath) args.push("--session", deployment.sessionFilePath);
+			if (deployment.mode === "persistent" && deployment.sessionFilePath) args.push("--session", deployment.sessionFilePath);
 			else args.push("--no-session");
 			if (modelRef) args.push("--model", modelRef);
 			const builtinTools = params.agent.tools.filter((tool) => ["read", "bash", "edit", "write", "grep", "find", "ls"].includes(tool));
@@ -1929,7 +1550,7 @@ export default function (pi: ExtensionAPI) {
 				};
 				forceCompleteAttempt = () => finalize(0);
 				if (false) {
-					const logDir = ensureDir(join(getRuntimeStoragePaths(params.cwd).sessionsDir, `${deployment.runtimeId || sanitizeFileLabel(deployment.deploymentId)}-logs`));
+					const logDir = ensureDir(join(tmpdir(), "pi-subagent-logs", `${deployment.runtimeId || sanitizeFileLabel(deployment.deploymentId)}-logs`));
 					const stdoutPath = join(logDir, "stdout.jsonl");
 					const stderrPath = join(logDir, "stderr.log");
 					const exitPath = join(logDir, "exit.code");
@@ -1938,9 +1559,6 @@ export default function (pi: ExtensionAPI) {
 					createTmuxPane({ cwd: params.cwd, command: shellCommand }).then(({ paneId, windowId }) => {
 						deployment.currentActivity = `running in ${paneId}`;
 						deployment.summary = `running in tmux pane ${paneId}`;
-						if (deployment.runtimeId && runtimeRegistryPath) {
-							finalizePersistentRuntime({ registryPath: runtimeRegistryPath, runtimeId: deployment.runtimeId, contextTokens: deployment.contextTokens, contextWindow: deployment.contextWindow, status: "busy", terminalState: "attached", tmuxPaneId: paneId, tmuxWindowId: windowId, lastVisibleState: "running" });
-						}
 						refreshUI(params.ctx);
 						emitProgress();
 						pollInterval = setInterval(() => {
@@ -1978,7 +1596,6 @@ export default function (pi: ExtensionAPI) {
 				const child = spawn(invocation.command, invocation.args, { cwd: params.cwd, env, stdio: ["ignore", "pipe", "pipe"], shell: false });
 				let childClosed = false;
 				let terminationRequested = false;
-				if (deployment.runtimeId && runtimeRegistryPath && child.pid) markPersistentRuntimeProcess(runtimeRegistryPath, deployment.runtimeId, child.pid);
 				const terminateChild = (reason: "abort" | "completion") => {
 					if (childClosed || terminationRequested) return;
 					terminationRequested = true;
@@ -2080,18 +1697,6 @@ export default function (pi: ExtensionAPI) {
 					deployment.status = "awaiting_user_input";
 					deployment.summary = truncate(questionPayload.executive_summary || questionPayload.question);
 					deployment.currentActivity = "awaiting user input";
-					if (deployment.runtimeId && runtimeRegistryPath) {
-						finalizePersistentRuntime({
-							registryPath: runtimeRegistryPath,
-							runtimeId: deployment.runtimeId,
-							contextTokens: deployment.usage.contextTokens,
-							contextWindow: deployment.contextWindow,
-							status: "idle",
-							awaitingUserInput: true,
-							lastVisibleState: "awaiting_user_input",
-							recoverableReason: undefined,
-						});
-					}
 					refreshUI(params.ctx);
 					emitProgress();
 					userResponse = await relayAwaitingUserInput(questionPayload, params.ctx);
@@ -2152,48 +1757,15 @@ export default function (pi: ExtensionAPI) {
 				? "paused · provider error"
 				: "failed";
 
-		if (deployment.runtimeId && runtimeRegistryPath) {
-			const runtime = finalizePersistentRuntime({
-				registryPath: runtimeRegistryPath,
-				runtimeId: deployment.runtimeId,
-				contextTokens: deployment.usage.contextTokens,
-				contextWindow: deployment.contextWindow,
-				stopReason,
-				errorMessage: deployment.errorMessage,
-				status: "idle",
-				recoverableReason: deployment.recoverableReason,
-				awaitingUserInput: false,
-				lastVisibleState: deployment.status,
-				terminalState: "closed",
-			});
-			if (runtime) {
-				deployment.contextTokens = runtime.contextTokens;
-				deployment.contextWindow = runtime.contextWindow;
-				const contextPercent = runtime.contextWindow > 0 ? (runtime.contextTokens / runtime.contextWindow) * 100 : 0;
-				if (deployment.status === "done" && contextPercent >= params.maxContextPercent) {
-					retirePersistentRuntime(runtimeRegistryPath, runtime.runtimeId);
-					deployment.reuseSummary = `retired ${runtime.runtimeId} at ${Math.round(contextPercent)}% ctx`;
-					deployment.currentActivity = `completed · retired at ${Math.round(contextPercent)}% ctx`;
-				} else {
-					deployment.reuseSummary = deployment.reuseSummary || `runtime ${runtime.runtimeId} idle`;
-				}
-			}
-		}
 		if (deployment.failureKind === "provider_error") {
 			const providerStopDetails: ProviderStopDetails = {
 				deploymentId: deployment.deploymentId,
-				runtimeId: deployment.runtimeId,
 				agent: deployment.agent,
 				summary: deployment.errorMessage || deployment.summary,
 				stopReason,
 				failureKind: "provider_error",
 				recoverableReason: deployment.recoverableReason,
 			};
-			if (deployment.runtimeId && runtimeRegistryPath) {
-				const runtime = pruneRuntimeRegistry(loadRuntimeRegistry(runtimeRegistryPath)).find((item) => item.runtimeId === deployment.runtimeId);
-				providerStopDetails.tmuxPaneId = runtime?.tmuxPaneId;
-				providerStopDetails.tmuxWindowId = runtime?.tmuxWindowId;
-			}
 			pi.events.emit(SUBAGENT_PROVIDER_STOP_EVENT, providerStopDetails);
 		}
 
@@ -2229,6 +1801,11 @@ export default function (pi: ExtensionAPI) {
 		);
 		refreshUI(params.ctx);
 		emitProgress();
+		if (deployment.status === "done") {
+			promptDeployments = promptDeployments.filter((item) => item.deploymentId !== deployment.deploymentId);
+			deploymentTranscripts.delete(deployment.deploymentId);
+			refreshUI(params.ctx);
+		}
 
 		const details: AgentRunDetails = {
 			deploymentId: deployment.deploymentId,
@@ -2268,6 +1845,7 @@ export default function (pi: ExtensionAPI) {
 			awaitingUserInput: Boolean(questionPayload),
 			questionPayload,
 			userResponse,
+			auditPrompt,
 		};
 
 		const outputText = deployment.status === "error" || deployment.status === "paused_provider_error"
@@ -2300,8 +1878,8 @@ ${finalText}`
 		promptSnippet: "Query a team of agents defined in agents/teams.yaml. Use parallel for research fan-out and serial when interaction or deterministic ordering matters.",
 		promptGuidelines: [
 			"Use query_team for research/consultation across a named team, not for persistent PDD phase delegation.",
-			"Defaults to persistent runtime reuse with reuse=prefer and maxContextPercent=75; pass mode=ephemeral only when continuity is unwanted.",
-			"Use execution=parallel for independent research questions and fan-out; compatible persistent runtimes are serialized internally to avoid concurrent writes to one session.",
+			"Defaults to one-shot ephemeral runs. Persistent mode is accepted for compatibility but does not keep reusable runtime state.",
+			"Use execution=parallel for independent research questions and fan-out; no shared runtime states are kept between runs.",
 			"Use execution=serial when a member may need user interaction or when stable ordering matters.",
 		],
 		parameters: QueryTeamParams,
@@ -2309,7 +1887,7 @@ ${finalText}`
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
 			const scope = params.scope ?? "both";
 			const execution = params.execution ?? "parallel";
-			const mode = params.mode ?? "persistent";
+			const mode = params.mode ?? "ephemeral";
 			const reuse = params.reuse ?? "prefer";
 			const maxContextPercent = Math.max(1, Math.min(100, params.maxContextPercent ?? 75));
 			const continueOnError = params.continueOnError ?? true;
@@ -2420,6 +1998,7 @@ ${finalText}`
 					errorMessage: run.details.errorMessage,
 					interactionOutcome: run.details.interactionOutcome,
 					awaitingUserInput: run.details.awaitingUserInput,
+					auditPrompt: run.details.auditPrompt,
 				};
 			};
 
@@ -2451,9 +2030,7 @@ ${finalText}`
 					for (let i = 0; i < requestedQueries.length; i += 1) {
 						const query = requestedQueries[i];
 						const memberAgent = agentCatalog.get(query.member)!;
-						const key = mode === "persistent"
-							? buildRuntimeCompatibilityKey({ agent: memberAgent, cwd: runtimeCwd, scope, mode, launchBackend })
-							: `${memberAgent.name}#${i}`;
+						const key = `${memberAgent.name}#${i}`;
 						const group = groups.get(key) ?? [];
 						group.push({ query, index: i });
 						groups.set(key, group);
@@ -2483,7 +2060,7 @@ ${finalText}`
 					}
 				}
 
-			const statusLine = `team ${team.name} (${execution} · ${mode}) — ${details.completed} completed, ${details.failed} failed`;
+			const statusLine = `team ${team.name} (${execution} · ${mode} one-shot) — ${details.completed} completed, ${details.failed} failed`;
 			const resultLines = details.results.map((result) => {
 				const icon = result.status === "done" ? "✓" : "✗";
 				return `${icon} ${result.member}: ${result.summary}`;
@@ -2506,22 +2083,20 @@ ${finalText}`
 			}
 		},
 
-		renderCall(args, theme) {
+		renderCall(args, theme, context) {
 			const execution = args.execution ?? "parallel";
-			const mode = args.mode ?? "persistent";
+			const mode = args.mode ?? "ephemeral";
 			const launchBackend = resolveLaunchBackend(args.launchBackend);
 			const queries = (args.queries || []) as QueryTeamQuery[];
-			return new Text(
-				theme.fg("toolTitle", theme.bold("query_team ")) +
+			const header = theme.fg("toolTitle", theme.bold("query_team ")) +
 				theme.fg("accent", args.team || "unknown") +
 				theme.fg("muted", ` [${execution} · ${mode} · ${launchBackend}]`) +
-				theme.fg("dim", ` · ${queries.length} quer${queries.length === 1 ? "y" : "ies"}`),
-				0,
-				0,
-			);
+				theme.fg("dim", ` · ${queries.length} quer${queries.length === 1 ? "y" : "ies"}`) +
+				(context.expanded ? "" : theme.fg("dim", ` · ${keyHint("app.tools.expand", "audit prompt")}`));
+			return new Text([header, ...(context.expanded ? formatQueryAuditLines(theme, queries) : [])].join("\n"), 0, 0);
 		},
 
-		renderResult(result, _options, theme) {
+		renderResult(result, options, theme) {
 			const details = result.details as QueryTeamDetails | undefined;
 			if (!details) {
 				const text = result.content[0];
@@ -2531,10 +2106,14 @@ ${finalText}`
 				theme.fg(result.isError ? "error" : "success", result.isError ? "✗" : "✓") +
 				" " +
 				theme.fg("toolTitle", theme.bold(`team ${details.team}`)) +
-				theme.fg("muted", ` · ${details.execution} · ${details.mode} · reuse ${details.reuse} <${details.maxContextPercent}% · ${details.launchBackend} · ${details.completed}/${details.requestedQueries.length} completed · ${details.failed} failed`);
+				theme.fg("muted", ` · ${details.execution} · ${details.mode} one-shot · ${details.launchBackend} · ${details.completed}/${details.requestedQueries.length} completed · ${details.failed} failed`);
 			const meta = theme.fg("muted", `resolved: ${details.resolvedMembers.join(", ")} · teams: ${details.teamsFilePath ?? "n/a"}`);
 			const members = details.results.map((item) => `${item.status === "done" ? "✓" : "✗"} ${item.member} · ${item.summary}`).join("\n");
-			return new Text([header, meta, members || "(no results)"].join("\n"), 0, 0);
+			const expandedPromptLines = options.expanded
+				? details.results.flatMap((item) => formatPromptAuditLines(theme, item.auditPrompt))
+				: [];
+			const hint = options.expanded ? "" : theme.fg("dim", ` ${keyHint("app.tools.expand", "audit prompts")}`);
+			return new Text([header + hint, meta, members || "(no results)", ...expandedPromptLines].filter(Boolean).join("\n"), 0, 0);
 		},
 	});
 
@@ -2549,7 +2128,7 @@ ${finalText}`
 			"Deploy a named agent with isolated context. Use this for pdd-explorer, pdd-requirements, pdd-planner, pdd-builder, and pdd-reviewer after you decide the minimal flow.",
 		promptGuidelines: [
 			"Use deploy_agent only after you, the orchestrator, decide whether the request needs no flow, a partial flow, or the full PDD flow.",
-			"Defaults to persistent runtime reuse with reuse=prefer and maxContextPercent=75; pass mode=ephemeral only for one-shot isolation.",
+			"Defaults to one-shot ephemeral runs. Persistent mode is accepted for compatibility but does not keep reusable runtime state.",
 			"Prefer the smallest valid flow. Do not deploy explorer/requirements/planner/reviewer automatically.",
 		],
 		parameters: DeployAgentParams,
@@ -2557,7 +2136,7 @@ ${finalText}`
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
 			const scope = params.scope ?? "both";
 			const runtimeCwd = params.cwd || ctx.cwd;
-			const mode = params.mode ?? "persistent";
+			const mode = params.mode ?? "ephemeral";
 			const reuse = params.reuse ?? "prefer";
 			const launchBackend = resolveLaunchBackend(params.launchBackend);
 			const maxContextPercent = Math.max(1, Math.min(100, params.maxContextPercent ?? 75));
@@ -2636,14 +2215,18 @@ ${finalText}`
 			if (context.state.deployAgentHasResult) return new Container();
 			const taskPreview = truncate(args.task || "", 72);
 			const scope = args.scope ?? "both";
-			const mode = args.mode ?? "persistent";
+			const mode = args.mode ?? "ephemeral";
 			const launchBackend = resolveLaunchBackend(args.launchBackend);
 			const header =
 				theme.fg("toolTitle", theme.bold("deploy_agent ")) +
 				theme.fg("accent", args.agent || "unknown") +
-				theme.fg("muted", ` [${scope} · ${mode} · ${launchBackend}]`);
+				theme.fg("muted", ` [${scope} · ${mode} · ${launchBackend}]`) +
+				(context.expanded ? "" : theme.fg("dim", ` · ${keyHint("app.tools.expand", "audit prompt")}`));
 			const taskLine = taskPreview ? `  ${theme.fg("dim", taskPreview)}` : undefined;
-			return createToolShell([header, taskLine], theme, {
+			const auditLines = context.expanded
+				? [theme.fg("accent", "Prompt audit"), theme.fg("toolTitle", "Task prompt:"), `Task: ${args.task || ""}`]
+				: [];
+			return createToolShell([header, taskLine, ...auditLines], theme, {
 				isPartial: context.isPartial,
 				isError: context.isError,
 			});
@@ -2653,7 +2236,7 @@ ${finalText}`
 			context.state.deployAgentHasResult = true;
 			const taskPreview = truncate(context.args.task || "", 72);
 			const scope = context.args.scope ?? "both";
-			const mode = context.args.mode ?? "persistent";
+			const mode = context.args.mode ?? "ephemeral";
 			const launchBackend = resolveLaunchBackend(context.args.launchBackend);
 			const header =
 				theme.fg("toolTitle", theme.bold("deploy_agent ")) +
@@ -2692,6 +2275,7 @@ ${finalText}`
 			const interactionLine = details.interactionOutcome ? theme.fg("muted", `interaction: ${details.interactionOutcome}`) : "";
 			const activityLine = details.currentActivity ? theme.fg("muted", `activity: ${details.currentActivity}`) : "";
 			const summary = result.content[0]?.type === "text" ? result.content[0].text : details.summary;
+			const auditHint = options.expanded ? "" : theme.fg("dim", keyHint("app.tools.expand", "audit prompt"));
 			return createToolShell([
 				header,
 				taskLine,
@@ -2703,6 +2287,8 @@ ${finalText}`
 				modelsLine,
 				interactionLine,
 				activityLine,
+				auditHint,
+				...(options.expanded ? formatPromptAuditLines(theme, details.auditPrompt) : []),
 				summary,
 				details.errorMessage ? theme.fg("error", details.errorMessage) : "",
 			], theme, {

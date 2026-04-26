@@ -309,7 +309,8 @@ function getWidgetViewModel(
 	currentSessionFile?: string | null,
 ) {
 	const sessionState = filterSessionState(deployments, runtimes, currentSessionFile);
-	const displayDeployments = deriveDisplayDeployments(sessionState.deployments, sessionState.runtimes);
+	const runningDeployments = sessionState.deployments.filter((deployment) => deployment.status !== "done");
+	const displayDeployments = deriveDisplayDeployments(runningDeployments, sessionState.runtimes);
 	const numberedDeployments = withInstanceNumbers(displayDeployments);
 	const statusRank = (status: DeploymentStatus): number => {
 		if (status === "running") return 0;
@@ -470,7 +471,7 @@ function inspectStatusIcon(status: DeploymentStatus): string {
 }
 
 function buildInspectOptions(deployments: DeploymentState[]): Array<{ label: string; deploymentId: string }> {
-	return withInstanceNumbers([...deployments])
+	return withInstanceNumbers([...deployments].filter((deployment) => deployment.status !== "done"))
 		.sort((a, b) => a.deploymentId.localeCompare(b.deploymentId))
 		.map((deployment) => ({
 			deploymentId: deployment.deploymentId,
@@ -765,8 +766,8 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.events.on(SUBAGENTS_EVENT, (data: { deployments?: DeploymentState[]; runtimes?: RuntimeSnapshot[]; transcripts?: DeploymentTranscriptMap }) => {
-		const nextDeployments = Array.isArray(data?.deployments) ? data.deployments : [];
-		const nextRuntimes = Array.isArray(data?.runtimes) ? data.runtimes : [];
+		const nextDeployments = Array.isArray(data?.deployments) ? data.deployments.filter((deployment) => deployment.status !== "done") : [];
+		const nextRuntimes: RuntimeSnapshot[] = [];
 		const nextTranscripts = data?.transcripts && typeof data.transcripts === "object"
 			? Object.fromEntries(Object.entries(data.transcripts).map(([deploymentId, entries]) => [deploymentId, normalizeTranscriptEntries(entries)]))
 			: {};

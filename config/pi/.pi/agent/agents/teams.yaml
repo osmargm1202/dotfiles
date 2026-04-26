@@ -16,6 +16,7 @@ pi-orchestrator:
   - agent-expert
   - cli-expert
   - keybinding-expert
+  - coding-expert
 
 pdd-orgm:
   - pdd-explorer
