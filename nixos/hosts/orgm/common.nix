@@ -6,11 +6,7 @@
 
 {
   imports =
-    [
-      # Include results of hardware scan.
-      ../../hardware-configuration.nix
-    ]
-    ++ lib.optionals (inputs != null) [ inputs.home-manager.nixosModules.home-manager ]
+    lib.optionals (inputs != null) [ inputs.home-manager.nixosModules.home-manager ]
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ];
 
   # Polkit
