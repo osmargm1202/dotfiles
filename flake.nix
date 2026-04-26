@@ -16,18 +16,35 @@
 
   outputs = inputs@{ nixpkgs, ... }: let
     system = "x86_64-linux";
-    mkHost = module:
+    mkHost = {
+      hostName,
+      hardware,
+      profile,
+    }:
       nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = { inherit inputs; };
-        modules = [ module ];
+        modules = [
+          ./nixos/common.nix
+          hardware
+          profile
+          { networking.hostName = hostName; }
+        ];
       };
   in {
     formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
 
     nixosConfigurations = {
-      orgm-gnome = mkHost ./nixos/hosts/orgm/gnome.nix;
-      orgm-hyprland = mkHost ./nixos/hosts/orgm/hyprland.nix;
+      orgm-gnome = mkHost {
+        hostName = "orgm";
+        hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+        profile = ./nixos/profiles/gnome.nix;
+      };
+      orgm-hyprland = mkHost {
+        hostName = "orgm";
+        hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+        profile = ./nixos/profiles/hyprland.nix;
+      };
     };
   };
 }
