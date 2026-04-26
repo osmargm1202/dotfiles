@@ -7,7 +7,8 @@
     layout = "us,latam";
     variant = "";
   };
-
+  security.polkit.enable = true;
+  
   services.desktopManager.gnome.enable = true;
 
   services.displayManager.gdm = {

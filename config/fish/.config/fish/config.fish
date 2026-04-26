@@ -85,6 +85,7 @@ end
 
 if type -q nvim
     set EDITOR nvim
+    alias hyprconfig='nvim ~/.config/hypr/hyprland.conf'
     alias fishconfig='nvim ~/.config/fish/config.fish'
     alias kittyconfig='nvim ~/.config/kitty/kitty.conf'
     alias ffconfig='nvim ~/.config/fastfetch/config.jsonc'
@@ -230,6 +231,7 @@ if not set -q DISTROBOX_ENTER_PATH
         alias ll='distrobox-enter arch -- eza -la --group-directories-first --icons'
         alias lt='distrobox-enter arch -- eza --tree --group-directories-first --icons'
         alias fishconfig='distrobox-enter arch -- nvim ~/.config/fish/config.fish'
+        alias hyprconfig='distrobox-enter arch -- nvim ~/.config/hypr/hyprland.conf'
         alias kittyconfig='distrobox-enter arch -- nvim ~/.config/kitty/kitty.conf'
         alias ffconfig'=distrobox-enter arch -- nvim ~/.config/fastfetch/config.jsonc'
 

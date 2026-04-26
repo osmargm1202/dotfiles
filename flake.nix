@@ -7,12 +7,14 @@
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    snappy-switcher.url = "github:OpalAayan/snappy-switcher";
     noctalia.url = "github:noctalia-dev/noctalia-shell";
     sddm-astronaut-theme = {
       url = "github:Keyitdev/sddm-astronaut-theme";
       flake = false;
     };
   };
+
 
   outputs = inputs@{ nixpkgs, ... }: let
     system = "x86_64-linux";

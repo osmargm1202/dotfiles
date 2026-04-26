@@ -10,14 +10,9 @@
     ++ lib.optionals (inputs == null) [ <home-manager/nixos> ];
 
   # Polkit
-  security.polkit.enable = true;
+  
 
-  # KWallet para gestión de credenciales
-  #security.pam.services.sddm.enableKwallet = true;
-  #programs.gnupg.agent = {
-  #  enable = true;
-  #  pinentryPackage = pkgs.pinentry-curses;  # o pinentry-gtk2, pinentry-qt para GUI
-  #};
+
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # Bootloader.
@@ -112,7 +107,7 @@
     shell = pkgs.fish;
     subUidRanges = [{ startUid = 100000; count = 65536; }];
     subGidRanges = [{ startGid = 100000; count = 65536; }];
-    extraGroups = [ "networkmanager" "wheel" "docker" "osmarg" "podman" "input" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" "osmarg" "podman" "input" "video" "render" ];
     packages = with pkgs; [
       # thunderbird
     ];
