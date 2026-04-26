@@ -643,8 +643,11 @@ export function buildPlanWidgetLines(
   hostWidth: number,
 ): string[] {
   if (state.tasks.length === 0) return [];
-  const width = Math.max(10, Math.min(PLAN_WIDGET_WIDTH, hostWidth));
-  const innerWidth = Math.max(8, width - 2);
+  const width = Math.max(
+    1,
+    Math.min(PLAN_WIDGET_WIDTH, Math.floor(hostWidth || 0)),
+  );
+  const innerWidth = Math.max(0, width - 2);
   const borderColor =
     state.blocked > 0
       ? "warning"
@@ -1087,6 +1090,15 @@ assert.equal(lines.length, 13);
 assert.ok(lines.some((line) => line.includes("▶")));
 assert.ok(lines.every((line) => [...line].length <= 50));
 
+for (const smallWidth of [1, 5, 9]) {
+  const smallLines = buildPlanWidgetLines(state, theme, smallWidth);
+  assert.equal(smallLines.length, 13);
+  assert.ok(
+    smallLines.every((line) => line.length <= smallWidth),
+    `hostWidth ${smallWidth} overflow: ${JSON.stringify(smallLines)}`,
+  );
+}
+
 const many = summarizePlan(
   Array.from({ length: 16 }, (_, index) => ({
     ...parsed.tasks[index % parsed.tasks.length],
@@ -1162,13 +1174,13 @@ pi --offline --no-session --no-extensions -e extensions/plan.ts -p --tools read 
 
 Expected: Pi starts without extension import errors. Output contains `plan widget extension loaded` or model/provider auth failure after extension load; no stack trace mentions `extensions/plan.ts` or `extensions/plan/`.
 
-- [ ] Run smoke tests.
+- [ ] Run smoke tests, including small-width renderer assertions for host widths `1`, `5`, and `9`.
 
 ```bash
 node extensions/plan/smoke-test.mjs
 ```
 
-Expected: `plan widget smoke checks passed`.
+Expected: `plan widget smoke checks passed`; smoke script asserts every rendered line length is `<= hostWidth` for small widths `1`, `5`, and `9`.
 
 - [ ] Verify no runtime writes to protected plan/spec/Superpowers paths are present.
 
