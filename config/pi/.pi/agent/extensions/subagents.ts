@@ -453,6 +453,19 @@ function getFallbackModel(primaryModel: string | undefined): string | undefined 
 	return primaryModel === GLOBAL_FALLBACK_MODEL ? undefined : GLOBAL_FALLBACK_MODEL;
 }
 
+function getCurrentParentRuntimeId(): string | undefined {
+	return process.env.PI_SUBAGENT_RUNTIME_ID?.trim() || undefined;
+}
+
+function getCurrentOwnerSessionFile(): string | undefined {
+	return process.env.PI_SUBAGENT_OWNER_SESSION_FILE?.trim() || undefined;
+}
+
+function getCurrentRuntimeDepth(): number {
+	const value = Number.parseInt(process.env.PI_SUBAGENT_RUNTIME_DEPTH || "0", 10);
+	return Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
 function buildAgentPromptAudit(params: {
 	agent: AgentConfig;
 	task: string;

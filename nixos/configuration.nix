@@ -9,7 +9,6 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
       ./profiles/gnome.nix
-      # ./profiles/i3.nix  # Uncomment to enable i3 desktop profile (replaces GNOME)
       <home-manager/nixos>
   ];
   # Polkit
@@ -21,7 +20,7 @@
   #  enable = true;
   #  pinentryPackage = pkgs.pinentry-curses;  # o pinentry-gtk2, pinentry-qt para GUI
   #};
-  #nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -126,6 +125,9 @@
     vim
     fish
     curl
+    nextcloud-client
+    gtk3
+    gsettings-desktop-schemas
     git
     distrobox
     htop
@@ -139,7 +141,15 @@
     (chromium.override { enableWideVine = true; })
   ];
 
+
+    programs.dconf.enable = true;
+
     fonts.fontconfig.enable = true;
+    environment.sessionVariables = {
+      XDG_DATA_DIRS = [
+        "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}"
+      ];
+    };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.

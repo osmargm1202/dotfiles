@@ -1,0 +1,188 @@
+set $mod Mod4
+
+exec ibus-daemon -drx
+
+exec waybar & 
+
+exec exec swaync
+
+# Basic keybindings
+bindsym $mod+Return exec alacritty
+# Launch Firefox
+bindsym $mod+f exec firefox
+# Close focused window
+bindsym $mod+q kill               
+# Open wofi
+bindsym $mod+d exec wofi --show drun
+# Toggle waybar
+bindsym $mod+w exec pkill -SIGUSR1 waybar
+# reload waybar
+bindsym $mod+Shift+w exec pkill waybar && waybar &
+
+bindsym Ctrl+Shift+s exec grim -g "$(slurp)" - | swappy -f -
+
+# open swaync 
+bindsym $mod+n exec swaync-client -t
+
+# Split windows (horizontal/vertical)
+# bindsym $mod+h split h
+# bindsym $mod+v split v
+
+# Move focus between windows
+bindsym $mod+h focus left
+bindsym $mod+j focus down 
+bindsym $mod+k focus top
+bindsym $mod+l focus right
+
+# Move window instead of just focusing
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+l move right
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+j move down
+
+# resise window
+bindsym $mod+Ctrl+h resize shrink width 10px  
+bindsym $mod+Ctrl+l resize grow width 10px  
+bindsym $mod+Ctrl+k resize grow height 10px  
+bindsym $mod+Ctrl+j resize shrink height 10px  
+
+# Logout, restart and reload sway
+bindsym $mod+Shift+e exec "swaymsg exit"
+# Reload Sway config
+bindsym $mod+Shift+Escape reload                 
+
+bindsym $mod+m exec "~/.local/bin/custom-monitor.sh"
+
+# Workspace
+# Open it while starting up
+exec swaymsg workspace C
+
+# Workspaces define
+# any
+bindsym $mod+6 workspace A 
+# setting
+bindsym $mod+5 workspace S 
+# coding
+bindsym $mod+1 workspace C 
+# browser
+bindsym $mod+2 workspace B 
+# music
+bindsym $mod+4 workspace M 
+# Teams, Postman, any team up tools ...
+bindsym $mod+3 workspace R 
+
+# Workspaces moving
+bindsym $mod+Shift+6 move container to workspace A
+bindsym $mod+Shift+5 move container to workspace S
+bindsym $mod+Shift+4 move container to workspace M
+bindsym $mod+Shift+1 move container to workspace C
+bindsym $mod+Shift+2 move container to workspace B
+bindsym $mod+Shift+3 move container to workspace R
+
+bindsym $mod+Tab workspace next
+
+bindsym $mod+Shift+Tab workspace prev
+
+# Toggle fullscreen
+bindsym $mod+Shift+f fullscreen toggle
+
+# Toggle between English and Vietnamese Bamboa
+bindsym Ctrl+space exec "if [ $(ibus engine) = Bamboo ]; then ibus engine xkb:us:intl:eng; else ibus engine Bamboo; fi"
+
+# Which app is assigned to which workspace
+assign [class="Firefox"] workspace B
+assign [class="Ghostty"] workspace C
+
+exec_always mpvpaper '*' ~/.dotfiles/images/wallpapers/gi-shenhe.1920x1080.mp4 -o "no-audio loop"
+
+# Floating windows
+bindsym $mod+Shift+space floating toggle
+# output eDP-1 resolution 1920x1080 rotate normal
+# Set background (replace with your own image path)
+output * bg ~/.dotfiles/images/wallpapers/1257855.jpg fill
+# bar {
+#   position top
+#   swaybar_command waybar
+# }
+
+# hide title bar
+# default_border none 
+# for_window [class=".*"] border none
+for_window [title="^.*"] title_format ""
+# default_border normal 0
+# default_floating_border normal 0
+
+# Brightness
+# Increase brightness
+bindsym XF86MonBrightnessUp exec 'brightnessctl set +5%'
+# Decrease brightness
+bindsym XF86MonBrightnessDown exec 'brightnessctl set 5%-'
+# Volume
+bindsym XF86AudioRaiseVolume exec 'wpctl set-volume @DEFAULT_AUDIO_SINK@ +5%'
+bindsym XF86AudioLowerVolume exec 'wpctl set-volume @DEFAULT_AUDIO_SINK@ -5%'
+bindsym XF86AudioMute exec 'wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle'
+
+input "type:keyboard" {
+    xkb_options ctrl:nocaps
+    xkb_options "caps:escape"
+}
+
+input "1267:12541:ELAN0712:00_04F3:30FD_Touchpad" {
+    dwt enabled
+    tap enabled
+    middle_emulation enabled
+    natural_scroll enabled
+}
+
+# output eDP-1 pos 10 10
+# output DP-1 pos 10 10
+# set my personal monitor text scale
+output 'LG Electronics LG ULTRAFINE 406NTEPAU196' scale 1.5
+gaps outer 20
+gaps inner 10
+
+default_border none
+
+set $term alacritty
+seat * xcursor_theme Bibata-Modern-Ice 24
+
+# Rounded corners
+corner_radius 5
+
+blur enable
+blur_xray on
+
+# Blur settings
+blur enable
+blur_radius 5
+blur_passes 1
+
+shadows enable
+
+# Required for xdg-desktop-portal-wlr
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
+exec systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+
+# Optional: set variable so apps detect sway
+set $XDG_CURRENT_DESKTOP sway
+
+set $GTK_IM_MODULE ibus
+set $QT_IM_MODULE ibus
+set $XMODIFIERS @im=ibus
+set $SDL_IM_MODULE ibus
+set $GLFW_IM_MODULE ibus
+
+exec_always {
+    export GTK_IM_MODULE=$GTK_IM_MODULE
+    export QT_IM_MODULE=$QT_IM_MODULE
+    export XMODIFIERS=$XMODIFIERS
+    export SDL_IM_MODULE=$SDL_IM_MODULE
+    export GLFW_IM_MODULE=$GLFW_IM_MODULE
+}
+
+# Set border style, width, and colors
+default_border pixel 1
+
+# Set border colors: <border> <background> <text> <indicator> <child_border>
+client.focused          #815eff #222222 #ffffff #815eff #815eff
+client.unfocused        #444444 #222222 #888888 #444444 #444444

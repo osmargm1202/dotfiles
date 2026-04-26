@@ -9,7 +9,8 @@
     "npm:pi-annotate",
     "npm:pi-markdown-preview",
     "npm:pi-image-preview",
-    "git:github.com/obra/superpowers"
+    "git:github.com/obra/superpowers",
+    "npm:pi-lens"
   ],
   "theme": "midnight-ocean",
   "hideThinkingBlock": false,
