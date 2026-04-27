@@ -45,6 +45,8 @@
   };
 
   programs.fish.enable = true;
+  programs.zoxide.enable = true;
+  programs.starship.enable = true;
   programs.git = {
     enable = true;
     config.user.name = "osmar";
