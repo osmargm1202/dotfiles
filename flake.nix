@@ -8,7 +8,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
-    noctalia.url = "github:noctalia-dev/noctalia-shell";
+    caelestia-shell = {
+      url = "github:caelestia-dots/shell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     sddm-astronaut-theme = {
       url = "github:Keyitdev/sddm-astronaut-theme";
       flake = false;
@@ -46,6 +49,11 @@
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/hyprland.nix;
+      };
+      orgm-niri = mkHost {
+        hostName = "orgm";
+        hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+        profile = ./nixos/profiles/niri.nix;
       };
     };
   };

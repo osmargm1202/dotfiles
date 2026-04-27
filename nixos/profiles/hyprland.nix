@@ -2,7 +2,7 @@
 
 let
   system = pkgs.stdenv.hostPlatform.system;
-  noctaliaShell = inputs.noctalia.packages.${system}.default;
+  caelestiaShell = inputs.caelestia-shell.packages.${system}.with-cli;
   sddmAstronautTheme = pkgs.callPackage ../packages/sddm-astronaut-theme.nix {
     src = inputs.sddm-astronaut-theme;
   };
@@ -41,7 +41,7 @@ in {
   '';
 
   environment.etc."xdg/hypr/hyprland.conf".text = lib.mkDefault ''
-    exec-once = ${lib.getExe noctaliaShell}
+    exec-once = ${lib.getExe caelestiaShell}
   '';
 
   environment.systemPackages = with pkgs; [
@@ -51,7 +51,7 @@ in {
     gnome-software
     slurp
     swappy
-    noctaliaShell
+    caelestiaShell
     sddmAstronautTheme
     inputs.snappy-switcher.packages.${pkgs.system}.default
     rofi
