@@ -54,6 +54,9 @@ in {
     noctaliaShell
     sddmAstronautTheme
     inputs.snappy-switcher.packages.${pkgs.system}.default
+    walker
+    elephant
+
 
     # Iconos KDE
     kdePackages.breeze-icons
@@ -68,7 +71,9 @@ in {
     qt6Packages.qt6ct
     libsForQt5.qt5ct
     # Integración KDE / archivos / protocolos / thumbnails
+    
 
+    kdePackages.kde-cli-tools
     kdePackages.dolphin
     kdePackages.kio
     kdePackages.kio-extras
@@ -92,6 +97,19 @@ in {
   ];
   # explorador de gnome 
   #services.gvfs.enable = true;
+  #
+  xdg.mime = {
+    enable = true;
+    defaultApplications = {
+      "inode/directory" = [ "org.kde.dolphin.desktop" ];
+    };
+  };
+
+  programs.starship = {
+    enable = true;
+    enableBashIntegration = true;
+    enableFishIntegration = true;
+  };
 
   xdg.portal = {
     enable = true;

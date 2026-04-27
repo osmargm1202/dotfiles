@@ -412,7 +412,9 @@
         ],
         "onlySameOutput": true,
         "pinnedApps": [
-            "app.zen_browser.zen"
+            "app.zen_browser.zen",
+            "org.kde.dolphin",
+            "Chatgpt"
         ],
         "pinnedStatic": true,
         "position": "bottom",
