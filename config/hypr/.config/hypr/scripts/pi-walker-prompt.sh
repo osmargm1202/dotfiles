@@ -34,4 +34,4 @@ if ! command -v distrobox-enter >/dev/null 2>&1; then
 	exit 127
 fi
 
-kitty --class kitty -e distrobox-enter arch -- pi "$input"
+kitty --class kitty --hold -e distrobox-enter arch -- pi "$input"
