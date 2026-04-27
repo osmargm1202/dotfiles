@@ -18,6 +18,7 @@ in {
     defaultSession = "hyprland";
     sddm = {
       enable = true;
+      autoNumlock = true;
       theme = "sddm-astronaut-theme";
       extraPackages = with pkgs.qt6; [
         qtmultimedia
@@ -31,11 +32,6 @@ in {
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
-  };
-
-  xdg.portal = {
-    enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
   };
 
   systemd.services.flatpak-repo.script = ''
@@ -52,15 +48,57 @@ in {
     kitty
     wl-clipboard
     grim
-    kdePackages.kwallet
     gnome-software
-    gnome-software-plugin-flatpak
-    kdePackages.dolphin
     slurp
     swappy
-    xdg-desktop-portal-hyprland
     noctaliaShell
     sddmAstronautTheme
     inputs.snappy-switcher.packages.${pkgs.system}.default
+
+    # Iconos KDE
+    kdePackages.breeze-icons
+    
+    # Live Wallpaper
+    mpvpaper
+    mpv
+    ffmpeg
+    # Temas Qt
+    libsForQt5.qtstyleplugin-kvantum
+    kdePackages.qtstyleplugin-kvantum
+    qt6ct
+    libsForQt5.qt5ct
+    # Integración KDE / archivos / protocolos / thumbnails
+
+    kdePackages.dolphin
+    kdePackages.kio
+    kdePackages.kio-extras
+    kdePackages.qtwayland
+    kdePackages.kwallet
+    kdePackages.konsole
+    # Utilidades XDG
+    xdg-utils
+    shared-mime-info
+
+    # Opcionales útiles
+    kdePackages.ark          # compresor zip/rar/etc
+    kdePackages.okular       # PDF
+    kdePackages.gwenview     # imágenes
+    kdePackages.kate         # editor
+
+    # explorador de gnome
+    #nautilus
+    #xdg-utils
+    #shared-mime-info
   ];
+  # explorador de gnome 
+  #services.gvfs.enable = true;
+
+  xdg.portal = {
+    enable = true;
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-hyprland
+      xdg-desktop-portal-gtk
+      kdePackages.xdg-desktop-portal-kde
+    ];
+  };
 }
