@@ -16,6 +16,7 @@ Agente cambiador de especificaciones para **Hyprland**.
 
 - Configuración en bloques: un archivo por bloque lógico.
 - `hyprland.conf` funciona como orquestador con `source = ...`.
+- `source` usa rutas estables (absolutas/relativas), sin `~` para evitar errores de globbing cuando hay symlinks/stow.
 - Leer primero el bloque relevante y editarlo directo.
 - Menos scroll, cambios más rápidos y reversibles.
 
