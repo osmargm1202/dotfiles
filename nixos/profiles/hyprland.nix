@@ -65,7 +65,7 @@ in {
     # Temas Qt
     libsForQt5.qtstyleplugin-kvantum
     kdePackages.qtstyleplugin-kvantum
-    qt6ct
+    qt6Packages.qt6ct
     libsForQt5.qt5ct
     # Integración KDE / archivos / protocolos / thumbnails
 

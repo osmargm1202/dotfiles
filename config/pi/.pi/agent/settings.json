@@ -6,22 +6,19 @@
   "packages": [
     "npm:pi-ask-user",
     "npm:pi-mcp-adapter",
-    "npm:pi-annotate",
-    "npm:pi-markdown-preview",
-    "npm:pi-image-preview",
     "git:github.com/obra/superpowers",
     "npm:pi-lens"
   ],
   "theme": "midnight-ocean",
-  "hideThinkingBlock": false,
+  "hideThinkingBlock": true,
   "extensions": [
     "~/.pi/agent/extensions/pi-mcp-adapter/index.ts",
     "~/.pi/agent/extensions/model-primary.ts",
     "~/.pi/agent/extensions/agent-selector.ts",
     "~/.pi/agent/extensions/subagents.ts",
-    "~/.pi/agent/extensions/agent-status.ts",
     "~/.pi/agent/extensions/minimal.ts",
-    "~/.pi/agent/extensions/rtk.ts"
+    "~/.pi/agent/extensions/rtk.ts",
+    "-extensions/agent-status.ts"
   ],
   "treeFilterMode": "default",
   "transport": "sse",
