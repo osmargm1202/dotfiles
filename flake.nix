@@ -9,6 +9,11 @@
     };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
     noctalia.url = "github:noctalia-dev/noctalia-shell";
+    elephant.url = "github:abenz1267/elephant";
+    walker = {
+      url = "github:abenz1267/walker";
+      inputs.elephant.follows = "elephant";
+    };
     sddm-astronaut-theme = {
       url = "github:Keyitdev/sddm-astronaut-theme";
       flake = false;

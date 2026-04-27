@@ -7,9 +7,13 @@ let
     src = inputs.sddm-astronaut-theme;
   };
 in {
+  imports = [
+    inputs.walker.nixosModules.default
+  ];
+
   services.xserver.enable = true;
   # KWallet para gestión de credenciales
-  #security.pam.services.sddm.enableKwallet = true;
+  security.pam.services.sddm.enableKwallet = true;
   #programs.gnupg.agent = {
   #  enable = true;
   #  pinentryPackage = pkgs.pinentry-curses;  # o pinentry-gtk2, pinentry-qt para GUI
@@ -34,6 +38,8 @@ in {
     xwayland.enable = true;
   };
 
+  programs.walker.enable = true;
+
   systemd.services.flatpak-repo.script = ''
     flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     flatpak remote-add --if-not-exists flathub https://nightly.gnome.org/gnome-nightly.flatpakrepo
@@ -54,8 +60,6 @@ in {
     noctaliaShell
     sddmAstronautTheme
     inputs.snappy-switcher.packages.${pkgs.system}.default
-    walker
-    elephant
 
 
     # Iconos KDE
@@ -103,12 +107,6 @@ in {
     defaultApplications = {
       "inode/directory" = [ "org.kde.dolphin.desktop" ];
     };
-  };
-
-  programs.starship = {
-    enable = true;
-    enableBashIntegration = true;
-    enableFishIntegration = true;
   };
 
   xdg.portal = {
