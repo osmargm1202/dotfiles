@@ -26,16 +26,24 @@ in {
 
   programs.niri.enable = true;
 
+  programs.nautilus-open-any-terminal = {
+    enable = true;
+    terminal = "kitty";
+  };
+
   services.gnome.gnome-keyring.enable = true;
   security.pam.services.sddm.enableGnomeKeyring = true;
   security.pam.services.login.enableGnomeKeyring = true;
 
-  # Portal GNOME para file picker, capturas y screencast
+  # Portal GNOME para capturas/screencast; GTK para selector de archivos en Niri.
   xdg.portal = {
     enable = true;
     config = {
       common = {
-        default = [ "gnome" ];
+        default = [ "gnome" "gtk" ];
+      };
+      niri = {
+        "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
       };
     };
     extraPortals = with pkgs; [
@@ -44,10 +52,29 @@ in {
     ];
   };
 
+  xdg.terminal-exec = {
+    enable = true;
+    settings = {
+      niri = [ "kitty.desktop" ];
+      default = [ "kitty.desktop" ];
+    };
+  };
+
   xdg.mime = {
     enable = true;
     defaultApplications = {
       "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
+      "text/plain" = [ "org.gnome.TextEditor.desktop" ];
+      "text/markdown" = [ "org.gnome.TextEditor.desktop" ];
+      "application/pdf" = [ "org.gnome.Evince.desktop" ];
+      "image/png" = [ "org.gnome.Loupe.desktop" ];
+      "image/jpeg" = [ "org.gnome.Loupe.desktop" ];
+      "image/webp" = [ "org.gnome.Loupe.desktop" ];
+      "image/gif" = [ "org.gnome.Loupe.desktop" ];
+      "application/zip" = [ "org.gnome.FileRoller.desktop" ];
+      "application/x-tar" = [ "org.gnome.FileRoller.desktop" ];
+      "application/x-7z-compressed" = [ "org.gnome.FileRoller.desktop" ];
+      "application/x-rar" = [ "org.gnome.FileRoller.desktop" ];
     };
   };
 
@@ -62,7 +89,6 @@ in {
     kitty
     alacritty
     fuzzel
-    waybar
     mako
     swaylock
     swayidle
@@ -74,6 +100,15 @@ in {
     slurp
     swappy
     nautilus
+    gnome-text-editor
+    gnome-calculator
+    evince
+    loupe
+    file-roller
+    gnome-disk-utility
+    sushi
+    baobab
+    adwaita-icon-theme
     shared-mime-info
 
     # Keyring + portal
