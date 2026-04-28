@@ -121,6 +121,11 @@ in {
     sushi
     baobab
     adwaita-icon-theme
+    papirus-icon-theme
+    hicolor-icon-theme
+    gnome-themes-extra
+    gnome-tweaks
+    yaru-remix-theme
     shared-mime-info
 
     # Keyring + portal
