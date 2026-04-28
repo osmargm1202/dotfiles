@@ -1,12 +1,14 @@
 { pkgs, inputs, ... }:
 
 let
-  system = pkgs.stdenv.hostPlatform.system;
-  caelestiaShell = inputs.caelestia-shell.packages.${system}.with-cli;
   sddmAstronautTheme = pkgs.callPackage ../packages/sddm-astronaut-theme.nix {
     src = inputs.sddm-astronaut-theme;
   };
 in {
+  imports = [
+    inputs.dms.nixosModules.dank-material-shell
+  ];
+
   services.xserver.enable = true;
 
   services.displayManager = {
@@ -25,6 +27,17 @@ in {
   };
 
   programs.niri.enable = true;
+
+  programs.dank-material-shell = {
+    enable = true;
+    systemd = {
+      enable = true;
+      restartIfChanged = true;
+    };
+    enableClipboardPaste = true;
+    enableDynamicTheming = true;
+    enableSystemMonitoring = false;
+  };
 
   programs.nautilus-open-any-terminal = {
     enable = true;
@@ -84,7 +97,6 @@ in {
     xwayland-satellite
 
     # Shell
-    caelestiaShell
     sddmAstronautTheme
     kitty
     alacritty

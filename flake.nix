@@ -12,6 +12,10 @@
       url = "github:caelestia-dots/shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    dms = {
+      url = "github:AvengeMedia/DankMaterialShell/stable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     sddm-astronaut-theme = {
       url = "github:Keyitdev/sddm-astronaut-theme";
       flake = false;
