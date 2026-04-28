@@ -48,8 +48,8 @@
     },
     "extensions/agent-status.ts": {
       "latest": {
-        "commit": "41d03ee",
-        "timestamp": "2026-04-27T11:50:07.522Z",
+        "commit": "81a4c8a",
+        "timestamp": "2026-04-27T19:54:03.648Z",
         "mi": 3.8,
         "cognitive": 551,
         "nesting": 5,
@@ -117,14 +117,24 @@
           "lines": 823,
           "maxCyclomatic": 114,
           "entropy": 7.29
+        },
+        {
+          "commit": "81a4c8a",
+          "timestamp": "2026-04-27T19:54:03.648Z",
+          "mi": 3.8,
+          "cognitive": 551,
+          "nesting": 5,
+          "lines": 823,
+          "maxCyclomatic": 114,
+          "entropy": 7.29
         }
       ],
       "trend": "stable"
     },
     "extensions/subagents.ts": {
       "latest": {
-        "commit": "41d03ee",
-        "timestamp": "2026-04-27T11:50:07.754Z",
+        "commit": "81a4c8a",
+        "timestamp": "2026-04-27T19:54:03.591Z",
         "mi": 0,
         "cognitive": 1295,
         "nesting": 9,
@@ -182,14 +192,34 @@
           "lines": 3080,
           "maxCyclomatic": 616,
           "entropy": 8.19
+        },
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:46:02.568Z",
+          "mi": 0,
+          "cognitive": 1295,
+          "nesting": 9,
+          "lines": 3080,
+          "maxCyclomatic": 616,
+          "entropy": 8.19
+        },
+        {
+          "commit": "81a4c8a",
+          "timestamp": "2026-04-27T19:54:03.591Z",
+          "mi": 0,
+          "cognitive": 1295,
+          "nesting": 9,
+          "lines": 3080,
+          "maxCyclomatic": 616,
+          "entropy": 8.19
         }
       ],
-      "trend": "regressing"
+      "trend": "stable"
     },
     "extensions/minimal.ts": {
       "latest": {
-        "commit": "41d03ee",
-        "timestamp": "2026-04-27T11:50:07.408Z",
+        "commit": "81a4c8a",
+        "timestamp": "2026-04-27T19:54:03.667Z",
         "mi": 23.6,
         "cognitive": 83,
         "nesting": 6,
@@ -231,6 +261,16 @@
         {
           "commit": "41d03ee",
           "timestamp": "2026-04-27T11:50:07.408Z",
+          "mi": 23.6,
+          "cognitive": 83,
+          "nesting": 6,
+          "lines": 167,
+          "maxCyclomatic": 75,
+          "entropy": 6.11
+        },
+        {
+          "commit": "81a4c8a",
+          "timestamp": "2026-04-27T19:54:03.667Z",
           "mi": 23.6,
           "cognitive": 83,
           "nesting": 6,
@@ -793,8 +833,8 @@
     },
     "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/node_modules/@mariozechner/pi-tui/dist/components/text.js": {
       "latest": {
-        "commit": "9ab56ed",
-        "timestamp": "2026-04-26T07:39:33.750Z",
+        "commit": "5efe61a",
+        "timestamp": "2026-04-27T19:46:45.667Z",
         "mi": 46.5,
         "cognitive": 26,
         "nesting": 4,
@@ -812,14 +852,24 @@
           "lines": 76,
           "maxCyclomatic": 30,
           "entropy": 5.53
+        },
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:46:45.667Z",
+          "mi": 46.5,
+          "cognitive": 26,
+          "nesting": 4,
+          "lines": 76,
+          "maxCyclomatic": 30,
+          "entropy": 5.53
         }
       ],
       "trend": "stable"
     },
     "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/node_modules/@mariozechner/pi-tui/dist/components/select-list.js": {
       "latest": {
-        "commit": "9ab56ed",
-        "timestamp": "2026-04-26T07:39:33.768Z",
+        "commit": "5efe61a",
+        "timestamp": "2026-04-27T19:47:31.977Z",
         "mi": 31.9,
         "cognitive": 87,
         "nesting": 7,
@@ -831,6 +881,16 @@
         {
           "commit": "9ab56ed",
           "timestamp": "2026-04-26T07:39:33.768Z",
+          "mi": 31.9,
+          "cognitive": 87,
+          "nesting": 7,
+          "lines": 147,
+          "maxCyclomatic": 23,
+          "entropy": 6.19
+        },
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:47:31.977Z",
           "mi": 31.9,
           "cognitive": 87,
           "nesting": 7,
@@ -868,14 +928,14 @@
     },
     "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/dist/modes/interactive/interactive-mode.js": {
       "latest": {
-        "commit": "41d03ee",
-        "timestamp": "2026-04-27T11:50:39.547Z",
+        "commit": "5efe61a",
+        "timestamp": "2026-04-27T19:47:08.471Z",
         "mi": 0,
-        "cognitive": 2507,
+        "cognitive": 2518,
         "nesting": 10,
-        "lines": 4298,
-        "maxCyclomatic": 119,
-        "entropy": 8.7
+        "lines": 4333,
+        "maxCyclomatic": 118,
+        "entropy": 8.72
       },
       "history": [
         {
@@ -907,9 +967,19 @@
           "lines": 4298,
           "maxCyclomatic": 119,
           "entropy": 8.7
+        },
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:47:08.471Z",
+          "mi": 0,
+          "cognitive": 2518,
+          "nesting": 10,
+          "lines": 4333,
+          "maxCyclomatic": 118,
+          "entropy": 8.72
         }
       ],
-      "trend": "stable"
+      "trend": "regressing"
     },
     "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/dist/modes/interactive/components/dynamic-border.js": {
       "latest": {
@@ -1098,8 +1168,8 @@
     },
     "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/dist/modes/interactive/components/tool-execution.js": {
       "latest": {
-        "commit": "802ea28",
-        "timestamp": "2026-04-26T09:48:02.307Z",
+        "commit": "81a4c8a",
+        "timestamp": "2026-04-27T19:54:21.855Z",
         "mi": 20.9,
         "cognitive": 153,
         "nesting": 8,
@@ -1117,14 +1187,34 @@
           "lines": 291,
           "maxCyclomatic": 53,
           "entropy": 6.89
+        },
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:46:15.259Z",
+          "mi": 20.9,
+          "cognitive": 153,
+          "nesting": 8,
+          "lines": 291,
+          "maxCyclomatic": 53,
+          "entropy": 6.89
+        },
+        {
+          "commit": "81a4c8a",
+          "timestamp": "2026-04-27T19:54:21.855Z",
+          "mi": 20.9,
+          "cognitive": 153,
+          "nesting": 8,
+          "lines": 291,
+          "maxCyclomatic": 53,
+          "entropy": 6.89
         }
       ],
       "trend": "stable"
     },
     "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/dist/core/tools/render-utils.js": {
       "latest": {
-        "commit": "802ea28",
-        "timestamp": "2026-04-26T09:48:03.466Z",
+        "commit": "81a4c8a",
+        "timestamp": "2026-04-27T19:56:48.501Z",
         "mi": 43.4,
         "cognitive": 23,
         "nesting": 3,
@@ -1136,6 +1226,16 @@
         {
           "commit": "802ea28",
           "timestamp": "2026-04-26T09:48:03.466Z",
+          "mi": 43.4,
+          "cognitive": 23,
+          "nesting": 3,
+          "lines": 48,
+          "maxCyclomatic": 18,
+          "entropy": 5.33
+        },
+        {
+          "commit": "81a4c8a",
+          "timestamp": "2026-04-27T19:56:48.501Z",
           "mi": 43.4,
           "cognitive": 23,
           "nesting": 3,
@@ -1493,8 +1593,8 @@
     },
     "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/dist/core/tools/bash.js": {
       "latest": {
-        "commit": "a811b73",
-        "timestamp": "2026-04-26T11:34:42.210Z",
+        "commit": "81a4c8a",
+        "timestamp": "2026-04-27T19:56:52.537Z",
         "mi": 19.7,
         "cognitive": 248,
         "nesting": 7,
@@ -1506,6 +1606,26 @@
         {
           "commit": "a811b73",
           "timestamp": "2026-04-26T11:34:42.210Z",
+          "mi": 19.7,
+          "cognitive": 248,
+          "nesting": 7,
+          "lines": 338,
+          "maxCyclomatic": 78,
+          "entropy": 6.88
+        },
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:46:34.267Z",
+          "mi": 19.7,
+          "cognitive": 248,
+          "nesting": 7,
+          "lines": 338,
+          "maxCyclomatic": 78,
+          "entropy": 6.88
+        },
+        {
+          "commit": "81a4c8a",
+          "timestamp": "2026-04-27T19:56:52.537Z",
           "mi": 19.7,
           "cognitive": 248,
           "nesting": 7,
@@ -2060,7 +2180,297 @@
         }
       ],
       "trend": "stable"
+    },
+    "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/dist/modes/interactive/theme/theme.js": {
+      "latest": {
+        "commit": "81a4c8a",
+        "timestamp": "2026-04-27T19:54:28.046Z",
+        "mi": 10.8,
+        "cognitive": 331,
+        "nesting": 6,
+        "lines": 899,
+        "maxCyclomatic": 24,
+        "entropy": 7.02
+      },
+      "history": [
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:46:21.711Z",
+          "mi": 10.8,
+          "cognitive": 331,
+          "nesting": 6,
+          "lines": 899,
+          "maxCyclomatic": 24,
+          "entropy": 7.02
+        },
+        {
+          "commit": "81a4c8a",
+          "timestamp": "2026-04-27T19:54:28.046Z",
+          "mi": 10.8,
+          "cognitive": 331,
+          "nesting": 6,
+          "lines": 899,
+          "maxCyclomatic": 24,
+          "entropy": 7.02
+        }
+      ],
+      "trend": "stable"
+    },
+    "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/dist/core/tools/read.js": {
+      "latest": {
+        "commit": "81a4c8a",
+        "timestamp": "2026-04-27T19:56:52.489Z",
+        "mi": 23.2,
+        "cognitive": 187,
+        "nesting": 9,
+        "lines": 219,
+        "maxCyclomatic": 63,
+        "entropy": 6.7
+      },
+      "history": [
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:46:34.219Z",
+          "mi": 23.2,
+          "cognitive": 187,
+          "nesting": 9,
+          "lines": 219,
+          "maxCyclomatic": 63,
+          "entropy": 6.7
+        },
+        {
+          "commit": "81a4c8a",
+          "timestamp": "2026-04-27T19:56:52.489Z",
+          "mi": 23.2,
+          "cognitive": 187,
+          "nesting": 9,
+          "lines": 219,
+          "maxCyclomatic": 63,
+          "entropy": 6.7
+        }
+      ],
+      "trend": "stable"
+    },
+    "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/dist/core/tools/write.js": {
+      "latest": {
+        "commit": "81a4c8a",
+        "timestamp": "2026-04-27T19:56:52.507Z",
+        "mi": 23.6,
+        "cognitive": 109,
+        "nesting": 8,
+        "lines": 210,
+        "maxCyclomatic": 20,
+        "entropy": 6.61
+      },
+      "history": [
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:46:34.241Z",
+          "mi": 23.6,
+          "cognitive": 109,
+          "nesting": 8,
+          "lines": 210,
+          "maxCyclomatic": 20,
+          "entropy": 6.61
+        },
+        {
+          "commit": "81a4c8a",
+          "timestamp": "2026-04-27T19:56:52.507Z",
+          "mi": 23.6,
+          "cognitive": 109,
+          "nesting": 8,
+          "lines": 210,
+          "maxCyclomatic": 20,
+          "entropy": 6.61
+        }
+      ],
+      "trend": "stable"
+    },
+    "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/dist/core/tools/index.js": {
+      "latest": {
+        "commit": "5efe61a",
+        "timestamp": "2026-04-27T19:46:34.279Z",
+        "mi": 32.4,
+        "cognitive": 46,
+        "nesting": 2,
+        "lines": 111,
+        "maxCyclomatic": 7,
+        "entropy": 4.91
+      },
+      "history": [
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:46:34.279Z",
+          "mi": 32.4,
+          "cognitive": 46,
+          "nesting": 2,
+          "lines": 111,
+          "maxCyclomatic": 7,
+          "entropy": 4.91
+        }
+      ],
+      "trend": "stable"
+    },
+    "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/node_modules/@mariozechner/pi-tui/dist/components/box.js": {
+      "latest": {
+        "commit": "5efe61a",
+        "timestamp": "2026-04-27T19:46:45.651Z",
+        "mi": 42.4,
+        "cognitive": 41,
+        "nesting": 4,
+        "lines": 93,
+        "maxCyclomatic": 17,
+        "entropy": 5.66
+      },
+      "history": [
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:46:45.651Z",
+          "mi": 42.4,
+          "cognitive": 41,
+          "nesting": 4,
+          "lines": 93,
+          "maxCyclomatic": 17,
+          "entropy": 5.66
+        }
+      ],
+      "trend": "stable"
+    },
+    "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/node_modules/@mariozechner/pi-tui/dist/utils.js": {
+      "latest": {
+        "commit": "5efe61a",
+        "timestamp": "2026-04-27T19:46:45.720Z",
+        "mi": 12.1,
+        "cognitive": 701,
+        "nesting": 7,
+        "lines": 901,
+        "maxCyclomatic": 109,
+        "entropy": 6.6
+      },
+      "history": [
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:46:45.720Z",
+          "mi": 12.1,
+          "cognitive": 701,
+          "nesting": 7,
+          "lines": 901,
+          "maxCyclomatic": 109,
+          "entropy": 6.6
+        }
+      ],
+      "trend": "stable"
+    },
+    "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/dist/core/tools/edit.js": {
+      "latest": {
+        "commit": "81a4c8a",
+        "timestamp": "2026-04-27T19:54:54.099Z",
+        "mi": 19.9,
+        "cognitive": 218,
+        "nesting": 9,
+        "lines": 309,
+        "maxCyclomatic": 47,
+        "entropy": 6.89
+      },
+      "history": [
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:46:52.731Z",
+          "mi": 19.9,
+          "cognitive": 218,
+          "nesting": 9,
+          "lines": 309,
+          "maxCyclomatic": 47,
+          "entropy": 6.89
+        },
+        {
+          "commit": "81a4c8a",
+          "timestamp": "2026-04-27T19:54:54.099Z",
+          "mi": 19.9,
+          "cognitive": 218,
+          "nesting": 9,
+          "lines": 309,
+          "maxCyclomatic": 47,
+          "entropy": 6.89
+        }
+      ],
+      "trend": "stable"
+    },
+    "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/node_modules/@mariozechner/pi-tui/dist/components/settings-list.js": {
+      "latest": {
+        "commit": "5efe61a",
+        "timestamp": "2026-04-27T19:47:31.995Z",
+        "mi": 31,
+        "cognitive": 131,
+        "nesting": 8,
+        "lines": 167,
+        "maxCyclomatic": 37,
+        "entropy": 6.25
+      },
+      "history": [
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:47:31.995Z",
+          "mi": 31,
+          "cognitive": 131,
+          "nesting": 8,
+          "lines": 167,
+          "maxCyclomatic": 37,
+          "entropy": 6.25
+        }
+      ],
+      "trend": "stable"
+    },
+    "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/dist/modes/interactive/components/custom-message.js": {
+      "latest": {
+        "commit": "5efe61a",
+        "timestamp": "2026-04-27T19:47:39.748Z",
+        "mi": 48.5,
+        "cognitive": 22,
+        "nesting": 5,
+        "lines": 70,
+        "maxCyclomatic": 10,
+        "entropy": 5.68
+      },
+      "history": [
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:47:39.748Z",
+          "mi": 48.5,
+          "cognitive": 22,
+          "nesting": 5,
+          "lines": 70,
+          "maxCyclomatic": 10,
+          "entropy": 5.68
+        }
+      ],
+      "trend": "stable"
+    },
+    "../../../../../../.local/share/fnm/node-versions/v22.22.1/installation/lib/node_modules/@mariozechner/pi-coding-agent/node_modules/@mariozechner/pi-tui/dist/components/markdown.d.ts": {
+      "latest": {
+        "commit": "5efe61a",
+        "timestamp": "2026-04-27T19:47:48.633Z",
+        "mi": 48.5,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 87,
+        "maxCyclomatic": 1,
+        "entropy": 4.65
+      },
+      "history": [
+        {
+          "commit": "5efe61a",
+          "timestamp": "2026-04-27T19:47:48.633Z",
+          "mi": 48.5,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 87,
+          "maxCyclomatic": 1,
+          "entropy": 4.65
+        }
+      ],
+      "trend": "stable"
     }
   },
-  "capturedAt": "2026-04-27T12:02:51.009Z"
+  "capturedAt": "2026-04-27T19:56:57.537Z"
 }

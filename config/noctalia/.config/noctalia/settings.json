@@ -273,7 +273,7 @@
         "manualSunset": "18:30",
         "monitorForColors": "",
         "predefinedScheme": "ADW",
-        "schedulingMode": "off",
+        "schedulingMode": "location",
         "syncGsettings": true,
         "useWallpaperColors": false
     },
@@ -353,18 +353,18 @@
                         "id": "Clock",
                         "roundedCorners": true,
                         "scale": 1.6591561025873347,
-                        "showBackground": false,
+                        "showBackground": true,
                         "useCustomFont": false,
                         "x": 2214,
                         "y": 101
                     },
                     {
-                        "hideMode": "visible",
+                        "hideMode": "hidden",
                         "id": "MediaPlayer",
                         "roundedCorners": true,
                         "scale": 1.1511440744786245,
                         "showAlbumArt": true,
-                        "showBackground": false,
+                        "showBackground": true,
                         "showButtons": true,
                         "showVisualizer": true,
                         "visualizerType": "linear",
@@ -414,10 +414,12 @@
         "pinnedApps": [
             "app.zen_browser.zen",
             "org.kde.dolphin",
-            "Chatgpt"
+            "Chatgpt",
+            "chromium-browser",
+            "windows-rdp"
         ],
         "pinnedStatic": true,
-        "position": "bottom",
+        "position": "right",
         "showDockIndicator": false,
         "showLauncherIcon": true,
         "sitOnFrame": false,
@@ -715,6 +717,34 @@
             {
                 "enabled": true,
                 "id": "discord"
+            },
+            {
+                "enabled": true,
+                "id": "helix"
+            },
+            {
+                "enabled": true,
+                "id": "starship"
+            },
+            {
+                "enabled": true,
+                "id": "steam"
+            },
+            {
+                "enabled": true,
+                "id": "walker"
+            },
+            {
+                "enabled": true,
+                "id": "zed"
+            },
+            {
+                "enabled": true,
+                "id": "gtk"
+            },
+            {
+                "enabled": true,
+                "id": "kcolorscheme"
             }
         ],
         "enableUserTheming": false
@@ -725,7 +755,7 @@
         "fontDefaultScale": 1,
         "fontFixed": "monospace",
         "fontFixedScale": 1,
-        "panelBackgroundOpacity": 0,
+        "panelBackgroundOpacity": 1,
         "panelsAttachedToBar": true,
         "scrollbarAlwaysVisible": false,
         "settingsPanelMode": "centered",

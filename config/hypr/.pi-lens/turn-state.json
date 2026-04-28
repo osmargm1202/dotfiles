@@ -1,6 +1,17 @@
 {
-  "files": {},
+  "files": {
+    "Hobby/dotfiles/config/hypr/.config/hypr/10-programs.conf": {
+      "modifiedRanges": [
+        {
+          "start": 10,
+          "end": 12
+        }
+      ],
+      "importsChanged": false,
+      "lastEdit": "2026-04-27T21:16:46.995Z"
+    }
+  },
   "turnCycles": 0,
   "maxCycles": 3,
-  "lastUpdated": "2026-04-27T18:36:24.333Z"
+  "lastUpdated": "2026-04-27T21:16:46.995Z"
 }

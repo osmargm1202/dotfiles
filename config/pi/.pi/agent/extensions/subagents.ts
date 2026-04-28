@@ -505,13 +505,10 @@ function formatBar(percent: number): string {
 }
 
 function getToolShellBg(
-	theme: any,
-	options: { isPartial?: boolean; isError?: boolean },
+	_theme: any,
+	_options: { isPartial?: boolean; isError?: boolean },
 ) {
-	if (options.isPartial)
-		return (text: string) => theme.bg("toolPendingBg", text);
-	if (options.isError) return (text: string) => theme.bg("toolErrorBg", text);
-	return (text: string) => theme.bg("toolSuccessBg", text);
+	return (text: string) => text;
 }
 
 function createToolShell(
