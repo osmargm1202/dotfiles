@@ -89,6 +89,7 @@ if type -q nvim
     alias fishconfig='nvim ~/.config/fish/config.fish'
     alias kittyconfig='nvim ~/.config/kitty/kitty.conf'
     alias ffconfig='nvim ~/.config/fastfetch/config.jsonc'
+    alias niriconfig='distrobox-enter arch -- nvim ~/.config/niri/'
 end
 
 # history search (ctrl+r mejorado con fzf si lo instalas)
@@ -231,6 +232,7 @@ if not set -q DISTROBOX_ENTER_PATH
         alias ll='distrobox-enter arch -- eza -la --group-directories-first --icons'
         alias lt='distrobox-enter arch -- eza --tree --group-directories-first --icons'
         alias fishconfig='distrobox-enter arch -- nvim ~/.config/fish/config.fish'
+        alias niriconfig='distrobox-enter arch -- nvim ~/.config/niri/'
         alias hyprconfig='distrobox-enter arch -- nvim ~/.config/hypr/hyprland.conf'
         alias kittyconfig='distrobox-enter arch -- nvim ~/.config/kitty/kitty.conf'
         alias ffconfig'=distrobox-enter arch -- nvim ~/.config/fastfetch/config.jsonc'

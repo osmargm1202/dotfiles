@@ -478,8 +478,8 @@
     },
     "extensions/model-primary.ts": {
       "latest": {
-        "commit": "b209455",
-        "timestamp": "2026-04-28T05:39:03.328Z",
+        "commit": "5f516fb",
+        "timestamp": "2026-04-28T06:01:39.220Z",
         "mi": 28.2,
         "cognitive": 56,
         "nesting": 5,
@@ -521,6 +521,16 @@
         {
           "commit": "b209455",
           "timestamp": "2026-04-28T05:39:03.328Z",
+          "mi": 28.2,
+          "cognitive": 56,
+          "nesting": 5,
+          "lines": 147,
+          "maxCyclomatic": 25,
+          "entropy": 6.55
+        },
+        {
+          "commit": "5f516fb",
+          "timestamp": "2026-04-28T06:01:39.220Z",
           "mi": 28.2,
           "cognitive": 56,
           "nesting": 5,
@@ -633,14 +643,14 @@
     },
     "extensions/lib/agent-discovery.ts": {
       "latest": {
-        "commit": "b209455",
-        "timestamp": "2026-04-28T05:39:24.424Z",
+        "commit": "5f516fb",
+        "timestamp": "2026-04-28T06:01:39.199Z",
         "mi": 23.4,
         "cognitive": 129,
         "nesting": 5,
         "lines": 215,
         "maxCyclomatic": 15,
-        "entropy": 6.38
+        "entropy": 6.39
       },
       "history": [
         {
@@ -682,6 +692,16 @@
           "lines": 215,
           "maxCyclomatic": 15,
           "entropy": 6.38
+        },
+        {
+          "commit": "5f516fb",
+          "timestamp": "2026-04-28T06:01:39.199Z",
+          "mi": 23.4,
+          "cognitive": 129,
+          "nesting": 5,
+          "lines": 215,
+          "maxCyclomatic": 15,
+          "entropy": 6.39
         }
       ],
       "trend": "stable"
@@ -1323,8 +1343,8 @@
     },
     "tests/subagents-output.test.mjs": {
       "latest": {
-        "commit": "b209455",
-        "timestamp": "2026-04-28T05:47:30.074Z",
+        "commit": "5f516fb",
+        "timestamp": "2026-04-28T09:17:15.643Z",
         "mi": 49.4,
         "cognitive": 0,
         "nesting": 1,
@@ -1356,6 +1376,16 @@
         {
           "commit": "b209455",
           "timestamp": "2026-04-28T05:47:30.074Z",
+          "mi": 49.4,
+          "cognitive": 0,
+          "nesting": 1,
+          "lines": 38,
+          "maxCyclomatic": 1,
+          "entropy": 4.19
+        },
+        {
+          "commit": "5f516fb",
+          "timestamp": "2026-04-28T09:17:15.643Z",
           "mi": 49.4,
           "cognitive": 0,
           "nesting": 1,
@@ -2532,5 +2562,5 @@
       "trend": "stable"
     }
   },
-  "capturedAt": "2026-04-28T05:47:35.077Z"
+  "capturedAt": "2026-04-28T09:17:20.643Z"
 }

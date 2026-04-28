@@ -6,8 +6,7 @@
   "packages": [
     "npm:pi-ask-user",
     "npm:pi-mcp-adapter",
-    "git:github.com/obra/superpowers",
-    "npm:pi-lens"
+    "git:github.com/obra/superpowers"
   ],
   "theme": "midnight-ocean",
   "hideThinkingBlock": true,
