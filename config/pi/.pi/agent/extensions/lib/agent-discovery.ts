@@ -6,7 +6,7 @@ export type AgentSource = "user" | "project";
 export type AgentScope = "user" | "project" | "both";
 
 export const SYSTEM_AGENT = "pi";
-export const DEFAULT_PRIMARY_AGENT = "tdd-orgm";
+export const DEFAULT_PRIMARY_AGENT = SYSTEM_AGENT;
 export const PRIMARY_STATE_ENTRY = "pdd-primary-agent";
 export const PRIMARY_STATE_EVENT = "pdd:primary-agent-changed";
 
