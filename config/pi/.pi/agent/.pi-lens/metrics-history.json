@@ -48,8 +48,8 @@
     },
     "extensions/agent-status.ts": {
       "latest": {
-        "commit": "81a4c8a",
-        "timestamp": "2026-04-27T19:54:03.648Z",
+        "commit": "b209455",
+        "timestamp": "2026-04-28T05:39:32.899Z",
         "mi": 3.8,
         "cognitive": 551,
         "nesting": 5,
@@ -121,6 +121,16 @@
         {
           "commit": "81a4c8a",
           "timestamp": "2026-04-27T19:54:03.648Z",
+          "mi": 3.8,
+          "cognitive": 551,
+          "nesting": 5,
+          "lines": 823,
+          "maxCyclomatic": 114,
+          "entropy": 7.29
+        },
+        {
+          "commit": "b209455",
+          "timestamp": "2026-04-28T05:39:32.899Z",
           "mi": 3.8,
           "cognitive": 551,
           "nesting": 5,
@@ -218,8 +228,8 @@
     },
     "extensions/minimal.ts": {
       "latest": {
-        "commit": "81a4c8a",
-        "timestamp": "2026-04-27T19:54:03.667Z",
+        "commit": "b209455",
+        "timestamp": "2026-04-28T05:39:24.487Z",
         "mi": 23.6,
         "cognitive": 83,
         "nesting": 6,
@@ -271,6 +281,16 @@
         {
           "commit": "81a4c8a",
           "timestamp": "2026-04-27T19:54:03.667Z",
+          "mi": 23.6,
+          "cognitive": 83,
+          "nesting": 6,
+          "lines": 167,
+          "maxCyclomatic": 75,
+          "entropy": 6.11
+        },
+        {
+          "commit": "b209455",
+          "timestamp": "2026-04-28T05:39:24.487Z",
           "mi": 23.6,
           "cognitive": 83,
           "nesting": 6,
@@ -458,8 +478,8 @@
     },
     "extensions/model-primary.ts": {
       "latest": {
-        "commit": "41d03ee",
-        "timestamp": "2026-04-27T11:53:41.266Z",
+        "commit": "b209455",
+        "timestamp": "2026-04-28T05:39:03.328Z",
         "mi": 28.2,
         "cognitive": 56,
         "nesting": 5,
@@ -497,14 +517,24 @@
           "lines": 147,
           "maxCyclomatic": 25,
           "entropy": 6.55
+        },
+        {
+          "commit": "b209455",
+          "timestamp": "2026-04-28T05:39:03.328Z",
+          "mi": 28.2,
+          "cognitive": 56,
+          "nesting": 5,
+          "lines": 147,
+          "maxCyclomatic": 25,
+          "entropy": 6.55
         }
       ],
       "trend": "stable"
     },
     "extensions/agent-selector.ts": {
       "latest": {
-        "commit": "41d03ee",
-        "timestamp": "2026-04-27T11:53:05.531Z",
+        "commit": "b209455",
+        "timestamp": "2026-04-28T05:39:03.310Z",
         "mi": 20.5,
         "cognitive": 165,
         "nesting": 6,
@@ -536,6 +566,16 @@
         {
           "commit": "41d03ee",
           "timestamp": "2026-04-27T11:53:05.531Z",
+          "mi": 20.5,
+          "cognitive": 165,
+          "nesting": 6,
+          "lines": 274,
+          "maxCyclomatic": 103,
+          "entropy": 6.61
+        },
+        {
+          "commit": "b209455",
+          "timestamp": "2026-04-28T05:39:03.310Z",
           "mi": 20.5,
           "cognitive": 165,
           "nesting": 6,
@@ -593,8 +633,8 @@
     },
     "extensions/lib/agent-discovery.ts": {
       "latest": {
-        "commit": "41d03ee",
-        "timestamp": "2026-04-27T11:56:20.645Z",
+        "commit": "b209455",
+        "timestamp": "2026-04-28T05:39:24.424Z",
         "mi": 23.4,
         "cognitive": 129,
         "nesting": 5,
@@ -626,6 +666,16 @@
         {
           "commit": "41d03ee",
           "timestamp": "2026-04-27T11:56:20.645Z",
+          "mi": 23.4,
+          "cognitive": 129,
+          "nesting": 5,
+          "lines": 215,
+          "maxCyclomatic": 15,
+          "entropy": 6.38
+        },
+        {
+          "commit": "b209455",
+          "timestamp": "2026-04-28T05:39:24.424Z",
           "mi": 23.4,
           "cognitive": 129,
           "nesting": 5,
@@ -1273,8 +1323,8 @@
     },
     "tests/subagents-output.test.mjs": {
       "latest": {
-        "commit": "a811b73",
-        "timestamp": "2026-04-26T11:36:03.497Z",
+        "commit": "b209455",
+        "timestamp": "2026-04-28T05:47:30.074Z",
         "mi": 49.4,
         "cognitive": 0,
         "nesting": 1,
@@ -1296,6 +1346,16 @@
         {
           "commit": "a811b73",
           "timestamp": "2026-04-26T11:36:03.497Z",
+          "mi": 49.4,
+          "cognitive": 0,
+          "nesting": 1,
+          "lines": 38,
+          "maxCyclomatic": 1,
+          "entropy": 4.19
+        },
+        {
+          "commit": "b209455",
+          "timestamp": "2026-04-28T05:47:30.074Z",
           "mi": 49.4,
           "cognitive": 0,
           "nesting": 1,
@@ -2472,5 +2532,5 @@
       "trend": "stable"
     }
   },
-  "capturedAt": "2026-04-27T19:56:57.537Z"
+  "capturedAt": "2026-04-28T05:47:35.077Z"
 }

@@ -2,21 +2,19 @@
 
 ## Rol
 
-Agente cambiador de especificaciones para **Hyprland**.
+Agente cambiador de especificaciones para **Hyprland, Niri, Fish, dms, tmux**.
 
 ## Alcance
 
 - Solo trabaja sobre configuración de Hyprland.
 - Cambios permitidos únicamente en:
-  - `config/hypr/.config/hypr/hyprland.conf`
-  - `config/hypr/.config/hypr/*.conf` (bloques de configuración).
+  - `config/`
+  - `config/` (bloques de configuración).
 - No tocar otros archivos del repo.
 
 ## Filosofía de trabajo rápido
 
 - Configuración en bloques: un archivo por bloque lógico.
-- `hyprland.conf` funciona como orquestador con `source = ...`.
-- `source` usa rutas estables (absolutas/relativas), sin `~` para evitar errores de globbing cuando hay symlinks/stow.
 - Leer primero el bloque relevante y editarlo directo.
 - Menos scroll, cambios más rápidos y reversibles.
 
@@ -28,9 +26,9 @@ Agente cambiador de especificaciones para **Hyprland**.
    - https://wiki.hypr.land/
 4. Si el usuario tiene dudas de implementación, discutir primero y proponer una opción concreta.
 5. Solo aplicar cambios luego de confirmación explícita del usuario.
-6. Hacer cambios en bloque (`*.conf`) y ajustar includes en `hyprland.conf`.
+6. Hacer cambios en bloque  y ajustar.
 7. Validación obligatoria antes de editar:
-   - Si hay cambios locales manuales sin commit en `config/hypr/.config/hypr`, hacer snapshot:
+   - Si hay cambios locales manuales sin commit en `config/*`, hacer snapshot:
      - `git add <archivos tocados>`
      - `git commit -m "Respaldo previo manual: ..."`
    - Luego continuar con el cambio solicitado.
@@ -40,6 +38,10 @@ Agente cambiador de especificaciones para **Hyprland**.
 
 ## Reglas
 
-- No proponer o aplicar cambios fuera de la configuración de Hyprland.
+- No proponer o aplicar cambios fuera de la configuración.
 - Si un cambio es imposible o arriesgado, explicar por qué y alternativas.
 - Registrar cada decisión en commits para revertir fácil.
+- Usa engram para memorria.
+- Usa ask user para preguntar.
+- Usa exa para buscar en internet.
+- trata de ser rapido sin hacer tantas cosas para aplicar cambios. Solo lo permitido.
