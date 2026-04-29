@@ -2,7 +2,7 @@
 <labwc_config>
   <core>
     <decoration>server</decoration>
-    <gap>10</gap>
+    <gap>0</gap>
     <adaptiveSync>fullscreen</adaptiveSync>
     <xwaylandPersistence>yes</xwaylandPersistence>
     <primarySelection>yes</primarySelection>
@@ -33,8 +33,10 @@
     <notifyClient>always</notifyClient>
   </snapping>
 
+  <margin top="8" bottom="8" left="8" right="8" />
+
   <desktops number="10">
-    <popupTime>1000</popupTime>
+    <popupTime>0</popupTime>
     <prefix>Workspace</prefix>
     <names>
       <name>1</name>
@@ -51,19 +53,20 @@
   </desktops>
 
   <theme>
+    <name>OrgmMinimalDark</name>
     <icon>Adwaita</icon>
     <fallbackAppIcon>labwc</fallbackAppIcon>
     <cornerRadius>8</cornerRadius>
     <keepBorder>yes</keepBorder>
     <dropShadows>yes</dropShadows>
-    <font place="ActiveWindow" name="JetBrainsMono Nerd Font" size="10" weight="medium" />
-    <font place="InactiveWindow" name="JetBrainsMono Nerd Font" size="10" />
-    <font place="MenuItem" name="JetBrainsMono Nerd Font" size="10" />
-    <font place="OnScreenDisplay" name="JetBrainsMono Nerd Font" size="10" />
+    <font place="ActiveWindow" name="JetBrainsMono Nerd Font" size="11" weight="medium" />
+    <font place="InactiveWindow" name="JetBrainsMono Nerd Font" size="11" />
+    <font place="MenuItem" name="JetBrainsMono Nerd Font" size="11" />
+    <font place="OnScreenDisplay" name="JetBrainsMono Nerd Font" size="12" weight="medium" />
   </theme>
 
   <windowSwitcher preview="yes" outlines="yes" order="focus">
-    <osd show="yes" style="thumbnail" output="focused" />
+    <osd show="yes" style="thumbnail" output="focused" thumbnailLabelFormat="%n - %T" />
   </windowSwitcher>
 
   <keyboard layoutScope="global">

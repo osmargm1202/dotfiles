@@ -1,52 +1,60 @@
 <?xml version="1.0"?>
 <openbox_menu xmlns="http://openbox.org/3.4/menu">
-  <menu id="root-menu" label="labwc">
-    <item label="Terminal (kitty)">
+  <menu id="root-menu" label="Orgm labwc">
+    <separator label="Apps" />
+    <item label="Terminal · kitty" icon="utilities-terminal">
       <action name="Execute"><command>kitty</command></action>
     </item>
-    <item label="Terminal Arch distrobox">
+    <item label="Arch terminal · distrobox" icon="utilities-terminal">
       <action name="Execute"><command>kitty -e distrobox-enter arch</command></action>
     </item>
-    <item label="Arch orgmai chat">
+    <item label="Chat · orgmai" icon="utilities-terminal">
       <action name="Execute"><command>kitty --class orgmai-chat -e distrobox-enter arch -- orgmai chat</command></action>
     </item>
-    <separator />
-    <item label="Files (Nautilus)">
+    <item label="Files · Nautilus" icon="org.gnome.Nautilus">
       <action name="Execute"><command>nautilus</command></action>
     </item>
-    <item label="Text Editor">
-      <action name="Execute"><command>gnome-text-editor</command></action>
-    </item>
-    <item label="Calculator">
-      <action name="Execute"><command>gnome-calculator</command></action>
-    </item>
-    <item label="Papers">
-      <action name="Execute"><command>papers</command></action>
-    </item>
-    <item label="Zen Browser">
+    <item label="Browser · Zen" icon="web-browser">
       <action name="Execute"><command>flatpak run app.zen_browser.zen</command></action>
     </item>
-    <separator />
-    <item label="DMS Spotlight">
+    <item label="Text Editor" icon="org.gnome.TextEditor">
+      <action name="Execute"><command>gnome-text-editor</command></action>
+    </item>
+    <item label="Calculator" icon="org.gnome.Calculator">
+      <action name="Execute"><command>gnome-calculator</command></action>
+    </item>
+    <item label="Papers" icon="org.gnome.Papers">
+      <action name="Execute"><command>papers</command></action>
+    </item>
+
+    <separator label="DankMaterialShell" />
+    <item label="Spotlight" icon="system-search">
       <action name="Execute"><command>dms ipc call spotlight toggle</command></action>
     </item>
-    <item label="DMS Control Center">
+    <item label="Control Center" icon="preferences-system">
       <action name="Execute"><command>dms ipc call control-center toggle</command></action>
     </item>
-    <item label="DMS Notifications">
+    <item label="Notifications" icon="preferences-system-notifications">
       <action name="Execute"><command>dms ipc call notifications toggle</command></action>
     </item>
-    <item label="DMS Settings">
+    <item label="Settings" icon="emblem-system">
       <action name="Execute"><command>dms ipc call settings focusOrToggle</command></action>
     </item>
-    <item label="DMS Keybinds">
+    <item label="Keybinds" icon="input-keyboard">
       <action name="Execute"><command>dms ipc call keybinds toggle labwc</command></action>
     </item>
-    <separator />
-    <item label="Reconfigure labwc">
+    <item label="Power menu" icon="system-shutdown">
+      <action name="Execute"><command>dms ipc call powermenu toggle</command></action>
+    </item>
+
+    <separator label="Labwc" />
+    <item label="Reconfigure" icon="view-refresh">
       <action name="Reconfigure" />
     </item>
-    <item label="Exit labwc">
+    <item label="Lock" icon="system-lock-screen">
+      <action name="Execute"><command>dms ipc call lock lock</command></action>
+    </item>
+    <item label="Exit session" icon="system-log-out">
       <action name="Exit" />
     </item>
   </menu>
