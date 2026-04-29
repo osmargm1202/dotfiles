@@ -1,15 +1,16 @@
 {
-  "lastChangelogVersion": "0.70.5",
+  "lastChangelogVersion": "0.70.6",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.5",
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "xhigh",
   "packages": [
     "npm:pi-ask-user",
     "npm:pi-mcp-adapter",
-    "git:github.com/obra/superpowers"
+    "git:github.com/obra/superpowers",
+    "git:github.com/garrytan/gstack"
   ],
   "theme": "midnight-ocean",
-  "hideThinkingBlock": true,
+  "hideThinkingBlock": false,
   "extensions": [
     "~/.pi/agent/extensions/pi-mcp-adapter/index.ts",
     "~/.pi/agent/extensions/model-primary.ts",
@@ -21,5 +22,15 @@
   ],
   "treeFilterMode": "default",
   "transport": "sse",
-  "editorPaddingX": 0
+  "editorPaddingX": 0,
+  "warnings": {
+    "anthropicExtraUsage": true
+  },
+  "doubleEscapeAction": "tree",
+  "quietStartup": true,
+  "collapseChangelog": false,
+  "terminal": {
+    "showTerminalProgress": true
+  },
+  "enableInstallTelemetry": true
 }
