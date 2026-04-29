@@ -227,6 +227,9 @@ if not set -q DISTROBOX_ENTER_PATH
         function jq
             distrobox-enter arch -- jq $argv
         end
+        function pandoc
+            distrobox-enter arch -- pandoc $argv
+        end
         alias y='distrobox-enter arch -- yazi'
         alias ls='distrobox-enter arch -- eza --group-directories-first --icons'
         alias ll='distrobox-enter arch -- eza -la --group-directories-first --icons'
@@ -236,7 +239,6 @@ if not set -q DISTROBOX_ENTER_PATH
         alias hyprconfig='distrobox-enter arch -- nvim ~/.config/hypr/hyprland.conf'
         alias kittyconfig='distrobox-enter arch -- nvim ~/.config/kitty/kitty.conf'
         alias ffconfig'=distrobox-enter arch -- nvim ~/.config/fastfetch/config.jsonc'
-
     end
 end
 

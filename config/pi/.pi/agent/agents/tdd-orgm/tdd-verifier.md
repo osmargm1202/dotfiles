@@ -3,7 +3,7 @@ name: tdd-verifier
 description: Run final verification gates for tdd-orgm, including safety and regression checks
 tools: read, grep, find, ls, bash
 defaultReads: context.md
-model: openai-codex/gpt-5.4
+model: openai-codex/gpt-5.5
 thinking: medium
 output: verification.md
 defaultProgress: true
