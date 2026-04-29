@@ -93,6 +93,9 @@
     <keybind key="W-w">
       <action name="Execute"><command>flatpak run app.zen_browser.zen</command></action>
     </keybind>
+    <keybind key="W-S-w">
+      <action name="Execute"><command>labwc-wallpaper --next --dir "$HOME/Videos/wallpapers"</command></action>
+    </keybind>
     <keybind key="W-a">
       <action name="Execute"><command>kitty --class orgmai-chat -e distrobox-enter arch -- orgmai chat</command></action>
     </keybind>

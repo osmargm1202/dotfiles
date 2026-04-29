@@ -23,11 +23,3 @@ wl-paste -t text --watch cliphist store &
 wl-paste -t image/png --watch cliphist store &
 
 labwc-wallpaper --init --dir "$HOME/Videos/wallpapers" &
-
-swayidle -w \
-  timeout 300 'wlopm --off "*"' \
-  resume 'wlopm --on "*"' \
-  timeout 600 'dms ipc call lock lock' \
-  timeout 900 'systemctl suspend' \
-  before-sleep 'dms ipc call lock lock' \
-  after-resume 'wlopm --on "*"' &
