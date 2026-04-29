@@ -59,6 +59,11 @@
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/niri.nix;
       };
+      orgm-labwc = mkHost {
+        hostName = "orgm";
+        hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+        profile = ./nixos/profiles/labwc.nix;
+      };
     };
   };
 }

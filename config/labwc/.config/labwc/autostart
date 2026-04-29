@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+
+# Export labwc session env to dbus/systemd so portals, DMS and GTK apps see wlroots.
+systemctl --user import-environment \
+  WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP \
+  QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 \
+  ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL \
+  XCURSOR_THEME XCURSOR_SIZE DMS_SCREENSHOT_EDITOR 2>/dev/null || true
+
+dbus-update-activation-environment --systemd \
+  WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP \
+  QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 \
+  ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL \
+  XCURSOR_THEME XCURSOR_SIZE DMS_SCREENSHOT_EDITOR 2>/dev/null || true
+
+systemctl --user start graphical-session.target 2>/dev/null || true
+systemctl --user start dms.service 2>/dev/null || dms run --session &
+
+nextcloud &
+flatpak run com.discordapp.Discord &
+
+wl-paste -t text --watch cliphist store &
+wl-paste -t image/png --watch cliphist store &
+
+mpvpaper -o "no-audio loop hwdec=auto" "*" "/home/osmarg/Videos/wallpapers/fondo.mp4" &
+
+swayidle -w \
+  timeout 300 'wlopm --off "*"' \
+  resume 'wlopm --on "*"' \
+  timeout 600 'dms ipc call lock lock' \
+  timeout 900 'systemctl suspend' \
+  before-sleep 'dms ipc call lock lock' &
