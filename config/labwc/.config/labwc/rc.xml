@@ -33,7 +33,7 @@
     <notifyClient>always</notifyClient>
   </snapping>
 
-  <margin top="8" bottom="8" left="8" right="8" />
+  <margin top="12" bottom="12" left="12" right="12" />
 
   <desktops number="10">
     <popupTime>0</popupTime>
@@ -58,6 +58,7 @@
     <fallbackAppIcon>labwc</fallbackAppIcon>
     <cornerRadius>12</cornerRadius>
     <keepBorder>yes</keepBorder>
+    <maximizedDecoration>titlebar</maximizedDecoration>
     <dropShadows>yes</dropShadows>
     <font place="ActiveWindow" name="JetBrainsMono Nerd Font" size="11" weight="medium" />
     <font place="InactiveWindow" name="JetBrainsMono Nerd Font" size="11" />
@@ -103,7 +104,7 @@
     </keybind>
 
     <!-- DankMaterialShell IPC -->
-    <keybind key="W-y">
+    <keybind key="W-v">
       <action name="Execute"><command>dms ipc call clipboard toggle</command></action>
     </keybind>
     <keybind key="W-A-e">
