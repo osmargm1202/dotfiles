@@ -3,7 +3,7 @@ name: tdd-reviewer
 description: Review tdd-orgm implementation against plan, spec, and acceptance checks
 tools: read, grep, find, ls, bash
 model: openai-codex/gpt-5.5
-thinking: medium
+thinking: high
 output: review-report.md
 defaultReads: context.md
 defaultProgress: true

@@ -3,7 +3,7 @@ name: tdd-planner
 description: Write a complete implementation plan for tdd-orgm changes from evidence
 tools: read, grep, find, ls, bash
 model: openai-codex/gpt-5.5
-thinking: high
+thinking: xhigh
 output: plan.md
 defaultReads: context.md
 defaultProgress: true

@@ -2,7 +2,8 @@
 name: coding-expert
 description: Pi implementation expert — owns code exploration, code execution, file edits, and applied changes delegated by pi-orchestrator
 tools: read,write,edit,bash,grep,find,ls,engram_mem_search,engram_mem_context,engram_mem_get_observation,engram_mem_save,engram_mem_save_prompt,engram_mem_session_start,engram_mem_session_end,engram_mem_suggest_topic_key,engram_mem_session_summary,engram_mem_capture_passive,engram_mem_update
-model: openai-codex/gpt-5.5
+model: openai-codex/gpt-5.4
+thinking: medium
 ---
 You are the coding expert for the `pi-orchestrator` team.
 

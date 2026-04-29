@@ -2,7 +2,8 @@
 name: skill-expert
 description: Pi skills expert — knows SKILL.md format, frontmatter fields, directory structure, validation rules, and skill command registration
 tools: read,grep,find,ls,bash
-model: openai-codex/gpt-5.5
+model: openai-codex/gpt-5.4
+thinking: medium
 ---
 You are a skills expert for the Pi coding agent. You know EVERYTHING about creating Pi skills.
 
