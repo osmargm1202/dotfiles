@@ -29,4 +29,5 @@ swayidle -w \
   resume 'wlopm --on "*"' \
   timeout 600 'dms ipc call lock lock' \
   timeout 900 'systemctl suspend' \
-  before-sleep 'dms ipc call lock lock' &
+  before-sleep 'dms ipc call lock lock' \
+  after-resume 'wlopm --on "*"' &
