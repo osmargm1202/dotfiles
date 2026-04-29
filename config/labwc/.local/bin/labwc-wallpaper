@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+WALL_DIR="${HOME}/Videos/wallpapers"
+ACTION="next"
+INDEX=""
+MPV_OPTS=(
+  -o
+  "no-audio loop hwdec=auto"
+)
+
+usage() {
+  cat <<'EOF'
+Uso:
+  labwc-wallpaper [accion] [directorio]
+
+Acciones:
+  --init, -i      iniciar con la primera imagen/video (orden natural)
+  --next, -n      avanzar (por defecto)
+  --prev, -p      retroceder
+  --index N, -k N saltar al índice N
+
+Opcionalmente:
+  --dir DIR       usar otro directorio de fondos (por defecto: ~/Videos/wallpapers)
+  --help, -h      mostrar esta ayuda
+
+El script elimina cualquier instancia anterior de mpvpaper y lanza el nuevo fondo.
+EOF
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --init|-i)
+      ACTION="init"
+      shift
+      ;;
+    --next|-n)
+      ACTION="next"
+      shift
+      ;;
+    --prev|-p)
+      ACTION="prev"
+      shift
+      ;;
+    --index|-k)
+      ACTION="index"
+      if [ "$#" -lt 2 ]; then
+        echo "Falta índice para --index" >&2
+        exit 1
+      fi
+      INDEX="$2"
+      shift 2
+      ;;
+    --dir)
+      if [ "$#" -lt 2 ]; then
+        echo "Falta directorio para --dir" >&2
+        exit 1
+      fi
+      WALL_DIR="$2"
+      shift 2
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      if [ -d "$1" ] && [ "$WALL_DIR" = "${HOME}/Videos/wallpapers" ]; then
+        WALL_DIR="$1"
+        shift
+      else
+        echo "Argumento desconocido: $1" >&2
+        usage
+        exit 1
+      fi
+      ;;
+  esac
+done
+
+if [ ! -d "$WALL_DIR" ]; then
+  echo "No existe directorio: $WALL_DIR" >&2
+  exit 1
+fi
+
+mapfile -d '' WALLPAPERS < <(
+  find "$WALL_DIR" -maxdepth 1 -type f \
+    \( -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.gif' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
+    -print0 | sort -z
+)
+
+TOTAL=${#WALLPAPERS[@]}
+if [ "$TOTAL" -eq 0 ]; then
+  echo "No se encontraron wallpapers en: $WALL_DIR" >&2
+  exit 1
+fi
+
+STATE_DIR="${XDG_STATE_HOME:-${HOME}/.local/state}/labwc"
+STATE_FILE="$STATE_DIR/mpvpaper.index"
+mkdir -p "$STATE_DIR"
+CURRENT="-1"
+if [ -f "$STATE_FILE" ]; then
+  READ_INDEX=$(cat "$STATE_FILE")
+  if echo "$READ_INDEX" | grep -qE '^[0-9]+$'; then
+    CURRENT=$READ_INDEX
+  fi
+fi
+if [ "$CURRENT" -ge "$TOTAL" ]; then
+  CURRENT="-1"
+fi
+
+case "$ACTION" in
+  init)
+    NEXT=0
+    ;;
+  next)
+    if [ "$CURRENT" -eq -1 ]; then
+      NEXT=0
+    else
+      NEXT=$(( (CURRENT + 1) % TOTAL ))
+    fi
+    ;;
+  prev)
+    if [ "$CURRENT" -eq -1 ]; then
+      NEXT=$((TOTAL - 1))
+    else
+      NEXT=$(( (CURRENT - 1 + TOTAL) % TOTAL ))
+    fi
+    ;;
+  index)
+    if ! echo "$INDEX" | grep -qE '^[0-9]+$'; then
+      echo "Indice invalido: $INDEX" >&2
+      exit 1
+    fi
+    NEXT=$(( INDEX % TOTAL ))
+    ;;
+esac
+
+SELECTED="${WALLPAPERS[$NEXT]}"
+
+if systemctl --user is-active --quiet mpvpaper.service 2>/dev/null; then
+  systemctl --user stop mpvpaper.service >/dev/null 2>&1 || true
+fi
+
+if pgrep -x mpvpaper >/dev/null 2>&1; then
+  pkill -x mpvpaper || true
+  for _ in 1 2 3 4 5; do
+    pgrep -x mpvpaper >/dev/null 2>&1 || break
+    sleep 0.1
+  done
+  pgrep -x mpvpaper >/dev/null 2>&1 && pkill -9 -x mpvpaper || true
+fi
+
+echo "$NEXT" > "$STATE_FILE"
+
+nohup mpvpaper "${MPV_OPTS[@]}" "*" "$SELECTED" >/tmp/labwc-mpvpaper.log 2>&1 < /dev/null &

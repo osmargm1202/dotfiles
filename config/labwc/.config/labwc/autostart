@@ -22,7 +22,7 @@ flatpak run com.discordapp.Discord &
 wl-paste -t text --watch cliphist store &
 wl-paste -t image/png --watch cliphist store &
 
-mpvpaper -o "no-audio loop hwdec=auto" "*" "/home/osmarg/Videos/wallpapers/fondo.mp4" &
+labwc-wallpaper --init --dir "$HOME/Videos/wallpapers" &
 
 swayidle -w \
   timeout 300 'wlopm --off "*"' \
