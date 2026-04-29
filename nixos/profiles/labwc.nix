@@ -302,6 +302,7 @@ in
   environment.systemPackages = with pkgs; [
     labwc
     labwc-tweaks
+    python3
     xwayland
 
     sddmAstronautTheme
