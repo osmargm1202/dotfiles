@@ -4,6 +4,17 @@ set -euo pipefail
 WALL_DIR="${HOME}/Videos/wallpapers"
 ACTION="next"
 INDEX=""
+MPVPAPER_BIN="${MPVPAPER_BIN:-$(command -v mpvpaper || true)}"
+if [ -z "$MPVPAPER_BIN" ] && [ -x /run/current-system/sw/bin/mpvpaper ]; then
+  MPVPAPER_BIN=/run/current-system/sw/bin/mpvpaper
+fi
+if [ -z "$MPVPAPER_BIN" ]; then
+  MPVPAPER_BIN=$(find /nix/store -maxdepth 3 -type f -path '*/bin/mpvpaper' -print -quit 2>/dev/null || true)
+fi
+if [ -z "$MPVPAPER_BIN" ]; then
+  echo "mpvpaper no encontrado en PATH, /run/current-system ni /nix/store" >&2
+  exit 1
+fi
 MPV_OPTS=(
   -o
   "no-audio loop hwdec=auto"
@@ -140,15 +151,16 @@ if systemctl --user is-active --quiet mpvpaper.service 2>/dev/null; then
   systemctl --user stop mpvpaper.service >/dev/null 2>&1 || true
 fi
 
-if pgrep -x mpvpaper >/dev/null 2>&1; then
-  pkill -x mpvpaper || true
+MPVPAPER_PATTERN='(^|/)mpvpaper( |$)'
+if pgrep -u "$USER" -f "$MPVPAPER_PATTERN" >/dev/null 2>&1; then
+  pkill -u "$USER" -f "$MPVPAPER_PATTERN" || true
   for _ in 1 2 3 4 5; do
-    pgrep -x mpvpaper >/dev/null 2>&1 || break
+    pgrep -u "$USER" -f "$MPVPAPER_PATTERN" >/dev/null 2>&1 || break
     sleep 0.1
   done
-  pgrep -x mpvpaper >/dev/null 2>&1 && pkill -9 -x mpvpaper || true
+  pgrep -u "$USER" -f "$MPVPAPER_PATTERN" >/dev/null 2>&1 && pkill -9 -u "$USER" -f "$MPVPAPER_PATTERN" || true
 fi
 
 echo "$NEXT" > "$STATE_FILE"
 
-nohup mpvpaper "${MPV_OPTS[@]}" "*" "$SELECTED" >/tmp/labwc-mpvpaper.log 2>&1 < /dev/null &
+nohup "$MPVPAPER_BIN" "${MPV_OPTS[@]}" "*" "$SELECTED" >/tmp/labwc-mpvpaper.log 2>&1 < /dev/null &
