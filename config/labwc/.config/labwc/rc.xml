@@ -280,7 +280,9 @@
       <action name="Execute"><command>sh -lc 'grim -g "$(slurp)" - | swappy -f -'</command></action>
     </keybind>
 
-    <keybind key="W-Escape"><action name="ToggleKeybinds" /></keybind>
+    <keybind key="W-Escape" onRelease="yes">
+      <action name="Execute"><command>labwc-tasklist</command></action>
+    </keybind>
     <keybind key="W-S-e"><action name="Exit" /></keybind>
     <keybind key="C-A-Delete"><action name="Exit" /></keybind>
     <keybind key="W-S-p">
@@ -308,6 +310,9 @@
     <windowRule identifier="org.quickshell*" skipTaskbar="yes" skipWindowSwitcher="yes" />
     <windowRule identifier="dms*" skipTaskbar="yes" />
     <windowRule identifier="mpvpaper" skipTaskbar="yes" skipWindowSwitcher="yes" />
+    <windowRule title="labwc-tasklist">
+      <skipWindowSwitcher>yes</skipWindowSwitcher>
+    </windowRule>
     <windowRule identifier="kitty" serverDecoration="yes" />
   </windowRules>
 
