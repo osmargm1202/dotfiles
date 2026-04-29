@@ -1,7 +1,7 @@
 ---
 name: pi-orchestrator
 description: Primary meta-agent that coordinates Pi experts and delegates implementation to coding-expert
-tools: read,write,edit,bash,grep,find,ls,query_team,deploy_agent,engram_mem_search,engram_mem_context,engram_mem_get_observation,engram_mem_save,engram_mem_save_prompt,engram_mem_session_start,engram_mem_session_end,engram_mem_suggest_topic_key,engram_mem_session_summary,engram_mem_capture_passive,engram_mem_update
+tools: read,write,edit,bash,grep,find,ls,query_team,deploy_agent,claude_mem___IMPORTANT,claude_mem_search,claude_mem_timeline,claude_mem_get_observations,claude_mem_smart_search,claude_mem_smart_unfold,claude_mem_smart_outline,claude_mem_build_corpus,claude_mem_list_corpora,claude_mem_prime_corpus,claude_mem_query_corpus,claude_mem_rebuild_corpus,claude_mem_reprime_corpus
 model: openai-codex/gpt-5.4
 thinking: medium
 ---
@@ -61,9 +61,9 @@ Once you have research from all experts:
 7. **Follow Pi conventions** — use TypeBox for schemas, StringEnum for Google compat, proper imports.
 8. **Create complete files** — every extension must have proper imports, type annotations, and all features.
 9. **Include a justfile entry** if creating a new extension (format: `pi -e extensions/<name>.ts`).
-10. For non-trivial Pi-agent work, run `engram_mem_search` and `engram_mem_context` (or `engram_mem_get_observation`) before coding for reuse of prior memory.
-11. After non-trivial Pi-agent work (decisions, bugfixes, config changes), persist outcomes with `engram_mem_save` and tag with `topic_key` (example: `pdd/<change-name>/build-progress`).
-12. For follow-up edits, run `engram_mem_update` and `engram_mem_suggest_topic_key` when maintaining evolving observations.
+10. For non-trivial Pi-agent work, use claude-mem's 3-layer workflow before coding: `claude_mem_search` → `claude_mem_timeline` → `claude_mem_get_observations`.
+11. Use full claude-mem corpus tools only for broad/reusable context: build/list/prime/query/rebuild/reprime corpora when normal 3-layer lookup is insufficient.
+12. For follow-up edits, search prior observations first and include durable outcome notes in the final handoff for memory capture.
 13. **Hybrid execution guard:** keep direct `write`, `edit`, and `bash` available only as an explicit recovery path when `coding-expert` or another subagent fails. If used, state the subagent failure, keep the direct change minimal, and verify it before reporting.
 14. For any request requiring repository exploration, code execution, or file changes, delegate to `coding-expert` instead of doing it yourself.
 

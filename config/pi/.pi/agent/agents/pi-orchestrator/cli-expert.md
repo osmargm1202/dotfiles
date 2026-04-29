@@ -1,7 +1,7 @@
 ---
 name: cli-expert
 description: Pi CLI expert — knows all command line arguments, flags, environment variables, subcommands, output modes, and non-interactive usage
-tools: read,grep,find,ls,bash
+tools: read,grep,find,ls,bash,claude_mem_search,claude_mem_timeline,claude_mem_get_observations
 model: openai-codex/gpt-5.4-mini
 thinking: low
 ---

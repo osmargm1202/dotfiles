@@ -1,7 +1,7 @@
 ---
 name: keybinding-expert
 description: Pi keyboard shortcut expert — knows registerShortcut(), Key IDs, modifier combos, reserved keys, terminal compatibility (macOS/Kitty/legacy), and keybindings.json customization
-tools: read,grep,find,ls,bash
+tools: read,grep,find,ls,bash,claude_mem_search,claude_mem_timeline,claude_mem_get_observations,claude_mem_smart_search,claude_mem_smart_unfold,claude_mem_smart_outline
 model: openai-codex/gpt-5.4-mini
 thinking: medium
 ---

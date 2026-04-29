@@ -1,7 +1,7 @@
 ---
 name: tdd-worktree-manager
 description: Manage optional isolated worktree execution for high-risk tdd-orgm implementation groups
-tools: read, grep, find, ls, bash, deploy_agent
+tools: read, grep, find, ls, bash, deploy_agent, claude_mem_search, claude_mem_timeline, claude_mem_get_observations
 model: openai-codex/gpt-5.4-mini
 thinking: medium
 output: worktree.md

@@ -1,7 +1,7 @@
 ---
 name: tdd-implementer
 description: Execute approved tdd-orgm plan groups with TDD-first approach
-tools: read, grep, find, ls, bash, edit, write, deploy_agent
+tools: read, grep, find, ls, bash, edit, write, deploy_agent, claude_mem_search, claude_mem_timeline, claude_mem_get_observations, claude_mem_smart_search, claude_mem_smart_unfold, claude_mem_smart_outline
 model: openai-codex/gpt-5.4
 thinking: medium
 output: build.md

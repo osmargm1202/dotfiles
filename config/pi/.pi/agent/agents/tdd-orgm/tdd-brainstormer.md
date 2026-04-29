@@ -1,7 +1,7 @@
 ---
 name: tdd-brainstormer
 description: Convert ambiguous user intent into a concrete design-safe request framing for TDD flows
-tools: read, grep, find, ls, bash
+tools: read, grep, find, ls, bash, claude_mem_search, claude_mem_timeline, claude_mem_get_observations, claude_mem_smart_search, claude_mem_smart_unfold, claude_mem_smart_outline
 model: openai-codex/gpt-5.4
 thinking: medium
 output: spec.md

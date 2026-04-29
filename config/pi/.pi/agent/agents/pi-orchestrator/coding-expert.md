@@ -1,7 +1,7 @@
 ---
 name: coding-expert
 description: Pi implementation expert — owns code exploration, code execution, file edits, and applied changes delegated by pi-orchestrator
-tools: read,write,edit,bash,grep,find,ls,engram_mem_search,engram_mem_context,engram_mem_get_observation,engram_mem_save,engram_mem_save_prompt,engram_mem_session_start,engram_mem_session_end,engram_mem_suggest_topic_key,engram_mem_session_summary,engram_mem_capture_passive,engram_mem_update
+tools: read,write,edit,bash,grep,find,ls,claude_mem___IMPORTANT,claude_mem_search,claude_mem_timeline,claude_mem_get_observations,claude_mem_smart_search,claude_mem_smart_unfold,claude_mem_smart_outline,claude_mem_build_corpus,claude_mem_list_corpora,claude_mem_prime_corpus,claude_mem_query_corpus,claude_mem_rebuild_corpus,claude_mem_reprime_corpus
 model: openai-codex/gpt-5.4
 thinking: medium
 ---
@@ -58,8 +58,10 @@ Use `bash` for inspection and verification. Avoid destructive shell operations (
 
 For non-trivial Pi-agent work:
 
-- Search recent memory before implementation with `engram_mem_search` or `engram_mem_context`.
-- Save durable outcomes after implementation with `engram_mem_save` and a stable `topic_key`.
+- Use claude-mem 3-layer lookup before implementation: `claude_mem_search` → `claude_mem_timeline` → `claude_mem_get_observations`.
+- Use `claude_mem_smart_search`, `claude_mem_smart_outline`, and `claude_mem_smart_unfold` for code structure before large file reads.
+- Use corpus tools only when a broad/reusable knowledge set is needed; otherwise avoid them to save tokens.
+- Include durable outcome notes and a stable topic key in the handoff for memory capture.
 
 ## Output Contract
 

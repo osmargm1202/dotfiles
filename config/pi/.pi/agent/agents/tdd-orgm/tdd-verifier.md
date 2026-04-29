@@ -1,7 +1,7 @@
 ---
 name: tdd-verifier
 description: Run final verification gates for tdd-orgm, including safety and regression checks
-tools: read, grep, find, ls, bash
+tools: read, grep, find, ls, bash, claude_mem_search, claude_mem_timeline, claude_mem_get_observations
 defaultReads: context.md
 model: openai-codex/gpt-5.3-codex-spark
 thinking: low

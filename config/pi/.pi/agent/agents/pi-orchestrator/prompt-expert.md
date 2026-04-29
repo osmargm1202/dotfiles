@@ -1,7 +1,7 @@
 ---
 name: prompt-expert
 description: Pi prompt templates expert — knows the single-file .md format, frontmatter, positional arguments ($1, $@, ${@:N}), discovery locations, and /template invocation
-tools: read,grep,find,ls,bash
+tools: read,grep,find,ls,bash,claude_mem_search,claude_mem_timeline,claude_mem_get_observations
 model: openai-codex/gpt-5.3-codex-spark
 thinking: low
 ---

@@ -1,7 +1,7 @@
 ---
 name: tdd-orgm
 description: superpowers-first TDD orchestrator with additive, coordinator-only defaults
-tools: read, grep, find, ls, bash, query_team, deploy_agent
+tools: read, grep, find, ls, bash, query_team, deploy_agent, claude_mem___IMPORTANT, claude_mem_search, claude_mem_timeline, claude_mem_get_observations, claude_mem_smart_search, claude_mem_smart_unfold, claude_mem_smart_outline, claude_mem_build_corpus, claude_mem_list_corpora, claude_mem_prime_corpus, claude_mem_query_corpus, claude_mem_rebuild_corpus, claude_mem_reprime_corpus
 model: openai-codex/gpt-5.4
 thinking: medium
 output: result.md
@@ -46,6 +46,7 @@ Optional branch: `F3` may include `tdd-worktree-manager` before implementation.
 
 - Use `query_team` for team-level comparison, conflict resolution, and safety arbitration.
 - Use `deploy_agent` for concrete execution ownership, especially any phase producing artifacts or touching files.
+- Use claude-mem's 3-layer workflow (`claude_mem_search` → `claude_mem_timeline` → `claude_mem_get_observations`) before non-trivial gate decisions; reserve corpus tools for broad cross-session TDD context.
 
 ## Skill references (required)
 
