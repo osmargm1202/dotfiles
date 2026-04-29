@@ -191,7 +191,10 @@ in
         qtsvg
         qtvirtualkeyboard
       ];
-      settings.General.InputMethod = "qtvirtualkeyboard";
+      settings.General = {
+        InputMethod = "qtvirtualkeyboard";
+        Numlock = "on";
+      };
     };
   };
 
