@@ -56,7 +56,7 @@
     <name>OrgmMinimalDark</name>
     <icon>Adwaita</icon>
     <fallbackAppIcon>labwc</fallbackAppIcon>
-    <cornerRadius>8</cornerRadius>
+    <cornerRadius>12</cornerRadius>
     <keepBorder>yes</keepBorder>
     <dropShadows>yes</dropShadows>
     <font place="ActiveWindow" name="JetBrainsMono Nerd Font" size="11" weight="medium" />

@@ -14,7 +14,7 @@ dbus-update-activation-environment --systemd \
   XCURSOR_THEME XCURSOR_SIZE DMS_SCREENSHOT_EDITOR 2>/dev/null || true
 
 systemctl --user start graphical-session.target 2>/dev/null || true
-systemctl --user start dms.service 2>/dev/null || dms run --session &
+pgrep -u "$USER" -f 'dms run' >/dev/null 2>&1 || dms run -d 2>/dev/null || true
 
 nextcloud &
 flatpak run com.discordapp.Discord &
