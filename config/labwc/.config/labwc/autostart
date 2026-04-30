@@ -16,6 +16,13 @@ dbus-update-activation-environment --systemd \
 systemctl --user start graphical-session.target 2>/dev/null || true
 pgrep -u "$USER" -f 'dms run' >/dev/null 2>&1 || dms run -d 2>/dev/null || true
 
+# Screen idle management for labwc/wlroots.
+pgrep -u "$USER" -x swayidle >/dev/null 2>&1 || \
+  swayidle -w \
+    timeout 300 'wlopm --off "*"' \
+    resume 'sleep 0.2; wlopm --on "*"' \
+    before-sleep 'wlopm --off "*"' &
+
 nextcloud &
 flatpak run com.discordapp.Discord &
 

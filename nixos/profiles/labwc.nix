@@ -94,7 +94,18 @@ in
   services.dbus.enable = true;
   services.gvfs.enable = true;
   services.gnome.gnome-keyring.enable = true;
-  programs.dconf.enable = true;
+  programs.dconf = {
+    enable = true;
+    profiles.user.databases = [
+      {
+        settings."org/gnome/desktop/interface" = {
+          color-scheme = "prefer-dark";
+          gtk-theme = "Adwaita-dark";
+          icon-theme = "Adwaita";
+        };
+      }
+    ];
+  };
 
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
@@ -105,6 +116,7 @@ in
     QT_QPA_PLATFORM = "wayland";
     QT_QPA_PLATFORMTHEME = "gtk3";
     QT_QPA_PLATFORMTHEME_QT6 = "gtk3";
+    GTK_THEME = "Adwaita:dark";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
     TERMINAL = "kitty";
   };
