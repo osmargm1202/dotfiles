@@ -12,6 +12,10 @@
   services.gvfs.enable = true;
   services.gnome.gnome-keyring.enable = true;
   programs.dconf.enable = true;
+  programs.nautilus-open-any-terminal = {
+    enable = true;
+    terminal = "kitty";
+  };
 
   xdg.portal = {
     enable = true;

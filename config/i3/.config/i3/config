@@ -1,7 +1,7 @@
 set $mod Mod4
 set $term kitty
 set $browser chromium
-set $files nautilus
+set $files sh -lc 'nautilus --new-window "$HOME" >/tmp/i3-nautilus.log 2>&1 || gtk-launch org.gnome.Nautilus.desktop >/tmp/i3-nautilus.log 2>&1 || xdg-open "$HOME" >/tmp/i3-nautilus.log 2>&1'
 set $launcher rofi -show drun -show-icons
 
 font pango:JetBrainsMono Nerd Font 11
@@ -17,7 +17,7 @@ exec --no-startup-id dunst
 exec --no-startup-id picom --config ~/.config/picom/picom.conf -b
 exec --no-startup-id polybar --config=$HOME/.config/polybar/config.ini modern
 exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option "grp:ctrl_space_toggle"
-exec --no-startup-id mpvpaper -o "--loop --no-audio --panscan=1.0" '*' "$HOME/Videos/wallpapers/default.mp4"
+exec --no-startup-id mpvpaper -o "--loop --no-audio --panscan=1.0" '*' "$HOME/Videos/wallpapers/1.mp4"
 
 bindsym $mod+Return exec --no-startup-id $term
 bindsym $mod+m exec --no-startup-id $launcher
