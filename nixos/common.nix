@@ -24,7 +24,7 @@
 
   boot.plymouth = {
     enable = true;
-    theme = "Glow";
+    theme = "glowing";
     themePackages = [ pkgs.adi1090x-plymouth-themes ];
   };
   boot.initrd.systemd.enable = true;
