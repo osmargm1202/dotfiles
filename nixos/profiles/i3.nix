@@ -13,6 +13,14 @@
   services.gnome.gnome-keyring.enable = true;
   programs.dconf.enable = true;
 
+  xdg.portal = {
+    enable = true;
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-gtk
+    ];
+    config.common.default = [ "gtk" ];
+  };
+
   environment.systemPackages = with pkgs; [
     i3
     i3lock-color
@@ -21,6 +29,10 @@
 
     rofi
     dunst
+
+    xdg-utils
+    xdg-desktop-portal
+    xdg-desktop-portal-gtk
 
     mpvpaper
     mpv
