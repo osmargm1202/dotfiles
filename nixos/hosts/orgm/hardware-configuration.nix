@@ -28,6 +28,8 @@
     wireplumber.enable = true;
   };
 
+  hardware.nvidia-container-toolkit.enable = true;
+
   hardware.nvidia = {
     modesetting.enable = true;
   

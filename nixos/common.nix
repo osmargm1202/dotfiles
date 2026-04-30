@@ -32,7 +32,6 @@
   };
 
   #virtualisation.docker.enable = true;
-  hardware.nvidia-container-toolkit.enable = true;
 
   services.flatpak.enable = true;
   systemd.services.flatpak-repo = {
