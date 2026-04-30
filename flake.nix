@@ -33,6 +33,7 @@
       hostName,
       hardware,
       profile,
+      extraModules ? [ ]
     }:
       nixpkgs.lib.nixosSystem {
         inherit system;
@@ -42,9 +43,8 @@
           hardware
           profile
           { networking.hostName = hostName; }
-        ];
-      };
-  in {
+        ] ++ extraModules;
+      };  in {
     formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
 
     nixosConfigurations = {
@@ -73,11 +73,13 @@
         hostName = "ero";
         hardware = ./nixos/hosts/ero/hardware-configuration.nix;
         profile = ./nixos/profiles/labwc.nix;
+        extraModules = [ ./nixos/hosts/ero/arch-parity-packages.nix ];
       };
       ero-i3 = mkHost {
         hostName = "ero";
         hardware = ./nixos/hosts/ero/hardware-configuration.nix;
         profile = ./nixos/profiles/i3.nix;
+        extraModules = [ ./nixos/hosts/ero/arch-parity-packages.nix ];
       };
     };
   };
