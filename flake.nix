@@ -82,11 +82,6 @@
       i3 = mkProfile {
         profile = ./nixos/profiles/i3.nix;
       };
-      i3-parity = mkProfile {
-        profile = ./nixos/profiles/i3.nix;
-        extraModules = [ ./nixos/hosts/ero/arch-parity-packages.nix ];
-      };
-
       orgm-gnome = mkHost {
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
@@ -112,13 +107,11 @@
         hostName = "ero";
         hardware = ./nixos/hosts/ero/hardware-configuration.nix;
         profile = ./nixos/profiles/labwc.nix;
-        extraModules = [ ./nixos/hosts/ero/arch-parity-packages.nix ];
       };
       ero-i3 = mkHost {
         hostName = "ero";
         hardware = ./nixos/hosts/ero/hardware-configuration.nix;
         profile = ./nixos/profiles/i3.nix;
-        extraModules = [ ./nixos/hosts/ero/arch-parity-packages.nix ];
       };
     };
   };
