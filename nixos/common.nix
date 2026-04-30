@@ -22,32 +22,7 @@
       pkgs.linuxPackages_latest
   );
 
-  boot.plymouth = {
-    enable = true;
-    theme = "orgm-glowing-1440p";
-    themePackages = [
-      (pkgs.stdenv.mkDerivation {
-        pname = "orgm-glowing-1440p-plymouth-theme";
-        version = "1.0";
-        src = ./plymouth-themes/orgm-glowing-1440p;
-        installPhase = ''
-          themeDir=$out/share/plymouth/themes/orgm-glowing-1440p
-          mkdir -p $themeDir
-          cp -r * $themeDir/
-          cat > $themeDir/orgm-glowing-1440p.plymouth <<EOF
-[Plymouth Theme]
-Name=orgm-glowing-1440p
-Description=Scaled glowing theme for 2560x1440 displays
-ModuleName=script
-
-[script]
-ImageDir=$themeDir
-ScriptFile=$themeDir/orgm-glowing-1440p.script
-EOF
-        '';
-      })
-    ];
-  };
+  boot.plymouth.enable = true;
   boot.initrd.systemd.enable = true;
   boot.kernelParams = [
     "quiet"

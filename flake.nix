@@ -86,32 +86,44 @@
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/gnome.nix;
+        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
       };
       orgm-hyprland = mkHost {
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/hyprland.nix;
+        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
       };
       orgm-niri = mkHost {
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/niri.nix;
+        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
       };
       orgm-labwc = mkHost {
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/labwc.nix;
+        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
       };
 
       ero-labwc = mkHost {
         hostName = "ero";
         hardware = ./nixos/hosts/ero/hardware-configuration.nix;
         profile = ./nixos/profiles/labwc.nix;
+        extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
       };
       ero-i3 = mkHost {
         hostName = "ero";
         hardware = ./nixos/hosts/ero/hardware-configuration.nix;
         profile = ./nixos/profiles/i3.nix;
+        extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
+      };
+      lenovo-labwc = mkHost {
+        hostName = "lenovo";
+        hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+        profile = ./nixos/profiles/labwc.nix;
+        extraModules = [ ./nixos/hosts/lenovo/plymouth.nix ];
       };
     };
   };
