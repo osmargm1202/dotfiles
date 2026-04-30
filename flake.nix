@@ -33,7 +33,7 @@
       hostName,
       hardware,
       profile,
-      extraModules ? [ ]
+      extraModules ? [ ],
     }:
       nixpkgs.lib.nixosSystem {
         inherit system;
@@ -44,10 +44,50 @@
           profile
           { networking.hostName = hostName; }
         ] ++ extraModules;
-      };  in {
+      };
+    mkProfile = {
+      profile,
+      hostName ? "nixos",
+      extraModules ? [ ],
+    }:
+      nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./nixos/common.nix
+          /etc/nixos/hardware-configuration.nix
+          profile
+          { networking.hostName = hostName; }
+        ] ++ extraModules;
+      };
+  in {
     formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
 
     nixosConfigurations = {
+      gnome = mkProfile {
+        profile = ./nixos/profiles/gnome.nix;
+      };
+      hyprland = mkProfile {
+        profile = ./nixos/profiles/hyprland.nix;
+      };
+      niri = mkProfile {
+        profile = ./nixos/profiles/niri.nix;
+      };
+      labwc = mkProfile {
+        profile = ./nixos/profiles/labwc.nix;
+      };
+      labwc-parity = mkProfile {
+        profile = ./nixos/profiles/labwc.nix;
+        extraModules = [ ./nixos/hosts/ero/arch-parity-packages.nix ];
+      };
+      i3 = mkProfile {
+        profile = ./nixos/profiles/i3.nix;
+      };
+      i3-parity = mkProfile {
+        profile = ./nixos/profiles/i3.nix;
+        extraModules = [ ./nixos/hosts/ero/arch-parity-packages.nix ];
+      };
+
       orgm-gnome = mkHost {
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
