@@ -15,7 +15,12 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = lib.mkDefault (
+    if builtins.elem "nvidia" config.services.xserver.videoDrivers then
+      pkgs.linuxPackages
+    else
+      pkgs.linuxPackages_latest
+  );
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;

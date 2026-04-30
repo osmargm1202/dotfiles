@@ -76,9 +76,8 @@
       labwc = mkProfile {
         profile = ./nixos/profiles/labwc.nix;
       };
-      labwc-parity = mkProfile {
-        profile = ./nixos/profiles/labwc.nix;
-        extraModules = [ ./nixos/hosts/ero/arch-parity-packages.nix ];
+      labwc-light = mkProfile {
+        profile = ./nixos/profiles/labwc-light.nix;
       };
       i3 = mkProfile {
         profile = ./nixos/profiles/i3.nix;
