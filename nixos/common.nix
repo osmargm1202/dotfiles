@@ -22,6 +22,20 @@
       pkgs.linuxPackages_latest
   );
 
+  boot.plymouth = {
+    enable = true;
+    theme = "Glow";
+    themePackages = [ pkgs.adi1090x-plymouth-themes ];
+  };
+  boot.initrd.systemd.enable = true;
+  boot.kernelParams = [
+    "quiet"
+    "splash"
+    "loglevel=3"
+    "udev.log_level=3"
+    "rd.udev.log_level=3"
+  ];
+
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
