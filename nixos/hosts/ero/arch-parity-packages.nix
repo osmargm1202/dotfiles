@@ -98,17 +98,21 @@ let
     "vulkan-radeon"
   ];
 
-  # Resolve package names when available; skip unknowns to avoid build breaks.
-  toPackage = name:
+  lookupPkg = names:
     let
-      path = lib.splitString "." name;
-      resolved = builtins.tryEval (builtins.getAttrFromPath path pkgs);
+      resolve = name: builtins.foldl' (
+        acc: p:
+          if acc == null
+          then null
+          else if builtins.isAttrs acc && builtins.hasAttr p acc
+          then acc.${p}
+          else null
+      ) pkgs (lib.splitString "." name);
     in
-      if resolved.success then [ resolved.value ] else [ ];
+    builtins.map resolve names;
 
-  toPackages = names: lib.concatMap toPackage names;
-
+  selected = builtins.filter (p: p != null) (lookupPkg pkgNames);
 in
 {
-  environment.systemPackages = toPackages pkgNames;
+  environment.systemPackages = selected;
 }
