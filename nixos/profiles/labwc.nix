@@ -173,12 +173,6 @@ in
   ];
 
   services.xserver.enable = true;
-  services.xserver.xkb = {
-    layout = "us,latam";
-    variant = "altgr-intl,";
-    options = "grp:ctrl_space_toggle";
-  };
-
   services.displayManager = {
     defaultSession = "labwc";
     sddm = {
@@ -269,15 +263,6 @@ in
       "application/x-7z-compressed" = [ "org.gnome.FileRoller.desktop" ];
       "application/x-rar" = [ "org.gnome.FileRoller.desktop" ];
     };
-  };
-
-  services.pipewire = {
-    enable = true;
-    audio.enable = true;
-    pulse.enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    wireplumber.enable = true;
   };
 
   security.polkit.enable = true;

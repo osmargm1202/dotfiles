@@ -2,11 +2,6 @@
 
 {
   services.xserver.enable = true;
-
-  services.xserver.xkb = {
-    layout = "us,latam";
-    variant = "";
-  };
   security.polkit.enable = true;
   
   services.desktopManager.gnome.enable = true;

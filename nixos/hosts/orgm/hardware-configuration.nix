@@ -13,6 +13,21 @@
   	enable = true;
   	enable32Bit = true;
 	};
+
+  services.xserver.xkb = {
+    layout = "us,latam";
+    variant = "altgr-intl,";
+    options = "grp:ctrl_space_toggle";
+  };
+
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    wireplumber.enable = true;
+  };
+
   hardware.nvidia = {
     modesetting.enable = true;
   

@@ -68,6 +68,17 @@
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/labwc.nix;
       };
+
+      ero-labwc = mkHost {
+        hostName = "ero";
+        hardware = ./nixos/hosts/ero/hardware-configuration.nix;
+        profile = ./nixos/profiles/labwc.nix;
+      };
+      ero-i3 = mkHost {
+        hostName = "ero";
+        hardware = ./nixos/hosts/ero/hardware-configuration.nix;
+        profile = ./nixos/profiles/i3.nix;
+      };
     };
   };
 }
