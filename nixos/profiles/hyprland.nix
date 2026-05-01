@@ -34,12 +34,6 @@ in {
     xwayland.enable = true;
   };
 
-  systemd.services.flatpak-repo.script = ''
-    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-    flatpak remote-add --if-not-exists flathub https://nightly.gnome.org/gnome-nightly.flatpakrepo
-    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-  '';
-
   environment.etc."xdg/hypr/hyprland.conf".text = lib.mkDefault ''
     exec-once = ${lib.getExe caelestiaShell}
   '';

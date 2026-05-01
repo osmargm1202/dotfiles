@@ -11,12 +11,6 @@
     autoSuspend = true;
   };
 
-  systemd.services.flatpak-repo.script = ''
-    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-    flatpak remote-add --if-not-exists flathub https://nightly.gnome.org/gnome-nightly.flatpakrepo
-    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-  '';
-
   environment.systemPackages = with pkgs; [
     gsettings-desktop-schemas
     gnome-tweaks
