@@ -1,17 +1,11 @@
 { pkgs, inputs, ... }:
 
 let
-  system = pkgs.stdenv.hostPlatform.system;
-  dgop = inputs.dgop.packages.${system}.default;
   sddmAstronautTheme = pkgs.callPackage ../packages/sddm-astronaut-theme.nix {
     src = inputs.sddm-astronaut-theme;
   };
 in
 {
-  imports = [
-    inputs.dms.nixosModules.dank-material-shell
-  ];
-
   services.xserver.enable = true;
   services.displayManager = {
     defaultSession = "labwc";
@@ -34,18 +28,6 @@ in
 
   programs.labwc.enable = true;
   programs.xwayland.enable = true;
-
-  programs.dank-material-shell = {
-    enable = true;
-    systemd = {
-      enable = true;
-      restartIfChanged = true;
-    };
-    dgop.package = dgop;
-    enableClipboardPaste = true;
-    enableDynamicTheming = true;
-    enableSystemMonitoring = true;
-  };
 
   programs.nautilus-open-any-terminal = {
     enable = true;
@@ -130,6 +112,9 @@ in
 
     sddmAstronautTheme
     kitty
+    fuzzel
+    sfwbar
+    swaynotificationcenter
     swayidle
     gsettings-desktop-schemas
     swaylock
@@ -145,6 +130,7 @@ in
     xdg-desktop-portal-gtk
 
     wl-clipboard
+    cliphist
     grim
     slurp
     swappy
@@ -155,9 +141,15 @@ in
     pamixer
     playerctl
 
+    pavucontrol
+    networkmanagerapplet
+    blueman
+    wdisplays
+
     nautilus
     gnome-software
     gnome-text-editor
+    apostrophe
     loupe
     gnome-calculator
     gnome-maps

@@ -23,28 +23,31 @@
     <item label="Calculator" icon="org.gnome.Calculator">
       <action name="Execute"><command>gnome-calculator</command></action>
     </item>
-    <item label="Papers" icon="org.gnome.Papers">
-      <action name="Execute"><command>papers</command></action>
+    <item label="PDF · Evince" icon="org.gnome.Evince">
+      <action name="Execute"><command>evince</command></action>
     </item>
 
-    <separator label="DankMaterialShell" />
-    <item label="Spotlight" icon="system-search">
-      <action name="Execute"><command>dms ipc call spotlight toggle</command></action>
+    <separator label="Desktop" />
+    <item label="Launcher · fuzzel" icon="system-search">
+      <action name="Execute"><command>fuzzel</command></action>
     </item>
-    <item label="Control Center" icon="preferences-system">
-      <action name="Execute"><command>dms ipc call control-center toggle</command></action>
+    <item label="Clipboard · cliphist" icon="edit-paste">
+      <action name="Execute"><command>sh -lc 'cliphist list | fuzzel --dmenu --prompt "Clipboard&gt; " | cliphist decode | wl-copy'</command></action>
     </item>
-    <item label="Notifications" icon="preferences-system-notifications">
-      <action name="Execute"><command>dms ipc call notifications toggle</command></action>
+    <item label="Notifications · swaync" icon="preferences-system-notifications">
+      <action name="Execute"><command>swaync-client -t -sw</command></action>
     </item>
-    <item label="Settings" icon="emblem-system">
-      <action name="Execute"><command>dms ipc call settings focusOrToggle</command></action>
+    <item label="Displays · wdisplays" icon="video-display">
+      <action name="Execute"><command>wdisplays</command></action>
     </item>
-    <item label="Keybinds" icon="input-keyboard">
-      <action name="Execute"><command>dms ipc call keybinds toggle labwc</command></action>
+    <item label="Audio · pavucontrol" icon="multimedia-volume-control">
+      <action name="Execute"><command>pavucontrol</command></action>
     </item>
-    <item label="Power menu" icon="system-shutdown">
-      <action name="Execute"><command>dms ipc call powermenu toggle</command></action>
+    <item label="Bluetooth" icon="bluetooth">
+      <action name="Execute"><command>blueman-manager</command></action>
+    </item>
+    <item label="Network" icon="network-workgroup">
+      <action name="Execute"><command>nm-connection-editor</command></action>
     </item>
 
     <separator label="Labwc" />
@@ -52,7 +55,7 @@
       <action name="Reconfigure" />
     </item>
     <item label="Lock" icon="system-lock-screen">
-      <action name="Execute"><command>dms ipc call lock lock</command></action>
+      <action name="Execute"><command>swaylock -f -c 000000</command></action>
     </item>
     <item label="Exit session" icon="system-log-out">
       <action name="Exit" />

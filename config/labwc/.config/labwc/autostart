@@ -1,32 +1,53 @@
 #!/usr/bin/env sh
 
-# Export labwc session env to dbus/systemd so portals, DMS and GTK apps see wlroots.
+# Export labwc session env to dbus/systemd so portals and GTK apps see wlroots.
 systemctl --user import-environment \
   WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP \
   QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 \
   ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL \
-  XCURSOR_THEME XCURSOR_SIZE DMS_SCREENSHOT_EDITOR 2>/dev/null || true
+  XCURSOR_THEME XCURSOR_SIZE 2>/dev/null || true
 
 dbus-update-activation-environment --systemd \
   WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP \
   QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 \
   ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL \
-  XCURSOR_THEME XCURSOR_SIZE DMS_SCREENSHOT_EDITOR 2>/dev/null || true
+  XCURSOR_THEME XCURSOR_SIZE 2>/dev/null || true
 
 systemctl --user start graphical-session.target 2>/dev/null || true
-pgrep -u "$USER" -f 'dms run' >/dev/null 2>&1 || dms run -d 2>/dev/null || true
+
+# Fondo de pantalla video/animado. Usa primer video disponible en ~/Videos/wallpapers.
+pgrep -u "$USER" -x mpvpaper >/dev/null 2>&1 || \
+  find "$HOME/Videos/wallpapers" -maxdepth 1 -type f \( -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' \) 2>/dev/null | \
+  sort | head -n 1 | while IFS= read -r wallpaper; do
+    [ -n "$wallpaper" ] && mpvpaper '*' "$wallpaper" --no-audio --loop >/dev/null 2>&1 &
+  done
+
+# Barra / taskbar / systray.
+pgrep -u "$USER" -x sfwbar >/dev/null 2>&1 || sfwbar >/dev/null 2>&1 &
+
+# Notificaciones / centro de control.
+pgrep -u "$USER" -x swaync >/dev/null 2>&1 || swaync >/dev/null 2>&1 &
+
+# Red / Bluetooth.
+pgrep -u "$USER" -x nm-applet >/dev/null 2>&1 || nm-applet --indicator >/dev/null 2>&1 &
+pgrep -u "$USER" -x blueman-applet >/dev/null 2>&1 || blueman-applet >/dev/null 2>&1 &
+
+# Polkit gráfico.
+pgrep -u "$USER" -f polkit-gnome-authentication-agent-1 >/dev/null 2>&1 || \
+  polkit-gnome-authentication-agent-1 >/dev/null 2>&1 &
 
 # Screen idle management for labwc/wlroots.
 pgrep -u "$USER" -x swayidle >/dev/null 2>&1 || \
   swayidle -w \
-    timeout 300 'wlopm --off "*"' \
-    resume 'sleep 0.2; wlopm --on "*"' \
-    before-sleep 'wlopm --off "*"' &
+    timeout 600 'swaylock -f -c 000000' \
+    timeout 900 'systemctl suspend' \
+    before-sleep 'swaylock -f -c 000000' >/dev/null 2>&1 &
 
 nextcloud &
 flatpak run com.discordapp.Discord &
 
-wl-paste -t text --watch cliphist store &
-wl-paste -t image/png --watch cliphist store &
-
-labwc-wallpaper --init --dir "$HOME/Videos/wallpapers" &
+# Portapapeles.
+pgrep -u "$USER" -f 'wl-paste.*text.*cliphist store' >/dev/null 2>&1 || \
+  wl-paste --type text --watch cliphist store >/dev/null 2>&1 &
+pgrep -u "$USER" -f 'wl-paste.*image.*cliphist store' >/dev/null 2>&1 || \
+  wl-paste --type image --watch cliphist store >/dev/null 2>&1 &

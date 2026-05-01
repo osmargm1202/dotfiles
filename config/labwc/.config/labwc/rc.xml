@@ -69,7 +69,7 @@
     <!-- Applications: mirrors niri 80-binds.kdl -->
     <keybind key="W-slash">
       <action name="Execute">
-        <command>dms ipc call keybinds toggle labwc</command>
+        <command>gnome-text-editor ~/.config/labwc/rc.xml</command>
       </action>
     </keybind>
     <keybind key="W-Return">
@@ -94,7 +94,7 @@
     </keybind>
     <keybind key="W-S-w">
       <action name="Execute">
-        <command>labwc-wallpaper --next --dir "$HOME/Videos/wallpapers"</command>
+        <command>sh -lc 'pkill mpvpaper 2&gt;/dev/null || true; find "$HOME/Videos/wallpapers" -maxdepth 1 -type f \( -iname "*.mp4" -o -iname "*.mkv" -o -iname "*.webm" \) | shuf -n 1 | while IFS= read -r wallpaper; do [ -n "$wallpaper" ] &amp;&amp; mpvpaper "*" "$wallpaper" --no-audio --loop; done'</command>
       </action>
     </keybind>
     <keybind key="W-a">
@@ -112,120 +112,130 @@
         <command>kitty -e distrobox-enter arch -- orgmrnc find</command>
       </action>
     </keybind>
-    <!-- DankMaterialShell IPC -->
+    <!-- Standalone stack: fuzzel, cliphist, swaync, swaylock, playerctl, pamixer, brightnessctl. -->
     <keybind key="W-v">
       <action name="Execute">
-        <command>dms ipc call clipboard toggle</command>
+        <command>sh -lc 'cliphist list | fuzzel --dmenu --prompt "Clipboard&gt; " | cliphist decode | wl-copy'</command>
       </action>
     </keybind>
     <keybind key="W-A-e">
       <action name="Execute">
-        <command>dms ipc call powermenu toggle</command>
+        <command>sh -lc 'choice=$(printf "lock\nsuspend\nlogout\nreboot\npoweroff" | fuzzel --dmenu --prompt "Power&gt; "); case "$choice" in lock) swaylock -f -c 000000 ;; suspend) systemctl suspend ;; logout) loginctl terminate-session "$XDG_SESSION_ID" ;; reboot) systemctl reboot ;; poweroff) systemctl poweroff ;; esac'</command>
       </action>
     </keybind>
     <keybind key="W-m">
       <action name="Execute">
-        <command>dms ipc call spotlight toggle</command>
+        <command>fuzzel</command>
       </action>
     </keybind>
     <keybind key="W-space">
       <action name="Execute">
-        <command>dms ipc call spotlight toggle</command>
+        <command>fuzzel</command>
       </action>
     </keybind>
     <keybind key="W-d">
       <action name="Execute">
-        <command>dms ipc call control-center toggle</command>
+        <command>fuzzel</command>
       </action>
     </keybind>
     <keybind key="W-C-comma">
       <action name="Execute">
-        <command>dms ipc call settings focusOrToggle</command>
+        <command>wdisplays</command>
+      </action>
+    </keybind>
+    <keybind key="W-p">
+      <action name="Execute">
+        <command>wdisplays</command>
+      </action>
+    </keybind>
+    <keybind key="W-F10">
+      <action name="Execute">
+        <command>pavucontrol</command>
       </action>
     </keybind>
     <keybind key="W-A-l">
       <action name="Execute">
-        <command>dms ipc call lock lock</command>
+        <command>swaylock -f -c 000000</command>
       </action>
     </keybind>
     <keybind key="W-n">
       <action name="Execute">
-        <command>dms ipc call notifications toggle</command>
+        <command>swaync-client -t -sw</command>
       </action>
     </keybind>
     <keybind key="W-S-n">
       <action name="Execute">
-        <command>dms ipc call notepad toggle</command>
+        <command>apostrophe</command>
       </action>
     </keybind>
     <keybind key="W-A-space">
       <action name="Execute">
-        <command>dms ipc call dankdash wallpaper</command>
+        <command>sh -lc 'pkill mpvpaper 2&gt;/dev/null || true; find "$HOME/Videos/wallpapers" -maxdepth 1 -type f \( -iname "*.mp4" -o -iname "*.mkv" -o -iname "*.webm" \) | shuf -n 1 | while IFS= read -r wallpaper; do [ -n "$wallpaper" ] &amp;&amp; mpvpaper "*" "$wallpaper" --no-audio --loop; done'</command>
       </action>
     </keybind>
     <keybind key="W-S-Escape">
       <action name="Execute">
-        <command>dms ipc call powermenu toggle</command>
+        <command>sh -lc 'choice=$(printf "lock\nsuspend\nlogout\nreboot\npoweroff" | fuzzel --dmenu --prompt "Power&gt; "); case "$choice" in lock) swaylock -f -c 000000 ;; suspend) systemctl suspend ;; logout) loginctl terminate-session "$XDG_SESSION_ID" ;; reboot) systemctl reboot ;; poweroff) systemctl poweroff ;; esac'</command>
       </action>
     </keybind>
     <keybind key="W-S-m">
       <action name="Execute">
-        <command>dms ipc call notifications clearAll</command>
+        <command>swaync-client -C</command>
       </action>
     </keybind>
     <keybind key="W-S-slash">
       <action name="Execute">
-        <command>dms ipc call keybinds toggle labwc</command>
+        <command>gnome-text-editor ~/.config/labwc/rc.xml</command>
       </action>
     </keybind>
     <keybind key="XF86AudioRaiseVolume" allowWhenLocked="yes">
       <action name="Execute">
-        <command>dms ipc call audio increment 3</command>
+        <command>pamixer -i 3</command>
       </action>
     </keybind>
     <keybind key="XF86AudioLowerVolume" allowWhenLocked="yes">
       <action name="Execute">
-        <command>dms ipc call audio decrement 3</command>
+        <command>pamixer -d 3</command>
       </action>
     </keybind>
     <keybind key="XF86AudioMute" allowWhenLocked="yes">
       <action name="Execute">
-        <command>dms ipc call audio mute</command>
+        <command>pamixer -t</command>
       </action>
     </keybind>
     <keybind key="XF86AudioMicMute" allowWhenLocked="yes">
       <action name="Execute">
-        <command>dms ipc call audio micmute</command>
+        <command>pamixer --default-source -t</command>
       </action>
     </keybind>
     <keybind key="XF86AudioPlay" allowWhenLocked="yes">
       <action name="Execute">
-        <command>dms ipc call mpris playPause</command>
+        <command>playerctl play-pause</command>
       </action>
     </keybind>
     <keybind key="XF86AudioStop" allowWhenLocked="yes">
       <action name="Execute">
-        <command>dms ipc call mpris stop</command>
+        <command>playerctl stop</command>
       </action>
     </keybind>
     <keybind key="XF86AudioPrev" allowWhenLocked="yes">
       <action name="Execute">
-        <command>dms ipc call mpris previous</command>
+        <command>playerctl previous</command>
       </action>
     </keybind>
     <keybind key="XF86AudioNext" allowWhenLocked="yes">
       <action name="Execute">
-        <command>dms ipc call mpris next</command>
+        <command>playerctl next</command>
       </action>
     </keybind>
     <keybind key="XF86MonBrightnessUp" allowWhenLocked="yes">
       <action name="Execute">
-        <command>dms ipc call brightness increment 5 ""</command>
+        <command>brightnessctl set 5%+</command>
       </action>
     </keybind>
     <keybind key="XF86MonBrightnessDown" allowWhenLocked="yes">
       <action name="Execute">
-        <command>dms ipc call brightness decrement 5 ""</command>
+        <command>brightnessctl set 5%-</command>
       </action>
     </keybind>
     <!-- Window/session controls. Labwc is stacking, so tiling-only niri actions map to closest labwc action. -->
@@ -545,7 +555,6 @@
     <windowRule identifier="org.gnome.Calculator" serverDecoration="yes"/>
     <windowRule identifier="org.pulseaudio.pavucontrol" serverDecoration="yes"/>
     <windowRule identifier="org.quickshell*" skipTaskbar="yes" skipWindowSwitcher="yes"/>
-    <windowRule identifier="dms*" skipTaskbar="yes"/>
     <windowRule identifier="mpvpaper" skipTaskbar="yes" skipWindowSwitcher="yes"/>
     <windowRule identifier="kitty" serverDecoration="yes"/>
   </windowRules>
