@@ -17,7 +17,7 @@ exec --no-startup-id dunst
 exec --no-startup-id picom --config ~/.config/picom/picom.conf -b
 exec --no-startup-id polybar --config=$HOME/.config/polybar/config.ini modern
 exec --no-startup-id setxkbmap -layout "us,latam" -variant "altgr-intl," -option "grp:ctrl_space_toggle"
-exec --no-startup-id mpvpaper -o "--loop --no-audio --panscan=1.0" '*' "$HOME/Videos/wallpapers/1.mp4"
+exec --no-startup-id xwinwrap -fs -fdt -ni -b -nf -un -o 1.0 -- mpv -wid WID --loop --no-audio --no-resume-playback --panscan=1.0 "$HOME/Videos/wallpapers/1.mp4"
 
 bindsym $mod+Return exec --no-startup-id $term
 bindsym $mod+m exec --no-startup-id $launcher

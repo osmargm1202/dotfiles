@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 let
-  themeName = "orgm-msi";
+  themeName = "orgm-nixos";
 in
 {
   boot.plymouth = {
@@ -9,9 +9,9 @@ in
     themePackages = [
       (pkgs.callPackage ../../plymouth-logo-theme.nix {
         inherit themeName;
-        logo = ../../plymouth-logos/msi.png;
+        logo = ../../plymouth-logos/orgm-nixos.png;
         background = "0.0, 0.0, 0.0";
-        logoScale = 32;
+        logoScale = 100;
       })
     ];
   };

@@ -26,7 +26,7 @@ Uso:
   labwc-wallpaper [accion] [directorio]
 
 Acciones:
-  --init, -i      iniciar con la primera imagen/video (orden natural)
+  --init, -i      iniciar con una imagen/video aleatorio
   --next, -n      avanzar (por defecto)
   --prev, -p      retroceder
   --index N, -k N saltar al índice N
@@ -120,7 +120,7 @@ fi
 
 case "$ACTION" in
   init)
-    NEXT=0
+    NEXT=$(shuf -i "0-$((TOTAL - 1))" -n 1)
     ;;
   next)
     if [ "$CURRENT" -eq -1 ]; then

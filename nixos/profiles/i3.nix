@@ -38,7 +38,7 @@
     xdg-desktop-portal
     xdg-desktop-portal-gtk
 
-    mpvpaper
+    xwinwrap
     mpv
     ffmpeg
 

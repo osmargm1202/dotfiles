@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 let
-  themeName = "lenovo-logo";
+  themeName = "lenovo-orgm";
 in
 {
   boot.plymouth = {
@@ -9,9 +9,9 @@ in
     themePackages = [
       (pkgs.callPackage ../../plymouth-logo-theme.nix {
         inherit themeName;
-        logo = ../../plymouth-logos/lenovo.png;
-        background = "0.85, 0.0, 0.0";
-        logoScale = 45;
+        logo = ../../plymouth-logos/orgm-nixos.png;
+        background = "0.0, 0.0, 0.0";
+        logoScale = 100;
       })
     ];
   };

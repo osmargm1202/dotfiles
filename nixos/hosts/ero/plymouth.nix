@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 let
-  themeName = "ero-gateway";
+  themeName = "ero-orgm";
 in
 {
   boot.plymouth = {
@@ -9,9 +9,9 @@ in
     themePackages = [
       (pkgs.callPackage ../../plymouth-logo-theme.nix {
         inherit themeName;
-        logo = ../../plymouth-logos/gateway.png;
+        logo = ../../plymouth-logos/orgm-nixos.png;
         background = "0.0, 0.0, 0.0";
-        logoScale = 42;
+        logoScale = 100;
       })
     ];
   };

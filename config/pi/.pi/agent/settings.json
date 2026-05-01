@@ -10,7 +10,7 @@
     "git:github.com/garrytan/gstack"
   ],
   "theme": "midnight-ocean",
-  "hideThinkingBlock": false,
+  "hideThinkingBlock": true,
   "extensions": [
     "~/.pi/agent/extensions/pi-mcp-adapter/index.ts",
     "~/.pi/agent/extensions/model-primary.ts",

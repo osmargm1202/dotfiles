@@ -152,6 +152,22 @@ in
     playerctl
 
     nautilus
+    gnome-software
+    gnome-text-editor
+    loupe
+    gnome-calculator
+    gnome-maps
+    gnome-system-monitor
+    file-roller
+    baobab
+    totem
+    gnome-photos
+    evince
+    gnome-disk-utility
+    gnome-logs
+    seahorse
+    gnome-font-viewer
+    gnome-characters
 
     adwaita-icon-theme
     papirus-icon-theme
