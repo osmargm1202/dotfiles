@@ -11,7 +11,7 @@ in
         inherit themeName;
         logo = ../../plymouth-logos/orgm-nixos.png;
         background = "0.0, 0.0, 0.0";
-        logoScale = 100;
+        logoScale = 42;
       })
     ];
   };
