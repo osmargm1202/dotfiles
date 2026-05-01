@@ -158,6 +158,7 @@
     gnumake
     podman-compose
     nerd-fonts.jetbrains-mono
+    nerd-fonts.symbols-only
     (chromium.override { enableWideVine = true; })
   ];
 

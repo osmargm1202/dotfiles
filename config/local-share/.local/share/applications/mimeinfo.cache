@@ -1,0 +1,8 @@
+[MIME Cache]
+application/json=zed.desktop;
+application/xml=zed.desktop;
+text/css=zed.desktop;
+text/html=zed.desktop;
+text/javascript=zed.desktop;
+text/plain=zed.desktop;
+x-scheme-handler/opencode=opencode-desktop-handler.desktop;
