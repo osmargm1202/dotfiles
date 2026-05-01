@@ -41,10 +41,35 @@ function getFolderLabel(cwd: string): string {
 	return ` ${folder}`;
 }
 
+function formatDuration(ms: number): string {
+	const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+	const hours = Math.floor(totalSeconds / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
+
+	if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+	if (minutes > 0) return `${minutes}m ${seconds}s`;
+	return `${seconds}s`;
+}
+
 export default function (pi: ExtensionAPI) {
 	let currentPrimary: string = SYSTEM_AGENT;
 	let currentCaveman: CavemanLevel = "off";
 	let showCavemanStatus = loadCavemanConfig().showStatus;
+	let timerStartedAt = 0;
+	let timerLabel = "";
+	let timerHandle: ReturnType<typeof setInterval> | undefined;
+
+	const setTimerLabel = (icon: "⏱" | "✓") => {
+		if (timerStartedAt === 0) return;
+		timerLabel = `${icon} ${formatDuration(Date.now() - timerStartedAt)}`;
+		if (footerHandle) footerHandle.requestRender();
+	};
+
+	const stopTimer = () => {
+		if (timerHandle) clearInterval(timerHandle);
+		timerHandle = undefined;
+	};
 
 	const installFooter = (ctx: ExtensionContext) => {
 		currentPrimary = restorePrimaryState(ctx.sessionManager.getEntries(), ctx.cwd, "both");
@@ -81,6 +106,7 @@ export default function (pi: ExtensionAPI) {
 					const thinking = pi.getThinkingLevel();
 					const tokenSummary = `↑${formatCompactNumber(inputTokens)} ↓${formatCompactNumber(outputTokens)}`;
 					const primaryLabel = formatPrimaryLabel(currentPrimary);
+					const agentStatus = timerLabel ? `${primaryLabel} · ${timerLabel}` : primaryLabel;
 					const cavemanStatus = formatCavemanStatus(currentCaveman);
 					const cavemanStyled = currentCaveman === "off"
 						? theme.fg("dim", cavemanStatus)
@@ -89,7 +115,7 @@ export default function (pi: ExtensionAPI) {
 					const leftParts = [
 						theme.fg("accent", contextText),
 						theme.fg("text", modelName),
-						theme.fg("muted", `${thinking} · ${primaryLabel}`),
+						theme.fg("muted", `${thinking} · ${agentStatus}`),
 					];
 					const left = leftParts.join(theme.fg("muted", " · "));
 					const centerRaw = folderLabel;
@@ -117,12 +143,12 @@ export default function (pi: ExtensionAPI) {
 					}
 
 					const compact = showCavemanStatus
-						? `${contextText} ${modelName} · ${thinking} · ${primaryLabel} · ${folderLabel} · ${cavemanStatus} · ${tokenSummary} ${formatCurrency(totalCost)}`
-						: `${contextText} ${modelName} · ${thinking} · ${primaryLabel} · ${folderLabel} · ${tokenSummary} ${formatCurrency(totalCost)}`;
+						? `${contextText} ${modelName} · ${thinking} · ${agentStatus} · ${folderLabel} · ${cavemanStatus} · ${tokenSummary} ${formatCurrency(totalCost)}`
+						: `${contextText} ${modelName} · ${thinking} · ${agentStatus} · ${folderLabel} · ${tokenSummary} ${formatCurrency(totalCost)}`;
 					const styledCompact = showCavemanStatus
 						? theme.fg("accent", `${contextText} `) +
 							theme.fg("text", modelName) +
-							theme.fg("muted", ` · ${thinking} · ${primaryLabel} · `) +
+							theme.fg("muted", ` · ${thinking} · ${agentStatus} · `) +
 							theme.fg("text", folderLabel) +
 							theme.fg("muted", " · ") +
 							cavemanStyled +
@@ -130,7 +156,7 @@ export default function (pi: ExtensionAPI) {
 							theme.fg("warning", formatCurrency(totalCost))
 						: theme.fg("accent", `${contextText} `) +
 							theme.fg("text", modelName) +
-							theme.fg("muted", ` · ${thinking} · ${primaryLabel} · `) +
+							theme.fg("muted", ` · ${thinking} · ${agentStatus} · `) +
 							theme.fg("text", folderLabel) +
 							theme.fg("muted", ` · ${tokenSummary} `) +
 							theme.fg("warning", formatCurrency(totalCost));
@@ -142,12 +168,12 @@ export default function (pi: ExtensionAPI) {
 					const compactBar = theme.fg("accent", `${contextText} `);
 					const compactTail = showCavemanStatus
 						? theme.fg("text", modelName) +
-							theme.fg("muted", ` · ${thinking} · ${primaryLabel} · `) +
+							theme.fg("muted", ` · ${thinking} · ${agentStatus} · `) +
 							theme.fg("text", folderLabel) +
 							theme.fg("muted", " · ") +
 							cavemanStyled
 						: theme.fg("text", modelName) +
-							theme.fg("muted", ` · ${thinking} · ${primaryLabel} · `) +
+							theme.fg("muted", ` · ${thinking} · ${agentStatus} · `) +
 							theme.fg("text", folderLabel);
 
 					const availableTailWidth = Math.max(0, width - visibleWidth(compactBar));
@@ -179,6 +205,24 @@ export default function (pi: ExtensionAPI) {
 	pi.on("model_select", async (_event, ctx) => {
 		if (!ctx.hasUI) return;
 		installFooter(ctx);
+	});
+
+	pi.on("before_agent_start", async (_event, ctx) => {
+		if (!ctx.hasUI) return;
+		stopTimer();
+		timerStartedAt = Date.now();
+		setTimerLabel("⏱");
+		timerHandle = setInterval(() => setTimerLabel("⏱"), 1000);
+	});
+
+	pi.on("agent_end", async (_event, ctx) => {
+		if (!ctx.hasUI) return;
+		stopTimer();
+		setTimerLabel("✓");
+	});
+
+	pi.on("session_shutdown", async () => {
+		stopTimer();
 	});
 
 	pi.registerCommand("minimal-footer", {
