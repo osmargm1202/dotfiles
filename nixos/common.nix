@@ -138,9 +138,13 @@
 
   environment.systemPackages = with pkgs; [
     wget
-    vim
-    fish
     curl
+    rsync
+    vim
+    tmux
+    stow
+    gh
+    fish
     nextcloud-client
     gtk3
     git
