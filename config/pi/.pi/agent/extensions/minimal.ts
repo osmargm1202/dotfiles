@@ -58,9 +58,10 @@ export default function (pi: ExtensionAPI) {
 	let showCavemanStatus = loadCavemanConfig().showStatus;
 	let timerStartedAt = 0;
 	let timerLabel = "";
+	let timerHasError = false;
 	let timerHandle: ReturnType<typeof setInterval> | undefined;
 
-	const setTimerLabel = (icon: "⏱" | "✓") => {
+	const setTimerLabel = (icon: "⏱" | "✓" | "✕") => {
 		if (timerStartedAt === 0) return;
 		timerLabel = `${icon} ${formatDuration(Date.now() - timerStartedAt)}`;
 		if (footerHandle) footerHandle.requestRender();
@@ -211,14 +212,27 @@ export default function (pi: ExtensionAPI) {
 		if (!ctx.hasUI) return;
 		stopTimer();
 		timerStartedAt = Date.now();
+		timerHasError = false;
 		setTimerLabel("⏱");
-		timerHandle = setInterval(() => setTimerLabel("⏱"), 1000);
+		timerHandle = setInterval(() => setTimerLabel(timerHasError ? "✕" : "⏱"), 1000);
+	});
+
+	pi.on("tool_execution_end", async (event, ctx) => {
+		if (!ctx.hasUI || !event.isError) return;
+		timerHasError = true;
+		setTimerLabel("✕");
+	});
+
+	pi.on("after_provider_response", async (event, ctx) => {
+		if (!ctx.hasUI || event.status < 400) return;
+		timerHasError = true;
+		setTimerLabel("✕");
 	});
 
 	pi.on("agent_end", async (_event, ctx) => {
 		if (!ctx.hasUI) return;
 		stopTimer();
-		setTimerLabel("✓");
+		setTimerLabel(timerHasError ? "✕" : "✓");
 	});
 
 	pi.on("session_shutdown", async () => {
