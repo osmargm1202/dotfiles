@@ -1,0 +1,78 @@
+[
+  {
+    "name": "topbar",
+    "layer": "top",
+    "position": "top",
+    "height": 34,
+    "spacing": 8,
+    "modules-left": ["custom/launcher"],
+    "modules-center": ["clock"],
+    "modules-right": ["tray", "pulseaudio", "network", "battery", "custom/power"],
+
+    "custom/launcher": {
+      "format": "󱄅",
+      "tooltip": "Aplicaciones",
+      "on-click": "fuzzel"
+    },
+
+    "clock": {
+      "format": "{:%H:%M}",
+      "format-alt": "{:%A %d %B %Y  %H:%M}",
+      "tooltip-format": "<tt><small>{calendar}</small></tt>"
+    },
+
+    "tray": {
+      "icon-size": 20,
+      "spacing": 10
+    },
+
+    "pulseaudio": {
+      "format": "{icon} {volume}%",
+      "format-muted": "󰝟 mute",
+      "format-icons": {
+        "default": ["󰕿", "󰖀", "󰕾"]
+      },
+      "on-click": "pavucontrol"
+    },
+
+    "network": {
+      "format-wifi": "󰤨 {essid}",
+      "format-ethernet": "󰈀 wired",
+      "format-disconnected": "󰤭 offline",
+      "tooltip-format": "{ifname}: {ipaddr}"
+    },
+
+    "battery": {
+      "format": "{icon} {capacity}%",
+      "format-charging": "󰂄 {capacity}%",
+      "format-plugged": "󰚥 {capacity}%",
+      "format-icons": ["󰁺", "󰁼", "󰁾", "󰂀", "󰁹"]
+    },
+
+    "custom/power": {
+      "format": "⏻",
+      "tooltip": "Apagar",
+      "on-click": "wlogout || systemctl poweroff"
+    }
+  },
+  {
+    "name": "dock",
+    "layer": "top",
+    "position": "bottom",
+    "height": 58,
+    "spacing": 6,
+    "margin-bottom": 10,
+    "margin-left": 360,
+    "margin-right": 360,
+    "modules-center": ["wlr/taskbar"],
+
+    "wlr/taskbar": {
+      "format": "{icon}",
+      "icon-size": 40,
+      "tooltip-format": "{title}",
+      "on-click": "activate",
+      "on-click-middle": "close",
+      "ignore-list": []
+    }
+  }
+]
