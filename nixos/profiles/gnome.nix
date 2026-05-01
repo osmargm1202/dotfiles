@@ -18,6 +18,7 @@
   '';
 
   environment.systemPackages = with pkgs; [
+    gsettings-desktop-schemas
     gnome-tweaks
     yaru-remix-theme
     gnomeExtensions.user-themes

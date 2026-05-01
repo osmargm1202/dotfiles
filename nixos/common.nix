@@ -143,7 +143,6 @@
     curl
     nextcloud-client
     gtk3
-    gsettings-desktop-schemas
     git
     distrobox
     htop
@@ -160,11 +159,6 @@
   programs.dconf.enable = true;
 
   fonts.fontconfig.enable = true;
-  environment.sessionVariables = {
-    XDG_DATA_DIRS = [
-      "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}"
-    ];
-  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.

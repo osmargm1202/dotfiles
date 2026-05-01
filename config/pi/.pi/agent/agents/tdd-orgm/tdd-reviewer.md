@@ -1,7 +1,7 @@
 ---
 name: tdd-reviewer
 description: Review tdd-orgm implementation against plan, spec, and acceptance checks
-tools: read, grep, find, ls, bash, claude_mem_search, claude_mem_timeline, claude_mem_get_observations, claude_mem_smart_search, claude_mem_smart_unfold, claude_mem_smart_outline
+tools: read, grep, find, ls, bash, engram_mem_search, engram_mem_context, engram_mem_get_observation, engram_mem_save, engram_mem_update
 model: openai-codex/gpt-5.5
 thinking: high
 output: review-report.md

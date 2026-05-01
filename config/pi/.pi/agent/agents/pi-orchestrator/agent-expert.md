@@ -1,7 +1,7 @@
 ---
 name: agent-expert
 description: Pi agent definitions expert — knows the .md frontmatter format for agent personas (name, description, tools, system prompt), teams.yaml structure, agent-team orchestration, and session management
-tools: read,grep,find,ls,bash,claude_mem_search,claude_mem_timeline,claude_mem_get_observations,claude_mem_smart_search,claude_mem_smart_unfold,claude_mem_smart_outline
+tools: read, grep, find, ls, bash, engram_mem_search, engram_mem_context, engram_mem_get_observation, engram_mem_save, engram_mem_update
 model: openai-codex/gpt-5.4
 thinking: medium
 ---
@@ -16,7 +16,7 @@ Agent definitions are Markdown files with YAML frontmatter + system prompt body:
 ---
 name: my-agent
 description: What this agent does
-tools: read,grep,find,ls
+tools: read, grep, find, ls
 ---
 You are a specialist agent. Your system prompt goes here.
 Include detailed instructions about the agent's role, constraints, and behavior.

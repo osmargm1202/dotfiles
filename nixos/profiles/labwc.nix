@@ -103,6 +103,9 @@ in
           gtk-theme = "Adwaita-dark";
           icon-theme = "Adwaita";
         };
+        settings."org/gnome/nautilus/icon-view" = {
+          captions = [ "type" "size" "none" ];
+        };
       }
     ];
   };
@@ -128,6 +131,7 @@ in
     sddmAstronautTheme
     kitty
     swayidle
+    gsettings-desktop-schemas
     swaylock
     wlopm
 

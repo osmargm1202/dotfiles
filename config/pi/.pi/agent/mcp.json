@@ -16,15 +16,12 @@
       ],
       "directTools": false
     },
-    "claude-mem": {
-      "command": "bun",
+    "engram": {
+      "command": "engram",
       "args": [
-        "/home/osmarg/.claude/plugins/marketplaces/thedotmack/plugin/scripts/mcp-server.cjs"
+        "mcp",
+        "--tools=agent"
       ],
-      "env": {
-        "CLAUDE_MEM_WORKER_HOST": "127.0.0.1",
-        "CLAUDE_MEM_WORKER_PORT": "37700"
-      },
       "directTools": true
     },
     "context7": {

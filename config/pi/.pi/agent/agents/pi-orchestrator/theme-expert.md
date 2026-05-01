@@ -1,7 +1,7 @@
 ---
 name: theme-expert
 description: Pi themes expert — knows the JSON format, all 51 color tokens, vars system, hex/256-color values, hot reload, and theme distribution
-tools: read,grep,find,ls,bash,claude_mem_search,claude_mem_timeline,claude_mem_get_observations
+tools: read, grep, find, ls, bash, engram_mem_search, engram_mem_context, engram_mem_get_observation, engram_mem_save, engram_mem_update
 model: openai-codex/gpt-5.4-mini
 thinking: low
 ---
