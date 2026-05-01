@@ -15,12 +15,10 @@ dbus-update-activation-environment --systemd \
 
 systemctl --user start graphical-session.target 2>/dev/null || true
 
-# Fondo de pantalla video/animado. Usa primer video disponible en ~/Videos/wallpapers.
+# Fondo de pantalla: videos en ~/Videos/wallpapers; fallback imágenes en ~/Pictures/Wallpapers.
 pgrep -u "$USER" -x mpvpaper >/dev/null 2>&1 || \
-  find "$HOME/Videos/wallpapers" -maxdepth 1 -type f \( -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' \) 2>/dev/null | \
-  sort | head -n 1 | while IFS= read -r wallpaper; do
-    [ -n "$wallpaper" ] && mpvpaper '*' "$wallpaper" --no-audio --loop >/dev/null 2>&1 &
-  done
+  pgrep -u "$USER" -x swaybg >/dev/null 2>&1 || \
+  labwc-wallpaper --init >/dev/null 2>&1 &
 
 # Barra superior + dock icon-only con apps abiertas.
 pgrep -u "$USER" -x waybar >/dev/null 2>&1 || \

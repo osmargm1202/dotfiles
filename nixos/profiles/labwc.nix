@@ -122,6 +122,7 @@ in
     wlopm
 
     mpvpaper
+    swaybg
     mpv
     ffmpeg
 

@@ -94,7 +94,7 @@
     </keybind>
     <keybind key="W-S-w">
       <action name="Execute">
-        <command>sh -lc 'pkill mpvpaper 2&gt;/dev/null || true; find "$HOME/Videos/wallpapers" -maxdepth 1 -type f \( -iname "*.mp4" -o -iname "*.mkv" -o -iname "*.webm" \) | shuf -n 1 | while IFS= read -r wallpaper; do [ -n "$wallpaper" ] &amp;&amp; mpvpaper "*" "$wallpaper" --no-audio --loop; done'</command>
+        <command>labwc-wallpaper --next</command>
       </action>
     </keybind>
     <keybind key="W-a">
@@ -170,7 +170,7 @@
     </keybind>
     <keybind key="W-A-space">
       <action name="Execute">
-        <command>sh -lc 'pkill mpvpaper 2&gt;/dev/null || true; find "$HOME/Videos/wallpapers" -maxdepth 1 -type f \( -iname "*.mp4" -o -iname "*.mkv" -o -iname "*.webm" \) | shuf -n 1 | while IFS= read -r wallpaper; do [ -n "$wallpaper" ] &amp;&amp; mpvpaper "*" "$wallpaper" --no-audio --loop; done'</command>
+        <command>labwc-wallpaper --next</command>
       </action>
     </keybind>
     <keybind key="W-S-Escape">

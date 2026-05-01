@@ -1,20 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WALL_DIR="${HOME}/Videos/wallpapers"
+VIDEO_DIR="${HOME}/Videos/wallpapers"
+IMAGE_DIR="${HOME}/Pictures/Wallpapers"
 ACTION="next"
 INDEX=""
-MPVPAPER_BIN="${MPVPAPER_BIN:-$(command -v mpvpaper || true)}"
-if [ -z "$MPVPAPER_BIN" ] && [ -x /run/current-system/sw/bin/mpvpaper ]; then
-  MPVPAPER_BIN=/run/current-system/sw/bin/mpvpaper
-fi
-if [ -z "$MPVPAPER_BIN" ]; then
-  MPVPAPER_BIN=$(find /nix/store -maxdepth 3 -type f -path '*/bin/mpvpaper' -print -quit 2>/dev/null || true)
-fi
-if [ -z "$MPVPAPER_BIN" ]; then
-  echo "mpvpaper no encontrado en PATH, /run/current-system ni /nix/store" >&2
-  exit 1
-fi
+
+find_bin() {
+  local name="$1"
+  local bin=""
+
+  bin="$(command -v "$name" || true)"
+  if [ -n "$bin" ]; then
+    printf '%s\n' "$bin"
+    return 0
+  fi
+
+  if [ -x "/run/current-system/sw/bin/$name" ]; then
+    printf '%s\n' "/run/current-system/sw/bin/$name"
+    return 0
+  fi
+
+  find /nix/store -maxdepth 3 -type f -path "*/bin/$name" -print -quit 2>/dev/null || true
+}
+
+MPVPAPER_BIN="${MPVPAPER_BIN:-$(find_bin mpvpaper)}"
+SWAYBG_BIN="${SWAYBG_BIN:-$(find_bin swaybg)}"
 MPV_OPTS=(
   -o
   "no-audio loop hwdec=auto"
@@ -23,19 +34,22 @@ MPV_OPTS=(
 usage() {
   cat <<'EOF'
 Uso:
-  labwc-wallpaper [accion] [directorio]
+  labwc-wallpaper [accion]
 
 Acciones:
-  --init, -i      iniciar con una imagen/video aleatorio
-  --next, -n      avanzar (por defecto)
-  --prev, -p      retroceder
-  --index N, -k N saltar al índice N
+  --init, -i          iniciar con un fondo aleatorio
+  --next, -n          avanzar (por defecto)
+  --prev, -p          retroceder
+  --index N, -k N     saltar al índice N
 
-Opcionalmente:
-  --dir DIR       usar otro directorio de fondos (por defecto: ~/Videos/wallpapers)
-  --help, -h      mostrar esta ayuda
+Directorios:
+  --video-dir DIR     videos (por defecto: ~/Videos/wallpapers)
+  --image-dir DIR     imágenes fallback (por defecto: ~/Pictures/Wallpapers)
 
-El script elimina cualquier instancia anterior de mpvpaper y lanza el nuevo fondo.
+Comportamiento:
+  - Si hay videos en video-dir: usa mpvpaper.
+  - Si NO hay videos: usa swaybg con imágenes de image-dir.
+  - Mata instancias anteriores de mpvpaper/swaybg antes de lanzar el nuevo fondo.
 EOF
 }
 
@@ -62,12 +76,28 @@ while [ "$#" -gt 0 ]; do
       INDEX="$2"
       shift 2
       ;;
+    --video-dir)
+      if [ "$#" -lt 2 ]; then
+        echo "Falta directorio para --video-dir" >&2
+        exit 1
+      fi
+      VIDEO_DIR="$2"
+      shift 2
+      ;;
+    --image-dir)
+      if [ "$#" -lt 2 ]; then
+        echo "Falta directorio para --image-dir" >&2
+        exit 1
+      fi
+      IMAGE_DIR="$2"
+      shift 2
+      ;;
     --dir)
       if [ "$#" -lt 2 ]; then
         echo "Falta directorio para --dir" >&2
         exit 1
       fi
-      WALL_DIR="$2"
+      VIDEO_DIR="$2"
       shift 2
       ;;
     --help|-h)
@@ -75,37 +105,57 @@ while [ "$#" -gt 0 ]; do
       exit 0
       ;;
     *)
-      if [ -d "$1" ] && [ "$WALL_DIR" = "${HOME}/Videos/wallpapers" ]; then
-        WALL_DIR="$1"
-        shift
-      else
-        echo "Argumento desconocido: $1" >&2
-        usage
-        exit 1
-      fi
+      echo "Argumento desconocido: $1" >&2
+      usage
+      exit 1
       ;;
   esac
 done
 
-if [ ! -d "$WALL_DIR" ]; then
-  echo "No existe directorio: $WALL_DIR" >&2
-  exit 1
-fi
+map_files() {
+  local dir="$1"
+  shift
 
-mapfile -d '' WALLPAPERS < <(
-  find "$WALL_DIR" -maxdepth 1 -type f \
-    \( -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.gif' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
-    -print0 | sort -z
+  if [ ! -d "$dir" ]; then
+    return 0
+  fi
+
+  find "$dir" -maxdepth 1 -type f "(" "$@" ")" -print0 | sort -z
+}
+
+mapfile -d '' VIDEOS < <(
+  map_files "$VIDEO_DIR" \
+    -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.mov' -o -iname '*.gif'
 )
+
+MODE="video"
+WALLPAPERS=("${VIDEOS[@]}")
+if [ "${#WALLPAPERS[@]}" -eq 0 ]; then
+  MODE="image"
+  mapfile -d '' WALLPAPERS < <(
+    map_files "$IMAGE_DIR" \
+      -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp'
+  )
+fi
 
 TOTAL=${#WALLPAPERS[@]}
 if [ "$TOTAL" -eq 0 ]; then
-  echo "No se encontraron wallpapers en: $WALL_DIR" >&2
+  echo "No se encontraron videos en: $VIDEO_DIR" >&2
+  echo "No se encontraron imágenes en: $IMAGE_DIR" >&2
+  exit 1
+fi
+
+if [ "$MODE" = "video" ] && [ -z "$MPVPAPER_BIN" ]; then
+  echo "mpvpaper no encontrado para reproducir videos" >&2
+  exit 1
+fi
+if [ "$MODE" = "image" ] && [ -z "$SWAYBG_BIN" ]; then
+  echo "swaybg no encontrado para mostrar imágenes" >&2
   exit 1
 fi
 
 STATE_DIR="${XDG_STATE_HOME:-${HOME}/.local/state}/labwc"
-STATE_FILE="$STATE_DIR/mpvpaper.index"
+STATE_FILE="$STATE_DIR/wallpaper-${MODE}.index"
 mkdir -p "$STATE_DIR"
 CURRENT="-1"
 if [ -f "$STATE_FILE" ]; then
@@ -138,7 +188,7 @@ case "$ACTION" in
     ;;
   index)
     if ! echo "$INDEX" | grep -qE '^[0-9]+$'; then
-      echo "Indice invalido: $INDEX" >&2
+      echo "Índice inválido: $INDEX" >&2
       exit 1
     fi
     NEXT=$(( INDEX % TOTAL ))
@@ -147,20 +197,34 @@ esac
 
 SELECTED="${WALLPAPERS[$NEXT]}"
 
+stop_process() {
+  local name="$1"
+  local pattern="(^|/)${name}( |$)"
+
+  if pgrep -u "$USER" -f "$pattern" >/dev/null 2>&1; then
+    pkill -u "$USER" -f "$pattern" || true
+    for _ in 1 2 3 4 5; do
+      pgrep -u "$USER" -f "$pattern" >/dev/null 2>&1 || break
+      sleep 0.1
+    done
+    pgrep -u "$USER" -f "$pattern" >/dev/null 2>&1 && pkill -9 -u "$USER" -f "$pattern" || true
+  fi
+}
+
 if systemctl --user is-active --quiet mpvpaper.service 2>/dev/null; then
   systemctl --user stop mpvpaper.service >/dev/null 2>&1 || true
 fi
 
-MPVPAPER_PATTERN='(^|/)mpvpaper( |$)'
-if pgrep -u "$USER" -f "$MPVPAPER_PATTERN" >/dev/null 2>&1; then
-  pkill -u "$USER" -f "$MPVPAPER_PATTERN" || true
-  for _ in 1 2 3 4 5; do
-    pgrep -u "$USER" -f "$MPVPAPER_PATTERN" >/dev/null 2>&1 || break
-    sleep 0.1
-  done
-  pgrep -u "$USER" -f "$MPVPAPER_PATTERN" >/dev/null 2>&1 && pkill -9 -u "$USER" -f "$MPVPAPER_PATTERN" || true
-fi
+stop_process mpvpaper
+stop_process swaybg
 
 echo "$NEXT" > "$STATE_FILE"
 
-nohup "$MPVPAPER_BIN" "${MPV_OPTS[@]}" "*" "$SELECTED" >/tmp/labwc-mpvpaper.log 2>&1 < /dev/null &
+case "$MODE" in
+  video)
+    nohup "$MPVPAPER_BIN" "${MPV_OPTS[@]}" "*" "$SELECTED" >/tmp/labwc-mpvpaper.log 2>&1 < /dev/null &
+    ;;
+  image)
+    nohup "$SWAYBG_BIN" -i "$SELECTED" -m fill >/tmp/labwc-swaybg.log 2>&1 < /dev/null &
+    ;;
+esac
