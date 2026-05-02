@@ -113,7 +113,9 @@ in
     sddmAstronautTheme
     kitty
     fuzzel
-    sfwbar
+    nwg-panel
+    nwg-dock
+    nwg-drawer
     wlogout
     swaynotificationcenter
     swayidle

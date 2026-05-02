@@ -1,0 +1,40 @@
+* {
+  border: none;
+  box-shadow: none;
+  background-image: none;
+}
+
+window,
+#box {
+  background: transparent;
+}
+
+button {
+  min-width: 58px;
+  min-height: 58px;
+  margin: 4px;
+  padding: 7px;
+  border-radius: 18px;
+  background: rgba(18, 18, 22, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+button:checked,
+button:active {
+  background: rgba(120, 170, 255, 0.24);
+  border-color: rgba(120, 170, 255, 0.65);
+}
+
+image {
+  -gtk-icon-shadow: none;
+}
+
+#detector-box,
+#hotspot-box {
+  background: transparent;
+}
