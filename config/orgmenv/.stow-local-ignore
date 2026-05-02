@@ -1,3 +1,0 @@
-^/\.config/orgmenv/orgmenv\.db$
-^/\.config/orgmenv/cache(?:/.*)?$
-^/\.config/orgmenv/backups(?:/.*)?$
