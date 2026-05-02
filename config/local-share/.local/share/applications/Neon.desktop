@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Neon
 Comment=Neon Postgresql Database App
-Exec=chromium --app="https://console.neon.tech/" --new-window
+Exec=chromium --app=https://console.neon.tech/ --new-window
 Icon=/home/osmarg/.local/share/icons/Neon.png
 Categories=Network;WebBrowser;
 NoDisplay=false

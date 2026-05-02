@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Gmail
 Comment=Gmail Web Application
-Exec=chromium --app="https://gmail.com" --new-window
+Exec=chromium --app=https://gmail.com --new-window
 Icon=/home/osmarg/.local/share/icons/Gmail.png
 Categories=Network;WebBrowser;
 NoDisplay=false

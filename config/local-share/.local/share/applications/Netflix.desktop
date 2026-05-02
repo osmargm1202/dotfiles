@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Netflix
 Comment=Netflix Web Application
-Exec=chromium --app="https://netflix.com" --new-window
+Exec=chromium --app=https://netflix.com --new-window
 Icon=/home/osmarg/.local/share/icons/Netflix.png
 Categories=Network;WebBrowser;
 NoDisplay=false

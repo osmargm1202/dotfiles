@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Fast
 Comment=Fast Web Application
-Exec=chromium --app="https://fast.com" --new-window
+Exec=chromium --app=https://fast.com --new-window
 Icon=/home/osmarg/.local/share/icons/Fast.png
 Categories=Development;
 NoDisplay=false

@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Windows Docker
 Comment=Windows VM
-Exec=chromium --app="http://127.0.0.1:8006" --new-window
+Exec=chromium --app=http://127.0.0.1:8006 --new-window
 Icon=/home/osmarg/.local/share/icons/Windows Docker.png
 Categories=Development;
 NoDisplay=false

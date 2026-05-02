@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Google AI Studio
 Comment=Google AI Studio Web Application
-Exec=chromium --app="https://aistudio.google.com/" --new-window
+Exec=chromium --app=https://aistudio.google.com/ --new-window
 Icon=/home/osmarg/.local/share/icons/Google AI Studio.png
 Categories=Development;
 NoDisplay=false

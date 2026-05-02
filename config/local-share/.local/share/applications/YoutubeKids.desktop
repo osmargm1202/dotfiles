@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=YoutubeKids
 Comment=YoutubeKids Web Application
-Exec=chromium --app="https://youtubekids.com" --new-window
+Exec=chromium --app=https://youtubekids.com --new-window
 Icon=/home/osmarg/.local/share/icons/YoutubeKids.png
 Categories=AudioVideo;
 NoDisplay=false

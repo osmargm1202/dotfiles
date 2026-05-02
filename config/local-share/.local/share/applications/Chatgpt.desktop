@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Chatgpt
 Comment=Chatgpt Web Application
-Exec=chromium --app="https://chatgpt.com" --new-window
+Exec=chromium --app=https://chatgpt.com --new-window
 Icon=/home/osmarg/.local/share/icons/Chatgpt.png
 Categories=Development;
 NoDisplay=false

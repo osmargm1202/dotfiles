@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Microsoft Teams
 Comment=Microsoft Teams Web Application
-Exec=chromium --app="https://teams.microsoft.com/" --new-window
+Exec=chromium --app=https://teams.microsoft.com/ --new-window
 Icon=/home/osmarg/.local/share/icons/Microsoft Teams.png
 Categories=Office;
 NoDisplay=false

@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=WebUi
 Comment=ORGM OpenWebUI
-Exec=chromium --app="https://chat.or-gm.com" --new-window
+Exec=chromium --app=https://chat.or-gm.com --new-window
 Icon=/home/osmarg/.local/share/icons/WebUi.png
 Categories=Development;
 NoDisplay=false

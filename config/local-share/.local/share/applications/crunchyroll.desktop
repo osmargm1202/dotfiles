@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=crunchyroll
 Comment=Crunchyroll webapp Anime
-Exec=chromium --app="https://www.crunchyroll.com/" --new-window
+Exec=chromium --app=https://www.crunchyroll.com/ --new-window
 Icon=/home/osmarg/.local/share/icons/crunchyroll.png
 Categories=AudioVideo;
 NoDisplay=false

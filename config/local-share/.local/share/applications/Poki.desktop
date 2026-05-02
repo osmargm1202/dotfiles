@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Poki
 Comment=Poki Game App
-Exec=chromium --app="https://poki.com" --new-window
+Exec=chromium --app=https://poki.com --new-window
 Icon=/home/osmarg/.local/share/icons/Poki.png
 Categories=Game;
 NoDisplay=false

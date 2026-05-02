@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=OpenCode
 Comment=OpenCode Web Application
-Exec=chromium --app="http://localhost:39839/" --new-window
+Exec=chromium --app=http://localhost:39839/ --new-window
 Icon=/home/osmarg/.local/share/icons/opencode.svg
 Categories=Development;
 NoDisplay=false

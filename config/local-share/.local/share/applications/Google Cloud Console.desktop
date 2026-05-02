@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Google Cloud Console
 Comment=Google Cloud Console Web Application
-Exec=chromium --app="https://console.cloud.google.com" --new-window
+Exec=chromium --app=https://console.cloud.google.com --new-window
 Icon=/home/osmarg/.local/share/icons/Google Cloud Console.png
 Categories=Utility;
 NoDisplay=false

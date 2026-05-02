@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Outlook - Hotmail
 Comment=Outlook - Hotmail Web Application
-Exec=chromium --app="https://outlook.office.com/" --new-window
+Exec=chromium --app=https://outlook.office.com/ --new-window
 Icon=/home/osmarg/.local/share/icons/Outlook - Hotmail.png
 Categories=Office;
 NoDisplay=false

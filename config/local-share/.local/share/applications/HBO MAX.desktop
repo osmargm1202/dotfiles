@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=HBO MAX
 Comment=HBO MAX Web Application
-Exec=chromium --app="https://hbomax.com" --new-window
+Exec=chromium --app=https://hbomax.com --new-window
 Icon=HBO MAX
 Categories=AudioVideo;
 NoDisplay=false

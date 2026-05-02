@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Facebook
 Comment=Facebook Web Application
-Exec=chromium --app="https://Facebook.com" --new-window
+Exec=chromium --app=https://Facebook.com --new-window
 Icon=/home/osmarg/.local/share/icons/Facebook.png
 Categories=Network;WebBrowser;
 NoDisplay=false

@@ -3,7 +3,7 @@ Version=1.0
 Type=Application
 Name=Claude
 Comment=Claude Web Application
-Exec=chromium --app="https://claude.ai" --new-window
+Exec=chromium --app=https://claude.ai --new-window
 Icon=/home/osmarg/.local/share/icons/Claude.png
 Categories=Development;
 NoDisplay=false
