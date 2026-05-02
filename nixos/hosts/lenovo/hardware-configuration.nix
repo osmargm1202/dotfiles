@@ -14,6 +14,8 @@
 
   services.xserver.videoDrivers = [ "nvidia" ];
 
+  services.upower.enable = true;
+
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
