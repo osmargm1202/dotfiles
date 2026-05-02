@@ -15,7 +15,8 @@ dbus-update-activation-environment --systemd \
 
 systemctl --user start graphical-session.target 2>/dev/null || true
 
-# DMS maneja panel, dock y wallpapers vía systemd user.
+# DMS maneja panel, dock y wallpapers.
+pgrep -u "$USER" -x dms >/dev/null 2>&1 || dms run -d >/dev/null 2>&1 &
 
 # Notificaciones / centro de control.
 pgrep -u "$USER" -x swaync >/dev/null 2>&1 || swaync >/dev/null 2>&1 &
@@ -35,7 +36,7 @@ pgrep -u "$USER" -x swayidle >/dev/null 2>&1 || \
     timeout 900 'systemctl suspend' \
     before-sleep 'swaylock -f -c 000000' >/dev/null 2>&1 &
 
-nextcloud &
+pgrep -u "$USER" -x nextcloud >/dev/null 2>&1 || nextcloud --background >/dev/null 2>&1 &
 flatpak run com.discordapp.Discord &
 
 # Portapapeles.

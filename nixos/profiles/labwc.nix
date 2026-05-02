@@ -35,18 +35,13 @@ in
 
   programs.dank-material-shell = {
     enable = true;
-    systemd = {
-      enable = true;
-      restartIfChanged = true;
-    };
+    # Labwc arranca DMS desde autostart con `dms run -d`.
+    # El servicio systemd fallaba buscando `qs` en PATH.
+    systemd.enable = false;
     enableClipboardPaste = true;
     enableDynamicTheming = true;
     enableSystemMonitoring = false;
   };
-
-  # El servicio DMS invoca `qs` (quickshell) por nombre.
-  # Asegura PATH correcto para systemd user.
-  systemd.user.services.dms.path = [ pkgs.quickshell ];
 
   programs.nautilus-open-any-terminal = {
     enable = true;
