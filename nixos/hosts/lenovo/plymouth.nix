@@ -9,9 +9,9 @@ in
     themePackages = [
       (pkgs.callPackage ../../plymouth-logo-theme.nix {
         inherit themeName;
-        logo = ../../plymouth-logos/orgm-nixos.png;
+        logo = ../../plymouth-logos/lenovo.png;
         background = "0.0, 0.0, 0.0";
-        logoScale = 42;
+        logoScale = 100;
       })
     ];
   };

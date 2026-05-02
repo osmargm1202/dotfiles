@@ -1,7 +1,7 @@
 {
-  "lastChangelogVersion": "0.71.1",
+  "lastChangelogVersion": "0.72.0",
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.5",
+  "defaultModel": "gpt-5.3-codex-spark",
   "defaultThinkingLevel": "medium",
   "packages": [
     "npm:pi-ask-user",
