@@ -46,8 +46,47 @@ window#waybar.dock > box {
   padding: 7px 10px;
 }
 
-#taskbar {
+#taskbar,
+#custom-fuzzel,
+#custom-zen,
+#custom-nautilus,
+#custom-kitty,
+#custom-discord,
+#custom-obsidian,
+#custom-chromium,
+#custom-windows,
+#custom-thunderbird {
   background: transparent;
+}
+
+#custom-fuzzel,
+#custom-zen,
+#custom-nautilus,
+#custom-kitty,
+#custom-discord,
+#custom-obsidian,
+#custom-chromium,
+#custom-windows,
+#custom-thunderbird {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 4px;
+  margin: 0 3px;
+  border-radius: 16px;
+  font-size: 30px;
+  color: #f2f2f2;
+}
+
+#custom-fuzzel:hover,
+#custom-zen:hover,
+#custom-nautilus:hover,
+#custom-kitty:hover,
+#custom-discord:hover,
+#custom-obsidian:hover,
+#custom-chromium:hover,
+#custom-windows:hover,
+#custom-thunderbird:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 #taskbar button {

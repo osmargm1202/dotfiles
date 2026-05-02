@@ -62,9 +62,74 @@
     "height": 58,
     "spacing": 6,
     "margin-bottom": 10,
-    "margin-left": 360,
-    "margin-right": 360,
-    "modules-center": ["wlr/taskbar"],
+    "margin-left": 220,
+    "margin-right": 220,
+    "modules-center": [
+      "custom/fuzzel",
+      "custom/zen",
+      "custom/nautilus",
+      "custom/kitty",
+      "custom/discord",
+      "custom/obsidian",
+      "custom/chromium",
+      "custom/windows",
+      "custom/thunderbird",
+      "wlr/taskbar"
+    ],
+
+    "custom/fuzzel": {
+      "format": "󱄅",
+      "tooltip": "Aplicaciones",
+      "on-click": "fuzzel"
+    },
+
+    "custom/zen": {
+      "format": "󰖟",
+      "tooltip": "Zen Browser",
+      "on-click": "flatpak run app.zen_browser.zen"
+    },
+
+    "custom/nautilus": {
+      "format": "󰉋",
+      "tooltip": "Archivos",
+      "on-click": "nautilus"
+    },
+
+    "custom/kitty": {
+      "format": "󰆍",
+      "tooltip": "Kitty",
+      "on-click": "kitty"
+    },
+
+    "custom/discord": {
+      "format": "󰙯",
+      "tooltip": "Discord",
+      "on-click": "flatpak run com.discordapp.Discord"
+    },
+
+    "custom/obsidian": {
+      "format": "󱓧",
+      "tooltip": "Obsidian",
+      "on-click": "flatpak run md.obsidian.Obsidian"
+    },
+
+    "custom/chromium": {
+      "format": "󰊯",
+      "tooltip": "Chromium",
+      "on-click": "chromium"
+    },
+
+    "custom/windows": {
+      "format": "󰍲",
+      "tooltip": "Windows VM",
+      "on-click": "/home/osmarg/.local/bin/windows-rdp run"
+    },
+
+    "custom/thunderbird": {
+      "format": "󰇮",
+      "tooltip": "Thunderbird",
+      "on-click": "thunderbird"
+    },
 
     "wlr/taskbar": {
       "format": "{icon}",
