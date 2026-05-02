@@ -114,6 +114,7 @@ in
     kitty
     fuzzel
     sfwbar
+    wlogout
     swaynotificationcenter
     swayidle
     gsettings-desktop-schemas
