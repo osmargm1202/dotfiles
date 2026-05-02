@@ -44,6 +44,10 @@ in
     enableSystemMonitoring = false;
   };
 
+  # El servicio DMS invoca `qs` (quickshell) por nombre.
+  # Asegura PATH correcto para systemd user.
+  systemd.user.services.dms.path = [ pkgs.quickshell ];
+
   programs.nautilus-open-any-terminal = {
     enable = true;
     terminal = "kitty";
@@ -128,6 +132,7 @@ in
     sddmAstronautTheme
     kitty
     fuzzel
+    quickshell
     wlogout
     swaynotificationcenter
     swayidle
