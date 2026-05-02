@@ -107,7 +107,7 @@
         <command>kitty -e distrobox-enter arch -- orgmrnc find</command>
       </action>
     </keybind>
-    <!-- Standalone stack: fuzzel, cliphist, swaync, swaylock, playerctl, pamixer, brightnessctl. -->
+    <!-- Standalone stack: fuzzel, cliphist, swaync, DMS lock, playerctl, pamixer, brightnessctl. -->
     <keybind key="W-v">
       <action name="Execute">
         <command>sh -lc 'cliphist list | fuzzel --dmenu --prompt "Clipboard&gt; " | cliphist decode | wl-copy'</command>
@@ -115,7 +115,7 @@
     </keybind>
     <keybind key="W-A-e">
       <action name="Execute">
-        <command>sh -lc 'choice=$(printf "lock\nsuspend\nlogout\nreboot\npoweroff" | fuzzel --dmenu --prompt "Power&gt; "); case "$choice" in lock) swaylock -f -c 000000 ;; suspend) systemctl suspend ;; logout) loginctl terminate-session "$XDG_SESSION_ID" ;; reboot) systemctl reboot ;; poweroff) systemctl poweroff ;; esac'</command>
+        <command>sh -lc 'choice=$(printf "lock\nsuspend\nlogout\nreboot\npoweroff" | fuzzel --dmenu --prompt "Power&gt; "); case "$choice" in lock) dms ipc call lock lock ;; suspend) systemctl suspend ;; logout) loginctl terminate-session "$XDG_SESSION_ID" ;; reboot) systemctl reboot ;; poweroff) systemctl poweroff ;; esac'</command>
       </action>
     </keybind>
     <keybind key="W-m">
@@ -150,7 +150,7 @@
     </keybind>
     <keybind key="W-A-l">
       <action name="Execute">
-        <command>swaylock -f -c 000000</command>
+        <command>dms ipc call lock lock</command>
       </action>
     </keybind>
     <keybind key="W-n">
@@ -165,7 +165,7 @@
     </keybind>
     <keybind key="W-S-Escape">
       <action name="Execute">
-        <command>sh -lc 'choice=$(printf "lock\nsuspend\nlogout\nreboot\npoweroff" | fuzzel --dmenu --prompt "Power&gt; "); case "$choice" in lock) swaylock -f -c 000000 ;; suspend) systemctl suspend ;; logout) loginctl terminate-session "$XDG_SESSION_ID" ;; reboot) systemctl reboot ;; poweroff) systemctl poweroff ;; esac'</command>
+        <command>sh -lc 'choice=$(printf "lock\nsuspend\nlogout\nreboot\npoweroff" | fuzzel --dmenu --prompt "Power&gt; "); case "$choice" in lock) dms ipc call lock lock ;; suspend) systemctl suspend ;; logout) loginctl terminate-session "$XDG_SESSION_ID" ;; reboot) systemctl reboot ;; poweroff) systemctl poweroff ;; esac'</command>
       </action>
     </keybind>
     <keybind key="W-S-m">

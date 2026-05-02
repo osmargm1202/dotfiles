@@ -55,7 +55,7 @@
       <action name="Reconfigure" />
     </item>
     <item label="Lock" icon="system-lock-screen">
-      <action name="Execute"><command>swaylock -f -c 000000</command></action>
+      <action name="Execute"><command>dms ipc call lock lock</command></action>
     </item>
     <item label="Exit session" icon="system-log-out">
       <action name="Exit" />

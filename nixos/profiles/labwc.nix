@@ -118,7 +118,6 @@ in
     swaynotificationcenter
     swayidle
     gsettings-desktop-schemas
-    swaylock
     wlopm
 
     mpv
