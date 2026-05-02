@@ -430,7 +430,9 @@
   "updaterTerminalAdditionalParams": "",
   "displayNameMode": "model",
   "screenPreferences": {
-    "wallpaper": []
+    "wallpaper": [
+      "all"
+    ]
   },
   "showOnLastDisplay": {},
   "niriOutputSettings": {},
