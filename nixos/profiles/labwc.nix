@@ -113,8 +113,7 @@ in
     sddmAstronautTheme
     kitty
     fuzzel
-    waybar
-    wlogout
+    sfwbar
     swaynotificationcenter
     swayidle
     gsettings-desktop-schemas
