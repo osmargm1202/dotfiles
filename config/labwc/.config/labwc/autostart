@@ -32,6 +32,7 @@ pgrep -u "$USER" -f polkit-gnome-authentication-agent-1 >/dev/null 2>&1 || \
 # Screen idle management for labwc/wlroots.
 pgrep -u "$USER" -x swayidle >/dev/null 2>&1 || \
   swayidle -w \
+    timeout 300 'wlopm --off "*"' resume 'wlopm --on "*"' \
     timeout 600 'swaylock -f -c 000000' \
     timeout 900 'systemctl suspend' \
     before-sleep 'swaylock -f -c 000000' >/dev/null 2>&1 &
