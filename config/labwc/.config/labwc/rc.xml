@@ -92,11 +92,6 @@
         <command>flatpak run app.zen_browser.zen</command>
       </action>
     </keybind>
-    <keybind key="W-S-w">
-      <action name="Execute">
-        <command>labwc-wallpaper --next</command>
-      </action>
-    </keybind>
     <keybind key="W-a">
       <action name="Execute">
         <command>kitty --class orgmai-chat -e distrobox-enter arch -- orgmai chat</command>
@@ -166,11 +161,6 @@
     <keybind key="W-S-n">
       <action name="Execute">
         <command>apostrophe</command>
-      </action>
-    </keybind>
-    <keybind key="W-A-space">
-      <action name="Execute">
-        <command>labwc-wallpaper --next</command>
       </action>
     </keybind>
     <keybind key="W-S-Escape">
@@ -555,7 +545,6 @@
     <windowRule identifier="org.gnome.Calculator" serverDecoration="yes"/>
     <windowRule identifier="org.pulseaudio.pavucontrol" serverDecoration="yes"/>
     <windowRule identifier="org.quickshell*" skipTaskbar="yes" skipWindowSwitcher="yes"/>
-    <windowRule identifier="mpvpaper" skipTaskbar="yes" skipWindowSwitcher="yes"/>
     <windowRule identifier="kitty" serverDecoration="yes"/>
   </windowRules>
   <menu>

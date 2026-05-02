@@ -15,13 +15,7 @@ dbus-update-activation-environment --systemd \
 
 systemctl --user start graphical-session.target 2>/dev/null || true
 
-# Fondo de pantalla: videos en ~/Videos/wallpapers; fallback imágenes en ~/Pictures/Wallpapers.
-pgrep -u "$USER" -x mpvpaper >/dev/null 2>&1 || \
-  pgrep -u "$USER" -x swaybg >/dev/null 2>&1 || \
-  labwc-wallpaper --init >/dev/null 2>&1 &
-
-# Panel superior + dock inferior nwg-shell.
-labwc-nwg-session >/dev/null 2>&1 &
+# DMS maneja panel, dock y wallpapers vía systemd user.
 
 # Notificaciones / centro de control.
 pgrep -u "$USER" -x swaync >/dev/null 2>&1 || swaync >/dev/null 2>&1 &

@@ -6,6 +6,10 @@ let
   };
 in
 {
+  imports = [
+    inputs.dms.nixosModules.dank-material-shell
+  ];
+
   services.xserver.enable = true;
   services.displayManager = {
     defaultSession = "labwc";
@@ -28,6 +32,17 @@ in
 
   programs.labwc.enable = true;
   programs.xwayland.enable = true;
+
+  programs.dank-material-shell = {
+    enable = true;
+    systemd = {
+      enable = true;
+      restartIfChanged = true;
+    };
+    enableClipboardPaste = true;
+    enableDynamicTheming = true;
+    enableSystemMonitoring = false;
+  };
 
   programs.nautilus-open-any-terminal = {
     enable = true;
@@ -113,9 +128,6 @@ in
     sddmAstronautTheme
     kitty
     fuzzel
-    nwg-panel
-    nwg-dock
-    nwg-drawer
     wlogout
     swaynotificationcenter
     swayidle
@@ -123,8 +135,6 @@ in
     swaylock
     wlopm
 
-    mpvpaper
-    swaybg
     mpv
     ffmpeg
 
