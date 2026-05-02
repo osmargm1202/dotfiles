@@ -90,21 +90,7 @@ in
   services.dbus.enable = true;
   services.gvfs.enable = true;
   services.gnome.gnome-keyring.enable = true;
-  programs.dconf = {
-    enable = true;
-    profiles.user.databases = [
-      {
-        settings."org/gnome/desktop/interface" = {
-          color-scheme = "prefer-dark";
-          gtk-theme = "Adwaita-dark";
-          icon-theme = "Adwaita";
-        };
-        settings."org/gnome/nautilus/icon-view" = {
-          captions = [ "type" "size" "none" ];
-        };
-      }
-    ];
-  };
+  programs.dconf.enable = true;
 
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";

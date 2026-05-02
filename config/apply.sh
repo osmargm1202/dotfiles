@@ -23,9 +23,9 @@ for package_path in */; do
     continue
   fi
 
-  echo "==> stow -R -t $TARGET_HOME $package"
+  echo "==> stow -R --no-folding -t $TARGET_HOME $package"
 
-  if stow -R -t "$TARGET_HOME" "$package"; then
+  if stow -R --no-folding -t "$TARGET_HOME" "$package"; then
     echo "[ok] $package"
     ((applied++))
   else
