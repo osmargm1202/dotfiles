@@ -82,6 +82,10 @@ end
 #   alias kittyconfig='vim ~/.config/kitty/kitty.conf'
 #   alias ffconfig='vim ~/.config/fastfetch/config.jsonc'
 #end
+#
+if type -q fnm
+    fnm env --use-on-cd --shell fish | source
+end
 
 if type -q nvim
     set EDITOR nvim
