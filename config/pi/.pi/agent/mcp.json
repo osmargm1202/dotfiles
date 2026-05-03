@@ -47,6 +47,9 @@
         "STITCH_API_KEY": "${STITCH_API_KEY}"
       },
       "directTools": false
+    },
+    "context-mode": {
+      "command": "context-mode"
     }
   }
 }

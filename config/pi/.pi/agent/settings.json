@@ -1,12 +1,14 @@
 {
-  "lastChangelogVersion": "0.72.0",
+  "lastChangelogVersion": "0.72.1",
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.3-codex-spark",
+  "defaultModel": "gpt-5.5",
   "defaultThinkingLevel": "medium",
   "packages": [
     "npm:pi-ask-user",
     "npm:pi-mcp-adapter",
-    "git:github.com/obra/superpowers"
+    "git:github.com/obra/superpowers",
+    "npm:context-mode",
+    "npm:glimpseui"
   ],
   "theme": "midnight-ocean",
   "hideThinkingBlock": true,
