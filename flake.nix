@@ -123,7 +123,10 @@
         hostName = "lenovo";
         hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
         profile = ./nixos/profiles/labwc.nix;
-        extraModules = [ ./nixos/hosts/lenovo/plymouth.nix ];
+        extraModules = [
+          ./nixos/hosts/lenovo/plymouth.nix
+          ./nixos/hosts/lenovo/audio.nix
+        ];
       };
     };
   };
