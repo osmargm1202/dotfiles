@@ -18,6 +18,7 @@
     "~/.pi/agent/extensions/agent-selector.ts",
     "~/.pi/agent/extensions/subagents.ts",
     "~/.pi/agent/extensions/minimal.ts",
+    "~/.pi/agent/extensions/ruflo/index.ts",
     "-extensions/agent-status.ts"
   ],
   "treeFilterMode": "default",

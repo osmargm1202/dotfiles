@@ -1,0 +1,14 @@
+{
+  "name": "pi-ruflo-local",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "ruflo": "latest"
+  },
+  "pi": {
+    "extensions": ["./index.ts"],
+    "skills": ["./skills"],
+    "prompts": ["./prompts"]
+  }
+}
