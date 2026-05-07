@@ -69,7 +69,7 @@
     <!-- Applications: mirrors niri 80-binds.kdl -->
     <keybind key="W-slash">
       <action name="Execute">
-        <command>gnome-text-editor ~/.config/labwc/rc.xml</command>
+        <command>kitty --hold -e distrobox-enter arch -- tmuxls</command>
       </action>
     </keybind>
     <keybind key="W-Return">
@@ -175,7 +175,12 @@
     </keybind>
     <keybind key="W-S-slash">
       <action name="Execute">
-        <command>gnome-text-editor ~/.config/labwc/rc.xml</command>
+        <command>kitty --hold -e distrobox-enter arch -- tmuxnewz</command>
+      </action>
+    </keybind>
+    <keybind key="W-A-backslash">
+      <action name="Execute">
+        <command>kitty --hold -e distrobox-enter arch -- tmuxdel</command>
       </action>
     </keybind>
     <keybind key="XF86AudioRaiseVolume" allowWhenLocked="yes">
