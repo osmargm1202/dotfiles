@@ -1,3 +1,0 @@
-{
-  "signature": "tdd/default-primary-agent-to-pi/build-progress::📐 Cascade errors in 1 other file(s) — fix before finishing turn:\n<diagnostics file=\"extensions/lib/agent-discovery.ts\">\n  line 1, col 66 code=2307: Cannot find module 'node:fs' or its corresponding type declarations.\n  line 2, col 48 code=2307: Cannot find module 'node:path' or its corresponding type declarations.\n  line 3, col 47 code=2307: Cannot find module '@mariozechner/pi-coding-agent' or its corresponding type declarations.\n</diagnostics>"
-}

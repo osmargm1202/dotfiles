@@ -12,7 +12,7 @@
     <cascadeOffset x="40" y="30"/>
   </placement>
   <focus>
-    <followMouse>yes</followMouse>
+    <followMouse>no</followMouse>
     <followMouseRequiresMovement>no</followMouseRequiresMovement>
     <raiseOnFocus>no</raiseOnFocus>
   </focus>
@@ -51,7 +51,7 @@
     <icon>Adwaita</icon>
     <fallbackAppIcon>labwc</fallbackAppIcon>
     <cornerRadius>12</cornerRadius>
-    <keepBorder>yes</keepBorder>
+    <keepBorder>no</keepBorder>
     <maximizedDecoration>titlebar</maximizedDecoration>
     <dropShadows>yes</dropShadows>
     <font place="ActiveWindow" name="JetBrainsMono Nerd Font" size="11" weight="medium"/>
@@ -542,10 +542,8 @@
     </context>
   </mouse>
   <windowRules>
-    <windowRule identifier="org.gnome.Calculator" serverDecoration="yes"/>
-    <windowRule identifier="org.pulseaudio.pavucontrol" serverDecoration="yes"/>
     <windowRule identifier="org.quickshell*" skipTaskbar="yes" skipWindowSwitcher="yes"/>
-    <windowRule identifier="kitty" serverDecoration="yes"/>
+    <windowRule identifier="*" serverDecoration="no"/>
   </windowRules>
   <menu>
     <showIcons>yes</showIcons>
