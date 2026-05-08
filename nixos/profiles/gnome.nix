@@ -14,6 +14,7 @@
   environment.systemPackages = with pkgs; [
     gsettings-desktop-schemas
     gnome-tweaks
+    gnome-network-displays
     yaru-remix-theme
     gnomeExtensions.user-themes
     gnomeExtensions.blur-my-shell

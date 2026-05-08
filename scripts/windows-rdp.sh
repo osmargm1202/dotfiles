@@ -59,12 +59,43 @@ wait_rdp() {
   return 1
 }
 
+rdp_command() {
+  local rdp_bin=""
+
+  if command -v xfreerdp3 &>/dev/null; then
+    rdp_bin="xfreerdp3"
+  elif command -v xfreerdp &>/dev/null; then
+    rdp_bin="xfreerdp"
+  fi
+
+  if [[ -n "$rdp_bin" ]]; then
+    if command -v nvidia-offload &>/dev/null; then
+      echo "Using host $rdp_bin via nvidia-offload."
+      RDP_CMD=(nvidia-offload "$rdp_bin")
+    else
+      echo "nvidia-offload not found; using NVIDIA PRIME env vars with host $rdp_bin."
+      RDP_CMD=(env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only "$rdp_bin")
+    fi
+  else
+    echo "Host FreeRDP not found. Falling back to distrobox '$DISTROBOX'."
+    if command -v nvidia-offload &>/dev/null; then
+      echo "Using distrobox FreeRDP via host nvidia-offload."
+      RDP_CMD=(nvidia-offload distrobox-enter "$DISTROBOX" -- xfreerdp3)
+    else
+      echo "nvidia-offload not found; using NVIDIA PRIME env vars with distrobox FreeRDP."
+      RDP_CMD=(env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only distrobox-enter "$DISTROBOX" -- xfreerdp3)
+    fi
+  fi
+}
+
 rdp_connect() {
   local attempt=1
+  local -a RDP_CMD
+  rdp_command
+
   while [[ $attempt -le $RDP_MAX_RETRIES ]]; do
     echo "RDP connection attempt $attempt/$RDP_MAX_RETRIES..."
-    distrobox-enter "$DISTROBOX" -- \
-      xfreerdp3 /v:"$RDP_HOST":"$RDP_PORT" \
+    "${RDP_CMD[@]}" /v:"$RDP_HOST":"$RDP_PORT" \
       /u:"$RDP_USER" \
       /p:"$RDP_PASS" \
       /size:"${WIDTH}x${HEIGHT}" \

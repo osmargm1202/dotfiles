@@ -157,6 +157,7 @@
     ncdu
     gnumake
     podman-compose
+    freerdp
     nerd-fonts.jetbrains-mono
     nerd-fonts.symbols-only
     (chromium.override { enableWideVine = true; })

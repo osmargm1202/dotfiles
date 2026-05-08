@@ -1,7 +1,12 @@
 
 # fnm
-set FNM_PATH "/home/osmarg/.local/share/fnm"
-if [ -d "$FNM_PATH" ]
-  set PATH "$FNM_PATH" $PATH
-  fnm env | source
+set -l FNM_PATH "$HOME/.local/share/fnm"
+
+if command -q fnm
+    fnm env --shell fish | source
+else if test -d "$FNM_PATH"
+    fish_add_path "$FNM_PATH"
+    if command -q fnm
+        fnm env --shell fish | source
+    end
 end

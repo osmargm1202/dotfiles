@@ -125,6 +125,7 @@ in {
     hicolor-icon-theme
     gnome-themes-extra
     gnome-tweaks
+    gnome-network-displays
     gsettings-desktop-schemas
     yaru-remix-theme
     shared-mime-info
