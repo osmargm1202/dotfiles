@@ -1,0 +1,22 @@
+# Host-specific files. Only apply on hosts explicitly enabled here.
+{{- if ne .chezmoi.hostname "lenovo" }}
+.pi/agent/settings.json
+.pi/agent/mcp.json
+.config/DankMaterialShell/settings.json
+.config/DankMaterialShell/clsettings.json
+.config/DankMaterialShell/plugin_settings.json
+{{- end }}
+
+# Runtime/private Pi state. Keep local per PC.
+.pi/agent/auth.json
+.pi/agent/git/**
+.pi/agent/npm/**
+.pi/agent/sessions/**
+.pi/agent/agent-sessions/**
+.pi/agent/mcp-cache.json
+.pi/agent/mcp-npx-cache.json
+.pi/agent/run-history.jsonl
+.pi/agent/agent-status.json
+.pi/agent/.pi-lens/**
+# Host-specific payloads copied by run_after_apply-local-share-host.sh.tmpl
+hosts/**

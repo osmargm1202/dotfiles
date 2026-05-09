@@ -14,6 +14,34 @@
 
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.auto-optimise-store = true;
+
+  programs.nh = {
+    enable = true;
+    flake = "/home/osmarg/Hobby/dotfiles";
+    clean = {
+      enable = true;
+      dates = "daily";
+      extraArgs = "--keep-since 10d --keep 5";
+    };
+  };
+
+  # Automatic system updates.
+  system.autoUpgrade = {
+    enable = true;
+    dates = "weekly";
+    operation = "switch";
+    randomizedDelaySec = "45min";
+    allowReboot = false;
+    flake = "/home/osmarg/Hobby/dotfiles";
+    flags = [
+      "--update-input"
+      "nixpkgs"
+      "--update-input"
+      "home-manager"
+      "-L"
+    ];
+  };
 
   boot.kernelPackages = lib.mkDefault (
     if builtins.elem "nvidia" config.services.xserver.videoDrivers then

@@ -6,6 +6,7 @@ LOCK_FILE="$REPO_ROOT/.restow.lock"
 DEBOUNCE_SECONDS="${RESTOW_DEBOUNCE:-0.35}"
 TARGET_HOME="${RESTOW_TARGET:-$HOME}"
 EVENTS=(modify create delete move attrib)
+CHEZMOI_PACKAGES=(dms pi)
 
 event_args=()
 for event in "${EVENTS[@]}"; do
@@ -85,6 +86,17 @@ is_ignored_path() {
   return 1
 }
 
+is_chezmoi_package() {
+  local package="$1"
+  local chezmoi_package
+
+  for chezmoi_package in "${CHEZMOI_PACKAGES[@]}"; do
+    [[ "$package" == "$chezmoi_package" ]] && return 0
+  done
+
+  return 1
+}
+
 package_from_path() {
   local rel="$1"
   local first
@@ -96,6 +108,7 @@ package_from_path() {
   [[ "$first" == .* ]] && return 1
   [[ "$first" == opencode ]] && return 1
   [[ ! -d "$first" ]] && return 1
+  is_chezmoi_package "$first" && return 1
 
   printf '%s\n' "$first"
 }

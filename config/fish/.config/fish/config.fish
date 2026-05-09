@@ -143,6 +143,9 @@ end
 if not set -q DISTROBOX_ENTER_PATH
     if string match -q "*arch*" (distrobox-list)
         distrobox-enter arch -- fastfetch --logo arch
+        if type -q distrobox-enter arch -- fnm
+            distrobox-enter arch -- fnm env --use-on-cd --shell fish | source
+        end
         if type -q distrobox-enter arch -- zoxide
             distrobox-enter arch -- zoxide init fish | source
             alias cd="z"

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source_dir='{{ .chezmoi.sourceDir }}'
+hostname='{{ .chezmoi.hostname }}'
+host_share="$source_dir/hosts/$hostname/dot_local/share"
+target_share="$HOME/.local/share"
+
+if [[ ! -d "$host_share" ]]; then
+  echo "[chezmoi] no host-local share for $hostname: $host_share"
+  exit 0
+fi
+
+mkdir -p "$target_share"
+
+for name in applications icons; do
+  src="$host_share/$name"
+  dst="$target_share/$name"
+
+  if [[ -d "$src" ]]; then
+    mkdir -p "$dst"
+    rsync -a --delete "$src/" "$dst/"
+    echo "[chezmoi] synced ~/.local/share/$name for $hostname"
+  fi
+done
