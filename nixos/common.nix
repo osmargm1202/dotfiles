@@ -175,12 +175,16 @@
     chezmoi
     gh
     fish
+    figlet
     fzf
     nix-search-tv
     nextcloud-client
     gtk3
     git
     distrobox
+    age
+    fd
+    eza
     htop
     ntfs3g
     gcc
@@ -191,7 +195,7 @@
     freerdp
     nerd-fonts.jetbrains-mono
     nerd-fonts.symbols-only
-    noto-fonts-emoji
+    noto-fonts-color-emoji
     (chromium.override { enableWideVine = true; })
     (pkgs.writeShellApplication {
       name = "ns";
@@ -212,7 +216,7 @@
     inter
     nerd-fonts.jetbrains-mono
     nerd-fonts.symbols-only
-    noto-fonts-emoji
+    noto-fonts-color-emoji
   ];
 
   # Some programs need SUID wrappers, can be configured further or are

@@ -26,8 +26,8 @@ client.focused          #5e81ac #5e81ac #ffffff #5e81ac #5e81ac
 client.focused_inactive #3b4252 #3b4252 #d8dee9 #3b4252 #3b4252
 client.unfocused        #2e3440 #2e3440 #d8dee9 #2e3440 #2e3440
 client.urgent           #bf616a #bf616a #ffffff #bf616a #bf616a
-gaps inner 0
-gaps outer 0
+gaps inner 16
+gaps outer 12
 default_border pixel 2
 default_floating_border pixel 2
 

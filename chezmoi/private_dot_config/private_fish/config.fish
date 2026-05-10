@@ -136,51 +136,6 @@ if type -q curl; and type -q fzf; and type -q bat
     end
 end
 
-if not set -q DISTROBOX_ENTER_PATH
-    if string match -q "*arch*" (distrobox-list)
-        #distrobox-enter arch -- fastfetch --logo arch
-        if type -q distrobox-enter arch -- fnm
-            distrobox-enter arch -- fnm env --use-on-cd --shell fish | source
-        end
-        if type -q distrobox-enter arch -- zoxide
-            distrobox-enter arch -- zoxide init fish | source
-            alias cd="z"
-        end
-        function nvim
-            distrobox-enter arch -- nvim $argv
-        end
-        function fd
-            distrobox-enter arch -- fd $argv
-        end
-        function rg
-            distrobox-enter arch -- rg $argv
-        end
-        function fzf
-            distrobox-enter arch -- fzf $argv
-        end
-        function stow
-            distrobox-enter arch -- stow $argv
-        end
-        function tmux
-            distrobox-enter arch -- tmux $argv
-        end
-        function pi
-            distrobox-enter arch -- pi $argv
-        end
-        function yazi
-            distrobox-enter arch -- yazi $argv
-        end
-        function pandoc
-            distrobox-enter arch -- pandoc $argv
-        end
-        alias y='distrobox-enter arch -- yazi'
-        alias ls='distrobox-enter arch -- eza --group-directories-first --icons'
-        alias ll='distrobox-enter arch -- eza -la --group-directories-first --icons'
-        alias lt='distrobox-enter arch -- eza --tree --group-directories-first --icons'
-        alias fishconfig='distrobox-enter arch -- nvim ~/.config/fish/config.fish'
-    end
-end
-
 function g
     set -l query (string join '+' $argv)
     xdg-open "https://www.google.com/search?q=$query"
