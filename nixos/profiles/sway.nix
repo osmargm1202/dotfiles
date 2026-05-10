@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   # Sway sin display manager: autologin en tty1 y arranque automático.
@@ -40,7 +40,7 @@
         "gtk"
       ];
       sway = {
-        default = [
+        default = lib.mkForce [
           "wlr"
           "gtk"
         ];

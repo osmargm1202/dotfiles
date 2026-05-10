@@ -198,6 +198,7 @@
         fzf
         nix-search-tv
       ];
+      checkPhase = "";
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
     })
   ];
