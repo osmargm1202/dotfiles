@@ -1,11 +1,8 @@
-# Host-specific files. Only apply on hosts explicitly enabled here.
+# Host-specific Pi files. Only apply on hosts explicitly enabled here.
 {{- $host := .chezmoi.hostname }}
 {{- if and (ne $host "lenovo") (ne $host "orgm") }}
 .pi/agent/settings.json
 .pi/agent/mcp.json
-.config/DankMaterialShell/settings.json
-.config/DankMaterialShell/clsettings.json
-.config/DankMaterialShell/plugin_settings.json
 {{- end }}
 
 # Runtime/private Pi state. Keep local per PC.
