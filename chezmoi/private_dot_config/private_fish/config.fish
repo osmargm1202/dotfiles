@@ -1,11 +1,15 @@
-if not set -q TMUX
-    if type -q fastfetch
-        # Fastfetch local disponible
-        fastfetch
-    end
-end
+# if not set -q TMUX
+#     if type -q fastfetch
+#         # Fastfetch local disponible
+#         fastfetch
+#     end
+# end
 
 set -gx AGE_KEY_FILE "$HOME/Nextcloud/Documentos/keys/age.txt"
+
+if test -f ~/.config/fish/age.fish
+    source ~/.config/fish/age.fish
+end
 
 if test -f ~/.config/fish/private-env.fish
     source ~/.config/fish/private-env.fish

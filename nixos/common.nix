@@ -172,6 +172,7 @@
     vim
     tmux
     stow
+    chezmoi
     gh
     fish
     nextcloud-client
