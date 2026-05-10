@@ -191,6 +191,7 @@
     freerdp
     nerd-fonts.jetbrains-mono
     nerd-fonts.symbols-only
+    noto-fonts-emoji
     (chromium.override { enableWideVine = true; })
     (pkgs.writeShellApplication {
       name = "ns";
@@ -206,6 +207,13 @@
   programs.dconf.enable = true;
 
   fonts.fontconfig.enable = true;
+  fonts.packages = with pkgs; [
+    jetbrains-mono
+    inter
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.symbols-only
+    noto-fonts-emoji
+  ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.

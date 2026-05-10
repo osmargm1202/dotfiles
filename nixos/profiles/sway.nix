@@ -119,9 +119,12 @@
     XDG_SESSION_DESKTOP = "sway";
     XDG_CURRENT_DESKTOP = "sway:wlroots";
     QT_QPA_PLATFORM = "wayland";
-    QT_QPA_PLATFORMTHEME = "gtk3";
-    QT_QPA_PLATFORMTHEME_QT6 = "gtk3";
-    GTK_THEME = "Adwaita:dark";
+    QT_QPA_PLATFORMTHEME = "qt5ct";
+    QT_QPA_PLATFORMTHEME_QT6 = "qt6ct";
+    QT_STYLE_OVERRIDE = "kvantum";
+    GTK_THEME = "catppuccin-macchiato-teal-standard";
+    XCURSOR_THEME = "Catppuccin-Macchiato-Teal-Cursors";
+    XCURSOR_SIZE = "24";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
     GDK_BACKEND = "wayland,x11";
     SDL_VIDEODRIVER = "wayland";
@@ -168,6 +171,11 @@
     networkmanagerapplet
     blueman
     wdisplays
+    wl-screenrec
+    libnotify
+    dunst
+    overskride
+    iwgtk
 
     # GNOME apps usados como defaults
     nautilus
@@ -195,6 +203,12 @@
     gnome-themes-extra
     gnome-tweaks
     yaru-remix-theme
+    catppuccin-gtk
+    colloid-icon-theme
+    libsForQt5.qtstyleplugin-kvantum
+    libsForQt5.qt5ct
+    kdePackages.qtstyleplugin-kvantum
+    qt6Packages.qt6ct
     shared-mime-info
     dconf
     glib
