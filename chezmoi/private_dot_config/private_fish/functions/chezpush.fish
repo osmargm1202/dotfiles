@@ -1,7 +1,7 @@
 function chezpush --description 'Re-add chezmoi-managed dotfiles, commit, and push'
-    set -l repo "$HOME/Hobby/dotfiles"
     set -l host (hostname)
     set -l source_dir (chezmoi source-path)
+    set -l repo (string replace --regex '/chezmoi$' '' -- "$source_dir")
     set -l msg
 
     if test (count $argv) -gt 0
@@ -10,13 +10,13 @@ function chezpush --description 'Re-add chezmoi-managed dotfiles, commit, and pu
         set msg "sync $host config"
     end
 
-    if not test -d "$repo/.git"
-        echo "chezpush: repo not found: $repo" >&2
+    if test "$repo" = "$source_dir"
+        echo "chezpush: chezmoi source must end with /chezmoi: $source_dir" >&2
         return 1
     end
 
-    if test "$source_dir" != "$repo/chezmoi"
-        echo "chezpush: chezmoi source is $source_dir, expected $repo/chezmoi" >&2
+    if not test -d "$repo/.git"
+        echo "chezpush: repo not found: $repo" >&2
         return 1
     end
 
