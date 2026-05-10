@@ -1,0 +1,42 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 30,
+  "spacing": 8,
+  "modules-left": ["sway/workspaces", "sway/mode"],
+  "modules-center": ["sway/window"],
+  "modules-right": ["tray", "network", "pulseaudio", "battery", "clock"],
+  "sway/workspaces": {
+    "disable-scroll": false,
+    "all-outputs": true
+  },
+  "tray": {
+    "spacing": 10
+  },
+  "clock": {
+    "format": "{:%a %d %b  %H:%M}"
+  },
+  "network": {
+    "format-wifi": "  {essid}",
+    "format-ethernet": "󰈀  wired",
+    "format-disconnected": "󰖪  offline",
+    "tooltip-format": "{ifname}: {ipaddr}"
+  },
+  "pulseaudio": {
+    "format": "{icon}  {volume}%",
+    "format-muted": "󰝟  muted",
+    "format-icons": {
+      "default": ["", "", ""]
+    },
+    "on-click": "pavucontrol"
+  },
+  "battery": {
+    "states": {
+      "warning": 30,
+      "critical": 15
+    },
+    "format": "{icon}  {capacity}%",
+    "format-charging": "󰂄  {capacity}%",
+    "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+  }
+}

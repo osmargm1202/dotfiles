@@ -79,6 +79,9 @@
       labwc-light = mkProfile {
         profile = ./nixos/profiles/labwc-light.nix;
       };
+      sway = mkProfile {
+        profile = ./nixos/profiles/sway.nix;
+      };
       i3 = mkProfile {
         profile = ./nixos/profiles/i3.nix;
       };
@@ -106,6 +109,12 @@
         profile = ./nixos/profiles/labwc.nix;
         extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
       };
+      orgm-sway = mkHost {
+        hostName = "orgm";
+        hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+        profile = ./nixos/profiles/sway.nix;
+        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
+      };
 
       ero-labwc = mkHost {
         hostName = "ero";
@@ -119,10 +128,25 @@
         profile = ./nixos/profiles/i3.nix;
         extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
       };
+      ero-sway = mkHost {
+        hostName = "ero";
+        hardware = ./nixos/hosts/ero/hardware-configuration.nix;
+        profile = ./nixos/profiles/sway.nix;
+        extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
+      };
       lenovo-labwc = mkHost {
         hostName = "lenovo";
         hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
         profile = ./nixos/profiles/labwc.nix;
+        extraModules = [
+          ./nixos/hosts/lenovo/plymouth.nix
+          ./nixos/hosts/lenovo/audio.nix
+        ];
+      };
+      lenovo-sway = mkHost {
+        hostName = "lenovo";
+        hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+        profile = ./nixos/profiles/sway.nix;
         extraModules = [
           ./nixos/hosts/lenovo/plymouth.nix
           ./nixos/hosts/lenovo/audio.nix

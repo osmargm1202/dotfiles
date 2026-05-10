@@ -175,6 +175,8 @@
     chezmoi
     gh
     fish
+    fzf
+    nix-search-tv
     nextcloud-client
     gtk3
     git
@@ -190,6 +192,14 @@
     nerd-fonts.jetbrains-mono
     nerd-fonts.symbols-only
     (chromium.override { enableWideVine = true; })
+    (pkgs.writeShellApplication {
+      name = "ns";
+      runtimeInputs = with pkgs; [
+        fzf
+        nix-search-tv
+      ];
+      text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
+    })
   ];
 
   programs.dconf.enable = true;
