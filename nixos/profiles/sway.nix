@@ -13,6 +13,7 @@
 
   programs.sway = {
     enable = true;
+    package = pkgs.swayfx;
     xwayland.enable = true;
     wrapperFeatures.gtk = true;
   };
@@ -129,14 +130,14 @@
   };
 
   environment.systemPackages = with pkgs; [
-    sway
+    swayfx
     xwayland
 
     # Shell Sway
     waybar
     swaybg
     swayidle
-    swaylock
+    swaylock-effects
     swaynotificationcenter
     wlogout
     fuzzel

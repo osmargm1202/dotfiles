@@ -87,17 +87,9 @@ end
 #   alias ffconfig='vim ~/.config/fastfetch/config.jsonc'
 #end
 #
-if type -q fnm
-    fnm env --use-on-cd --shell fish | source
-end
-
 if type -q nvim
     set EDITOR nvim
-    alias hyprconfig='nvim ~/.config/hypr/hyprland.conf'
     alias fishconfig='nvim ~/.config/fish/config.fish'
-    alias kittyconfig='nvim ~/.config/kitty/kitty.conf'
-    alias ffconfig='nvim ~/.config/fastfetch/config.jsonc'
-    alias niriconfig='distrobox-enter arch -- nvim ~/.config/niri/'
 end
 
 # history search (ctrl+r mejorado con fzf si lo instalas)
@@ -136,7 +128,7 @@ if type -q zoxide; and type -q fzf
 end
 
 # Deshabilitar mensaje de ayuda de fish
-set -U fish_greeting ""
+# Ejecutado una vez como variable universal, no en cada inicio.
 
 if type -q curl; and type -q fzf; and type -q bat
     function cheat
@@ -146,7 +138,7 @@ end
 
 if not set -q DISTROBOX_ENTER_PATH
     if string match -q "*arch*" (distrobox-list)
-        distrobox-enter arch -- fastfetch --logo arch
+        #distrobox-enter arch -- fastfetch --logo arch
         if type -q distrobox-enter arch -- fnm
             distrobox-enter arch -- fnm env --use-on-cd --shell fish | source
         end
@@ -157,18 +149,6 @@ if not set -q DISTROBOX_ENTER_PATH
         function nvim
             distrobox-enter arch -- nvim $argv
         end
-        function bat
-            distrobox-enter arch -- bat $argv
-        end
-        function helix
-            distrobox-enter arch -- helix $argv
-        end
-        function git
-            distrobox-enter arch -- git $argv
-        end
-        function gh
-            distrobox-enter arch -- gh $argv
-        end
         function fd
             distrobox-enter arch -- fd $argv
         end
@@ -177,24 +157,6 @@ if not set -q DISTROBOX_ENTER_PATH
         end
         function fzf
             distrobox-enter arch -- fzf $argv
-        end
-        function go
-            distrobox-enter arch -- go $argv
-        end
-        function uv
-            distrobox-enter arch -- uv $argv
-        end
-        function npm
-            distrobox-enter arch -- npm $argv
-        end
-        function paru
-            distrobox enter arch -- paru $argv
-        end
-        function rust
-            distrobox-enter arch -- rust $argv
-        end
-        function cargo
-            distrobox-enter arch -- cargo $argv
         end
         function stow
             distrobox-enter arch -- stow $argv
@@ -205,38 +167,8 @@ if not set -q DISTROBOX_ENTER_PATH
         function pi
             distrobox-enter arch -- pi $argv
         end
-        function fnm
-            distrobox-enter arch -- fnm $argv
-        end
-        function orgmrnc
-            distrobox-enter arch -- orgmrnc $argv
-        end
-        function orgmcalc
-            distrobox-enter arch -- orgmrnc $argv
-        end
-        function orgmorg
-            distrobox-enter arch -- orgmorg $argv
-        end
-        function orgmos
-            distrobox-enter arch -- orgmos $argv
-        end
-        function mypy
-            distrobox-enter arch -- mypy $argv
-        end
-        function ty
-            distrobox-enter arch -- ty $argv
-        end
-        function ruff
-            distrobox-enter arch -- ruff $argv
-        end
-        function pyrefly
-            distrobox-enter arch -- pyrefly $argv
-        end
         function yazi
             distrobox-enter arch -- yazi $argv
-        end
-        function jq
-            distrobox-enter arch -- jq $argv
         end
         function pandoc
             distrobox-enter arch -- pandoc $argv
@@ -246,10 +178,6 @@ if not set -q DISTROBOX_ENTER_PATH
         alias ll='distrobox-enter arch -- eza -la --group-directories-first --icons'
         alias lt='distrobox-enter arch -- eza --tree --group-directories-first --icons'
         alias fishconfig='distrobox-enter arch -- nvim ~/.config/fish/config.fish'
-        alias niriconfig='distrobox-enter arch -- nvim ~/.config/niri/'
-        alias hyprconfig='distrobox-enter arch -- nvim ~/.config/hypr/hyprland.conf'
-        alias kittyconfig='distrobox-enter arch -- nvim ~/.config/kitty/kitty.conf'
-        alias ffconfig'=distrobox-enter arch -- nvim ~/.config/fastfetch/config.jsonc'
     end
 end
 
