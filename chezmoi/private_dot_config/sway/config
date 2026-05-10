@@ -31,6 +31,24 @@ gaps outer 12
 default_border pixel 2
 default_floating_border pixel 2
 
+# SwayFX effects.
+corner_radius 12
+smart_corner_radius on
+shadows enable
+shadow_blur_radius 18
+shadow_color #00000070
+blur enable
+blur_xray disable
+blur_passes 3
+blur_radius 5
+for_window [app_id=".*"] opacity 0.96
+for_window [class=".*"] opacity 0.96
+
+# Start Discord hidden in scratchpad (Sway equivalent of minimized).
+for_window [app_id="discord"] move scratchpad
+for_window [app_id="com.discordapp.Discord"] move scratchpad
+for_window [class="discord"] move scratchpad
+
 # Env for portals/GTK apps.
 exec_always systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL XCURSOR_THEME XCURSOR_SIZE
 exec_always dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL XCURSOR_THEME XCURSOR_SIZE
@@ -44,6 +62,8 @@ exec nm-applet --indicator
 exec blueman-applet
 exec polkit-gnome-authentication-agent-1
 exec nextcloud --background
+exec sh -lc 'command -v distrobox >/dev/null 2>&1 && distrobox enter arch -- true'
+exec sh -lc 'if command -v discord >/dev/null 2>&1; then discord --start-minimized; elif command -v flatpak >/dev/null 2>&1 && flatpak info com.discordapp.Discord >/dev/null 2>&1; then flatpak run com.discordapp.Discord --start-minimized; fi'
 exec wl-paste --type text --watch cliphist store
 exec wl-paste --type image --watch cliphist store
 exec swayidle -w timeout 300 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' timeout 600 'swaylock --config ~/.config/swaylock/config' timeout 900 'systemctl suspend' before-sleep 'swaylock --config ~/.config/swaylock/config'

@@ -4,24 +4,22 @@
   border: none;
   min-height: 0;
   font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", "Symbols Nerd Font Mono", "Noto Color Emoji", sans-serif;
-  font-size: 13px;
+  font-size: 17px;
 }
 
-window.top_bar#waybar {
-  background-color: alpha(@base, 0.72);
-  border-bottom: solid alpha(@surface1, 0.7) 2px;
-}
+window.top_bar#waybar,
 window.bottom_bar#waybar {
   background-color: alpha(@base, 0.72);
-  border-top: solid alpha(@surface1, 0.7) 2px;
+  border: none;
+  border-radius: 18px;
 }
-#workspaces { margin-left: 10px; }
+#workspaces { margin-left: 13px; }
 #workspaces button {
   color: @text;
-  font-size: 18px;
-  padding: 0 5px;
-  margin: 4px 2px;
-  border-radius: 12px;
+  font-size: 23px;
+  padding: 0 7px;
+  margin: 5px 3px;
+  border-radius: 16px;
 }
 #workspaces button.empty { color: @overlay0; }
 #workspaces button.active,
@@ -35,14 +33,14 @@ window.bottom_bar .modules-left, window.bottom_bar .modules-right, #bluetooth,
 #network, #privacy, #tray, #custom-logout_menu, #custom-user, #window,
 #idle_inhibitor, #mpris, #backlight, #pulseaudio, #battery {
   background-color: alpha(@surface1, 0.7);
-  border-radius: 15px;
-  padding: 0 14px;
-  margin-top: 5px;
-  margin-bottom: 5px;
+  border-radius: 20px;
+  padding: 0 18px;
+  margin-top: 7px;
+  margin-bottom: 7px;
 }
 window.top_bar .modules-center { font-weight: bold; color: @peach; }
-window.bottom_bar .modules-left { border-radius: 0 15px 15px 0; margin-left: 0; }
-window.bottom_bar .modules-right { border-radius: 15px 0 0 15px; margin-right: 0; }
+window.bottom_bar .modules-left { border-radius: 20px; margin-left: 13px; }
+window.bottom_bar .modules-right { border-radius: 20px; margin-right: 13px; }
 #custom-separator, #custom-separator_dot { color: @green; }
 #clock.time { color: @flamingo; }
 #clock.week, #clock.month { color: @sapphire; }
@@ -53,7 +51,7 @@ window.bottom_bar .modules-right { border-radius: 15px 0 0 15px; margin-right: 0
 #network.ethernet { color: @green; }
 #network.disconnected, #battery.critical { color: @red; }
 #privacy-item.screenshare, #privacy-item.audio-in { color: @red; }
-#custom-logout_menu { color: @red; font-size: 18px; }
+#custom-logout_menu { color: @red; font-size: 23px; }
 #custom-user { color: @lavender; font-weight: bold; }
 #window { color: @text; }
 #idle_inhibitor.activated { color: @green; }
