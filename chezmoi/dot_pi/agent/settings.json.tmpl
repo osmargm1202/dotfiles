@@ -5,4 +5,42 @@
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.5"
 }
+{{- else if eq .chezmoi.hostname "orgm" -}}
+{
+  "lastChangelogVersion": "0.74.0",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.5",
+  "defaultThinkingLevel": "medium",
+  "packages": [
+    "npm:pi-ask-user",
+    "npm:pi-mcp-adapter",
+    "git:github.com/obra/superpowers",
+    "npm:context-mode",
+    "npm:@spences10/pi-lsp"
+  ],
+  "theme": "tokyo-night",
+  "hideThinkingBlock": true,
+  "extensions": [
+    "~/.pi/agent/extensions/pi-mcp-adapter/index.ts",
+    "~/.pi/agent/extensions/model-primary.ts",
+    "~/.pi/agent/extensions/agent-selector.ts",
+    "~/.pi/agent/extensions/subagents.ts",
+    "~/.pi/agent/extensions/minimal.ts",
+    "~/.pi/agent/extensions/ruflo/index.ts",
+    "-extensions/agent-status.ts"
+  ],
+  "treeFilterMode": "default",
+  "transport": "sse",
+  "editorPaddingX": 0,
+  "warnings": {
+    "anthropicExtraUsage": true
+  },
+  "doubleEscapeAction": "tree",
+  "quietStartup": true,
+  "collapseChangelog": false,
+  "terminal": {
+    "showTerminalProgress": true
+  },
+  "enableInstallTelemetry": true
+}
 {{- end -}}

@@ -1,0 +1,2 @@
+# Runtime plugins are installed locally by TPM, not managed by stow/git.
+^\.tmux/plugins/

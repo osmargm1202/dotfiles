@@ -7,4 +7,13 @@
   "disabled": false,
   "maxPinned": 25
 }
+{{- else if eq .chezmoi.hostname "orgm" -}}
+{
+  "maxHistory": 50000,
+  "maxEntrySize": 20971520,
+  "autoClearDays": 0,
+  "clearAtStartup": false,
+  "disabled": false,
+  "maxPinned": 25
+}
 {{- end -}}

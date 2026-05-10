@@ -1,3 +1,8 @@
 .worktrees/
 .gstack/
 config/codex/.codex/
+
+# Legacy stow/runtime leftovers kept local after chezmoi migration.
+config/dms/
+config/pi/
+config/tmux/.tmux/plugins/

@@ -55,4 +55,61 @@
     }
   }
 }
+{{- else if eq .chezmoi.hostname "orgm" -}}
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ],
+      "directTools": false
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": [
+        "obsidian-mcp",
+        "/home/osmarg/Nextcloud/Documentos/obsidian-vault"
+      ],
+      "directTools": false
+    },
+    "engram": {
+      "command": "engram",
+      "args": [
+        "mcp",
+        "--tools=agent"
+      ],
+      "directTools": true
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "directTools": true
+    },
+    "exa": {
+      "url": "https://mcp.exa.ai/mcp",
+      "directTools": true
+    },
+    "stitch": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "google-stitch-mcp",
+        "proxy"
+      ],
+      "env": {
+        "STITCH_API_KEY": "${STITCH_API_KEY}"
+      },
+      "directTools": false
+    },
+    "context-mode": {
+      "command": "context-mode",
+      "directTools": true
+    }
+  }
+}
 {{- end -}}
