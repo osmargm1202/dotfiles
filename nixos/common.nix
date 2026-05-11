@@ -66,6 +66,11 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   hardware.uinput.enable = true;
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+  };
+  services.blueman.enable = true;
 
   virtualisation.podman = {
     enable = true;
