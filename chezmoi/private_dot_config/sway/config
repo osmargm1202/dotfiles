@@ -60,6 +60,7 @@ exec swaybg -i ~/.config/wallpapers/xnm1-background.png -m fill
 exec swaync
 exec nm-applet --indicator
 exec blueman-applet
+exec gnome-keyring-daemon --start --components=secrets,pkcs11,ssh
 exec polkit-gnome-authentication-agent-1
 exec nextcloud --background
 exec sh -lc 'command -v distrobox >/dev/null 2>&1 && distrobox enter arch -- true'

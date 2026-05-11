@@ -104,7 +104,18 @@
     };
   };
 
-  security.polkit.enable = true;
+  security.polkit = {
+    enable = true;
+    # Evita prompts repetidos de polkit al abrir navegadores en Sway
+    # por acciones de colord/color-manager.
+    extraConfig = ''
+      polkit.addRule(function(action, subject) {
+        if (subject.user == "osmarg" && action.id.indexOf("org.freedesktop.color-manager.") == 0) {
+          return polkit.Result.YES;
+        }
+      });
+    '';
+  };
   security.pam.services.login.enableGnomeKeyring = true;
 
   services.dbus.enable = true;
