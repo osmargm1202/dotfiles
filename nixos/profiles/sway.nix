@@ -1,9 +1,9 @@
 { pkgs, lib, ... }:
 
 {
-  # Sway sin display manager: autologin en tty1 y arranque automático.
+  # Sway sin display manager: login en tty1 y arranque automático.
+  # Sin autologin, PAM puede desbloquear GNOME Keyring con la clave de login.
   services.xserver.enable = false;
-  services.getty.autologinUser = "osmarg";
 
   programs.fish.loginShellInit = ''
     if test -z "$DISPLAY"; and test -z "$WAYLAND_DISPLAY"; and test (tty) = "/dev/tty1"
@@ -149,6 +149,7 @@
 
     # Shell Sway
     waybar
+    yad
     swaybg
     swayidle
     swaylock-effects

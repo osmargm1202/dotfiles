@@ -11,7 +11,7 @@
     "margin-right": 14,
     "modules-left": ["sway/workspaces", "sway/mode"],
     "modules-center": ["clock#time", "custom/separator", "clock#week", "custom/separator_dot", "clock#month", "custom/separator", "clock#calendar"],
-    "modules-right": ["bluetooth", "network", "privacy", "tray", "custom/logout_menu"],
+    "modules-right": ["custom/wallpaper", "bluetooth", "network", "privacy", "tray", "custom/logout_menu"],
 
     "sway/workspaces": {
       "disable-scroll": false,
@@ -47,6 +47,13 @@
           "today": "<span color='#8bd5ca'><b><u>{}</u></b></span>"
         }
       }
+    },
+
+    "custom/wallpaper": {
+      "format": "󰸉",
+      "tooltip": true,
+      "tooltip-format": "Cambiar fondo aleatorio",
+      "on-click": "~/.local/bin/sway-random-wallpaper next"
     },
 
     "bluetooth": {
@@ -92,7 +99,7 @@
     "margin-right": 14,
     "modules-left": ["custom/user", "sway/window"],
     "modules-center": ["idle_inhibitor", "mpris"],
-    "modules-right": ["backlight", "pulseaudio", "battery"],
+    "modules-right": ["backlight", "pulseaudio", "battery", "keyboard-state", "custom/kbd_layout", "custom/keybindings_help"],
 
     "custom/user": { "format": "  osmarg", "tooltip": false },
     "sway/window": { "format": "{}", "max-length": 80, "separate-outputs": true },
@@ -104,6 +111,30 @@
     },
     "backlight": { "format": "{icon} {percent}%", "format-icons": ["󰃞", "󰃟", "󰃠"] },
     "pulseaudio": { "format": "{icon} {volume}%", "format-muted": "󰝟 muted", "format-icons": { "default": ["", "", ""] }, "on-click": "pavucontrol" },
-    "battery": { "states": { "warning": 30, "critical": 15 }, "format": "{icon} {capacity}%", "format-charging": "󰂄 {capacity}%", "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"] }
+    "keyboard-state": {
+      "capslock": true,
+      "format": { "capslock": "CAPS" },
+      "tooltip": false
+    },
+    "custom/kbd_layout": {
+      "exec": "~/.config/waybar/kbd-layout.sh",
+      "interval": 1,
+      "tooltip": false
+    },
+    "custom/keybindings_help": {
+      "format": "?",
+      "tooltip": true,
+      "tooltip-format": "Atajos Sway (Win+/)",
+      "on-click": "~/.local/bin/sway-keybindings-help"
+    },
+    "battery": {
+      "states": { "warning": 30, "critical": 15 },
+      "format": "{icon} {capacity}%",
+      "format-charging": "󰂄 {capacity}% ",
+      "format-plugged": "󰚥 {capacity}%",
+      "format-full": "󰁹 {capacity}%",
+      "tooltip-format": "{capacity}% {timeTo} {power}W",
+      "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+    }
   }
 ]

@@ -10,7 +10,7 @@ set $lock swaylock --config ~/.config/swaylock/config
 set $power_menu fish -c wlogout_uniqe
 
 # Outputs / wallpaper
-output * bg ~/.config/wallpapers/xnm1-background.png fill
+# Managed by ~/.local/bin/sway-random-wallpaper to avoid duplicate swaybg processes.
 
 # Input
 input * {
@@ -26,7 +26,7 @@ client.focused          #5e81ac #5e81ac #ffffff #5e81ac #5e81ac
 client.focused_inactive #3b4252 #3b4252 #d8dee9 #3b4252 #3b4252
 client.unfocused        #2e3440 #2e3440 #d8dee9 #2e3440 #2e3440
 client.urgent           #bf616a #bf616a #ffffff #bf616a #bf616a
-gaps inner 16
+gaps inner 12
 gaps outer 12
 default_border pixel 2
 default_floating_border pixel 2
@@ -43,12 +43,23 @@ blur_passes 3
 blur_radius 5
 for_window [app_id=".*"] opacity 0.96
 for_window [class=".*"] opacity 0.96
+for_window [app_id="kitty"] opacity 0.85
+for_window [app_id="app.zen_browser.zen"] opacity 0.90
+for_window [app_id="zen-browser"] opacity 0.90
+for_window [app_id="chromium"] opacity 0.90
+for_window [class="Chromium"] opacity 0.90
 
-# Start Discord hidden in scratchpad (Sway equivalent of minimized).
-for_window [app_id="discord"] move scratchpad
-for_window [app_id="com.discordapp.Discord"] move scratchpad
-for_window [class="discord"] move scratchpad
+# Utility windows.
+for_window [app_id="org.gnome.Calculator"] floating enable, resize set 420 520, move position center
+for_window [app_id="pavucontrol"] floating enable, resize set 760 520, move position center
+for_window [app_id="blueman-manager"] floating enable, resize set 760 520, move position center
+for_window [app_id="nm-connection-editor"] floating enable, resize set 820 560, move position center
+for_window [app_id="wdisplays"] floating enable, resize set 980 640, move position center
+for_window [app_id="org.gnome.FileRoller"] floating enable, resize set 820 560, move position center
+for_window [window_role="pop-up"] floating enable
+for_window [window_type="dialog"] floating enable
 
+# Discord is autostarted minimized; do not force it to scratchpad.
 # Env for portals/GTK apps.
 exec_always systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL XCURSOR_THEME XCURSOR_SIZE
 exec_always dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL XCURSOR_THEME XCURSOR_SIZE
@@ -56,7 +67,7 @@ exec systemctl --user start graphical-session.target
 
 # Autostart: no DMS, no DM.
 exec waybar
-exec swaybg -i ~/.config/wallpapers/xnm1-background.png -m fill
+exec sh -lc '~/.local/bin/sway-random-wallpaper daemon'
 exec swaync
 exec nm-applet --indicator
 exec blueman-applet
@@ -70,7 +81,8 @@ exec wl-paste --type image --watch cliphist store
 exec swayidle -w timeout 300 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' timeout 600 'swaylock --config ~/.config/swaylock/config' timeout 900 'systemctl suspend' before-sleep 'swaylock --config ~/.config/swaylock/config'
 
 # Applications: mirrors labwc rc.xml.
-bindsym $mod+slash exec kitty --hold -e distrobox-enter arch -- tmuxls
+bindsym $mod+slash exec ~/.local/bin/sway-keybindings-help
+bindsym $mod+Ctrl+slash exec kitty --hold -e distrobox-enter arch -- tmuxls
 bindsym $mod+Return exec $term
 bindsym $mod+Shift+Return exec kitty -e distrobox-enter arch
 bindsym $mod+e exec sh -lc 'if command -v nautilus >/dev/null 2>&1; then nautilus; elif command -v flatpak >/dev/null 2>&1 && flatpak info org.gnome.Nautilus >/dev/null 2>&1; then flatpak run org.gnome.Nautilus; elif command -v xdg-open >/dev/null 2>&1; then xdg-open .; else echo "explorador no disponible"; fi'
@@ -91,7 +103,11 @@ bindsym $mod+F10 exec pavucontrol
 bindsym $mod+Alt+l exec $lock
 bindsym $mod+n exec swaync-client -t -sw
 bindsym $mod+Shift+n exec apostrophe
+bindsym $mod+Shift+w exec ~/.local/bin/sway-random-wallpaper next
 bindsym $mod+Shift+Escape exec $power_menu
+bindsym $mod+s scratchpad show
+bindsym $mod+Shift+s move scratchpad
+bindsym $mod+Ctrl+s floating disable, move container to workspace current
 bindsym $mod+Shift+m exec swaync-client -C
 bindsym $mod+Shift+slash exec kitty --hold -e distrobox-enter arch -- tmuxnewz
 bindsym $mod+Alt+backslash exec kitty --hold -e distrobox-enter arch -- tmuxdel
