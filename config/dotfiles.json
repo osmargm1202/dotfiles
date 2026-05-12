@@ -81,6 +81,9 @@
   },
   "local_only": {
     "paths": [
+      ".config/fish/fish_variables",
+      ".config/fish/pdd",
+      ".config/fish/private-env.fish",
       ".pi/agent/agent-status.json",
       ".pi/agent/auth.json",
       ".pi/agent/mcp-npx-cache.json",
