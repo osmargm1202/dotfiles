@@ -92,7 +92,7 @@
     "name": "bottom_bar",
     "layer": "top",
     "position": "bottom",
-    "height": 44,
+    "height": 52,
     "spacing": 5,
     "margin-bottom": 10,
     "margin-left": 14,
