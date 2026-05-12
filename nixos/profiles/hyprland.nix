@@ -28,6 +28,11 @@
   };
   security.pam.services.login.enableGnomeKeyring = true;
 
+  programs.nautilus-open-any-terminal = {
+    enable = true;
+    terminal = "kitty";
+  };
+
   services.dbus.enable = true;
   services.gvfs.enable = true;
   services.gnome.gnome-keyring.enable = true;
