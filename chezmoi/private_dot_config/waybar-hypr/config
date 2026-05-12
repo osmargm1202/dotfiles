@@ -117,7 +117,7 @@
       "tooltip": false
     },
     "custom/kbd_layout": {
-      "exec": "~/.config/waybar/kbd-layout.sh",
+      "exec": "~/.config/waybar-hypr/kbd-layout.sh",
       "interval": 1,
       "tooltip": false
     },
