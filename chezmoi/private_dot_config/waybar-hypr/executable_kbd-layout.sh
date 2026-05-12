@@ -2,14 +2,16 @@
 
 layout=""
 
-if command -v swaymsg >/dev/null 2>&1; then
+if command -v swaymsg >/dev/null 2>&1 && [ -n "${SWAYSOCK:-}" ]; then
   layout=$(swaymsg -t get_inputs 2>/dev/null \
     | awk -F'"' '/"xkb_active_layout_name"/ { print $4; exit }')
 fi
 
-if [ -z "$layout" ] && command -v hyprctl >/dev/null 2>&1; then
-  layout=$(hyprctl devices 2>/dev/null \
-    | awk -F': ' '/active keymap:/ { print $2; exit }')
+if [ -z "$layout" ] && command -v hyprctl >/dev/null 2>&1 && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+  layout=$(hyprctl devices 2>/dev/null | awk -F': ' '
+    /active keymap:/ { current=$2 }
+    /main: yes/ { print current; exit }
+  ')
 fi
 
 case "$layout" in
