@@ -1,0 +1,1 @@
+../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/docs/plans/2025-11-22-opencode-support-implementation.md

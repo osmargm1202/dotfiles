@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Gestor de Propuestas
+Comment=Gestor de propuestas con interfaz TUI
+Exec=orgm prop
+Icon=/home/osmarg/.local/share/icons/propuestas-icon.png
+Terminal=true
+Categories=Office;Utility;
+Keywords=propuestas;documentos;gestor;
+StartupNotify=true

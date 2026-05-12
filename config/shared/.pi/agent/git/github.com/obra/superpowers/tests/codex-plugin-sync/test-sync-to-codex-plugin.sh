@@ -1,0 +1,1 @@
+../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/tests/codex-plugin-sync/test-sync-to-codex-plugin.sh

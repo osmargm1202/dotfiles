@@ -1,0 +1,1 @@
+../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/tests/explicit-skill-requests/run-extended-multiturn-test.sh

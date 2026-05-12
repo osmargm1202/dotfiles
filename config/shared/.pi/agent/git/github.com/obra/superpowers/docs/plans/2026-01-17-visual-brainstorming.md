@@ -1,0 +1,1 @@
+../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/docs/plans/2026-01-17-visual-brainstorming.md

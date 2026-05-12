@@ -1,0 +1,95 @@
+{
+  "settings": {
+    "repo": "/home/osmarg/Hobby/dotfiles",
+    "destination": "~",
+    "source_shared": "config/shared",
+    "source_hosts": "config/hosts",
+    "state_dir": "~/.local/state/dot.sh",
+    "poll_seconds": 5
+  },
+  "shared": {
+    "paths": [
+      ".config/Kvantum",
+      ".config/bat",
+      ".config/btop",
+      ".config/delta",
+      ".config/dolphinrc",
+      ".config/dunst",
+      ".config/fastfetch",
+      ".config/fish",
+      ".config/fuzzel",
+      ".config/gtk-3.0",
+      ".config/gtk-4.0",
+      ".config/helix",
+      ".config/hypr",
+      ".config/i3",
+      ".config/kdeglobals",
+      ".config/kitty",
+      ".config/labwc",
+      ".config/niri",
+      ".config/nvim",
+      ".config/picom",
+      ".config/polybar",
+      ".config/posting",
+      ".config/qt5ct",
+      ".config/qt6ct",
+      ".config/rofi",
+      ".config/starship.toml",
+      ".config/swappy",
+      ".config/sway",
+      ".config/swaylock",
+      ".config/swaync",
+      ".config/wallpapers",
+      ".config/waybar",
+      ".config/waybar-hypr",
+      ".config/wlogout",
+      ".config/wofi",
+      ".config/yazi",
+      ".config/zathura",
+      ".config/zellij",
+      ".icons",
+      ".local/bin",
+      ".local/share/posting",
+      ".local/share/themes",
+      ".pi/agent/AGENTS.md",
+      ".pi/agent/RTK.md",
+      ".pi/agent/agents",
+      ".pi/agent/extensions",
+      ".pi/agent/git",
+      ".pi/agent/skills",
+      ".pi/agent/themes",
+      ".tmux.conf"
+    ]
+  },
+  "hosts": {
+    "orgm": {
+      "paths": [
+        ".config/DankMaterialShell",
+        ".local/share/applications",
+        ".local/share/icons",
+        ".pi/agent/mcp-cache.json",
+        ".pi/agent/mcp.json"
+      ]
+    },
+    "lenovo": {
+      "paths": [
+        ".config/DankMaterialShell",
+        ".local/share/applications",
+        ".local/share/icons"
+      ]
+    }
+  },
+  "local_only": {
+    "paths": [
+      ".pi/agent/agent-status.json",
+      ".pi/agent/auth.json",
+      ".pi/agent/mcp-npx-cache.json",
+      ".pi/agent/mcp.json.bak-20260420-151836",
+      ".pi/agent/pi-crash.log",
+      ".pi/agent/settings.json"
+    ]
+  },
+  "diff": {
+    "scan_roots": []
+  }
+}

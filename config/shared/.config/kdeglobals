@@ -1,0 +1,184 @@
+[ColorEffects:Disabled]
+ChangeSelectionColor=
+Color=34,34,34
+ColorAmount=0
+ColorEffect=0
+ContrastAmount=0.65
+ContrastEffect=1
+Enable=
+IntensityAmount=0.1
+IntensityEffect=2
+
+[ColorEffects:Inactive]
+ChangeSelectionColor=true
+Color=30,30,30
+ColorAmount=0.025
+ColorEffect=2
+ContrastAmount=0.1
+ContrastEffect=2
+Enable=false
+IntensityAmount=0
+IntensityEffect=0
+
+[Colors:Button]
+BackgroundAlternate=33,33,33
+BackgroundNormal=40,40,40
+DecorationFocus=53,132,228
+DecorationHover=53,132,228
+ForegroundActive=53,132,228
+ForegroundInactive=255,255,255
+ForegroundLink=27,70,124
+ForegroundNegative=192,28,40
+ForegroundNeutral=255,255,255
+ForegroundNormal=255,255,255
+ForegroundPositive=255,255,255
+ForegroundVisited=213,228,246
+
+[Colors:Complementary]
+BackgroundAlternate=33,33,33
+BackgroundNormal=36,36,36
+DecorationFocus=53,132,228
+DecorationHover=53,132,228
+ForegroundActive=53,132,228
+ForegroundInactive=255,255,255
+ForegroundLink=27,70,124
+ForegroundNegative=192,28,40
+ForegroundNeutral=255,255,255
+ForegroundNormal=210,228,249
+ForegroundPositive=255,255,255
+ForegroundVisited=213,228,246
+
+[Colors:Header]
+BackgroundAlternate=36,36,36
+BackgroundNormal=30,30,30
+DecorationFocus=53,132,228
+DecorationHover=53,132,228
+ForegroundActive=53,132,228
+ForegroundInactive=255,255,255
+ForegroundLink=27,70,124
+ForegroundNegative=192,28,40
+ForegroundNeutral=255,255,255
+ForegroundNormal=255,255,255
+ForegroundPositive=255,255,255
+ForegroundVisited=213,228,246
+
+[Colors:Header][Inactive]
+BackgroundAlternate=30,30,30
+BackgroundNormal=36,36,36
+DecorationFocus=53,132,228
+DecorationHover=53,132,228
+ForegroundActive=53,132,228
+ForegroundInactive=255,255,255
+ForegroundLink=27,70,124
+ForegroundNegative=192,28,40
+ForegroundNeutral=255,255,255
+ForegroundNormal=255,255,255
+ForegroundPositive=255,255,255
+ForegroundVisited=213,228,246
+
+[Colors:Selection]
+BackgroundAlternate=33,33,33
+BackgroundNormal=53,132,228
+DecorationFocus=53,132,228
+DecorationHover=53,132,228
+ForegroundActive=255,255,255
+ForegroundInactive=255,255,255
+ForegroundLink=27,70,124
+ForegroundNegative=73,4,9
+ForegroundNeutral=179,152,152
+ForegroundNormal=255,255,255
+ForegroundPositive=179,152,152
+ForegroundVisited=213,228,246
+
+[Colors:Tooltip]
+BackgroundAlternate=36,36,36
+BackgroundNormal=30,30,30
+DecorationFocus=53,132,228
+DecorationHover=53,132,228
+ForegroundActive=53,132,228
+ForegroundInactive=255,255,255
+ForegroundLink=27,70,124
+ForegroundNegative=192,28,40
+ForegroundNeutral=255,255,255
+ForegroundNormal=255,255,255
+ForegroundPositive=255,255,255
+ForegroundVisited=213,228,246
+
+[Colors:View]
+BackgroundAlternate=30,30,30
+BackgroundNormal=36,36,36
+DecorationFocus=210,228,249
+DecorationHover=255,255,255
+ForegroundActive=53,132,228
+ForegroundInactive=255,255,255
+ForegroundLink=27,70,124
+ForegroundNegative=192,28,40
+ForegroundNeutral=255,255,255
+ForegroundNormal=255,255,255
+ForegroundPositive=255,255,255
+ForegroundVisited=213,228,246
+
+[Colors:Window]
+BackgroundAlternate=4,47,98
+BackgroundNormal=30,30,30
+DecorationFocus=53,132,228
+DecorationHover=53,132,228
+ForegroundActive=53,132,228
+ForegroundInactive=255,255,255
+ForegroundLink=27,70,124
+ForegroundNegative=192,28,40
+ForegroundNeutral=255,255,255
+ForegroundNormal=255,255,255
+ForegroundPositive=255,255,255
+ForegroundVisited=213,228,246
+
+[General]
+AccentColor=61,174,233
+ColorSchemeHash=9f63c7711a13123582e720791ea0f8c0172977d2
+LastUsedCustomAccentColor=61,174,233
+TerminalApplication=/usr/bin/kitty
+ColorScheme=Noctalia
+Name=noctalia
+
+[KDE]
+AnimationDurationFactor=0.5
+AutomaticLookAndFeel=true
+ShowDeleteCommand=false
+contrast=4
+
+[KFileDialog Settings]
+Allow Expansion=false
+Automatically select filename extension=true
+Breadcrumb Navigation=true
+Decoration position=2
+Preview Width=282
+Show Full Path=false
+Show Inline Previews=true
+Show Preview=true
+Show Speedbar=true
+Show hidden files=false
+Sort by=Date
+Sort directories first=true
+Sort hidden files last=false
+Sort reversed=false
+Speedbar Width=275
+View Style=DetailTree
+
+[PreviewSettings]
+EnableRemoteFolderThumbnail=false
+MaximumRemoteSize=0
+
+[UiSettings]
+ColorScheme=colors
+
+[WM]
+activeBackground=4,47,98
+activeBlend=210,228,249
+activeForeground=210,228,249
+inactiveBackground=36,36,36
+inactiveBlend=255,255,255
+inactiveForeground=255,255,255
+
+[Wallet]
+Enabled=false
+

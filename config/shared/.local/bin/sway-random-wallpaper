@@ -1,0 +1,58 @@
+#!/bin/sh
+set -eu
+
+wallpaper_dir="${HOME}/Pictures/Wallpapers"
+fallback="${HOME}/.config/wallpapers/xnm1-background.png"
+interval="${SWAY_WALLPAPER_INTERVAL:-3600}"
+state_dir="${XDG_RUNTIME_DIR:-/tmp}"
+current_file="${state_dir}/sway-random-wallpaper.current"
+daemon_pid_file="${state_dir}/sway-random-wallpaper.daemon.pid"
+
+mkdir -p "${wallpaper_dir}"
+
+pick_wallpaper() {
+  find "${wallpaper_dir}" -type f \( \
+    -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \
+  \) | shuf -n 1
+}
+
+set_wallpaper() {
+  wallpaper="$(pick_wallpaper || true)"
+  if [ -z "${wallpaper}" ]; then
+    wallpaper="${fallback}"
+  fi
+
+  swaymsg output "*" bg "${wallpaper}" fill >/dev/null
+  printf '%s\n' "${wallpaper}" > "${current_file}"
+}
+
+case "${1:-daemon}" in
+  next|change)
+    set_wallpaper
+    ;;
+  daemon)
+    # Keep a single wallpaper timer, even after Sway reloads/manual starts.
+    for old_daemon in $(pgrep -f "^/bin/sh ${HOME}/.local/bin/sway-random-wallpaper" 2>/dev/null || true); do
+      if [ "${old_daemon}" != "$$" ] && kill -0 "${old_daemon}" 2>/dev/null; then
+        kill -KILL "${old_daemon}" 2>/dev/null || true
+      fi
+    done
+
+    if [ -f "${daemon_pid_file}" ]; then
+      old_daemon="$(cat "${daemon_pid_file}" 2>/dev/null || true)"
+      if [ -n "${old_daemon}" ] && [ "${old_daemon}" != "$$" ] && kill -0 "${old_daemon}" 2>/dev/null; then
+        kill -KILL "${old_daemon}" 2>/dev/null || true
+      fi
+    fi
+
+    printf '%s\n' "$$" > "${daemon_pid_file}"
+    while true; do
+      set_wallpaper
+      sleep "${interval}"
+    done
+    ;;
+  *)
+    echo "usage: sway-random-wallpaper [daemon|next]" >&2
+    exit 2
+    ;;
+esac

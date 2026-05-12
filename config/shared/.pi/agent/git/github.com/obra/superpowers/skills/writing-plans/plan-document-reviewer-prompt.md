@@ -1,0 +1,1 @@
+../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/skills/writing-plans/plan-document-reviewer-prompt.md

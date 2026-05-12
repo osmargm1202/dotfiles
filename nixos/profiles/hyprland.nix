@@ -95,8 +95,8 @@
     QT_STYLE_OVERRIDE = "kvantum";
     GTK_THEME = "catppuccin-macchiato-teal-standard";
     XCURSOR_THEME = "Catppuccin-Macchiato-Teal-Cursors";
-    XCURSOR_SIZE = "24";
-    HYPRCURSOR_SIZE = "24";
+    XCURSOR_SIZE = "36";
+    HYPRCURSOR_SIZE = "36";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
     GDK_BACKEND = "wayland,x11";
     SDL_VIDEODRIVER = "wayland";

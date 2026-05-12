@@ -1,0 +1,1 @@
+../../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/docs/superpowers/specs/2026-03-23-codex-app-compatibility-design.md
