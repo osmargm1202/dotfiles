@@ -1,18 +1,20 @@
 #!/bin/sh
 set -eu
 
-log="${XDG_STATE_HOME:-$HOME/.local/state}/waybar/waybar.log"
+config_dir="${1:-${WAYBAR_CONFIG_DIR:-$HOME/.config/waybar}}"
+profile="$(basename "$config_dir")"
+log="${XDG_STATE_HOME:-$HOME/.local/state}/waybar/${profile}.log"
 mkdir -p "$(dirname "$log")"
 
-# One watcher only.
-for old in $(pgrep -f "^/bin/sh ${HOME}/.local/bin/waybar-watch" 2>/dev/null || true); do
+# One watcher only per config dir.
+for old in $(pgrep -f "^/bin/sh ${HOME}/.local/bin/waybar-watch ${config_dir}" 2>/dev/null || true); do
   if [ "$old" != "$$" ]; then
     kill -KILL "$old" 2>/dev/null || true
   fi
 done
 
 while true; do
-  pkill -x waybar 2>/dev/null || true
-  waybar >>"$log" 2>&1 || true
+  pkill -KILL -f '(^|/)waybar($| )|[.]waybar-wrapped' 2>/dev/null || true
+  waybar -c "${config_dir}/config" -s "${config_dir}/style.css" >>"$log" 2>&1 || true
   sleep 2
 done

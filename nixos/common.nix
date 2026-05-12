@@ -189,6 +189,7 @@
     distrobox
     age
     fd
+    jq
     eza
     htop
     ntfs3g

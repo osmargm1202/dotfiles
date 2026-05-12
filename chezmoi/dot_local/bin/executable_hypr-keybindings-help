@@ -1,0 +1,35 @@
+#!/bin/sh
+
+if ! command -v yad >/dev/null 2>&1; then
+  notify-send "Hyprland keybindings" "yad no está instalado. Rebuild NixOS para activar pkgs.yad." 2>/dev/null || true
+  exit 1
+fi
+
+exec yad \
+  --title="Hyprland keybindings" \
+  --no-buttons \
+  --geometry=620x560-15-400 \
+  --list \
+  --column="key:" \
+  --column="description:" \
+  --column="command:" \
+  "ESC" "cerrar esta ayuda" "" \
+  "Win" "modkey" "SUPER" \
+  "Win+/" "ayuda de atajos" "hypr-keybindings-help" \
+  "Win+Enter" "Terminal" "kitty" \
+  "Win+Shift+Enter" "Terminal Arch distrobox" "kitty -e distrobox-enter arch" \
+  "Win+D / Win+Space" "Application Menu" "nwg-drawer" \
+  "Win+E" "Archivos" "nautilus" \
+  "Win+W" "Browser" "Zen Browser" \
+  "Win+Q" "Cerrar app enfocada" "killactive" \
+  "Win+V" "Clipboard" "cliphist + nwg-drawer/fuzzel" \
+  "Win+Alt+E" "Power menu" "nwg-bar" \
+  "Win+Alt+L" "Lock" "hyprlock" \
+  "Win+N" "Notificaciones" "swaync" \
+  "Win+P" "Pantallas" "nwg-displays" \
+  "Win+Shift+W" "Cambiar wallpaper" "hypr-random-wallpaper" \
+  "Win+S" "Mostrar scratchpad" "special workspace" \
+  "Win+Shift+S" "Enviar scratchpad" "movetoworkspacesilent special:magic" \
+  "Win+Ctrl+S" "Devolver scratchpad" "movetoworkspace current" \
+  "Print" "Screenshot" "grim/slurp/swappy" \
+  "Ctrl+Space" "Cambiar teclado" "US / LATAM"

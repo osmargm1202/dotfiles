@@ -1,0 +1,140 @@
+// Adapted from XNM1/linux-nixos-hyprland-config-dotfiles for Sway.
+[
+  {
+    "name": "top_bar",
+    "layer": "top",
+    "position": "top",
+    "height": 47,
+    "spacing": 5,
+    "margin-top": 10,
+    "margin-left": 14,
+    "margin-right": 14,
+    "modules-left": ["hyprland/workspaces", "hyprland/submap"],
+    "modules-center": ["clock#time", "custom/separator", "clock#week", "custom/separator_dot", "clock#month", "custom/separator", "clock#calendar"],
+    "modules-right": ["custom/wallpaper", "bluetooth", "network", "privacy", "tray", "custom/logout_menu"],
+
+    "hyprland/workspaces": {
+      "disable-scroll": false,
+      "all-outputs": true,
+      "format": "{icon}",
+      "format-icons": {
+        "1": "󰲠", "2": "󰲢", "3": "󰲤", "4": "󰲦", "5": "󰲨",
+        "6": "󰲪", "7": "󰲬", "8": "󰲮", "9": "󰲰", "10": "󰿬",
+        "default": ""
+      },
+      "persistent-workspaces": {
+        "1": [], "2": [], "3": [], "4": [], "5": [],
+        "6": [], "7": [], "8": [], "9": [], "10": []
+      }
+    },
+
+    "hyprland/submap": { "format": "<span color='#a6da95'>Mode:</span> {}", "tooltip": false },
+    "clock#time": { "format": "{:%I:%M %p}" },
+    "custom/separator": { "format": "|", "tooltip": false },
+    "custom/separator_dot": { "format": "•", "tooltip": false },
+    "clock#week": { "format": "{:%a}" },
+    "clock#month": { "format": "{:%h}" },
+    "clock#calendar": {
+      "format": "{:%F}",
+      "tooltip-format": "<tt><small>{calendar}</small></tt>",
+      "calendar": {
+        "mode": "month", "mode-mon-col": 3, "weeks-pos": "right",
+        "format": {
+          "months": "<span color='#f4dbd6'><b>{}</b></span>",
+          "days": "<span color='#cad3f5'><b>{}</b></span>",
+          "weeks": "<span color='#c6a0f6'><b>W{}</b></span>",
+          "weekdays": "<span color='#a6da95'><b>{}</b></span>",
+          "today": "<span color='#8bd5ca'><b><u>{}</u></b></span>"
+        }
+      }
+    },
+
+    "custom/wallpaper": {
+      "format": "󰸉",
+      "tooltip": true,
+      "tooltip-format": "Cambiar fondo aleatorio",
+      "on-click": "~/.local/bin/hypr-random-wallpaper next"
+    },
+
+    "bluetooth": {
+      "format": "󰂯", "format-disabled": "󰂲", "format-connected": "󰂱 {device_alias}",
+      "format-connected-battery": "󰂱 {device_alias} (󰥉 {device_battery_percentage}%)",
+      "tooltip-format": "{controller_alias}\t{controller_address} ({status})\n\n{num_connections} connected",
+      "tooltip-format-disabled": "bluetooth off",
+      "tooltip-format-connected": "{controller_alias}\t{controller_address} ({status})\n\n{num_connections} connected\n\n{device_enumerate}",
+      "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
+      "tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t({device_battery_percentage}%)",
+      "max-length": 35,
+      "on-click": "blueman-manager"
+    },
+
+    "network": {
+      "format": "󰤭",
+      "format-wifi": "{icon} ({signalStrength}%) {essid}",
+      "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+      "format-ethernet": "󰈀 {ipaddr}/{cidr}",
+      "format-disconnected": "󰤫 Disconnected",
+      "tooltip-format-wifi": "SSID: {essid} ({signalStrength}%)\nInterface: {ifname}\nIP: {ipaddr}\nGW: {gwaddr}\n\n<span color='#a6da95'> {bandwidthUpBits}</span>\t<span color='#ee99a0'> {bandwidthDownBits}</span>",
+      "tooltip-format-ethernet": "Interface: {ifname}\nIP: {ipaddr}\nGW: {gwaddr}\n\n<span color='#a6da95'> {bandwidthUpBits}</span>\t<span color='#ee99a0'> {bandwidthDownBits}</span>",
+      "tooltip-format-disconnected": "<span color='#ed8796'>disconnected</span>",
+      "max-length": 35,
+      "on-click": "nm-connection-editor"
+    },
+
+    "privacy": {
+      "icon-spacing": 5, "icon-size": 16, "transition-duration": 250,
+      "modules": [{ "type": "audio-in" }, { "type": "screenshare" }]
+    },
+    "tray": { "icon-size": 21, "spacing": 10 },
+    "custom/logout_menu": { "format": "󰐥", "tooltip": false, "on-click": "fish -c wlogout_uniqe" }
+  },
+  {
+    "name": "bottom_bar",
+    "layer": "top",
+    "position": "bottom",
+    "height": 52,
+    "spacing": 5,
+    "margin-bottom": 10,
+    "margin-left": 14,
+    "margin-right": 14,
+    "modules-left": ["custom/user", "hyprland/window"],
+    "modules-center": ["idle_inhibitor", "mpris"],
+    "modules-right": ["backlight", "pulseaudio", "battery", "keyboard-state", "custom/kbd_layout", "custom/keybindings_help"],
+
+    "custom/user": { "format": "  osmarg", "tooltip": false },
+    "hyprland/window": { "format": "{}", "max-length": 80, "separate-outputs": true },
+    "idle_inhibitor": { "format": "{icon}", "format-icons": { "activated": "󰅶", "deactivated": "󰾪" } },
+    "mpris": {
+      "format": "{player_icon} {dynamic}", "format-paused": "{status_icon} {dynamic}",
+      "player-icons": { "default": "󰎈" }, "status-icons": { "paused": "󰏤" },
+      "max-length": 45, "on-click": "playerctl play-pause", "on-click-right": "playerctl next", "on-click-middle": "playerctl previous"
+    },
+    "backlight": { "format": "{icon} {percent}%", "format-icons": ["󰃞", "󰃟", "󰃠"] },
+    "pulseaudio": { "format": "{icon} {volume}%", "format-muted": "󰝟 muted", "format-icons": { "default": ["", "", ""] }, "on-click": "pavucontrol" },
+    "keyboard-state": {
+      "capslock": true,
+      "format": { "capslock": "CAPS" },
+      "tooltip": false
+    },
+    "custom/kbd_layout": {
+      "exec": "~/.config/waybar/kbd-layout.sh",
+      "interval": 1,
+      "tooltip": false
+    },
+    "custom/keybindings_help": {
+      "format": "?",
+      "tooltip": true,
+      "tooltip-format": "Atajos Hyprland (Win+/)",
+      "on-click": "~/.local/bin/hypr-keybindings-help"
+    },
+    "battery": {
+      "states": { "warning": 30, "critical": 15 },
+      "format": "{icon} {capacity}%",
+      "format-charging": "󰂄 {capacity}% ",
+      "format-plugged": "󰚥 {capacity}%",
+      "format-full": "󰁹 {capacity}%",
+      "tooltip-format": "{capacity}% {timeTo} {power}W",
+      "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+    }
+  }
+]

@@ -1,7 +1,16 @@
 #!/bin/sh
 
-layout=$(swaymsg -t get_inputs 2>/dev/null \
-  | awk -F'"' '/"xkb_active_layout_name"/ { print $4; exit }')
+layout=""
+
+if command -v swaymsg >/dev/null 2>&1; then
+  layout=$(swaymsg -t get_inputs 2>/dev/null \
+    | awk -F'"' '/"xkb_active_layout_name"/ { print $4; exit }')
+fi
+
+if [ -z "$layout" ] && command -v hyprctl >/dev/null 2>&1; then
+  layout=$(hyprctl devices 2>/dev/null \
+    | awk -F': ' '/active keymap:/ { print $2; exit }')
+fi
 
 case "$layout" in
   *Spanish*Latin*|*latam*|*Latam*) text="LATAM" ;;

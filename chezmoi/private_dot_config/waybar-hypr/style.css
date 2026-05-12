@@ -1,0 +1,70 @@
+@import "macchiato.css";
+
+* {
+  border: none;
+  min-height: 0;
+  font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", "Symbols Nerd Font Mono", "Noto Color Emoji", sans-serif;
+  font-size: 17px;
+}
+
+window.top_bar#waybar,
+window.bottom_bar#waybar {
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+}
+#workspaces { margin-left: 13px; }
+#workspaces button {
+  color: @text;
+  font-size: 23px;
+  padding: 0 7px;
+  margin: 5px 3px;
+  border-radius: 16px;
+}
+#workspaces button.empty { color: @overlay0; }
+#workspaces button.active,
+#workspaces button.focused {
+  color: @peach;
+  background-color: alpha(@surface1, 0.65);
+}
+#workspaces button.urgent { color: @red; }
+#mode, #submap, window.top_bar .modules-center, window.bottom_bar .modules-center,
+window.bottom_bar .modules-left, window.bottom_bar .modules-right, #custom-wallpaper,
+#bluetooth, #network, #privacy, #tray, #custom-logout_menu, #custom-user, #window,
+#idle_inhibitor, #mpris, #backlight, #pulseaudio, #battery, #keyboard-state, #custom-kbd_layout, #custom-keybindings_help {
+  background-color: alpha(@surface1, 0.7);
+  border-radius: 20px;
+  padding: 0 18px;
+  margin-top: 7px;
+  margin-bottom: 7px;
+}
+window.top_bar .modules-center { font-weight: bold; color: @peach; }
+window.bottom_bar .modules-left { border-radius: 20px; margin-left: 13px; }
+window.bottom_bar .modules-right { border-radius: 20px; margin-right: 13px; }
+#custom-separator, #custom-separator_dot { color: @green; }
+#clock.time { color: @flamingo; }
+#clock.week, #clock.month { color: @sapphire; }
+#clock.calendar { color: @mauve; }
+#custom-wallpaper { color: @mauve; }
+#bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #mpris.paused { color: @subtext0; }
+#bluetooth.on, #bluetooth.connected { color: @sapphire; }
+#network.wifi { color: @teal; }
+#network.ethernet { color: @green; }
+#network.disconnected, #battery.critical { color: @red; }
+#privacy-item.screenshare, #privacy-item.audio-in { color: @red; }
+#custom-logout_menu { color: @red; font-size: 23px; }
+#custom-user { color: @lavender; font-weight: bold; }
+#window { color: @text; }
+#idle_inhibitor.activated { color: @green; }
+#mpris { color: @mauve; }
+#backlight { color: @yellow; }
+#pulseaudio { color: @blue; }
+#pulseaudio.muted { color: @overlay0; }
+#battery { color: @green; }
+#keyboard-state label.capslock { color: @base; font-weight: bold; }
+#keyboard-state label.capslock.locked { color: @text; }
+#custom-kbd_layout { color: @teal; font-weight: bold; }
+#custom-keybindings_help { color: @mauve; font-weight: bold; }
+#battery.charging, #battery.plugged { color: @teal; }
+#battery.full { color: @green; }
+#battery.warning { color: @yellow; }

@@ -143,6 +143,33 @@
           ./nixos/hosts/lenovo/audio.nix
         ];
       };
+      lenovo-gnome = mkHost {
+        hostName = "lenovo";
+        hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+        profile = ./nixos/profiles/gnome.nix;
+        extraModules = [
+          ./nixos/hosts/lenovo/plymouth.nix
+          ./nixos/hosts/lenovo/audio.nix
+        ];
+      };
+      lenovo-hyprland = mkHost {
+        hostName = "lenovo";
+        hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+        profile = ./nixos/profiles/hyprland.nix;
+        extraModules = [
+          ./nixos/hosts/lenovo/plymouth.nix
+          ./nixos/hosts/lenovo/audio.nix
+        ];
+      };
+      lenovo-niri = mkHost {
+        hostName = "lenovo";
+        hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+        profile = ./nixos/profiles/niri.nix;
+        extraModules = [
+          ./nixos/hosts/lenovo/plymouth.nix
+          ./nixos/hosts/lenovo/audio.nix
+        ];
+      };
       lenovo-sway = mkHost {
         hostName = "lenovo";
         hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
