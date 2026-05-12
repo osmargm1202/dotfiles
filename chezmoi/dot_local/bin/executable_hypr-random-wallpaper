@@ -6,6 +6,7 @@ fallback="${HOME}/.config/wallpapers/xnm1-background.png"
 interval="${HYPR_WALLPAPER_INTERVAL:-3600}"
 state_dir="${XDG_RUNTIME_DIR:-/tmp}"
 current_file="${state_dir}/hypr-random-wallpaper.current"
+lock_wallpaper="${state_dir}/hypr-current-wallpaper"
 daemon_pid_file="${state_dir}/hypr-random-wallpaper.daemon.pid"
 
 mkdir -p "${wallpaper_dir}"
@@ -34,6 +35,7 @@ set_wallpaper() {
   hyprctl hyprpaper preload "${wallpaper}" >/dev/null
   hyprctl hyprpaper wallpaper ",${wallpaper}" >/dev/null
   printf '%s\n' "${wallpaper}" > "${current_file}"
+  ln -sfn "${wallpaper}" "${lock_wallpaper}"
 }
 
 case "${1:-daemon}" in
