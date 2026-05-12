@@ -178,6 +178,8 @@
     gnome-font-viewer
     gnome-characters
     sushi
+    warehouse
+    gnome-software
 
     # Desktop integration / theming
     gsettings-desktop-schemas
