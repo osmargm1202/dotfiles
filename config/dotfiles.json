@@ -49,6 +49,8 @@
       ".config/zellij",
       ".icons",
       ".local/bin",
+      ".local/share/applications/windows-rdp.desktop",
+      ".local/share/icons/windows.png",
       ".local/share/posting",
       ".local/share/themes",
       ".pi/agent/AGENTS.md",
@@ -65,6 +67,7 @@
     "orgm": {
       "paths": [
         ".config/DankMaterialShell",
+        ".config/fish/age-host.fish",
         ".local/share/applications",
         ".local/share/icons",
         ".pi/agent/mcp-cache.json",
@@ -74,6 +77,7 @@
     "lenovo": {
       "paths": [
         ".config/DankMaterialShell",
+        ".config/fish/age-host.fish",
         ".local/share/applications",
         ".local/share/icons"
       ]

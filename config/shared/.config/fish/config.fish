@@ -5,20 +5,25 @@
 #     end
 # end
 
-set -gx AGE_KEY_FILE "$HOME/Nextcloud/Documentos/keys/age.txt"
-
 if test -f ~/.config/fish/age.fish
     source ~/.config/fish/age.fish
 end
 
-if test -f ~/.config/fish/private-env.fish
-    source ~/.config/fish/private-env.fish
+if test -f ~/.config/fish/age-host.fish
+    source ~/.config/fish/age-host.fish
+end
+
+if functions -q load_private_env
+    load_private_env
 end
 
 # PATH
 set -gx PATH $HOME/.local/bin $PATH
 set -gx PATH $HOME/.cargo/bin $PATH
 set -gx PATH $HOME/go/bin $PATH
+
+# Node: usar pnpm por defecto; npx ejecuta pnpm dlx (ver functions/npx.fish)
+alias npm="pnpm"
 
 # Prompt más vistoso (starship opcional)
 if type -q starship

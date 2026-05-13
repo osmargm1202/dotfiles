@@ -376,9 +376,11 @@ run_daemon() {
 
 run_install() {
   mkdir -p "$HOME/.local/bin"
+  ln -sfn "$SCRIPT_PATH" "$HOME/.local/bin/dot"
   ln -sfn "$SCRIPT_PATH" "$HOME/.local/bin/dot.sh"
+  printf 'installed: %s -> %s\n' "$HOME/.local/bin/dot" "$SCRIPT_PATH"
   printf 'installed: %s -> %s\n' "$HOME/.local/bin/dot.sh" "$SCRIPT_PATH"
-  printf 'launch example: dot.sh --daemon --host orgm\n'
+  printf 'launch example: dot --daemon --host orgm\n'
 }
 
 run_status() {
