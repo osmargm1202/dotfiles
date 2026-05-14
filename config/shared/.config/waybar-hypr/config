@@ -10,8 +10,8 @@
     "margin-left": 14,
     "margin-right": 14,
     "modules-left": ["custom/menu", "hyprland/workspaces", "hyprland/submap"],
-    "modules-center": ["clock#time", "custom/separator", "clock#week", "custom/separator_dot", "clock#month", "custom/separator", "clock#calendar"],
-    "modules-right": ["custom/wallpaper", "bluetooth", "network", "privacy", "tray", "custom/logout_menu"],
+    "modules-center": ["custom/day_month", "custom/time", "custom/date"],
+    "modules-right": ["group/system", "custom/wallpaper", "bluetooth", "network", "privacy", "tray", "custom/logout_menu"],
 
     "custom/menu": {
       "format": "",
@@ -36,25 +36,9 @@
     },
 
     "hyprland/submap": { "format": "<span color='#a6da95'>Mode:</span> {}", "tooltip": false },
-    "clock#time": { "format": "{:%I:%M %p}" },
-    "custom/separator": { "format": "|", "tooltip": false },
-    "custom/separator_dot": { "format": "•", "tooltip": false },
-    "clock#week": { "format": "{:%a}" },
-    "clock#month": { "format": "{:%h}" },
-    "clock#calendar": {
-      "format": "{:%F}",
-      "tooltip-format": "<tt><small>{calendar}</small></tt>",
-      "calendar": {
-        "mode": "month", "mode-mon-col": 3, "weeks-pos": "right",
-        "format": {
-          "months": "<span color='#f4dbd6'><b>{}</b></span>",
-          "days": "<span color='#cad3f5'><b>{}</b></span>",
-          "weeks": "<span color='#c6a0f6'><b>W{}</b></span>",
-          "weekdays": "<span color='#a6da95'><b>{}</b></span>",
-          "today": "<span color='#8bd5ca'><b><u>{}</u></b></span>"
-        }
-      }
-    },
+    "custom/day_month": { "exec": "~/.local/bin/waybar-day-month-es", "interval": 60, "tooltip": false },
+    "custom/time": { "exec": "~/.local/bin/waybar-time-ampm", "interval": 1, "tooltip": false },
+    "custom/date": { "exec": "~/.local/bin/waybar-date-es", "interval": 60, "tooltip": false },
 
     "custom/wallpaper": {
       "format": "󰸉",
@@ -73,6 +57,28 @@
       "tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t({device_battery_percentage}%)",
       "max-length": 35,
       "on-click": "blueman-manager"
+    },
+
+    "cpu": { "format": " {usage}%", "tooltip": true, "on-click": "kitty -e btop" },
+    "memory": { "format": " {percentage}%", "tooltip-format": "{used:0.1f}G / {total:0.1f}G", "on-click": "kitty -e btop" },
+    "temperature": { "format": " {temperatureC}°C", "critical-threshold": 85, "on-click": "kitty -e btop" },
+    "disk#ssd": { "path": "/", "format": "󰋊 SSD {percentage_used}%", "tooltip-format": "{used} used / {total} total", "on-click": "kitty -e btop" },
+    "custom/swap": { "exec": "~/.local/bin/waybar-swap-usage", "interval": 5, "tooltip": false, "on-click": "kitty -e btop" },
+
+    "group/system": {
+      "orientation": "horizontal",
+      "modules": ["backlight", "pulseaudio", "battery"]
+    },
+    "backlight": { "format": "{icon} {percent}%", "format-icons": ["󰃞", "󰃟", "󰃠"] },
+    "pulseaudio": { "format": "{icon} {volume}%", "format-muted": "󰝟 muted", "format-icons": { "default": ["", "", ""] }, "on-click": "pavucontrol" },
+    "battery": {
+      "states": { "warning": 30, "critical": 15 },
+      "format": "{icon} {capacity}%",
+      "format-charging": "󰂄 {capacity}% ",
+      "format-plugged": "󰚥 {capacity}%",
+      "format-full": "󰁹 {capacity}%",
+      "tooltip-format": "{capacity}% {timeTo} {power}W",
+      "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
     },
 
     "network": {
@@ -106,7 +112,7 @@
     "margin-right": 14,
     "modules-left": ["custom/user", "hyprland/window"],
     "modules-center": ["idle_inhibitor", "mpris"],
-    "modules-right": ["backlight", "pulseaudio", "battery", "keyboard-state", "custom/kbd_layout", "custom/keybindings_help"],
+    "modules-right": ["group/usage", "custom/kbd_layout", "custom/keybindings_help"],
 
     "custom/user": { "format": "  osmarg", "tooltip": false },
     "hyprland/window": { "format": "{}", "max-length": 80, "separate-outputs": true },
@@ -116,13 +122,17 @@
       "player-icons": { "default": "󰎈" }, "status-icons": { "paused": "󰏤" },
       "max-length": 45, "on-click": "playerctl play-pause", "on-click-right": "playerctl next", "on-click-middle": "playerctl previous"
     },
+    "cpu": { "format": " {usage}%", "tooltip": true, "on-click": "kitty -e btop" },
+    "memory": { "format": " {percentage}%", "tooltip-format": "{used:0.1f}G / {total:0.1f}G", "on-click": "kitty -e btop" },
+    "temperature": { "format": " {temperatureC}°C", "critical-threshold": 85, "on-click": "kitty -e btop" },
+    "disk#ssd": { "path": "/", "format": "󰋊 SSD {percentage_used}%", "tooltip-format": "{used} used / {total} total", "on-click": "kitty -e btop" },
+    "custom/swap": { "exec": "~/.local/bin/waybar-swap-usage", "interval": 5, "tooltip": false, "on-click": "kitty -e btop" },
+    "group/usage": {
+      "orientation": "horizontal",
+      "modules": ["cpu", "memory", "temperature", "disk#ssd", "custom/swap"]
+    },
     "backlight": { "format": "{icon} {percent}%", "format-icons": ["󰃞", "󰃟", "󰃠"] },
     "pulseaudio": { "format": "{icon} {volume}%", "format-muted": "󰝟 muted", "format-icons": { "default": ["", "", ""] }, "on-click": "pavucontrol" },
-    "keyboard-state": {
-      "capslock": true,
-      "format": { "capslock": "CAPS" },
-      "tooltip": false
-    },
     "custom/kbd_layout": {
       "exec": "~/.config/waybar-hypr/kbd-layout.sh",
       "interval": 1,

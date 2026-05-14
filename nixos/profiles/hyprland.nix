@@ -1,7 +1,9 @@
 { pkgs, lib, inputs, ... }:
 
 let
-  hyprlandPkgs = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
+  system = pkgs.stdenv.hostPlatform.system;
+  hyprlandPkgs = inputs.hyprland.packages.${system};
+  hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
 in
 {
   # Hyprland sin display manager: login en tty1 y arranque automático.
@@ -118,7 +120,7 @@ in
     # Hyprland-native stack
     hyprlandPkgs.hyprland
     xwayland
-    hyprpaper
+    hyprpaperPkg
     hypridle
     hyprlock
     hyprpicker

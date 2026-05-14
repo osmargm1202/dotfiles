@@ -193,6 +193,7 @@
     jq
     eza
     htop
+    btop
     ntfs3g
     gcc
     zoxide

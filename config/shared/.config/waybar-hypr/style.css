@@ -13,59 +13,88 @@ window.bottom_bar#waybar {
   border: none;
   border-radius: 0;
 }
-#workspaces { margin-left: 0; }
+#workspaces {
+  background-color: alpha(@surface1, 0.7);
+  border-radius: 20px;
+  padding: 0 10px;
+  margin: 7px 0;
+}
 #workspaces button {
   color: @text;
   font-size: 23px;
   padding: 0 7px;
-  margin: 5px 3px;
+  margin: 0 3px;
   border-radius: 16px;
 }
 #workspaces button.empty { color: @overlay0; }
 #workspaces button.active,
 #workspaces button.focused {
-  color: @peach;
+  color: @blue;
   background-color: alpha(@surface1, 0.65);
 }
 #workspaces button.urgent { color: @red; }
-#mode, #submap, window.top_bar .modules-center, window.bottom_bar .modules-center,
-window.bottom_bar .modules-left, window.bottom_bar .modules-right, #custom-menu, #custom-wallpaper,
+#mode, #submap, window.bottom_bar .modules-center,
+window.bottom_bar .modules-left, window.bottom_bar .modules-right, #group-usage, #usage, #group-system, #system, #custom-wallpaper,
 #bluetooth, #network, #privacy, #tray, #custom-logout_menu, #custom-user, #window,
-#idle_inhibitor, #mpris, #backlight, #pulseaudio, #battery, #keyboard-state, #custom-kbd_layout, #custom-keybindings_help {
+#idle_inhibitor, #mpris, #backlight, #pulseaudio, #battery, #custom-kbd_layout, #custom-keybindings_help {
   background-color: alpha(@surface1, 0.7);
   border-radius: 20px;
   padding: 0 18px;
   margin-top: 7px;
   margin-bottom: 7px;
 }
-window.top_bar .modules-center { font-weight: bold; color: @peach; }
+window.top_bar .modules-center { font-weight: bold; color: @overlay2; }
 window.bottom_bar .modules-left { border-radius: 20px; margin-left: 13px; }
 window.bottom_bar .modules-right { border-radius: 20px; margin-right: 13px; }
-#custom-separator, #custom-separator_dot { color: @green; }
-#clock.time { color: @flamingo; }
-#clock.week, #clock.month { color: @sapphire; }
-#clock.calendar { color: @mauve; }
-#custom-menu { color: @blue; font-size: 29px; padding: 0; min-width: 47px; margin-left: 13px; }
-#custom-wallpaper { color: @mauve; }
-#bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #mpris.paused { color: @subtext0; }
-#bluetooth.on, #bluetooth.connected { color: @sapphire; }
-#network.wifi { color: @teal; }
-#network.ethernet { color: @green; }
-#network.disconnected, #battery.critical { color: @red; }
+#custom-day_month, #custom-date {
+  background-color: alpha(@surface1, 0.7);
+  border-radius: 20px;
+  color: @overlay2;
+  padding: 0 18px;
+  margin: 7px 5px;
+}
+#custom-time {
+  background-color: alpha(@surface1, 0.82);
+  border-radius: 22px;
+  color: @text;
+  font-size: 34px;
+  font-weight: 800;
+  padding: 0 24px;
+  margin: 4px 8px;
+}
+#custom-menu {
+  background: transparent;
+  box-shadow: none;
+  color: @text;
+  font-size: 29px;
+  padding: 0;
+  min-width: 47px;
+  margin: 7px 0 7px 13px;
+}
+#group-usage, #usage, #group-system, #system, #cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #bluetooth, #network, #privacy, #tray { color: @subtext0; }
+#group-usage #cpu, #group-usage #memory, #group-usage #temperature, #group-usage #disk, #group-usage #custom-swap,
+#usage #cpu, #usage #memory, #usage #temperature, #usage #disk, #usage #custom-swap,
+#group-system #backlight, #group-system #pulseaudio, #group-system #battery,
+#system #backlight, #system #pulseaudio, #system #battery {
+  background: transparent;
+  padding: 0 6px;
+  margin: 0;
+}
+#bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #mpris.paused { color: @overlay0; }
+#network.disconnected, #battery.critical, #temperature.critical { color: @red; }
 #privacy-item.screenshare, #privacy-item.audio-in { color: @red; }
 #custom-logout_menu { color: @red; font-size: 23px; }
-#custom-user { color: @lavender; font-weight: bold; }
-#window { color: @text; }
-#idle_inhibitor.activated { color: @green; }
-#mpris { color: @mauve; }
-#backlight { color: @yellow; }
-#pulseaudio { color: @blue; }
+#custom-user { color: @subtext0; font-weight: bold; }
+#window { color: @subtext0; }
+#idle_inhibitor.activated { color: @blue; }
+#mpris { color: @subtext0; }
+#backlight { color: @subtext0; }
+#pulseaudio { color: @subtext0; }
 #pulseaudio.muted { color: @overlay0; }
-#battery { color: @green; }
+#battery { color: @subtext0; }
 #keyboard-state label.capslock { color: @base; font-weight: bold; }
-#keyboard-state label.capslock.locked { color: @text; }
-#custom-kbd_layout { color: @teal; font-weight: bold; }
-#custom-keybindings_help { color: @mauve; font-weight: bold; }
-#battery.charging, #battery.plugged { color: @teal; }
-#battery.full { color: @green; }
-#battery.warning { color: @yellow; }
+#keyboard-state label.capslock.locked { color: @subtext0; }
+#custom-kbd_layout { color: @subtext0; font-weight: bold; }
+#custom-keybindings_help { color: @subtext0; font-weight: bold; }
+#battery.charging, #battery.plugged, #battery.full { color: @subtext0; }
+#battery.warning { color: @subtext0; }

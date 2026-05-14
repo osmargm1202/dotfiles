@@ -8,6 +8,8 @@ state_dir="${XDG_RUNTIME_DIR:-/tmp}"
 current_file="${state_dir}/hypr-random-wallpaper.current"
 lock_wallpaper="${state_dir}/hypr-current-wallpaper"
 daemon_pid_file="${state_dir}/hypr-random-wallpaper.daemon.pid"
+hyprpaper_conf="${state_dir}/hypr-random-wallpaper.hyprpaper.conf"
+hyprpaper_bin="${HYPRPAPER_BIN:-hyprpaper}"
 
 mkdir -p "${wallpaper_dir}"
 
@@ -17,11 +19,21 @@ pick_wallpaper() {
   \) | shuf -n 1
 }
 
-ensure_hyprpaper() {
-  if ! pgrep -x hyprpaper >/dev/null 2>&1; then
-    hyprpaper >/tmp/hyprpaper.log 2>&1 &
-    sleep 1
-  fi
+write_hyprpaper_config() {
+  wallpaper="$1"
+  cat >"${hyprpaper_conf}" <<EOF
+wallpaper {
+    monitor =
+    path = ${wallpaper}
+    fit_mode = cover
+}
+EOF
+}
+
+restart_hyprpaper() {
+  pkill -x hyprpaper >/dev/null 2>&1 || true
+  "${hyprpaper_bin}" -c "${hyprpaper_conf}" >/tmp/hyprpaper.log 2>&1 &
+  sleep 1
 }
 
 set_wallpaper() {
@@ -30,10 +42,13 @@ set_wallpaper() {
     wallpaper="${fallback}"
   fi
 
-  ensure_hyprpaper
-  hyprctl hyprpaper unload all >/dev/null 2>&1 || true
-  hyprctl hyprpaper preload "${wallpaper}" >/dev/null
-  hyprctl hyprpaper wallpaper ",${wallpaper}" >/dev/null
+  if [ ! -f "${wallpaper}" ]; then
+    echo "Wallpaper not found: ${wallpaper}" >&2
+    return 1
+  fi
+
+  write_hyprpaper_config "${wallpaper}"
+  restart_hyprpaper
   printf '%s\n' "${wallpaper}" > "${current_file}"
   ln -sfn "${wallpaper}" "${lock_wallpaper}"
 }

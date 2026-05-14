@@ -11,6 +11,10 @@
       # Track latest upstream git. Pin exact rev in flake.lock for reproducible builds.
       url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     };
+    hyprpaper = {
+      # Keep hyprpaper IPC compatible with latest Hyprland/hyprctl.
+      url = "github:hyprwm/hyprpaper";
+    };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
     caelestia-shell = {
       url = "github:caelestia-dots/shell";
