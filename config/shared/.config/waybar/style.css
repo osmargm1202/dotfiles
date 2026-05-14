@@ -45,7 +45,7 @@ window.bottom_bar .modules-right { border-radius: 20px; margin-right: 13px; }
 #clock.time { color: @flamingo; }
 #clock.week, #clock.month { color: @sapphire; }
 #clock.calendar { color: @mauve; }
-#custom-menu { color: @blue; font-size: 29px; padding: 0 20px; margin-left: 13px; }
+#custom-menu { color: @blue; font-size: 29px; padding: 0; min-width: 47px; margin-left: 13px; }
 #custom-wallpaper { color: @mauve; }
 #bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #mpris.paused { color: @subtext0; }
 #bluetooth.on, #bluetooth.connected { color: @sapphire; }

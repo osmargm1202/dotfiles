@@ -7,6 +7,10 @@
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hyprland = {
+      # Track latest upstream git. Pin exact rev in flake.lock for reproducible builds.
+      url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+    };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
     caelestia-shell = {
       url = "github:caelestia-dots/shell";

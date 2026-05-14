@@ -14,7 +14,7 @@
     "modules-right": ["custom/wallpaper", "bluetooth", "network", "privacy", "tray", "custom/logout_menu"],
 
     "custom/menu": {
-      "format": "",
+      "format": "",
       "tooltip": true,
       "tooltip-format": "Abrir menú",
       "on-click": "fuzzel"
@@ -126,7 +126,8 @@
     "custom/kbd_layout": {
       "exec": "~/.config/waybar-hypr/kbd-layout.sh",
       "interval": 1,
-      "tooltip": false
+      "tooltip": false,
+      "on-click": "~/.local/bin/kbd-layout-next"
     },
     "custom/keybindings_help": {
       "format": "?",

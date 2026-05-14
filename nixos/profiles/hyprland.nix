@@ -1,5 +1,8 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, inputs, ... }:
 
+let
+  hyprlandPkgs = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
+in
 {
   # Hyprland sin display manager: login en tty1 y arranque automático.
   # Sin autologin, PAM puede desbloquear GNOME Keyring con la clave de login.
@@ -14,6 +17,8 @@
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
+    package = hyprlandPkgs.hyprland;
+    portalPackage = hyprlandPkgs.xdg-desktop-portal-hyprland;
   };
 
   security.polkit = {
@@ -41,7 +46,7 @@
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
-      xdg-desktop-portal-hyprland
+      hyprlandPkgs.xdg-desktop-portal-hyprland
       xdg-desktop-portal-gtk
     ];
     config = {
@@ -111,7 +116,7 @@
 
   environment.systemPackages = with pkgs; [
     # Hyprland-native stack
-    hyprland
+    hyprlandPkgs.hyprland
     xwayland
     hyprpaper
     hypridle
@@ -137,7 +142,7 @@
     # Portal / XDG
     xdg-utils
     xdg-desktop-portal
-    xdg-desktop-portal-hyprland
+    hyprlandPkgs.xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
 
     # Clipboard / screenshots / wlroots-compatible tools
