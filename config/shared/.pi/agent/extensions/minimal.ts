@@ -306,7 +306,7 @@ export default function (pi: ExtensionAPI) {
 						}
 					}
 
-					if (!showSkillsStatus) return [firstLine];
+					if (!showSkillsStatus || loadedSkills.size === 0) return [firstLine];
 					const skillsLine = renderSkillsLine(theme, width, loadedSkills);
 					return [firstLine, skillsLine];
 				},
