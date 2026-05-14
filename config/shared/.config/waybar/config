@@ -9,9 +9,16 @@
     "margin-top": 10,
     "margin-left": 14,
     "margin-right": 14,
-    "modules-left": ["sway/workspaces", "sway/mode"],
+    "modules-left": ["custom/menu", "sway/workspaces", "sway/mode"],
     "modules-center": ["clock#time", "custom/separator", "clock#week", "custom/separator_dot", "clock#month", "custom/separator", "clock#calendar"],
     "modules-right": ["custom/wallpaper", "bluetooth", "network", "privacy", "tray", "custom/logout_menu"],
+
+    "custom/menu": {
+      "format": "",
+      "tooltip": true,
+      "tooltip-format": "Abrir menú",
+      "on-click": "fuzzel"
+    },
 
     "sway/workspaces": {
       "disable-scroll": false,

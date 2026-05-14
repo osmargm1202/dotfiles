@@ -137,6 +137,7 @@ rdp_connect() {
       /p:"$RDP_PASS" \
       /size:"${WIDTH}x${HEIGHT}" \
       /dynamic-resolution \
+      /admin \
       /sec:nla:off \
       /tls:seclevel:0 \
       /network:lan \
@@ -183,22 +184,19 @@ do_stop() {
 }
 
 do_connect() {
-  echo "Connecting to existing container '$CONTAINER'..."
+  echo "Connecting to container '$CONTAINER'..."
   if ! nc -z "$RDP_HOST" "$RDP_PORT" 2>/dev/null; then
-    echo "Error: RDP is not available. Is the container running?"
-    exit 1
+    echo "RDP is not available. Starting container '$CONTAINER'..."
+    do_start
+    wait_rdp || exit 1
   fi
-  notify_user "Conectando a Contenedor!!" "Abriendo sesión RDP."
+  notify_user "Conectando a Contenedor!!" "Abriendo sesión RDP activa."
   rdp_connect
 }
 
 do_run() {
-  do_start
-  wait_rdp || exit 1
-  notify_user "Conectando a Contenedor!!" "Abriendo sesión RDP."
-  rdp_connect
-  echo "RDP session closed."
-  do_stop
+  do_connect
+  echo "RDP session closed. Container left running."
 }
 
 do_install() {
@@ -251,10 +249,10 @@ Usage: $SCRIPT_NAME <command>
 
 Commands:
   (none)     Install if first run, otherwise run
-  run        Start container, open RDP, stop container on exit
+  run        Start container if needed and open RDP; leave container running on exit
   start      Start the Windows container only
   stop       Stop the Windows container only
-  connect    Connect RDP to an already running container
+  connect    Connect RDP; start container if needed
   install    Install script, icon and .desktop launcher
 
 EOF

@@ -13,7 +13,7 @@ window.bottom_bar#waybar {
   border: none;
   border-radius: 0;
 }
-#workspaces { margin-left: 13px; }
+#workspaces { margin-left: 0; }
 #workspaces button {
   color: @text;
   font-size: 23px;
@@ -29,7 +29,7 @@ window.bottom_bar#waybar {
 }
 #workspaces button.urgent { color: @red; }
 #mode, #submap, window.top_bar .modules-center, window.bottom_bar .modules-center,
-window.bottom_bar .modules-left, window.bottom_bar .modules-right, #custom-wallpaper,
+window.bottom_bar .modules-left, window.bottom_bar .modules-right, #custom-menu, #custom-wallpaper,
 #bluetooth, #network, #privacy, #tray, #custom-logout_menu, #custom-user, #window,
 #idle_inhibitor, #mpris, #backlight, #pulseaudio, #battery, #keyboard-state, #custom-kbd_layout, #custom-keybindings_help {
   background-color: alpha(@surface1, 0.7);
@@ -45,6 +45,7 @@ window.bottom_bar .modules-right { border-radius: 20px; margin-right: 13px; }
 #clock.time { color: @flamingo; }
 #clock.week, #clock.month { color: @sapphire; }
 #clock.calendar { color: @mauve; }
+#custom-menu { color: @blue; font-size: 29px; padding: 0 20px; margin-left: 13px; }
 #custom-wallpaper { color: @mauve; }
 #bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #mpris.paused { color: @subtext0; }
 #bluetooth.on, #bluetooth.connected { color: @sapphire; }
