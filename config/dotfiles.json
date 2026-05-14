@@ -81,6 +81,13 @@
         ".local/share/applications",
         ".local/share/icons"
       ]
+    },
+    "ero": {
+      "paths": [
+        ".config/fish/age-host.fish",
+        ".local/share/applications",
+        ".local/share/icons"
+      ]
     }
   },
   "local_only": {
