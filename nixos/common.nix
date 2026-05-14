@@ -177,7 +177,6 @@
     vim
     tmux
     stow
-    chezmoi
     gh
     fish
     figlet
