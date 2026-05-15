@@ -8,10 +8,10 @@
     "spacing": 5,
     "margin-top": 10,
     "margin-left": 14,
-    "margin-right": 14,
-    "modules-left": ["custom/menu", "sway/workspaces", "sway/mode"],
+    "margin-right": 24,
+    "modules-left": ["custom/menu", "sway/workspaces", "group/system", "sway/mode"],
     "modules-center": ["custom/day_month", "custom/time", "custom/date"],
-    "modules-right": ["group/system", "custom/wallpaper", "bluetooth", "network", "privacy", "tray", "custom/logout_menu"],
+    "modules-right": ["custom/wallpaper", "bluetooth", "network", "privacy", "tray", "custom/logout_menu"],
 
     "custom/menu": {
       "format": "",
@@ -23,7 +23,7 @@
     "sway/workspaces": {
       "disable-scroll": false,
       "all-outputs": true,
-      "format": "{icon}",
+      "format": "{name}",
       "format-icons": {
         "1": "󰲠", "2": "󰲢", "3": "󰲤", "4": "󰲦", "5": "󰲨",
         "6": "󰲪", "7": "󰲬", "8": "󰲮", "9": "󰲰", "10": "󰿬",
@@ -110,10 +110,11 @@
     "margin-bottom": 10,
     "margin-left": 14,
     "margin-right": 14,
-    "modules-left": ["custom/user", "sway/window"],
+    "modules-left": ["custom/orgm_logo", "custom/user", "sway/window"],
     "modules-center": ["idle_inhibitor", "mpris"],
     "modules-right": ["group/usage", "custom/kbd_layout", "custom/keybindings_help"],
 
+    "custom/orgm_logo": { "format": " ", "tooltip": true, "tooltip-format": "Abrir fuzzel", "on-click": "fuzzel" },
     "custom/user": { "format": "  osmarg", "tooltip": false },
     "sway/window": { "format": "{}", "max-length": 80, "separate-outputs": true },
     "idle_inhibitor": { "format": "{icon}", "format-icons": { "activated": "󰅶", "deactivated": "󰾪" } },

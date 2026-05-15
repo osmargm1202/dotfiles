@@ -1,0 +1,72 @@
+[
+  {
+    "id": "windows",
+    "name": "Windows RDP",
+    "icon": "windows.png",
+    "launch": "~/.local/bin/windows-rdp run",
+    "match": {
+      "class": ["windows-rdp", "xfreerdp"],
+      "title": ["Windows"]
+    }
+  },
+  {
+    "id": "kitty",
+    "name": "Kitty",
+    "icon": "kitty.svg",
+    "launch": "kitty",
+    "match": {
+      "class": ["kitty"],
+      "title": []
+    }
+  },
+  {
+    "id": "nautilus",
+    "name": "Nautilus",
+    "icon": "nautilus.png",
+    "launch": "nautilus",
+    "match": {
+      "class": ["org.gnome.Nautilus", "nautilus"],
+      "title": []
+    }
+  },
+  {
+    "id": "zen",
+    "name": "Zen Browser",
+    "icon": "zen-browser.png",
+    "launch": "flatpak run app.zen_browser.zen",
+    "match": {
+      "class": ["app.zen_browser.zen", "zen"],
+      "title": ["Zen Browser"]
+    }
+  },
+  {
+    "id": "chromium",
+    "name": "Chromium",
+    "icon": "chromium-browser.svg",
+    "launch": "chromium",
+    "match": {
+      "class": ["chromium-browser", "chromium"],
+      "title": ["Chromium"]
+    }
+  },
+  {
+    "id": "obsidian",
+    "name": "Obsidian",
+    "icon": "obsidian.png",
+    "launch": "flatpak run md.obsidian.Obsidian",
+    "match": {
+      "class": ["obsidian", "md.obsidian.Obsidian"],
+      "title": ["Obsidian"]
+    }
+  },
+  {
+    "id": "software",
+    "name": "Software",
+    "icon": "software.png",
+    "launch": "gnome-software",
+    "match": {
+      "class": ["org.gnome.Software", "gnome-software"],
+      "title": []
+    }
+  }
+]

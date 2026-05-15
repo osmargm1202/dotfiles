@@ -9,58 +9,62 @@
 
 window.top_bar#waybar,
 window.bottom_bar#waybar {
-  background-color: transparent;
+  background-color: rgba(0, 0, 0, 0.80);
   border: none;
-  border-radius: 0;
+  border-radius: 6px;
 }
 #workspaces {
-  background-color: alpha(@surface1, 0.7);
-  border-radius: 20px;
-  padding: 0 10px;
+  background: transparent;
+  border-radius: 6px;
+  padding: 0 4px;
   margin: 7px 0;
 }
 #workspaces button {
   color: @text;
-  font-size: 23px;
-  padding: 0 7px;
-  margin: 0 3px;
-  border-radius: 16px;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 0 6px;
+  margin: 0 1px;
+  border-radius: 5px;
 }
 #workspaces button.empty { color: @overlay0; }
 #workspaces button.active,
 #workspaces button.focused {
   color: @blue;
-  background-color: alpha(@surface1, 0.65);
 }
 #workspaces button.urgent { color: @red; }
-#mode, #submap, window.bottom_bar .modules-center,
-window.bottom_bar .modules-left, window.bottom_bar .modules-right, #group-usage, #usage, #group-system, #system, #custom-wallpaper,
-#bluetooth, #network, #privacy, #tray, #custom-logout_menu, #custom-user, #window,
-#idle_inhibitor, #mpris, #backlight, #pulseaudio, #battery, #custom-kbd_layout, #custom-keybindings_help {
-  background-color: alpha(@surface1, 0.7);
-  border-radius: 20px;
-  padding: 0 18px;
+#mode, #submap, window.top_bar .modules-center, window.top_bar .modules-right,
+window.bottom_bar .modules-left, window.bottom_bar .modules-center, window.bottom_bar .modules-right,
+#group-system, #system {
+  background: transparent;
+  border-radius: 6px;
+  padding: 0 14px;
   margin-top: 7px;
   margin-bottom: 7px;
 }
-window.top_bar .modules-center { font-weight: bold; color: @overlay2; }
-window.bottom_bar .modules-left { border-radius: 20px; margin-left: 13px; }
-window.bottom_bar .modules-right { border-radius: 20px; margin-right: 13px; }
-#custom-day_month, #custom-date {
-  background-color: alpha(@surface1, 0.7);
-  border-radius: 20px;
+window.top_bar .modules-center {
+  font-weight: bold;
   color: @overlay2;
-  padding: 0 18px;
+  padding: 0 8px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+window.top_bar .modules-right { padding-left: 24px; padding-right: 24px; }
+window.bottom_bar .modules-left { border-radius: 6px; margin-left: 13px; }
+window.bottom_bar .modules-right { border-radius: 6px; margin-right: 13px; }
+#custom-day_month, #custom-date {
+  color: @overlay2;
+  padding: 0 14px;
   margin: 7px 5px;
 }
 #custom-time {
-  background-color: alpha(@surface1, 0.82);
-  border-radius: 22px;
+  background: transparent;
+  border-radius: 8px;
   color: @text;
   font-size: 34px;
   font-weight: 800;
-  padding: 0 24px;
-  margin: 4px 8px;
+  padding: 0 20px;
+  margin: 0 8px;
 }
 #custom-menu {
   background: transparent;
@@ -71,13 +75,33 @@ window.bottom_bar .modules-right { border-radius: 20px; margin-right: 13px; }
   min-width: 47px;
   margin: 7px 0 7px 13px;
 }
+#custom-orgm_logo {
+  background: transparent;
+  background-image: url("orgm.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 28px auto;
+  font-size: 0;
+  min-height: 0;
+  min-width: 34px;
+  padding: 0;
+  margin: 0 2px 0 0;
+}
 #group-usage, #usage, #group-system, #system, #cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #bluetooth, #network, #privacy, #tray { color: @subtext0; }
+#group-usage, #usage {
+  background: transparent;
+}
+#custom-wallpaper, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#custom-user, #window, #mpris, #backlight, #pulseaudio, #battery, #custom-kbd_layout,
+#cpu, #memory, #temperature, #disk, #custom-swap {
+  background: transparent;
+}
 #group-usage #cpu, #group-usage #memory, #group-usage #temperature, #group-usage #disk, #group-usage #custom-swap,
 #usage #cpu, #usage #memory, #usage #temperature, #usage #disk, #usage #custom-swap,
 #group-system #backlight, #group-system #pulseaudio, #group-system #battery,
 #system #backlight, #system #pulseaudio, #system #battery {
   background: transparent;
-  padding: 0 6px;
+  padding: 0 5px;
   margin: 0;
 }
 #bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #mpris.paused { color: @overlay0; }
@@ -95,6 +119,67 @@ window.bottom_bar .modules-right { border-radius: 20px; margin-right: 13px; }
 #keyboard-state label.capslock { color: @base; font-weight: bold; }
 #keyboard-state label.capslock.locked { color: @subtext0; }
 #custom-kbd_layout { color: @subtext0; font-weight: bold; }
+#idle_inhibitor, #custom-keybindings_help {
+  background: transparent;
+  border-radius: 6px;
+  padding: 0 12px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
 #custom-keybindings_help { color: @subtext0; font-weight: bold; }
 #battery.charging, #battery.plugged, #battery.full { color: @subtext0; }
 #battery.warning { color: @subtext0; }
+
+window.dock_bar#waybar {
+  background-color: rgba(0, 0, 0, 0.80);
+  border: none;
+  border-radius: 10px;
+}
+#custom-dock_windows,
+#custom-dock_kitty,
+#custom-dock_nautilus,
+#custom-dock_zen,
+#custom-dock_chromium,
+#custom-dock_obsidian,
+#custom-dock_software {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center 4px;
+  background-size: 38px auto;
+  color: transparent;
+  font-size: 1px;
+  font-weight: 900;
+  min-width: 62px;
+  min-height: 50px;
+  padding: 36px 0 0 0;
+  margin: 0;
+}
+#custom-dock_windows.running,
+#custom-dock_kitty.running,
+#custom-dock_nautilus.running,
+#custom-dock_zen.running,
+#custom-dock_chromium.running,
+#custom-dock_obsidian.running,
+#custom-dock_software.running {
+  color: @blue;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+#custom-dock_windows.active,
+#custom-dock_kitty.active,
+#custom-dock_nautilus.active,
+#custom-dock_zen.active,
+#custom-dock_chromium.active,
+#custom-dock_obsidian.active,
+#custom-dock_software.active {
+  color: @text;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+#custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }
+#custom-dock_kitty { background-image: url("/home/osmarg/.local/share/icons/kitty.svg"); }
+#custom-dock_nautilus { background-image: url("/home/osmarg/.local/share/icons/nautilus.png"); }
+#custom-dock_zen { background-image: url("/home/osmarg/.local/share/icons/zen-browser.png"); }
+#custom-dock_chromium { background-image: url("/home/osmarg/.local/share/icons/chromium-browser.svg"); }
+#custom-dock_obsidian { background-image: url("/home/osmarg/.local/share/icons/obsidian.png"); }
+#custom-dock_software { background-image: url("/home/osmarg/.local/share/icons/software.png"); }
