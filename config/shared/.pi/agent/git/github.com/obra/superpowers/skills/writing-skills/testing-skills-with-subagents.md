@@ -1,1 +1,0 @@
-../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/skills/writing-skills/testing-skills-with-subagents.md

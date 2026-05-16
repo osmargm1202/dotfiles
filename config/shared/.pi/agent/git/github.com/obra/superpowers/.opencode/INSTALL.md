@@ -1,1 +1,0 @@
-../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/.opencode/INSTALL.md

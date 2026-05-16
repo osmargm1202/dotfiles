@@ -1,1 +1,0 @@
-../../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.md

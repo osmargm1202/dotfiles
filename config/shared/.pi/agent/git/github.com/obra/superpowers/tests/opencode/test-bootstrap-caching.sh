@@ -1,1 +1,0 @@
-../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/tests/opencode/test-bootstrap-caching.sh

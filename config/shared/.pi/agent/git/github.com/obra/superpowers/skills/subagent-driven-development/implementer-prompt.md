@@ -1,1 +1,0 @@
-../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/skills/subagent-driven-development/implementer-prompt.md

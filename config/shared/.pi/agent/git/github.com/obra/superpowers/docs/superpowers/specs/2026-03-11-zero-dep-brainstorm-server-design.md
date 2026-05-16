@@ -1,1 +1,0 @@
-../../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/docs/superpowers/specs/2026-03-11-zero-dep-brainstorm-server-design.md

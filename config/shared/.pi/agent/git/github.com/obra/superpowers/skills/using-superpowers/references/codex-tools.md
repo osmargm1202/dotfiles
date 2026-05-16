@@ -1,1 +1,0 @@
-../../../../../../../../../Hobby/dotfiles/config/pi/.pi/agent/git/github.com/obra/superpowers/skills/using-superpowers/references/codex-tools.md
