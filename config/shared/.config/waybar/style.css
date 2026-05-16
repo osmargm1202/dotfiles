@@ -127,7 +127,8 @@ window.bottom_bar .modules-right { border-radius: 6px; margin-right: 13px; }
   margin-bottom: 4px;
 }
 #custom-keybindings_help { color: @subtext0; font-weight: bold; }
-#battery.charging, #battery.plugged, #battery.full { color: @subtext0; }
+#battery.charging { color: @blue; }
+#battery.plugged, #battery.full { color: @subtext0; }
 #battery.warning { color: @subtext0; }
 
 window.dock_bar#waybar {
