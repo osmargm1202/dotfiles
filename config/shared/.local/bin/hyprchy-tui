@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo="${HYPRCHY_DOTFILES:-$HOME/Hobby/dotfiles}"
+host="${HYPRCHY_HOST:-$(hostname)}"
+
+choose() {
+  if command -v fzf >/dev/null 2>&1; then
+    fzf --prompt='hyprchy> ' --height=40% --border
+    return
+  fi
+
+  nl -w1 -s') '
+  printf 'choice> ' >&2
+  read -r n
+  sed -n "${n}p"
+}
+
+pause() {
+  printf '\npress enter...'
+  read -r _
+}
+
+run_in_repo() {
+  cd "$repo"
+  "$@"
+}
+
+while true; do
+  action=$(printf '%s\n' \
+    'dotfiles status' \
+    'dotfiles diff' \
+    'nixos dry test' \
+    'nixos eval hyprchy host' \
+    'walker logs' \
+    'elephant logs' \
+    'theme dirs' \
+    'quit' | choose)
+
+  case "$action" in
+    'dotfiles status') run_in_repo ./dot.sh status --host "$host"; pause ;;
+    'dotfiles diff') run_in_repo ./dot.sh diff --host "$host"; pause ;;
+    'nixos dry test') run_in_repo nh os test --dry --hostname "$host"; pause ;;
+    'nixos eval hyprchy host') run_in_repo nix eval ".#nixosConfigurations.${host}-hyprchy.config.system.name"; pause ;;
+    'walker logs') journalctl --user -u hyprchy-walker.service -n 80 --no-pager; pause ;;
+    'elephant logs') journalctl --user -u hyprchy-elephant.service -n 80 --no-pager; pause ;;
+    'theme dirs') find "$HOME/.config" "$HOME/.local/share/themes" "$HOME/.local/share/icons" -maxdepth 2 -type d 2>/dev/null | sort | less ;;
+    'quit'|'') exit 0 ;;
+  esac
+done

@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+if command -v pulsemixer >/dev/null 2>&1; then
+  exec kitty --class hyprchy-audio -e pulsemixer
+fi
+
+if command -v pavucontrol >/dev/null 2>&1; then
+  exec pavucontrol
+fi
+
+notify-send "Hyprchy Audio" "No audio UI found: expected pulsemixer or pavucontrol" 2>/dev/null || true

@@ -1,0 +1,390 @@
+// Hyprchy Waybar profile. Same visual stack as waybar-hypr, but launcher/TUI clicks are Hyprchy-specific.
+[
+  {
+    "name": "top_bar",
+    "layer": "top",
+    "position": "top",
+    "height": 47,
+    "spacing": 5,
+    "margin-top": 10,
+    "margin-left": 14,
+    "margin-right": 24,
+    "modules-left": [
+      "custom/menu",
+      "hyprland/workspaces",
+      "group/system",
+      "hyprland/submap"
+    ],
+    "modules-center": [
+      "custom/day_month",
+      "custom/time",
+      "custom/date"
+    ],
+    "modules-right": [
+      "custom/wallpaper",
+      "bluetooth",
+      "network",
+      "privacy",
+      "tray",
+      "custom/logout_menu"
+    ],
+    "custom/menu": {
+      "format": "",
+      "tooltip": true,
+      "tooltip-format": "Abrir Walker",
+      "on-click": "hypr-launcher"
+    },
+    "hyprland/workspaces": {
+      "disable-scroll": false,
+      "all-outputs": true,
+      "format": "{name}",
+      "format-icons": {
+        "1": "󰲠",
+        "2": "󰲢",
+        "3": "󰲤",
+        "4": "󰲦",
+        "5": "󰲨",
+        "6": "󰲪",
+        "7": "󰲬",
+        "8": "󰲮",
+        "9": "󰲰",
+        "10": "󰿬",
+        "default": ""
+      },
+      "persistent-workspaces": {
+        "1": [],
+        "2": [],
+        "3": [],
+        "4": [],
+        "5": [],
+        "6": [],
+        "7": [],
+        "8": [],
+        "9": [],
+        "10": []
+      }
+    },
+    "hyprland/submap": {
+      "format": "<span color='#a6da95'>Mode:</span> {}",
+      "tooltip": false
+    },
+    "custom/day_month": {
+      "exec": "~/.local/bin/waybar-day-month-es",
+      "interval": 60,
+      "tooltip": false
+    },
+    "custom/time": {
+      "exec": "~/.local/bin/waybar-time-ampm",
+      "interval": 1,
+      "tooltip": false
+    },
+    "custom/date": {
+      "exec": "~/.local/bin/waybar-date-es",
+      "interval": 60,
+      "tooltip": false
+    },
+    "custom/wallpaper": {
+      "format": "󰸉",
+      "tooltip": true,
+      "tooltip-format": "Cambiar fondo aleatorio",
+      "on-click": "~/.local/bin/hypr-random-wallpaper next"
+    },
+    "bluetooth": {
+      "format": "󰂯",
+      "format-disabled": "󰂲",
+      "format-connected": "󰂱 {device_alias}",
+      "format-connected-battery": "󰂱 {device_alias} (󰥉 {device_battery_percentage}%)",
+      "tooltip-format": "{controller_alias}\t{controller_address} ({status})\n\n{num_connections} connected",
+      "tooltip-format-disabled": "bluetooth off",
+      "tooltip-format-connected": "{controller_alias}\t{controller_address} ({status})\n\n{num_connections} connected\n\n{device_enumerate}",
+      "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
+      "tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t({device_battery_percentage}%)",
+      "max-length": 35,
+      "on-click": "hyprchy-bluetooth"
+    },
+    "group/system": {
+      "orientation": "horizontal",
+      "modules": [
+        "backlight",
+        "pulseaudio",
+        "battery"
+      ]
+    },
+    "backlight": {
+      "format": "{icon} {percent}%",
+      "format-icons": [
+        "󰃞",
+        "󰃟",
+        "󰃠"
+      ]
+    },
+    "pulseaudio": {
+      "format": "{icon} {volume}%",
+      "format-muted": "󰝟 muted",
+      "format-icons": {
+        "default": [
+          "",
+          "",
+          ""
+        ]
+      },
+      "on-click": "hyprchy-audio"
+    },
+    "battery": {
+      "states": {
+        "warning": 30,
+        "critical": 15
+      },
+      "format": "{icon} {capacity}%",
+      "format-charging": "󰂄 {capacity}% ",
+      "format-plugged": "󰚥 {capacity}%",
+      "format-full": "󰁹 {capacity}%",
+      "tooltip-format": "{capacity}% {timeTo} {power}W",
+      "format-icons": [
+        "󰁺",
+        "󰁻",
+        "󰁼",
+        "󰁽",
+        "󰁾",
+        "󰁿",
+        "󰂀",
+        "󰂁",
+        "󰂂",
+        "󰁹"
+      ]
+    },
+    "network": {
+      "format": "󰤭",
+      "format-wifi": "{icon} ({signalStrength}%) {essid}",
+      "format-icons": [
+        "󰤯",
+        "󰤟",
+        "󰤢",
+        "󰤥",
+        "󰤨"
+      ],
+      "format-ethernet": "󰈀 {ipaddr}/{cidr}",
+      "format-disconnected": "󰤫 Disconnected",
+      "tooltip-format-wifi": "SSID: {essid} ({signalStrength}%)\nInterface: {ifname}\nIP: {ipaddr}\nGW: {gwaddr}\n\n<span color='#a6da95'> {bandwidthUpBits}</span>\t<span color='#ee99a0'> {bandwidthDownBits}</span>",
+      "tooltip-format-ethernet": "Interface: {ifname}\nIP: {ipaddr}\nGW: {gwaddr}\n\n<span color='#a6da95'> {bandwidthUpBits}</span>\t<span color='#ee99a0'> {bandwidthDownBits}</span>",
+      "tooltip-format-disconnected": "<span color='#ed8796'>disconnected</span>",
+      "max-length": 35,
+      "on-click": "hyprchy-network"
+    },
+    "privacy": {
+      "icon-spacing": 5,
+      "icon-size": 16,
+      "transition-duration": 250,
+      "modules": [
+        {
+          "type": "audio-in"
+        },
+        {
+          "type": "screenshare"
+        }
+      ]
+    },
+    "tray": {
+      "icon-size": 21,
+      "spacing": 10
+    },
+    "custom/logout_menu": {
+      "format": "󰐥",
+      "tooltip": true,
+      "tooltip-format": "Hyprchy system menu",
+      "on-click": "kitty --class hyprchy-tui -e hyprchy-tui"
+    }
+  },
+  {
+    "name": "bottom_bar",
+    "layer": "top",
+    "position": "bottom",
+    "height": 52,
+    "spacing": 5,
+    "margin-bottom": 10,
+    "margin-left": 14,
+    "margin-right": 14,
+    "modules-left": [
+      "custom/orgm_logo",
+      "custom/user",
+      "hyprland/window"
+    ],
+    "modules-center": [
+      "idle_inhibitor",
+      "mpris"
+    ],
+    "modules-right": [
+      "group/usage",
+      "custom/kbd_layout",
+      "custom/keybindings_help"
+    ],
+    "custom/orgm_logo": {
+      "format": " ",
+      "tooltip": true,
+      "tooltip-format": "Abrir Walker",
+      "on-click": "hypr-launcher"
+    },
+    "custom/user": {
+      "format": "  hyprchy",
+      "tooltip": false
+    },
+    "hyprland/window": {
+      "format": "{}",
+      "max-length": 80,
+      "separate-outputs": true
+    },
+    "idle_inhibitor": {
+      "format": "{icon}",
+      "format-icons": {
+        "activated": "󰅶",
+        "deactivated": "󰾪"
+      }
+    },
+    "mpris": {
+      "format": "{player_icon} {dynamic}",
+      "format-paused": "{status_icon} {dynamic}",
+      "player-icons": {
+        "default": "󰎈"
+      },
+      "status-icons": {
+        "paused": "󰏤"
+      },
+      "max-length": 45,
+      "on-click": "playerctl play-pause",
+      "on-click-right": "playerctl next",
+      "on-click-middle": "playerctl previous"
+    },
+    "cpu": {
+      "format": " {usage}%",
+      "tooltip": true,
+      "on-click": "kitty -e btop"
+    },
+    "memory": {
+      "format": " {percentage}%",
+      "tooltip-format": "{used:0.1f}G / {total:0.1f}G",
+      "on-click": "kitty -e btop"
+    },
+    "temperature": {
+      "format": " {temperatureC}°C",
+      "critical-threshold": 85,
+      "on-click": "kitty -e btop"
+    },
+    "disk#ssd": {
+      "path": "/",
+      "format": "󰋊 SSD {percentage_used}%",
+      "tooltip-format": "{used} used / {total} total",
+      "on-click": "kitty -e btop"
+    },
+    "custom/swap": {
+      "exec": "~/.local/bin/waybar-swap-usage",
+      "interval": 5,
+      "tooltip": false,
+      "on-click": "kitty -e btop"
+    },
+    "group/usage": {
+      "orientation": "horizontal",
+      "modules": [
+        "cpu",
+        "memory",
+        "temperature",
+        "disk#ssd",
+        "custom/swap"
+      ]
+    },
+    "custom/kbd_layout": {
+      "exec": "~/.config/waybar-hypr/kbd-layout.sh",
+      "interval": 1,
+      "tooltip": false,
+      "on-click": "~/.local/bin/kbd-layout-next"
+    },
+    "custom/keybindings_help": {
+      "format": "?",
+      "tooltip": true,
+      "tooltip-format": "Atajos Hyprchy (Win+/)",
+      "on-click": "kitty --class hyprchy-tui -e hyprchy-tui"
+    }
+  },
+  {
+    "name": "dock_bar",
+    "layer": "top",
+    "position": "right",
+    "width": 72,
+    "spacing": 2,
+    "margin-right": 10,
+    "margin-top": 0,
+    "margin-bottom": 0,
+    "custom/dock_windows": {
+      "exec": "~/.local/bin/waybar-hypr-dock status windows",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/waybar-hypr-dock click windows",
+      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch windows"
+    },
+    "custom/dock_kitty": {
+      "exec": "~/.local/bin/waybar-hypr-dock status kitty",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/waybar-hypr-dock click kitty",
+      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch kitty"
+    },
+    "custom/dock_nautilus": {
+      "exec": "~/.local/bin/waybar-hypr-dock status nautilus",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/waybar-hypr-dock click nautilus",
+      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch nautilus"
+    },
+    "custom/dock_zen": {
+      "exec": "~/.local/bin/waybar-hypr-dock status zen",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/waybar-hypr-dock click zen",
+      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch zen"
+    },
+    "custom/dock_chromium": {
+      "exec": "~/.local/bin/waybar-hypr-dock status chromium",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/waybar-hypr-dock click chromium",
+      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch chromium"
+    },
+    "custom/dock_obsidian": {
+      "exec": "~/.local/bin/waybar-hypr-dock status obsidian",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/waybar-hypr-dock click obsidian",
+      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch obsidian"
+    },
+    "custom/dock_software": {
+      "exec": "~/.local/bin/waybar-hypr-dock status software",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/waybar-hypr-dock click software",
+      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch software"
+    },
+    "height": 620,
+    "modules-center": [
+      "custom/dock_windows",
+      "custom/dock_kitty",
+      "custom/dock_nautilus",
+      "custom/dock_zen",
+      "custom/dock_chromium",
+      "custom/dock_obsidian",
+      "custom/dock_software"
+    ]
+  }
+]

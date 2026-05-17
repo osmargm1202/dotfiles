@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+prompt="Search> "
+args=()
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --prompt|-p)
+      prompt="${2:-$prompt}"
+      shift 2
+      ;;
+    *)
+      args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [ "${HYPRCHY:-0}" = "1" ] && command -v walker >/dev/null 2>&1; then
+  prompt="${prompt%> }"
+  prompt="${prompt%>}"
+  exec walker --dmenu -p "$prompt"
+fi
+
+if command -v fuzzel >/dev/null 2>&1; then
+  exec fuzzel --dmenu --prompt "$prompt" "${args[@]}"
+fi
+
+if command -v rofi >/dev/null 2>&1; then
+  exec rofi -dmenu -p "$prompt"
+fi
+
+cat

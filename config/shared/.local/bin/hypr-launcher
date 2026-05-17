@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ "${HYPRCHY:-0}" = "1" ] && command -v walker >/dev/null 2>&1; then
+  exec walker "$@"
+fi
+
+if command -v fuzzel >/dev/null 2>&1; then
+  exec fuzzel --prompt "Apps> "
+fi
+
+if command -v nwg-drawer >/dev/null 2>&1; then
+  exec nwg-drawer
+fi
+
+printf 'No launcher found: expected walker, fuzzel, or nwg-drawer\n' >&2
+exit 127

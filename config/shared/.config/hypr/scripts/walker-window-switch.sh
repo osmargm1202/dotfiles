@@ -53,13 +53,17 @@ if [ -z "$entries" ]; then
 	exit 0
 fi
 
-if command -v walker >/dev/null 2>&1; then
+if command -v hypr-dmenu >/dev/null 2>&1; then
+	selection=$(printf '%s\n' "$entries" | hypr-dmenu --prompt "$PROMPT> ")
+elif [ "${HYPRCHY:-0}" = "1" ] && command -v walker >/dev/null 2>&1; then
 	selection=$(printf '%s\n' "$entries" | walker --dmenu -p "$PROMPT")
+elif command -v fuzzel >/dev/null 2>&1; then
+	selection=$(printf '%s\n' "$entries" | fuzzel --dmenu --prompt "$PROMPT> ")
 elif command -v rofi >/dev/null 2>&1; then
 	selection=$(printf '%s\n' "$entries" | rofi -dmenu -p "$PROMPT")
 else
 	if command -v notify-send >/dev/null 2>&1; then
-		notify-send "Walker" "Instalá walker (o rofi) para usar Alt+Tab"
+		notify-send "Window switcher" "Instalá walker, fuzzel o rofi para cambiar ventanas"
 	fi
 	exit 0
 fi

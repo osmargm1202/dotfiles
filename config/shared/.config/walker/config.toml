@@ -1,0 +1,41 @@
+# Hyprchy Walker config.
+# Keep this conservative: fast central launcher first, heavy providers later.
+
+close_when_open = true
+click_to_close = true
+single_click_activation = true
+selection_wrap = false
+theme = "default"
+
+[placeholders]
+default = { input = "Hyprchy", list = "No results" }
+
+[providers]
+default = ["desktopapplications", "calc", "websearch", "menus"]
+empty = ["desktopapplications"]
+ignore_preview = []
+max_results = 50
+
+[[providers.prefixes]]
+prefix = ";"
+provider = "providerlist"
+
+[[providers.prefixes]]
+prefix = ">"
+provider = "runner"
+
+[[providers.prefixes]]
+prefix = "="
+provider = "calc"
+
+[[providers.prefixes]]
+prefix = "@"
+provider = "websearch"
+
+[[providers.prefixes]]
+prefix = ":"
+provider = "clipboard"
+
+[[providers.prefixes]]
+prefix = "!"
+provider = "menus"

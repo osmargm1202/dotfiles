@@ -1,21 +1,81 @@
-{ pkgs, lib, inputs, ... }:
+{
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 
 let
   system = pkgs.stdenv.hostPlatform.system;
   hyprlandPkgs = inputs.hyprland.packages.${system};
   hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
+  walkerPkg = inputs.walker.packages.${system}.default;
+  elephantPkg = inputs.elephant.packages.${system}.default;
 in
 {
+  imports = [
+    inputs.walker.nixosModules.default
+  ];
+
+  # Hyprchy keeps the working Hyprland baseline and adds Walker/Elephant.
+  # Runtime config is managed by dot.sh under ~/.config/walker and
+  # ~/.config/elephant; Nix owns package/module wiring only.
+  programs.walker = {
+    enable = true;
+    package = walkerPkg;
+    elephant = {
+      package = elephantPkg;
+      installService = false;
+      providers = [
+        "calc"
+        "desktopapplications"
+        "menus"
+        "providerlist"
+        "runner"
+        "websearch"
+      ];
+    };
+  };
+
+  systemd.user.services.hyprchy-elephant = {
+    description = "Hyprchy Elephant launcher backend";
+    after = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    wantedBy = [ "graphical-session.target" ];
+    serviceConfig = {
+      ExecStart = "${elephantPkg}/bin/elephant";
+      Restart = "on-failure";
+      RestartSec = 1;
+    };
+  };
+
+  systemd.user.services.hyprchy-walker = {
+    description = "Hyprchy Walker launcher service";
+    after = [
+      "graphical-session.target"
+      "hyprchy-elephant.service"
+    ];
+    requires = [ "hyprchy-elephant.service" ];
+    partOf = [ "graphical-session.target" ];
+    wantedBy = [ "graphical-session.target" ];
+    serviceConfig = {
+      ExecStart = "${walkerPkg}/bin/walker --gapplication-service";
+      Restart = "on-failure";
+      RestartSec = 1;
+    };
+  };
+
   # Hyprland sin display manager: login en tty1 y arranque automático.
   # Sin autologin, PAM puede desbloquear GNOME Keyring con la clave de login.
   services.xserver.enable = false;
 
   programs.fish.loginShellInit = ''
     if test -z "$DISPLAY"; and test -z "$WAYLAND_DISPLAY"; and test (tty) = "/dev/tty1"
+      set -gx HYPRCHY 1
       if command -q start-hyprland
-        exec start-hyprland
+        exec start-hyprland -- --config "$HOME/.config/hypr/hyprchy.lua"
       else
-        exec Hyprland
+        exec Hyprland --config "$HOME/.config/hypr/hyprchy.lua"
       end
     end
   '';
@@ -82,10 +142,22 @@ in
       "text/plain" = [ "org.gnome.TextEditor.desktop" ];
       "text/markdown" = [ "org.gnome.TextEditor.desktop" ];
       "text/x-markdown" = [ "org.gnome.TextEditor.desktop" ];
-      "text/html" = [ "chromium-browser.desktop" "chromium.desktop" ];
-      "application/xhtml+xml" = [ "chromium-browser.desktop" "chromium.desktop" ];
-      "x-scheme-handler/http" = [ "chromium-browser.desktop" "chromium.desktop" ];
-      "x-scheme-handler/https" = [ "chromium-browser.desktop" "chromium.desktop" ];
+      "text/html" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
+      "application/xhtml+xml" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
+      "x-scheme-handler/http" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
+      "x-scheme-handler/https" = [
+        "chromium-browser.desktop"
+        "chromium.desktop"
+      ];
       "application/pdf" = [ "org.gnome.Evince.desktop" ];
       "image/png" = [ "org.gnome.Loupe.desktop" ];
       "image/jpeg" = [ "org.gnome.Loupe.desktop" ];
@@ -100,6 +172,7 @@ in
   };
 
   environment.sessionVariables = {
+    HYPRCHY = "1";
     NIXOS_OZONE_WL = "1";
     MOZ_ENABLE_WAYLAND = "1";
     XDG_SESSION_TYPE = "wayland";
@@ -163,10 +236,15 @@ in
     # Hardware controls
     brightnessctl
     pamixer
+    pulsemixer
     playerctl
     pavucontrol
+    networkmanager
     networkmanagerapplet
+    bluetui
     blueman
+    impala
+    iwmenu
     libnotify
     dunst
     overskride

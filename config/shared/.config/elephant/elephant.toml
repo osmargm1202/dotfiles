@@ -1,0 +1,4 @@
+# Hyprchy Elephant config.
+# Elephant is Walker's provider backend. Keep provider set conservative first.
+
+global_argument_delimiter = "#"

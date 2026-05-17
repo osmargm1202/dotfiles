@@ -7,6 +7,20 @@
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    systems.url = "github:nix-systems/default-linux";
+    elephant = {
+      # Walker's backend provider service. Keep pinned with Walker in flake.lock.
+      url = "github:abenz1267/elephant";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
+    };
+    walker = {
+      # Central launcher UI. Follow the same Elephant input to avoid protocol drift.
+      url = "github:abenz1267/walker";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
+      inputs.elephant.follows = "elephant";
+    };
     hyprland = {
       # Track latest upstream git. Pin exact rev in flake.lock for reproducible builds.
       url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
@@ -37,6 +51,9 @@
 
   outputs = inputs@{ nixpkgs, ... }: let
     system = "x86_64-linux";
+    # Generic profile outputs use eval-only hardware so pure flake checks do not
+    # depend on /etc or any real host. Host-specific outputs pass real hardware.
+    defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
     mkHost = {
       hostName,
       hardware,
@@ -63,7 +80,7 @@
         specialArgs = { inherit inputs; };
         modules = [
           ./nixos/common.nix
-          /etc/nixos/hardware-configuration.nix
+          defaultHardware
           profile
           { networking.hostName = hostName; }
         ] ++ extraModules;
@@ -77,6 +94,9 @@
       };
       hyprland = mkProfile {
         profile = ./nixos/profiles/hyprland.nix;
+      };
+      hyprchy = mkProfile {
+        profile = ./nixos/profiles/hyprchy.nix;
       };
       niri = mkProfile {
         profile = ./nixos/profiles/niri.nix;
@@ -103,6 +123,12 @@
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/hyprland.nix;
+        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
+      };
+      orgm-hyprchy = mkHost {
+        hostName = "orgm";
+        hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
+        profile = ./nixos/profiles/hyprchy.nix;
         extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
       };
       orgm-niri = mkHost {
@@ -142,6 +168,12 @@
         profile = ./nixos/profiles/sway.nix;
         extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
       };
+      ero-hyprchy = mkHost {
+        hostName = "ero";
+        hardware = ./nixos/hosts/ero/hardware-configuration.nix;
+        profile = ./nixos/profiles/hyprchy.nix;
+        extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
+      };
       lenovo-labwc = mkHost {
         hostName = "lenovo";
         hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
@@ -164,6 +196,15 @@
         hostName = "lenovo";
         hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
         profile = ./nixos/profiles/hyprland.nix;
+        extraModules = [
+          ./nixos/hosts/lenovo/plymouth.nix
+          ./nixos/hosts/lenovo/audio.nix
+        ];
+      };
+      lenovo-hyprchy = mkHost {
+        hostName = "lenovo";
+        hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
+        profile = ./nixos/profiles/hyprchy.nix;
         extraModules = [
           ./nixos/hosts/lenovo/plymouth.nix
           ./nixos/hosts/lenovo/audio.nix

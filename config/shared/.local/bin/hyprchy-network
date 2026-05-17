@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+if command -v nmtui >/dev/null 2>&1; then
+  exec kitty --class hyprchy-network -e nmtui
+fi
+
+if command -v iwgtk >/dev/null 2>&1; then
+  exec iwgtk
+fi
+
+if command -v nm-connection-editor >/dev/null 2>&1; then
+  exec nm-connection-editor
+fi
+
+notify-send "Hyprchy Network" "No network UI found: expected nmtui, iwgtk, or nm-connection-editor" 2>/dev/null || true

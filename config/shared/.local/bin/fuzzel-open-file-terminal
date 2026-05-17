@@ -14,7 +14,7 @@ selection=$(
     -printf '%T@\t%P\n' 2>/dev/null \
     | sort -rn \
     | cut -f2- \
-    | fuzzel --dmenu --prompt "Term dir> " --width 88 --lines 18
+    | hypr-dmenu --prompt "Term dir> "
 )
 
 [ -n "${selection:-}" ] || exit 0
