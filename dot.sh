@@ -23,13 +23,16 @@ INTERVAL=""
 usage() {
   cat <<'EOF'
 Usage:
-  dot.sh --diff --host HOST [--no-color|--porcelain]
-  dot.sh --sync --host HOST [--dry-run]
-  dot.sh --daemon --host HOST
-  dot.sh --add PATH (--shared|--host HOST)
-  dot.sh --remove PATH (--shared|--host HOST)
-  dot.sh --install
-  dot.sh --status --host HOST
+  dot.sh diff --host HOST [--no-color|--porcelain]
+  dot.sh sync --host HOST [--dry-run]
+  dot.sh daemon --host HOST
+  dot.sh add PATH (--shared|--host HOST)
+  dot.sh remove PATH (--shared|--host HOST)
+  dot.sh install
+  dot.sh status --host HOST
+
+Legacy command flags like --diff and --sync still work, but the fast form
+without -- is preferred.
 
 Environment:
   DOT_SH_CONFIG=/path/to/dotfiles.json
@@ -41,9 +44,22 @@ need_cmd() { command -v "$1" >/dev/null 2>&1 || fail "missing dependency: $1"; }
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    diff|sync|daemon|install|status)
+      [ -z "$CMD" ] || fail "only one command is allowed"
+      CMD="$1"
+      shift
+      ;;
     --diff|--sync|--daemon|--install|--status)
       [ -z "$CMD" ] || fail "only one command is allowed"
       CMD="${1#--}"
+      shift
+      ;;
+    add|remove)
+      [ -z "$CMD" ] || fail "only one command is allowed"
+      CMD="$1"
+      shift
+      [ "$#" -gt 0 ] || fail "$CMD requires PATH"
+      TARGET="$1"
       shift
       ;;
     --add|--remove)
@@ -380,7 +396,7 @@ run_install() {
   ln -sfn "$SCRIPT_PATH" "$HOME/.local/bin/dot.sh"
   printf 'installed: %s -> %s\n' "$HOME/.local/bin/dot" "$SCRIPT_PATH"
   printf 'installed: %s -> %s\n' "$HOME/.local/bin/dot.sh" "$SCRIPT_PATH"
-  printf 'launch example: dot --daemon --host orgm\n'
+  printf 'launch example: dot daemon --host orgm\n'
 }
 
 run_status() {
