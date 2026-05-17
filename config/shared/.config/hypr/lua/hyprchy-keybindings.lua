@@ -36,7 +36,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("swaync-client -t -sw"))
   hl.bind(mainMod .. " + CTRL + SHIFT + M", hl.dsp.exec_cmd("swaync-client -C"))
   hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("~/.local/bin/hypr-random-wallpaper next"))
-  hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("sh -lc 'cliphist list | hypr-dmenu --prompt \"Clipboard> \" | cliphist decode | wl-copy'"))
+  hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("sh -lc 'cliphist list | $HOME/.local/bin/hypr-dmenu --prompt \"Clipboard> \" | cliphist decode | wl-copy'"))
   hl.bind(mainMod .. " + F10", hl.dsp.exec_cmd("pavucontrol"))
   hl.bind("CTRL + Space", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))
 

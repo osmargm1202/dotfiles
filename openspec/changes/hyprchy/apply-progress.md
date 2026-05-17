@@ -273,3 +273,34 @@ LSP diagnostics hyprland.nix: none
 ### Next
 
 Run fresh static review, then final build/switch only when user approves.
+
+## Runtime smoke fix: PATH and Elephant startup
+
+### Status
+
+runtime_bugfix_lightweight_green
+
+### Root cause evidence
+
+- Running Hyprchy session had `HYPRCHY=1`, Hyprland, and `waybar-hyprchy` active.
+- `waybar-hyprchy.log` showed click commands failing with `command not found` for `hypr-launcher`, `hyprchy-bluetooth`, `hyprchy-network`, and `hyprchy-audio`.
+- `systemctl --user start graphical-session.target` is refused on this NixOS session (`Operation refused, unit graphical-session.target may be requested by dependency only`), so `hyprchy-elephant.service` and `hyprchy-walker.service` stayed inactive.
+- Manually starting `hyprchy-elephant.service` then `hyprchy-walker.service` worked; Walker/Elephant processes became active.
+
+### Changes made
+
+- `hyprchy-autostart.lua` now starts `hyprchy-elephant.service` and `hyprchy-walker.service` explicitly instead of trying to start `graphical-session.target`.
+- `hyprchy-programs.lua` uses `~/.local/bin/hypr-launcher` so `SUPER+Space` does not depend on PATH containing `~/.local/bin`.
+- `waybar-hyprchy/config` uses absolute `~/.local/bin/hypr-*` commands for launcher/audio/bluetooth/network clicks.
+- fuzzel helper scripts and `walker-window-switch.sh` call `$HOME/.local/bin/hypr-dmenu` explicitly.
+- Clipboard keybinding calls `$HOME/.local/bin/hypr-dmenu` explicitly.
+
+### Lightweight validation
+
+```text
+JSONC parse waybar-hyprchy/config: ok
+luac -p hyprchy autostart/programs/keybindings: ok
+bash -n changed helper scripts: ok
+remaining unqualified Waybar custom commands: none
+remaining bare hypr-dmenu command refs: only help text
+```

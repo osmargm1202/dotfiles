@@ -53,8 +53,8 @@ if [ -z "$entries" ]; then
 	exit 0
 fi
 
-if command -v hypr-dmenu >/dev/null 2>&1; then
-	selection=$(printf '%s\n' "$entries" | hypr-dmenu --prompt "$PROMPT> ")
+if [ -x "$HOME/.local/bin/hypr-dmenu" ]; then
+	selection=$(printf '%s\n' "$entries" | "$HOME/.local/bin/hypr-dmenu" --prompt "$PROMPT> ")
 elif [ "${HYPRCHY:-0}" = "1" ] && command -v walker >/dev/null 2>&1; then
 	selection=$(printf '%s\n' "$entries" | walker --dmenu -p "$PROMPT")
 elif command -v fuzzel >/dev/null 2>&1; then

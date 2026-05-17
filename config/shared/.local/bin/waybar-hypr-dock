@@ -85,7 +85,7 @@ case "$action" in
       exit 0
     fi
 
-    selection="$(printf '%s' "$clients" | jq -r '.[] | "\(.address)\t[\(.workspace.name // "?")] \(.title // .class // "window")"' | hypr-dmenu --prompt "${app_name}> " 2>/dev/null || true)"
+    selection="$(printf '%s' "$clients" | jq -r '.[] | "\(.address)\t[\(.workspace.name // "?")] \(.title // .class // "window")"' | "$HOME/.local/bin/hypr-dmenu" --prompt "${app_name}> " 2>/dev/null || true)"
     addr="$(printf '%s' "$selection" | cut -f1)"
     focus_address "$addr"
     ;;

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-selection=$(distrobox-enter arch -- tmux ls 2>/dev/null | hypr-dmenu --prompt "tmux> ")
+selection=$(distrobox-enter arch -- tmux ls 2>/dev/null | "$HOME/.local/bin/hypr-dmenu" --prompt "tmux> ")
 [ -n "${selection:-}" ] || exit 0
 session=${selection%%:*}
 exec kitty -e distrobox-enter arch -- tmux attach -t "$session"
