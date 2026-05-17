@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [ "${HYPRCHY:-0}" = "1" ] && command -v walker >/dev/null 2>&1; then
-  exec walker "$@"
+  exec walker --provider desktopapplications "$@"
 fi
 
 if command -v fuzzel >/dev/null 2>&1; then

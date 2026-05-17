@@ -11,7 +11,7 @@ theme = "default"
 default = { input = "Hyprchy", list = "No results" }
 
 [providers]
-default = ["desktopapplications", "calc", "websearch", "menus"]
+default = ["desktopapplications"]
 empty = ["desktopapplications"]
 ignore_preview = []
 max_results = 50
