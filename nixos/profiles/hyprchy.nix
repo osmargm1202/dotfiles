@@ -59,6 +59,7 @@ in
     partOf = [ "graphical-session.target" ];
     wantedBy = [ "graphical-session.target" ];
     serviceConfig = {
+      ExecStartPre = "${pkgs.coreutils}/bin/sleep 2";
       ExecStart = "${walkerPkg}/bin/walker --gapplication-service";
       Restart = "on-failure";
       RestartSec = 1;
