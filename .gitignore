@@ -11,5 +11,7 @@ config/**/.config/fish/*.decrypted
 config/dms/
 config/pi/
 config/tmux/.tmux/plugins/
+
 # Local Pi runtime state
 .atl/
+.pi-lens/
