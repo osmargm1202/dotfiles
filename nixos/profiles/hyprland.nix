@@ -140,6 +140,7 @@ in
     # Shell / launchers / terminal
     kitty
     fuzzel
+    rofi
     libqalculate
     yad
     wlogout
@@ -147,6 +148,7 @@ in
 
     # Portal / XDG
     xdg-utils
+    desktop-file-utils
     xdg-desktop-portal
     hyprlandPkgs.xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
@@ -166,6 +168,7 @@ in
     playerctl
     pavucontrol
     networkmanagerapplet
+    bluetui
     blueman
     libnotify
     dunst
@@ -185,6 +188,7 @@ in
     gnome-calculator
     gnome-disk-utility
     gnome-logs
+    gnome-system-monitor
     seahorse
     gnome-font-viewer
     gnome-characters

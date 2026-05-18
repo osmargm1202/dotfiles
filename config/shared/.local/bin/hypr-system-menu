@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+repo="${DOTFILES_REPO:-$HOME/Hobby/dotfiles}"
+host="${HYPR_HOST:-$(hostname)}"
+choice="$(printf '%s\n' '󰑓 Reload Hyprland' '󰑓 Restart Waybar' '󰆍 User logs' '󰁯 dot.sh status' '󰕚 dot.sh diff' '󰑓 dot.sh sync' '󰉋 Open dotfiles' '󰅖 Cancel' | rofi -dmenu -i -p 'System' -theme "$theme" || true)"
+case "$choice" in
+  *'Reload Hyprland') exec hyprctl reload ;;
+  *'Restart Waybar') pkill waybar 2>/dev/null || true; exec waybar -c ~/.config/waybar-hypr/config -s ~/.config/waybar-hypr/style.css ;;
+  *'User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
+  *'dot.sh status') exec kitty --class dot-status -e sh -lc "cd '$repo' && ./dot.sh status --host '$host'; read -r -p 'press enter...'" ;;
+  *'dot.sh diff') exec kitty --class dot-diff -e sh -lc "cd '$repo' && ./dot.sh diff --host '$host'; read -r -p 'press enter...'" ;;
+  *'dot.sh sync') exec kitty --class dot-sync -e sh -lc "cd '$repo' && ./dot.sh sync --host '$host'; read -r -p 'press enter...'" ;;
+  *'Open dotfiles') exec nautilus "$repo" ;;
+  *) exit 0 ;;
+esac

@@ -1,0 +1,64 @@
+configuration {
+  font: "JetBrainsMono Nerd Font 12";
+  terminal: "kitty";
+  show-icons: true;
+  drun-display-format: "{icon} {name}";
+}
+
+* {
+  bg: rgba(24, 25, 38, 0.94);
+  bg-alt: rgba(54, 58, 79, 0.72);
+  fg: #cad3f5;
+  accent: #8bd5ca;
+  selected: rgba(139, 213, 202, 0.22);
+}
+
+window {
+  location: center;
+  anchor: center;
+  width: 760px;
+  border-radius: 18px;
+  border: 2px;
+  border-color: @accent;
+  background-color: @bg;
+}
+
+mainbox {
+  spacing: 14px;
+  padding: 22px;
+  background-color: transparent;
+}
+
+inputbar {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background-color: @bg-alt;
+}
+
+prompt, entry {
+  text-color: @fg;
+  background-color: transparent;
+}
+
+listview {
+  columns: 2;
+  lines: 8;
+  spacing: 10px;
+  scrollbar: false;
+  background-color: transparent;
+}
+
+element {
+  padding: 12px;
+  border-radius: 12px;
+  background-color: @bg-alt;
+  text-color: @fg;
+}
+
+element selected {
+  background-color: @selected;
+  text-color: #ffffff;
+}
+
+element-icon { size: 28px; }
+element-text { vertical-align: 0.5; }

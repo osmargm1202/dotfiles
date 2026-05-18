@@ -45,12 +45,9 @@
     ];
   };
 
-  boot.kernelPackages = lib.mkDefault (
-    if builtins.elem "nvidia" config.services.xserver.videoDrivers then
-      pkgs.linuxPackages
-    else
-      pkgs.linuxPackages_latest
-  );
+  # Main kernel for all hosts. Keep host-specific overrides in each host file
+  # only when hardware needs a different kernel.
+  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_zen;
 
   boot.plymouth.enable = true;
   boot.initrd.systemd.enable = true;

@@ -7,6 +7,10 @@ end
 function M.setup(programs)
   local mainMod = "SUPER"
 
+  local function program(name, fallback)
+    return programs[name] or fallback
+  end
+
   -- Help / launchers.
   hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("~/.local/bin/hypr-keybindings-help"))
   hl.bind(mainMod .. " + CTRL + slash", hl.dsp.exec_cmd("kitty --hold -e distrobox-enter arch -- tmuxls"))
@@ -17,10 +21,12 @@ function M.setup(programs)
   hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("kitty --class orgmai-chat -e distrobox-enter arch -- orgmai chat"))
   hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("kitty --class orgmai-chat -e distrobox-enter arch -- orgmai prev"))
   hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("kitty -e distrobox-enter arch -- orgmrnc find"))
-  hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd(programs.piPrompt))
+  hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd(program("piPrompt", "kitty --hold -e pi")))
 
-  -- NWG stack.
-  hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(programs.menu))
+  -- Launchers and control center.
+  hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(program("menu", "fuzzel --prompt 'Apps> '")))
+  hl.bind(mainMod .. " + ALT + Space", hl.dsp.exec_cmd(program("control_center", "~/.local/bin/hypr-main-menu")))
+  hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(program("smart_run", "~/.local/bin/hypr-smart-run")))
   hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("~/.local/bin/fuzzel-open-file"))
   hl.bind(mainMod .. " + CTRL + M", hl.dsp.exec_cmd("~/.local/bin/fuzzel-open-file-dir"))
   hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("~/.local/bin/fuzzel-open-file-terminal"))
@@ -28,10 +34,10 @@ function M.setup(programs)
   hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("~/.local/bin/fuzzel-tmux-arch"))
   hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("~/.local/bin/fuzzel-calc"))
   hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("~/.local/bin/fuzzel-ssh-host"))
-  hl.bind(mainMod .. " + P", hl.dsp.exec_cmd(programs.display_settings))
-  hl.bind(mainMod .. " + CTRL + comma", hl.dsp.exec_cmd(programs.display_settings))
-  hl.bind(mainMod .. " + ALT + E", hl.dsp.exec_cmd(programs.power_menu))
-  hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd(programs.lock))
+  hl.bind(mainMod .. " + P", hl.dsp.exec_cmd(program("display_settings", "nwg-displays")))
+  hl.bind(mainMod .. " + CTRL + comma", hl.dsp.exec_cmd(program("display_settings", "nwg-displays")))
+  hl.bind(mainMod .. " + ALT + E", hl.dsp.exec_cmd(program("power_menu", "fish -c wlogout_uniqe")))
+  hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd(program("lock", "hyprlock")))
   hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("swaync-client -t -sw"))
   hl.bind(mainMod .. " + CTRL + SHIFT + M", hl.dsp.exec_cmd("swaync-client -C"))
   hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("~/.local/bin/hypr-random-wallpaper next"))
@@ -73,7 +79,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + SHIFT + Space", hl.dsp.window.float({ action = "toggle" }))
   hl.bind(mainMod .. " + T", hl.dsp.layout("togglesplit"))
   hl.bind(mainMod .. " + C", hl.dsp.window.center())
-  hl.bind(mainMod .. " + R", hl.dsp.layout("togglesplit"))
+  hl.bind(mainMod .. " + CTRL + R", hl.dsp.layout("togglesplit"))
   hl.bind(mainMod .. " + minus", dispatch("resizeactive -20 0"))
   hl.bind(mainMod .. " + equal", dispatch("resizeactive 20 0"))
   hl.bind(mainMod .. " + SHIFT + minus", dispatch("resizeactive 0 -20"))

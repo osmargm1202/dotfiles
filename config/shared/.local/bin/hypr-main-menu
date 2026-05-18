@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+
+pick() {
+  rofi -dmenu -i -show-icons -p "$1" -theme "$theme"
+}
+
+choice="$(printf '%s\n' \
+  '󰀻 Apps' \
+  '󰒓 Tools' \
+  '󰚰 Update' \
+  '󱐋 Performance' \
+  '󰖩 WiFi' \
+  '󰂯 Bluetooth' \
+  '󰍉 Search' \
+  '󰌌 Keybinds' \
+  '󰒓 System' \
+  '󰐥 Power' \
+  '󰌌 Keyboard' \
+  '󰣆 Web App Maker' \
+  '󰅖 Quit' | pick 'Hyprland' || true)"
+
+case "$choice" in
+  *'Apps') exec rofi -show drun -theme "$theme" ;;
+  *'Tools') exec hypr-tools-menu ;;
+  *'Update') exec hypr-update-menu ;;
+  *'Performance') exec hypr-performance-menu ;;
+  *'WiFi') exec hypr-wifi-menu ;;
+  *'Bluetooth') exec hypr-bluetooth-menu ;;
+  *'Search') exec hypr-smart-run ;;
+  *'Keybinds') exec hypr-keybindings-help ;;
+  *'System') exec hypr-system-menu ;;
+  *'Power') exec hypr-power-menu ;;
+  *'Keyboard') exec hypr-keyboard-menu ;;
+  *'Web App Maker') exec hypr-webapp-maker ;;
+  *'Quit'|'') exit 0 ;;
+esac

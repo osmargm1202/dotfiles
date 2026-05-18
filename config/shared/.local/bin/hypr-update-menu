@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+repo="${DOTFILES_REPO:-$HOME/Hobby/dotfiles}"
+host="${HYPR_HOST:-$(hostname)}"
+profile="${HYPR_PROFILE:-hyprland}"
+target="${HYPR_UPDATE_TARGET:-$host-$profile}"
+
+choice="$(printf '%s\n' "Update $target" 'Open repo' 'Cancel' | rofi -dmenu -i -p 'NixOS Update' -theme "$theme" || true)"
+case "$choice" in
+  Update*) exec kitty --class hypr-update -e sh -lc "cd '$repo' && nh os switch .#$target --update; read -r -p 'press enter...'" ;;
+  'Open repo') exec nautilus "$repo" ;;
+  *) exit 0 ;;
+esac

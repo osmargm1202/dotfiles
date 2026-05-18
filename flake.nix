@@ -81,9 +81,7 @@
       hyprland = mkProfile {
         profile = ./nixos/profiles/hyprland.nix;
       };
-      hyprchy = mkProfile {
-        profile = ./nixos/profiles/hyprchy.nix;
-      };
+
       niri = mkProfile {
         profile = ./nixos/profiles/niri.nix;
       };
@@ -111,12 +109,7 @@
         profile = ./nixos/profiles/hyprland.nix;
         extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
       };
-      orgm-hyprchy = mkHost {
-        hostName = "orgm";
-        hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-        profile = ./nixos/profiles/hyprchy.nix;
-        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
-      };
+
       orgm-niri = mkHost {
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
@@ -154,12 +147,7 @@
         profile = ./nixos/profiles/sway.nix;
         extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
       };
-      ero-hyprchy = mkHost {
-        hostName = "ero";
-        hardware = ./nixos/hosts/ero/hardware-configuration.nix;
-        profile = ./nixos/profiles/hyprchy.nix;
-        extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
-      };
+
       lenovo-labwc = mkHost {
         hostName = "lenovo";
         hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
@@ -187,15 +175,7 @@
           ./nixos/hosts/lenovo/audio.nix
         ];
       };
-      lenovo-hyprchy = mkHost {
-        hostName = "lenovo";
-        hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-        profile = ./nixos/profiles/hyprchy.nix;
-        extraModules = [
-          ./nixos/hosts/lenovo/plymouth.nix
-          ./nixos/hosts/lenovo/audio.nix
-        ];
-      };
+
       lenovo-niri = mkHost {
         hostName = "lenovo";
         hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
