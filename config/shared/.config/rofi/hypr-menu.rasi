@@ -1,64 +1,121 @@
+// Hyprland rofi menu theme
+// Adapted from https://github.com/binoymanoj/dotfiles rofi catppuccin theme.
+
 configuration {
-  font: "JetBrainsMono Nerd Font 12";
-  terminal: "kitty";
-  show-icons: true;
-  drun-display-format: "{icon} {name}";
+    font: "JetBrainsMono Nerd Font 12";
+    terminal: "kitty";
+    show-icons: true;
+    icon-theme: "Papirus";
+    drun-display-format: "{icon} {name}";
+
 }
 
 * {
-  bg: rgba(24, 25, 38, 0.94);
-  bg-alt: rgba(54, 58, 79, 0.72);
-  fg: #cad3f5;
-  accent: #8bd5ca;
-  selected: rgba(139, 213, 202, 0.22);
+    bg-col: #11111b;
+    bg-col-light: #313244;
+    border-col: #9199CB;
+    selected-col: #313244;
+    purple: #9199CB;
+    fg-col: #cdd6f4;
+    fg-col2: #9199CB;
+    width: 600px;
 }
 
 window {
-  location: center;
-  anchor: center;
-  width: 760px;
-  border-radius: 18px;
-  border: 2px;
-  border-color: @accent;
-  background-color: @bg;
+    location: center;
+    anchor: center;
+    width: @width;
+    background-color: @bg-col;
+    border: 2px;
+    border-color: @border-col;
+    border-radius: 15px;
 }
 
 mainbox {
-  spacing: 14px;
-  padding: 22px;
-  background-color: transparent;
+    background-color: @bg-col;
 }
 
 inputbar {
-  padding: 10px 14px;
-  border-radius: 12px;
-  background-color: @bg-alt;
+    children: [prompt, entry];
+    background-color: @bg-col;
+    border-radius: 10px;
+    padding: 2px;
+    margin: 0px 5px 0px 0px;
 }
 
-prompt, entry {
-  text-color: @fg;
-  background-color: transparent;
+prompt {
+    background-color: @purple;
+    padding: 10px;
+    text-color: @bg-col;
+    border-radius: 10px;
+    margin: 5px 0px 0px 5px;
+}
+
+textbox-prompt-colon {
+    expand: false;
+    str: ":";
+}
+
+entry {
+    padding: 10px;
+    margin: 5px 0px 0px 5px;
+    text-color: @fg-col;
+    background-color: @bg-col-light;
+    border-radius: 10px;
 }
 
 listview {
-  columns: 2;
-  lines: 8;
-  spacing: 10px;
-  scrollbar: false;
-  background-color: transparent;
+    border: 0px 0px 0px;
+    padding: 6px 0px 0px;
+    margin: 10px 5px 5px 5px;
+    columns: 1;
+    lines: 8;
+    background-color: @bg-col;
+    scrollbar: false;
 }
 
 element {
-  padding: 12px;
-  border-radius: 12px;
-  background-color: @bg-alt;
-  text-color: @fg;
+    padding: 8px;
+    background-color: @bg-col;
+    border-radius: 10px;
+    text-color: @fg-col;
+}
+
+element-icon {
+    size: 32px;
+    padding: 0px 10px 0px 0px;
+    background-color: @bg-col;
+}
+
+element-text {
+    background-color: @bg-col;
+    text-color: @fg-col;
+    vertical-align: 0.5;
 }
 
 element selected {
-  background-color: @selected;
-  text-color: #ffffff;
+    background-color: @selected-col;
+    text-color: @fg-col2;
 }
 
-element-icon { size: 28px; }
-element-text { vertical-align: 0.5; }
+element-text selected {
+    text-color: @fg-col2;
+    background-color: @selected-col;
+}
+
+element-icon selected {
+    background-color: @selected-col;
+}
+
+message {
+    background-color: @bg-col-light;
+    margin: 2px;
+    padding: 2px;
+    border-radius: 5px;
+}
+
+textbox {
+    padding: 6px;
+    text-color: @fg-col;
+    background-color: @bg-col-light;
+}

@@ -8,7 +8,7 @@ tmp="$(mktemp)"
 trap 'rm -f "$tmp"' EXIT
 
 if [ -d "$apps_dir" ]; then
-  find "$apps_dir" -maxdepth 1 -type f -name 'hypr-webapp-*.desktop' -print 2>/dev/null | sort | while read -r file; do
+  find "$apps_dir" -maxdepth 1 -type f -name '*.desktop' -print 2>/dev/null | sort | while read -r file; do
     grep -q '^X-Hypr-WebApp=true$' "$file" || continue
     name="$(sed -n 's/^Name=//p' "$file" | head -n1)"
     url="$(sed -n 's/^X-Hypr-WebApp-URL=//p' "$file" | head -n1)"

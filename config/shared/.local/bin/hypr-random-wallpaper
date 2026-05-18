@@ -9,7 +9,20 @@ current_file="${state_dir}/hypr-random-wallpaper.current"
 lock_wallpaper="${state_dir}/hypr-current-wallpaper"
 daemon_pid_file="${state_dir}/hypr-random-wallpaper.daemon.pid"
 hyprpaper_conf="${state_dir}/hypr-random-wallpaper.hyprpaper.conf"
-hyprpaper_bin="${HYPRPAPER_BIN:-hyprpaper}"
+
+resolve_hyprpaper() {
+  if [ -n "${HYPRPAPER_BIN:-}" ] && [ -x "${HYPRPAPER_BIN}" ]; then
+    printf '%s\n' "${HYPRPAPER_BIN}"
+  elif command -v hyprpaper >/dev/null 2>&1; then
+    command -v hyprpaper
+  elif [ -x /run/current-system/sw/bin/hyprpaper ]; then
+    printf '%s\n' /run/current-system/sw/bin/hyprpaper
+  else
+    printf '%s\n' hyprpaper
+  fi
+}
+
+hyprpaper_bin="$(resolve_hyprpaper)"
 
 mkdir -p "${wallpaper_dir}"
 
@@ -31,8 +44,15 @@ EOF
 }
 
 restart_hyprpaper() {
-  pkill -x hyprpaper >/dev/null 2>&1 || true
-  "${hyprpaper_bin}" -c "${hyprpaper_conf}" >/tmp/hyprpaper.log 2>&1 &
+  if command -v "${hyprpaper_bin}" >/dev/null 2>&1 || [ -x "${hyprpaper_bin}" ]; then
+    pkill -x hyprpaper >/dev/null 2>&1 || true
+    "${hyprpaper_bin}" -c "${hyprpaper_conf}" >/tmp/hyprpaper.log 2>&1 &
+  elif command -v distrobox-host-exec >/dev/null 2>&1; then
+    distrobox-host-exec sh -lc "pkill -x hyprpaper >/dev/null 2>&1 || true; hyprpaper -c '$hyprpaper_conf' >/tmp/hyprpaper.log 2>&1 &"
+  else
+    echo "hyprpaper not found" >&2
+    return 1
+  fi
   sleep 1
 }
 

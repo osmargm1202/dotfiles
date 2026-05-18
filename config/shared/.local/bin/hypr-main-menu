@@ -2,6 +2,7 @@
 set -euo pipefail
 
 theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+bin_dir="${HYPR_BIN_DIR:-$HOME/.local/bin}"
 
 pick() {
   rofi -dmenu -i -show-icons -p "$1" -theme "$theme"
@@ -24,16 +25,16 @@ choice="$(printf '%s\n' \
 
 case "$choice" in
   *'Apps') exec rofi -show drun -theme "$theme" ;;
-  *'Tools') exec hypr-tools-menu ;;
-  *'Update') exec hypr-update-menu ;;
-  *'Performance') exec hypr-performance-menu ;;
-  *'WiFi') exec hypr-wifi-menu ;;
-  *'Bluetooth') exec hypr-bluetooth-menu ;;
-  *'Search') exec hypr-smart-run ;;
-  *'Keybinds') exec hypr-keybindings-help ;;
-  *'System') exec hypr-system-menu ;;
-  *'Power') exec hypr-power-menu ;;
-  *'Keyboard') exec hypr-keyboard-menu ;;
-  *'Web App Maker') exec hypr-webapp-maker ;;
+  *'Tools') exec "$bin_dir/hypr-tools-menu" ;;
+  *'Update') exec "$bin_dir/hypr-update-menu" ;;
+  *'Performance') exec "$bin_dir/hypr-performance-menu" ;;
+  *'WiFi') exec "$bin_dir/hypr-wifi-menu" ;;
+  *'Bluetooth') exec "$bin_dir/hypr-bluetooth-menu" ;;
+  *'Search') exec "$bin_dir/hypr-smart-run" ;;
+  *'Keybinds') exec "$bin_dir/hypr-keybindings-help" ;;
+  *'System') exec "$bin_dir/hypr-system-menu" ;;
+  *'Power') exec "$bin_dir/hypr-power-menu" ;;
+  *'Keyboard') exec "$bin_dir/hypr-keyboard-menu" ;;
+  *'Web App Maker') exec "$bin_dir/hypr-webapp-maker" ;;
   *'Quit'|'') exit 0 ;;
 esac
