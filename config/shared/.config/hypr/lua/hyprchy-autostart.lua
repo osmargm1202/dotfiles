@@ -1,8 +1,8 @@
 local exec_once = {
   "systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL XCURSOR_THEME XCURSOR_SIZE HYPRCHY",
   "dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL XCURSOR_THEME XCURSOR_SIZE HYPRCHY",
-  "sh -lc 'systemctl --user start hyprchy-elephant.service && sleep 2 && systemctl --user start hyprchy-walker.service'",
-  "~/.local/bin/waybar-watch ~/.config/waybar-hyprchy",
+  "hyprpanel",
+  "hyprpaper",
   "swaync",
   "nm-applet --indicator",
   "blueman-applet",

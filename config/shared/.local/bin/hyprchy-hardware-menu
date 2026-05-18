@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+theme="${HYPRCHY_ROFI_THEME:-$HOME/.config/rofi-hyprchy/control-center.rasi}"
+choice="$(printf '%s\n' '󰤨 Network editor' '󰂯 Bluetooth manager' '󰕾 Audio mixer' '󰍹 Display settings' '󰅖 Cancel' | rofi -dmenu -i -p 'Hardware' -theme "$theme" || true)"
+
+case "$choice" in
+  *'Network') exec nm-connection-editor ;;
+  *'Bluetooth') exec blueman-manager ;;
+  *'Audio') exec pavucontrol ;;
+  *'Display') exec nwg-displays ;;
+  *) exit 0 ;;
+esac

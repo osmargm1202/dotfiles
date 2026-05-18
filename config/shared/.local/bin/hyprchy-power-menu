@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+choice="$(printf '%s\n' '󰌾 Lock' '󰗼 Logout' '󰜉 Reboot' '󰐥 Power off' '󰅖 Cancel' | rofi -dmenu -i -p 'Power' -theme "${HYPRCHY_ROFI_THEME:-$HOME/.config/rofi-hyprchy/control-center.rasi}" || true)"
+
+case "$choice" in
+  *'Lock') exec hyprlock ;;
+  *'Logout') hyprctl dispatch exit ;;
+  *'Reboot') systemctl reboot ;;
+  *'Power off') systemctl poweroff ;;
+  *) exit 0 ;;
+esac

@@ -1,5 +1,5 @@
 -- Hyprchy profile config.
--- Same Hyprland stack as hyprland.lua, with Walker/Elephant launcher overlays only.
+-- Same Hyprland stack as hyprland.lua, with fuzzel/rofi control-center overlays.
 
 require("lua.monitors")
 local programs = require("lua.hyprchy-programs")

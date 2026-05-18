@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+theme="${HYPRCHY_ROFI_THEME:-$HOME/.config/rofi-hyprchy/control-center.rasi}"
+choice="$(printf '%s\n' '󰀻 Launch app' '󰜉 Smart run/search' '󰣆 App Maker' '󰅗 App Remover' '󰉋 Open applications folder' '󰅖 Cancel' | rofi -dmenu -i -p 'Apps' -theme "$theme" || true)"
+
+case "$choice" in
+  *'Launch app') exec rofi -show drun -theme "$theme" ;;
+  *'Smart') exec hyprchy-smart-run ;;
+  *'App Maker') exec hyprchy-webapp-maker ;;
+  *'App Remover') exec hyprchy-webapp-remover ;;
+  *'applications') exec nautilus "$HOME/.local/share/applications" ;;
+  *) exit 0 ;;
+esac

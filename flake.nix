@@ -7,20 +7,6 @@
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    systems.url = "github:nix-systems/default-linux";
-    elephant = {
-      # Walker's backend provider service. Keep pinned with Walker in flake.lock.
-      url = "github:abenz1267/elephant";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.systems.follows = "systems";
-    };
-    walker = {
-      # Central launcher UI. Follow the same Elephant input to avoid protocol drift.
-      url = "github:abenz1267/walker";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.systems.follows = "systems";
-      inputs.elephant.follows = "elephant";
-    };
     hyprland = {
       # Track latest upstream git. Pin exact rev in flake.lock for reproducible builds.
       url = "git+https://github.com/hyprwm/Hyprland?submodules=1";

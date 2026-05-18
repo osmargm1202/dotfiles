@@ -18,12 +18,12 @@ exec yad \
   "Win+/" "ayuda de atajos" "hypr-keybindings-help" \
   "Win+Enter" "Terminal" "kitty" \
   "Win+Shift+Enter" "Terminal Arch distrobox" "kitty -e distrobox-enter arch" \
-  "Win+Space" "Application Menu" "hypr-launcher (Walker en Hyprchy)" \
+  "Win+D / Win+Space" "Application Menu" "nwg-drawer" \
   "Win+E" "Archivos" "nautilus" \
   "Win+W" "Browser" "Zen Browser" \
   "Win+Q" "Cerrar app enfocada" "killactive" \
-  "Win+V" "Clipboard" "cliphist + hypr-dmenu" \
-  "Win+Alt+E" "Power menu" "wlogout" \
+  "Win+V" "Clipboard" "cliphist + nwg-drawer/fuzzel" \
+  "Win+Alt+E" "Power menu" "nwg-bar" \
   "Win+Alt+L" "Lock" "hyprlock" \
   "Win+N" "Notificaciones" "swaync" \
   "Win+P" "Pantallas" "nwg-displays" \

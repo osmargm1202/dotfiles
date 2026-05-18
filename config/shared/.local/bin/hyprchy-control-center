@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROFI_THEME="${HYPRCHY_ROFI_THEME:-$HOME/.config/rofi-hyprchy/control-center.rasi}"
+
+choose() {
+  rofi -dmenu -i -show-icons -p "$1" -theme "$ROFI_THEME"
+}
+
+choice="$(printf '%s\n' \
+  '󰀻 Apps' \
+  '󰒓 System' \
+  '󰸉 Appearance' \
+  '󰚥 Hardware' \
+  '󱂬 Panels' \
+  '󰐥 Session' \
+  '󰋖 Help' \
+  '󰅖 Quit' | choose 'Hyprchy' || true)"
+
+case "$choice" in
+  *'Apps') hyprchy-app-menu ;;
+  *'System') hyprchy-system-menu ;;
+  *'Appearance') hyprchy-theme-menu ;;
+  *'Hardware') hyprchy-hardware-menu ;;
+  *'Panels') hyprchy-panel-menu ;;
+  *'Session') hyprchy-power-menu ;;
+  *'Help') hyprchy-help-menu ;;
+  *'Quit'|'') exit 0 ;;
+esac

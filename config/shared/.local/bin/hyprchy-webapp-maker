@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+theme="${HYPRCHY_ROFI_THEME:-$HOME/.config/rofi-hyprchy/control-center.rasi}"
+apps_dir="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+state_dir="${XDG_DATA_HOME:-$HOME/.local/share}/hyprchy/webapps"
+bin_dir="$state_dir/bin"
+profile_dir="$state_dir/profiles"
+
+ask() {
+  local prompt="$1"
+  local initial="${2:-}"
+  printf '%s' "$initial" | rofi -dmenu -i -p "$prompt" -theme "$theme"
+}
+
+notify() {
+  notify-send "Hyprchy App Maker" "$1" 2>/dev/null || true
+}
+
+slugify() {
+  printf '%s' "$1" \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g'
+}
+
+desktop_escape() {
+  printf '%s' "$1" | sed 's/\\/\\\\/g; s/;/\\;/g'
+}
+
+browser_candidates() {
+  if command -v chromium >/dev/null 2>&1; then echo "chromium"; fi
+  if command -v brave >/dev/null 2>&1; then echo "brave"; fi
+  if command -v brave-browser >/dev/null 2>&1; then echo "brave-browser"; fi
+  if command -v flatpak >/dev/null 2>&1 && flatpak info com.brave.Browser >/dev/null 2>&1; then echo "flatpak:com.brave.Browser"; fi
+  # Zen is intentionally excluded here: it launches URLs, but does not provide
+  # Chromium-style --app/--class/--user-data-dir web app isolation.
+}
+
+name="$(ask 'App name' || true)"
+name="$(printf '%s' "$name" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+[ -n "$name" ] || exit 0
+
+url="$(ask 'URL' 'https://' || true)"
+url="$(printf '%s' "$url" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+[ -n "$url" ] || exit 0
+case "$url" in
+  http://*|https://*) ;;
+  *) url="https://$url" ;;
+esac
+
+browser_list="$(browser_candidates | awk 'NF')"
+if [ -z "$browser_list" ]; then
+  notify 'No Chromium-compatible browser found. Install chromium or brave.'
+  exit 1
+fi
+browser="$(printf '%s\n' "$browser_list" | rofi -dmenu -i -p 'Browser' -theme "$theme" || true)"
+[ -n "$browser" ] || exit 0
+
+icon="$(ask 'Icon name/path' 'chromium' || true)"
+icon="${icon:-chromium}"
+slug="$(slugify "$name")"
+[ -n "$slug" ] || slug="hyprchy-webapp"
+app_id="hyprchy-webapp-$slug"
+launcher="$bin_dir/$app_id"
+desktop_file="$apps_dir/$app_id.desktop"
+app_profile="$profile_dir/$slug"
+class="HyprchyWebApp-$slug"
+
+mkdir -p "$apps_dir" "$bin_dir" "$profile_dir"
+
+q_url="$(printf '%q' "$url")"
+q_profile="$(printf '%q' "$app_profile")"
+q_class="$(printf '%q' "$class")"
+q_browser="$(printf '%q' "$browser")"
+
+cat > "$launcher" <<EOF_LAUNCHER
+#!/usr/bin/env bash
+set -euo pipefail
+url=$q_url
+profile=$q_profile
+class=$q_class
+browser=$q_browser
+mkdir -p "\$profile"
+case "\$browser" in
+  chromium|brave|brave-browser)
+    exec "\$browser" --ozone-platform=wayland --enable-features=UseOzonePlatform --new-window --app="\$url" --class="\$class" --user-data-dir="\$profile"
+    ;;
+  flatpak:com.brave.Browser)
+    exec flatpak run com.brave.Browser --new-window --app="\$url" --class="\$class" --user-data-dir="\$profile"
+    ;;
+  *)
+    exec "\$browser" "\$url"
+    ;;
+esac
+EOF_LAUNCHER
+chmod +x "$launcher"
+
+cat > "$desktop_file" <<EOF_DESKTOP
+[Desktop Entry]
+Type=Application
+Name=$(desktop_escape "$name")
+Comment=Hyprchy web app: $(desktop_escape "$url")
+Exec=$launcher
+Icon=$(desktop_escape "$icon")
+Terminal=false
+Categories=Network;WebBrowser;
+StartupNotify=true
+StartupWMClass=$class
+X-Hyprchy-WebApp=true
+X-Hyprchy-WebApp-URL=$(desktop_escape "$url")
+X-Hyprchy-WebApp-Browser=$(desktop_escape "$browser")
+EOF_DESKTOP
+
+update-desktop-database "$apps_dir" >/dev/null 2>&1 || true
+notify "Created $name"

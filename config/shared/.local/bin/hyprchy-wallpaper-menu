@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+theme="${HYPRCHY_ROFI_THEME:-$HOME/.config/rofi-hyprchy/control-center.rasi}"
+wallpaper_dirs=("$HOME/.config/wallpapers" "$HOME/Pictures/Wallpapers")
+
+choices=""
+for dir in "${wallpaper_dirs[@]}"; do
+  [ -d "$dir" ] || continue
+  while IFS= read -r file; do
+    choices+="$file"$'\n'
+  done < <(find "$dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | sort)
+done
+
+selection="$(printf '%s' "$choices" | rofi -dmenu -i -p 'Wallpaper' -theme "$theme" || true)"
+[ -n "$selection" ] || exit 0
+
+if command -v hyprctl >/dev/null 2>&1; then
+  hyprctl hyprpaper preload "$selection" >/dev/null 2>&1 || true
+  hyprctl hyprpaper wallpaper ", $selection" >/dev/null 2>&1 || true
+fi
+
+notify-send 'Hyprchy wallpaper' "$(basename "$selection")" 2>/dev/null || true

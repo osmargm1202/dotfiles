@@ -9,62 +9,9 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   hyprlandPkgs = inputs.hyprland.packages.${system};
   hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
-  walkerPkg = inputs.walker.packages.${system}.default;
-  elephantPkg = inputs.elephant.packages.${system}.default;
 in
 {
-  imports = [
-    inputs.walker.nixosModules.default
-  ];
-
-  # Hyprchy keeps the working Hyprland baseline and adds Walker/Elephant.
-  # Runtime config is managed by dot.sh under ~/.config/walker and
-  # ~/.config/elephant; Nix owns package/module wiring only.
-  programs.walker = {
-    enable = true;
-    package = walkerPkg;
-    elephant = {
-      package = elephantPkg;
-      installService = false;
-      providers = [
-        "calc"
-        "desktopapplications"
-        "menus"
-        "providerlist"
-        "runner"
-        "websearch"
-      ];
-    };
-  };
-
-  systemd.user.services.hyprchy-elephant = {
-    description = "Hyprchy Elephant launcher backend";
-    after = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    wantedBy = [ "graphical-session.target" ];
-    serviceConfig = {
-      ExecStart = "${elephantPkg}/bin/elephant";
-      Restart = "on-failure";
-      RestartSec = 1;
-    };
-  };
-
-  systemd.user.services.hyprchy-walker = {
-    description = "Hyprchy Walker launcher service";
-    after = [
-      "graphical-session.target"
-      "hyprchy-elephant.service"
-    ];
-    requires = [ "hyprchy-elephant.service" ];
-    partOf = [ "graphical-session.target" ];
-    wantedBy = [ "graphical-session.target" ];
-    serviceConfig = {
-      ExecStartPre = "${pkgs.coreutils}/bin/sleep 2";
-      ExecStart = "${walkerPkg}/bin/walker --gapplication-service";
-      Restart = "on-failure";
-      RestartSec = 1;
-    };
-  };
+  # Hyprchy keeps the working Hyprland baseline and adds fuzzel/rofi/HyprPanel control-center tooling.
 
   # Hyprland sin display manager: login en tty1 y arranque automático.
   # Sin autologin, PAM puede desbloquear GNOME Keyring con la clave de login.
@@ -211,9 +158,11 @@ in
     nwg-displays
     nwg-look
 
-    # Shell / launchers / terminal
+    # Shell / launchers / panel / terminal
     kitty
     fuzzel
+    rofi
+    hyprpanel
     libqalculate
     yad
     wlogout
@@ -221,6 +170,7 @@ in
 
     # Portal / XDG
     xdg-utils
+    desktop-file-utils
     xdg-desktop-portal
     hyprlandPkgs.xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
@@ -245,7 +195,6 @@ in
     bluetui
     blueman
     impala
-    iwmenu
     libnotify
     dunst
     overskride
@@ -289,5 +238,10 @@ in
     dconf
     glib
     gnome-keyring
+
+    # Hyprchy theme/color tooling
+    matugen
+    wallust
+    pywal16
   ];
 }

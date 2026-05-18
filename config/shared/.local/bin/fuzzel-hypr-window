@@ -18,7 +18,7 @@ else
   ' > "$tmp"
 fi
 
-selection=$(cut -f2- "$tmp" | "$HOME/.local/bin/hypr-dmenu" --prompt "Window> ")
+selection=$(cut -f2- "$tmp" | fuzzel --dmenu --prompt "Window> " --width 72 --lines 14)
 [ -n "${selection:-}" ] || exit 0
 addr=$(awk -F'\t' -v label="$selection" '$2 == label { print $1; exit }' "$tmp")
 [ -n "${addr:-}" ] || exit 1

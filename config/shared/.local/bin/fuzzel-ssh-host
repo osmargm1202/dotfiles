@@ -24,6 +24,6 @@ known_hosts=$(
 )
 
 hosts=$(printf '%s\n%s\n' "$hosts" "$known_hosts" | sort -u | sed '/^$/d')
-selection=$(printf '%s\n' "$hosts" | "$HOME/.local/bin/hypr-dmenu" --prompt "SSH> ")
+selection=$(printf '%s\n' "$hosts" | fuzzel --dmenu --prompt "SSH> " --width 56 --lines 14)
 [ -n "${selection:-}" ] || exit 0
 exec kitty -e ssh "$selection"
