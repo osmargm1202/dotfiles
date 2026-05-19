@@ -15,6 +15,11 @@
       # Keep hyprpaper IPC compatible with latest Hyprland/hyprctl.
       url = "github:hyprwm/hyprpaper";
     };
+    nwg-dock-hyprland-src = {
+      # Track upstream git so dock focus behavior can follow Hyprland changes.
+      url = "github:nwg-piotr/nwg-dock-hyprland";
+      flake = false;
+    };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
     caelestia-shell = {
       url = "github:caelestia-dots/shell";

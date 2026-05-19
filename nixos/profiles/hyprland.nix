@@ -4,6 +4,10 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   hyprlandPkgs = inputs.hyprland.packages.${system};
   hyprpaperPkg = inputs.hyprpaper.packages.${system}.hyprpaper;
+  nwgDockHyprlandGit = pkgs.nwg-dock-hyprland.overrideAttrs (old: {
+    version = "git-${inputs.nwg-dock-hyprland-src.shortRev or "unknown"}";
+    src = inputs.nwg-dock-hyprland-src;
+  });
 in
 {
   # Hyprland sin display manager: login en tty1 y arranque automático.
@@ -133,7 +137,7 @@ in
 
     # Shell / panel for Hyprland.
     waybar
-    nwg-dock-hyprland
+    nwgDockHyprlandGit
     nwg-drawer
     nwg-displays
     nwg-look

@@ -824,6 +824,22 @@
         "type": "github"
       }
     },
+    "nwg-dock-hyprland-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778714071,
+        "narHash": "sha256-c2rLNHlC03Lt9y1mCL52zZWD2WFiMQBuWOujErp2k44=",
+        "owner": "nwg-piotr",
+        "repo": "nwg-dock-hyprland",
+        "rev": "e551b3586e67ab122b492a6777e5c43798b526c9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nwg-piotr",
+        "repo": "nwg-dock-hyprland",
+        "type": "github"
+      }
+    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -899,6 +915,7 @@
         "hyprland": "hyprland",
         "hyprpaper": "hyprpaper",
         "nixpkgs": "nixpkgs_3",
+        "nwg-dock-hyprland-src": "nwg-dock-hyprland-src",
         "sddm-astronaut-theme": "sddm-astronaut-theme",
         "snappy-switcher": "snappy-switcher"
       }
