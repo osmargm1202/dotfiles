@@ -11,7 +11,16 @@
     "margin-right": 24,
     "modules-left": [
       "custom/menu",
-      "hyprland/workspaces",
+      "custom/ws_1",
+      "custom/ws_2",
+      "custom/ws_3",
+      "custom/ws_4",
+      "custom/ws_5",
+      "custom/ws_6",
+      "custom/ws_7",
+      "custom/ws_8",
+      "custom/ws_9",
+      "custom/ws_10",
       "group/system",
       "hyprland/submap"
     ],
@@ -34,36 +43,85 @@
       "tooltip-format": "Abrir menú ORGM-HYPR",
       "on-click": "~/.local/bin/hypr-main-menu"
     },
-    "hyprland/workspaces": {
-      "disable-scroll": false,
-      "all-outputs": true,
-      "on-click": "activate",
-      "format": "{name}",
-      "format-icons": {
-        "1": "󰲠",
-        "2": "󰲢",
-        "3": "󰲤",
-        "4": "󰲦",
-        "5": "󰲨",
-        "6": "󰲪",
-        "7": "󰲬",
-        "8": "󰲮",
-        "9": "󰲰",
-        "10": "󰿬",
-        "default": ""
-      },
-      "persistent-workspaces": {
-        "1": [],
-        "2": [],
-        "3": [],
-        "4": [],
-        "5": [],
-        "6": [],
-        "7": [],
-        "8": [],
-        "9": [],
-        "10": []
-      }
+    "custom/ws_1": {
+      "exec": "~/.local/bin/hypr-workspace-button status 1",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/hypr-workspace-button click 1"
+    },
+    "custom/ws_2": {
+      "exec": "~/.local/bin/hypr-workspace-button status 2",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/hypr-workspace-button click 2"
+    },
+    "custom/ws_3": {
+      "exec": "~/.local/bin/hypr-workspace-button status 3",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/hypr-workspace-button click 3"
+    },
+    "custom/ws_4": {
+      "exec": "~/.local/bin/hypr-workspace-button status 4",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/hypr-workspace-button click 4"
+    },
+    "custom/ws_5": {
+      "exec": "~/.local/bin/hypr-workspace-button status 5",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/hypr-workspace-button click 5"
+    },
+    "custom/ws_6": {
+      "exec": "~/.local/bin/hypr-workspace-button status 6",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/hypr-workspace-button click 6"
+    },
+    "custom/ws_7": {
+      "exec": "~/.local/bin/hypr-workspace-button status 7",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/hypr-workspace-button click 7"
+    },
+    "custom/ws_8": {
+      "exec": "~/.local/bin/hypr-workspace-button status 8",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/hypr-workspace-button click 8"
+    },
+    "custom/ws_9": {
+      "exec": "~/.local/bin/hypr-workspace-button status 9",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/hypr-workspace-button click 9"
+    },
+    "custom/ws_10": {
+      "exec": "~/.local/bin/hypr-workspace-button status 10",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/hypr-workspace-button click 10"
     },
     "hyprland/submap": {
       "format": "<span color='#a6da95'>Mode:</span> {}",
@@ -372,88 +430,5 @@
         "󰁹"
       ]
     }
-  },
-  {
-    "name": "dock_bar",
-    "layer": "top",
-    "position": "right",
-    "width": 72,
-    "spacing": 2,
-    "margin-right": 10,
-    "margin-top": 0,
-    "margin-bottom": 0,
-    "custom/dock_windows": {
-      "exec": "~/.local/bin/waybar-hypr-dock status windows",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/waybar-hypr-dock click windows",
-      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch windows"
-    },
-    "custom/dock_kitty": {
-      "exec": "~/.local/bin/waybar-hypr-dock status kitty",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/waybar-hypr-dock click kitty",
-      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch kitty"
-    },
-    "custom/dock_nautilus": {
-      "exec": "~/.local/bin/waybar-hypr-dock status nautilus",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/waybar-hypr-dock click nautilus",
-      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch nautilus"
-    },
-    "custom/dock_zen": {
-      "exec": "~/.local/bin/waybar-hypr-dock status zen",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/waybar-hypr-dock click zen",
-      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch zen"
-    },
-    "custom/dock_chromium": {
-      "exec": "~/.local/bin/waybar-hypr-dock status chromium",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/waybar-hypr-dock click chromium",
-      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch chromium"
-    },
-    "custom/dock_obsidian": {
-      "exec": "~/.local/bin/waybar-hypr-dock status obsidian",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/waybar-hypr-dock click obsidian",
-      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch obsidian"
-    },
-    "custom/dock_software": {
-      "exec": "~/.local/bin/waybar-hypr-dock status software",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{}",
-      "tooltip": true,
-      "on-click": "~/.local/bin/waybar-hypr-dock click software",
-      "on-click-middle": "~/.local/bin/waybar-hypr-dock launch software"
-    },
-    "height": 620,
-    "modules-center": [
-      "custom/dock_windows",
-      "custom/dock_kitty",
-      "custom/dock_nautilus",
-      "custom/dock_zen",
-      "custom/dock_chromium",
-      "custom/dock_obsidian",
-      "custom/dock_software"
-    ]
   }
 ]

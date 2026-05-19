@@ -68,5 +68,5 @@ fi
 
 addr=${selection%%$'\t'*}
 if [ -n "$addr" ]; then
-	hyprctl dispatch focuswindow "address:$addr"
+	hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })"
 fi

@@ -1,0 +1,23 @@
+window {
+	background: rgba(30, 30, 46, 0.78);
+	border: 1px solid rgba(137, 180, 250, 0.45);
+	border-radius: 18px;
+}
+
+button {
+	background: transparent;
+	border: none;
+	border-radius: 12px;
+	padding: 4px;
+	margin: 3px;
+}
+
+button:hover {
+	background: rgba(137, 180, 250, 0.2);
+}
+
+button:checked,
+button.active {
+	background: rgba(137, 180, 250, 0.3);
+	border: 1px solid rgba(245, 194, 231, 0.8);
+}

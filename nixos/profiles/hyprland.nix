@@ -133,6 +133,7 @@ in
 
     # Shell / panel for Hyprland.
     waybar
+    nwg-dock-hyprland
     nwg-drawer
     nwg-displays
     nwg-look

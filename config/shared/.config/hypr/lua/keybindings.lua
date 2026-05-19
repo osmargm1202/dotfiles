@@ -70,7 +70,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + SHIFT + Print", hl.dsp.exec_cmd("fish -c record_screen_gif"))
 
   -- Window/session controls.
-  hl.bind(mainMod .. " + Tab", dispatch("focuscurrentorlast"))
+  hl.bind(mainMod .. " + Tab", hl.dsp.focus({ last = true }))
   hl.bind(mainMod .. " + Q", hl.dsp.window.close())
   hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exit())
   hl.bind("CTRL + ALT + Delete", hl.dsp.exit())

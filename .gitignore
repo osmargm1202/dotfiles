@@ -15,3 +15,6 @@ config/tmux/.tmux/plugins/
 # Local Pi runtime state
 .atl/
 .pi-lens/
+
+# Superpowers visual brainstorming artifacts
+.superpowers/

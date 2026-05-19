@@ -13,26 +13,19 @@ window.bottom_bar#waybar {
   border: none;
   border-radius: 6px;
 }
-#workspaces {
-  background: transparent;
-  border-radius: 6px;
-  padding: 0 4px;
-  margin: 7px 0;
-}
-#workspaces button {
+#custom-ws_1, #custom-ws_2, #custom-ws_3, #custom-ws_4, #custom-ws_5,
+#custom-ws_6, #custom-ws_7, #custom-ws_8, #custom-ws_9, #custom-ws_10 {
   color: @text;
   font-size: 17px;
   font-weight: 700;
   padding: 0 6px;
-  margin: 0 1px;
+  margin: 7px 1px;
   border-radius: 5px;
 }
-#workspaces button.empty { color: @overlay0; }
-#workspaces button.active,
-#workspaces button.focused {
-  color: @blue;
-}
-#workspaces button.urgent { color: @red; }
+#custom-ws_1.empty, #custom-ws_2.empty, #custom-ws_3.empty, #custom-ws_4.empty, #custom-ws_5.empty,
+#custom-ws_6.empty, #custom-ws_7.empty, #custom-ws_8.empty, #custom-ws_9.empty, #custom-ws_10.empty { color: @overlay0; }
+#custom-ws_1.active, #custom-ws_2.active, #custom-ws_3.active, #custom-ws_4.active, #custom-ws_5.active,
+#custom-ws_6.active, #custom-ws_7.active, #custom-ws_8.active, #custom-ws_9.active, #custom-ws_10.active { color: @blue; }
 #mode, #submap, window.top_bar .modules-center, window.top_bar .modules-right,
 window.bottom_bar .modules-left, window.bottom_bar .modules-center, window.bottom_bar .modules-right,
 #group-system, #system {

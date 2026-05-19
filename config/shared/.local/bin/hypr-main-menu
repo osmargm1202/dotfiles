@@ -32,6 +32,7 @@ choice="$(printf '%s\n' \
   '󰍉 Search' \
   '󰌌 Keybinds' \
   '󰒓 System' \
+  '󰑓 Reload Dock' \
   '󰐥 Power' \
   '󰌌 Keyboard' \
   '󰣆 Web App Maker' \
@@ -47,6 +48,7 @@ case "$choice" in
   *'Search') exec "$bin_dir/hypr-smart-run" ;;
   *'Keybinds') exec "$bin_dir/hypr-keybindings-help" ;;
   *'System') exec "$bin_dir/hypr-system-menu" ;;
+  *'Reload Dock') exec "$bin_dir/hypr-nwg-dock" reload ;;
   *'Power') exec "$bin_dir/hypr-power-menu" ;;
   *'Keyboard') exec "$bin_dir/hypr-keyboard-menu" ;;
   *'Web App Maker') exec "$bin_dir/hypr-webapp-maker" ;;
