@@ -31,12 +31,13 @@
     "custom/menu": {
       "format": "",
       "tooltip": true,
-      "tooltip-format": "Abrir menú",
-      "on-click": "fuzzel"
+      "tooltip-format": "Abrir menú ORGM-HYPR",
+      "on-click": "~/.local/bin/hypr-main-menu"
     },
     "hyprland/workspaces": {
       "disable-scroll": false,
       "all-outputs": true,
+      "on-click": "activate",
       "format": "{name}",
       "format-icons": {
         "1": "󰲠",
@@ -218,7 +219,7 @@
     "custom/logout_menu": {
       "format": "󰐥",
       "tooltip": false,
-      "on-click": "fish -c wlogout_uniqe"
+      "on-click": "~/.local/bin/hypr-power-menu"
     }
   },
   {
@@ -246,8 +247,8 @@
     "custom/orgm_logo": {
       "format": " ",
       "tooltip": true,
-      "tooltip-format": "Abrir fuzzel",
-      "on-click": "fuzzel"
+      "tooltip-format": "Abrir menú ORGM-HYPR",
+      "on-click": "~/.local/bin/hypr-main-menu"
     },
     "custom/user": {
       "format": "  osmarg",

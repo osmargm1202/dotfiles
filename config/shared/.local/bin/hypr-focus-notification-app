@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+normalize() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/\.desktop$//; s/[^a-z0-9]+/[-_.]*/g; s/^[-_.\*]+//; s/[-_.\*]+$//'
+}
+
+focus_match() {
+  local pattern="$1"
+  [ -n "$pattern" ] || return 1
+  hyprctl -j clients | jq -r --arg p "$pattern" '
+    .[]
+    | select((.class // "" | ascii_downcase | test($p))
+        or (.initialClass // "" | ascii_downcase | test($p))
+        or (.title // "" | ascii_downcase | test($p))
+        or (.initialTitle // "" | ascii_downcase | test($p)))
+    | .address
+  ' | head -n 1 | while read -r address; do
+    [ -n "$address" ] || exit 1
+    hyprctl dispatch focuswindow "address:$address" >/dev/null
+    exit 0
+  done
+}
+
+app_name="${SWAYNC_APP_NAME:-}"
+desktop_entry="${SWAYNC_DESKTOP_ENTRY:-}"
+summary="${SWAYNC_SUMMARY:-}"
+
+for value in "$desktop_entry" "$app_name" "$summary"; do
+  pattern="$(normalize "$value")"
+  if focus_match "$pattern"; then
+    exit 0
+  fi
+done
+
+exit 0

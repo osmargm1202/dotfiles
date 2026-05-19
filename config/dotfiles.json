@@ -71,6 +71,7 @@
       "paths": [
         ".config/DankMaterialShell",
         ".config/fish/age-host.fish",
+        ".config/fuzzel/fuzzel.env",
         ".local/share/applications",
         ".local/share/icons",
         ".pi/agent/mcp-cache.json",
@@ -81,6 +82,7 @@
       "paths": [
         ".config/DankMaterialShell",
         ".config/fish/age-host.fish",
+        ".config/fuzzel/fuzzel.env",
         ".local/share/applications",
         ".local/share/icons"
       ]

@@ -2,10 +2,13 @@
 set -euo pipefail
 
 theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
-choice="$(printf '%s\n' '󰌾 Lock' '󰗼 Logout' '󰜉 Reboot' '󰐥 Power off' '󰅖 Cancel' | rofi -dmenu -i -p 'Power' -theme "$theme" || true)"
+choice="$(printf '%s\n' '󰌾 Lock' '󰗼 Logout' '󰜉 Reboot' '󰐥 Power off' '󰅖 Cancel' \
+  | rofi -dmenu -i -p 'Power' -theme "$theme" \
+      -theme-str 'window { width: 360px; } listview { lines: 5; } element { padding: 5px 8px; } element-icon { size: 22px; } inputbar { padding: 8px; }' \
+  || true)"
 
 case "$choice" in
-  *'Lock') exec hyprlock ;;
+  *'Lock') exec "$HOME/.local/bin/hypr-lock" ;;
   *'Logout') hyprctl dispatch exit ;;
   *'Reboot') systemctl reboot ;;
   *'Power off') systemctl poweroff ;;

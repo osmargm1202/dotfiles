@@ -77,7 +77,7 @@ window.bottom_bar .modules-right { border-radius: 6px; margin-right: 13px; }
 }
 #custom-orgm_logo {
   background: transparent;
-  background-image: url("orgm.png");
+  background-image: url("orgm-hypr.png");
   background-repeat: no-repeat;
   background-position: center;
   background-size: 28px auto;
