@@ -214,6 +214,8 @@
   ];
 
   programs.dconf.enable = true;
+  programs.adb.enable = true;
+  programs.gamemode.enable = true;
 
   fonts.fontconfig.enable = true;
   fonts.packages = with pkgs; [
@@ -235,7 +237,7 @@
   # List services that you want to enable:
 
   # Enable OpenSSH daemon.
-  # services.openssh.enable = true;
+  services.openssh.enable = true;
 
   # Open ports in firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
