@@ -3,95 +3,52 @@ set -euo pipefail
 
 theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
 bin_dir="${HYPR_BIN_DIR:-$HOME/.local/bin}"
-repo="${HYPR_DOTFILES_REPO:-$HOME/Hobby/dotfiles}"
-host="${HYPR_DOT_HOST:-$(hostname -s)}"
-target="${HYPR_NIXOS_TARGET:-${host}-hyprland}"
+env_file="${HYPR_ROFI_ENV:-$HOME/.config/rofi/hypr-menu.env}"
+
+if [ -f "$env_file" ]; then
+  # shellcheck disable=SC1090
+  . "$env_file"
+fi
+
+scale="${HYPR_ROFI_SCALE:-1.00}"
+width="${HYPR_ROFI_WIDTH:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 600 * s }')}"
+lines="${HYPR_ROFI_LINES:-$(awk -v s="$scale" 'BEGIN { printf "%d", 13 * s }')}"
+font_size="${HYPR_ROFI_FONT_SIZE:-$(awk -v s="$scale" 'BEGIN { printf "%d", 12 * s }')}"
+icon_size="${HYPR_ROFI_ICON_SIZE:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 32 * s }')}"
+element_padding="${HYPR_ROFI_ELEMENT_PADDING:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 8 * s }')}"
 
 pick() {
-  rofi -dmenu -i -show-icons -p "$1" -theme "$theme"
+  rofi -dmenu -i -show-icons -p "$1" -theme "$theme" \
+    -theme-str "configuration { font: \"JetBrainsMono Nerd Font $font_size\"; } window { width: $width; } listview { lines: $lines; } element { padding: $element_padding; } element-icon { size: $icon_size; }"
 }
 
-choice="$(cat <<'EOF_MENU' | pick 'Hyprland'
-󰀻 Apps
-󰒓 Tools
-󰆍 Tools / Terminal
-󰉋 Tools / Files
-󰍉 Tools / Search files
-󰃭 Tools / Calculator
-󰍹 Tools / Displays
-󰸉 Tools / Wallpaper next
-󰚰 Update
-󰚰 Update / NixOS switch
-󰉋 Update / Open repo
-󱐋 Performance
-󰍛 Performance / btop
-󰍛 Performance / htop
-󰍛 Performance / dgop
-󰍛 Performance / GNOME System Monitor
-󰖩 WiFi
-󰂯 Bluetooth
-󰍉 Search
-󰌌 Keybinds
-󰒓 System
-󰑓 System / Reload Hyprland
-󰑓 System / Restart Waybar
-󰆍 System / User logs
-󰁯 System / dot.sh status
-󰕚 System / dot.sh diff
-󰑓 System / dot.sh sync
-󰉋 System / Open dotfiles
-󰐥 Power
-󰌾 Power / Lock
-󰗼 Power / Logout
-󰜉 Power / Reboot
-󰐥 Power / Power off
-󰌌 Keyboard
-󰌌 Keyboard / Toggle layout
-󰌌 Keyboard / US
-󰌌 Keyboard / Latam
-󰣆 Web App Maker
-󰅖 Quit
-EOF_MENU
-)"
+choice="$(printf '%s\n' \
+  '󰀻 Apps' \
+  '󰒓 Tools' \
+  '󰚰 Update' \
+  '󱐋 Performance' \
+  '󰖩 WiFi' \
+  '󰂯 Bluetooth' \
+  '󰍉 Search' \
+  '󰌌 Keybinds' \
+  '󰒓 System' \
+  '󰐥 Power' \
+  '󰌌 Keyboard' \
+  '󰣆 Web App Maker' \
+  '󰅖 Quit' | pick 'Hyprland' || true)"
 
 case "$choice" in
-  '󰀻 Apps') exec rofi -show drun -theme "$theme" ;;
-  '󰒓 Tools') exec "$bin_dir/hypr-tools-menu" ;;
-  *'Tools / Terminal') exec kitty ;;
-  *'Tools / Files') exec nautilus ;;
-  *'Tools / Search files') exec "$bin_dir/fuzzel-open-file" ;;
-  *'Tools / Calculator') exec gnome-calculator ;;
-  *'Tools / Displays') exec nwg-displays ;;
-  *'Tools / Wallpaper next') exec "$bin_dir/hypr-random-wallpaper" next ;;
-  '󰚰 Update') exec "$bin_dir/hypr-update-menu" ;;
-  *'Update / NixOS switch') exec kitty --class hypr-update -e sh -lc "cd '$repo' && nh os switch .#$target --update; read -r -p 'press enter...'" ;;
-  *'Update / Open repo') exec nautilus "$repo" ;;
-  '󱐋 Performance') exec "$bin_dir/hypr-performance-menu" ;;
-  *'Performance / btop') exec kitty -e btop ;;
-  *'Performance / htop') exec kitty -e htop ;;
-  *'Performance / dgop') exec kitty -e dgop ;;
-  *'Performance / GNOME System Monitor') exec gnome-system-monitor ;;
-  '󰖩 WiFi') exec "$bin_dir/hypr-wifi-menu" ;;
-  '󰂯 Bluetooth') exec "$bin_dir/hypr-bluetooth-menu" ;;
-  '󰍉 Search') exec "$bin_dir/hypr-smart-run" ;;
-  '󰌌 Keybinds') exec "$bin_dir/hypr-keybindings-help" ;;
-  '󰒓 System') exec "$bin_dir/hypr-system-menu" ;;
-  *'System / Reload Hyprland') exec hyprctl reload ;;
-  *'System / Restart Waybar') pkill waybar 2>/dev/null || true; exec waybar -c ~/.config/waybar-hypr/config -s ~/.config/waybar-hypr/style.css ;;
-  *'System / User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
-  *'System / dot.sh status') exec kitty --class dot-status -e sh -lc "cd '$repo' && ./dot.sh status --host '$host'; read -r -p 'press enter...'" ;;
-  *'System / dot.sh diff') exec kitty --class dot-diff -e sh -lc "cd '$repo' && ./dot.sh diff --host '$host'; read -r -p 'press enter...'" ;;
-  *'System / dot.sh sync') exec kitty --class dot-sync -e sh -lc "cd '$repo' && ./dot.sh sync --host '$host'; read -r -p 'press enter...'" ;;
-  *'System / Open dotfiles') exec nautilus "$repo" ;;
-  '󰐥 Power') exec "$bin_dir/hypr-power-menu" ;;
-  *'Power / Lock') exec "$bin_dir/hypr-lock" ;;
-  *'Power / Logout') exec hyprctl dispatch exit ;;
-  *'Power / Reboot') exec systemctl reboot ;;
-  *'Power / Power off') exec systemctl poweroff ;;
-  '󰌌 Keyboard') exec "$bin_dir/hypr-keyboard-menu" ;;
-  *'Keyboard / Toggle layout') exec hyprctl switchxkblayout all next ;;
-  *'Keyboard / US') exec hyprctl keyword input:kb_layout us ;;
-  *'Keyboard / Latam') exec hyprctl keyword input:kb_layout latam ;;
-  '󰣆 Web App Maker') exec "$bin_dir/hypr-webapp-maker" ;;
-  '󰅖 Quit'|'') exit 0 ;;
+  *'Apps') exec rofi -show drun -theme "$theme" ;;
+  *'Tools') exec "$bin_dir/hypr-tools-menu" ;;
+  *'Update') exec "$bin_dir/hypr-update-menu" ;;
+  *'Performance') exec "$bin_dir/hypr-performance-menu" ;;
+  *'WiFi') exec "$bin_dir/hypr-wifi-menu" ;;
+  *'Bluetooth') exec "$bin_dir/hypr-bluetooth-menu" ;;
+  *'Search') exec "$bin_dir/hypr-smart-run" ;;
+  *'Keybinds') exec "$bin_dir/hypr-keybindings-help" ;;
+  *'System') exec "$bin_dir/hypr-system-menu" ;;
+  *'Power') exec "$bin_dir/hypr-power-menu" ;;
+  *'Keyboard') exec "$bin_dir/hypr-keyboard-menu" ;;
+  *'Web App Maker') exec "$bin_dir/hypr-webapp-maker" ;;
+  *'Quit'|'') exit 0 ;;
 esac

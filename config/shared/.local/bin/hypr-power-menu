@@ -2,9 +2,24 @@
 set -euo pipefail
 
 theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+env_file="${HYPR_ROFI_ENV:-$HOME/.config/rofi/hypr-menu.env}"
+
+if [ -f "$env_file" ]; then
+  # shellcheck disable=SC1090
+  . "$env_file"
+fi
+
+scale="${HYPR_ROFI_SCALE:-1.00}"
+width="${HYPR_ROFI_POWER_WIDTH:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 360 * s }')}"
+font_size="${HYPR_ROFI_FONT_SIZE:-$(awk -v s="$scale" 'BEGIN { printf "%d", 12 * s }')}"
+icon_size="${HYPR_ROFI_POWER_ICON_SIZE:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 22 * s }')}"
+padding_y="${HYPR_ROFI_POWER_PADDING_Y:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 5 * s }')}"
+padding_x="${HYPR_ROFI_POWER_PADDING_X:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 8 * s }')}"
+input_padding="${HYPR_ROFI_POWER_INPUT_PADDING:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 8 * s }')}"
+
 choice="$(printf '%s\n' '󰌾 Lock' '󰗼 Logout' '󰜉 Reboot' '󰐥 Power off' '󰅖 Cancel' \
   | rofi -dmenu -i -p 'Power' -theme "$theme" \
-      -theme-str 'window { width: 360px; } listview { lines: 5; } element { padding: 5px 8px; } element-icon { size: 22px; } inputbar { padding: 8px; }' \
+      -theme-str "configuration { font: \"JetBrainsMono Nerd Font $font_size\"; } window { width: $width; } listview { lines: 5; } element { padding: $padding_y $padding_x; } element-icon { size: $icon_size; } inputbar { padding: $input_padding; }" \
   || true)"
 
 case "$choice" in
