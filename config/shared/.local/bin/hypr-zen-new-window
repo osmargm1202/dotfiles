@@ -20,19 +20,33 @@ focus_zen() {
   done
 }
 
+zen_is_running() {
+  command -v hyprctl >/dev/null 2>&1 || return 1
+  command -v jq >/dev/null 2>&1 || return 1
+
+  hyprctl -j clients 2>/dev/null | jq -e '
+    any(.[]; (.class // "") == "app.zen_browser.zen" or (.class // "") == "zen-browser")
+  ' >/dev/null 2>&1
+}
+
 run_zen() {
+  local -a args=()
+  if zen_is_running; then
+    args=(--new-tab about:blank)
+  fi
+
   if command -v flatpak >/dev/null 2>&1 && flatpak info app.zen_browser.zen >/dev/null 2>&1; then
-    flatpak run app.zen_browser.zen --new-tab about:blank >/dev/null 2>&1 &
+    flatpak run app.zen_browser.zen "${args[@]}" >/dev/null 2>&1 &
     return 0
   fi
 
   if command -v zen-browser >/dev/null 2>&1; then
-    zen-browser --new-tab about:blank >/dev/null 2>&1 &
+    zen-browser "${args[@]}" >/dev/null 2>&1 &
     return 0
   fi
 
   if command -v zen >/dev/null 2>&1; then
-    zen --new-tab about:blank >/dev/null 2>&1 &
+    zen "${args[@]}" >/dev/null 2>&1 &
     return 0
   fi
 
