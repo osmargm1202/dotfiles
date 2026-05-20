@@ -101,42 +101,47 @@ rdp_command() {
 
   if [[ -n "$rdp_bin" ]]; then
     if command -v nvidia-offload &>/dev/null; then
-      echo "Using host $rdp_bin via nvidia-offload."
       RDP_CMD=(nvidia-offload "$rdp_bin")
     elif command -v prime-run &>/dev/null; then
-      echo "Using host $rdp_bin via prime-run."
       RDP_CMD=(prime-run "$rdp_bin")
     else
-      echo "nvidia-offload/prime-run not found; using NVIDIA PRIME env vars with host $rdp_bin."
       RDP_CMD=(/usr/bin/env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only "$rdp_bin")
     fi
   else
-    echo "Host FreeRDP not found. Falling back to distrobox '$DISTROBOX'."
     if command -v nvidia-offload &>/dev/null; then
-      echo "Using distrobox FreeRDP via host nvidia-offload."
       RDP_CMD=(nvidia-offload distrobox-enter "$DISTROBOX" -- xfreerdp3)
     elif command -v prime-run &>/dev/null; then
-      echo "Using distrobox FreeRDP via host prime-run."
       RDP_CMD=(prime-run distrobox-enter "$DISTROBOX" -- xfreerdp3)
     else
-      echo "nvidia-offload/prime-run not found; using NVIDIA PRIME env vars with distrobox FreeRDP."
       RDP_CMD=(/usr/bin/env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only distrobox-enter "$DISTROBOX" -- xfreerdp3)
     fi
   fi
 }
 
 rdp_connect() {
+  local started_container="${1:-0}"
   local attempt=1
+  local max_retries=1
+  local rc=1
   local -a RDP_CMD
+
+  if [[ "$started_container" == "1" ]]; then
+    max_retries="$RDP_MAX_RETRIES"
+  fi
+
   rdp_command
 
-  while [[ $attempt -le $RDP_MAX_RETRIES ]]; do
-    echo "RDP connection attempt $attempt/$RDP_MAX_RETRIES..."
+  while [[ $attempt -le $max_retries ]]; do
+    if [[ "$started_container" == "1" ]]; then
+      echo "RDP connection attempt $attempt/$max_retries..."
+    fi
+
     "${RDP_CMD[@]}" /v:"$RDP_HOST":"$RDP_PORT" \
       /u:"$RDP_USER" \
       /p:"$RDP_PASS" \
       /size:"${WIDTH}x${HEIGHT}" \
       /dynamic-resolution \
+      /admin \
       /sec:nla:off \
       /tls:seclevel:0 \
       /network:lan \
@@ -146,22 +151,28 @@ rdp_connect() {
       +home-drive \
       /cert:ignore \
       /wm-class:windows-rdp
-    local rc=$?
+    rc=$?
 
     # rc=0 means clean disconnect (user closed session)
     if [[ $rc -eq 0 ]]; then
       return 0
     fi
 
-    # If connection was rejected, retry after a delay
-    if [[ $attempt -lt $RDP_MAX_RETRIES ]]; then
+    # Startup path can race Windows RDP initialization; direct path should fail fast.
+    if [[ "$started_container" == "1" && $attempt -lt $max_retries ]]; then
       echo "Connection failed (exit code $rc). Retrying in 5s..."
       sleep 5
     fi
     ((attempt++))
   done
 
-  echo "Error: Could not connect after $RDP_MAX_RETRIES attempts."
+  if [[ "$started_container" == "1" ]]; then
+    echo "Error: Could not connect after $max_retries attempts."
+    notify_user "Windows RDP error" "No se pudo conectar tras iniciar '$CONTAINER'."
+  else
+    echo "Error: RDP connection failed (exit code $rc)."
+    notify_user "Windows RDP error" "La conexión directa falló (código $rc)."
+  fi
   return 1
 }
 
@@ -183,22 +194,23 @@ do_stop() {
 }
 
 do_connect() {
-  echo "Connecting to existing container '$CONTAINER'..."
+  local started_container=0
+
   if ! nc -z "$RDP_HOST" "$RDP_PORT" 2>/dev/null; then
-    echo "Error: RDP is not available. Is the container running?"
-    exit 1
+    started_container=1
+    echo "RDP is not available. Starting container '$CONTAINER'..."
+    do_start
+    if ! wait_rdp; then
+      notify_user "Windows RDP no disponible" "No se abrió $RDP_HOST:$RDP_PORT tras iniciar '$CONTAINER'."
+      exit 1
+    fi
   fi
-  notify_user "Conectando a Contenedor!!" "Abriendo sesión RDP."
-  rdp_connect
+
+  rdp_connect "$started_container"
 }
 
 do_run() {
-  do_start
-  wait_rdp || exit 1
-  notify_user "Conectando a Contenedor!!" "Abriendo sesión RDP."
-  rdp_connect
-  echo "RDP session closed."
-  do_stop
+  do_connect
 }
 
 do_install() {
@@ -251,10 +263,10 @@ Usage: $SCRIPT_NAME <command>
 
 Commands:
   (none)     Install if first run, otherwise run
-  run        Start container, open RDP, stop container on exit
+  run        Start container if needed and open RDP; leave container running on exit
   start      Start the Windows container only
   stop       Stop the Windows container only
-  connect    Connect RDP to an already running container
+  connect    Connect RDP; start container if needed
   install    Install script, icon and .desktop launcher
 
 EOF
