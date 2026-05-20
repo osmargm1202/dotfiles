@@ -72,6 +72,7 @@ function M.setup(programs)
   -- Window/session controls.
   hl.bind(mainMod .. " + Tab", hl.dsp.focus({ last = true }))
   hl.bind(mainMod .. " + Q", hl.dsp.window.close())
+  hl.bind(mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("~/.local/bin/hypr-kill-windows"))
   hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exit())
   hl.bind("CTRL + ALT + Delete", hl.dsp.exit())
   hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }))
