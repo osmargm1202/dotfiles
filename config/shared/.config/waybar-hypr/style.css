@@ -84,10 +84,30 @@ window.bottom_bar .modules-right { border-radius: 6px; margin-right: 13px; }
 #group-usage, #usage {
   background: transparent;
 }
-#custom-wallpaper, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#custom-wallpaper, #custom-updates, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
 #custom-user, #window, #mpris, #backlight, #pulseaudio, #battery, #custom-kbd_layout,
 #cpu, #memory, #temperature, #disk, #custom-swap {
   background: transparent;
+}
+#custom-updates {
+  color: @subtext0;
+  font-weight: bold;
+  padding: 0 8px;
+}
+#custom-updates.ok {
+  color: @green;
+}
+#custom-updates.pending {
+  color: @yellow;
+}
+#custom-updates.checking {
+  color: @blue;
+}
+#custom-updates.error {
+  color: @red;
+}
+#custom-updates.unknown {
+  color: @overlay0;
 }
 #group-usage #cpu, #group-usage #memory, #group-usage #temperature, #group-usage #disk, #group-usage #custom-swap,
 #usage #cpu, #usage #memory, #usage #temperature, #usage #disk, #usage #custom-swap,

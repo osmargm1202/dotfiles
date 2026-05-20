@@ -1,0 +1,13 @@
+[Unit]
+Description=Refresh Hypr update status cache every 10 minutes
+Documentation=man:systemd.timer(5)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+RandomizedDelaySec=90s
+Persistent=true
+Unit=hypr-update-status.service
+
+[Install]
+WantedBy=timers.target

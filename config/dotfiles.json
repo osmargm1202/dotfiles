@@ -41,6 +41,7 @@
       ".config/sway",
       ".config/swaylock",
       ".config/swaync",
+      ".config/systemd/user",
       ".config/wallpapers",
       ".config/waybar",
       ".config/waybar-hypr",

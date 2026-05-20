@@ -1,0 +1,362 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/hypr-updates"
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/hypr-updates"
+log_dir="$cache_dir/logs"
+status_file="$state_dir/status.json"
+lock_dir="$state_dir/status.lock"
+repo="${DOTFILES_REPO:-$HOME/Hobby/dotfiles}"
+
+mkdir -p "$state_dir" "$log_dir"
+
+log() {
+  printf '[%s] %s\n' "$(date -Is)" "$*" >> "$log_dir/status.log"
+}
+
+source_json() {
+  local label="$1" state="$2" pending="$3" detail="$4"
+  jq -n \
+    --arg label "$label" \
+    --arg state "$state" \
+    --argjson pending "${pending:-0}" \
+    --arg checked_at "$(date -Is)" \
+    --arg detail "$detail" \
+    '{label:$label,state:$state,pending:$pending,checked_at:$checked_at,detail:$detail}'
+}
+
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+status_file_valid() {
+  [ -f "$status_file" ] && jq -e '
+    type == "object"
+    and (.sources | type == "object")
+    and (
+      [.sources.nixos, .sources.distrobox, .sources.pi, .sources.flatpak]
+      | map(
+        (type == "object")
+        and (.label? | type == "string")
+        and (.state? | type == "string")
+        and (.pending? | type == "number")
+        and (.detail? | type == "string")
+      )
+      | all
+    )
+  ' "$status_file" >/dev/null 2>&1
+}
+
+waybar_fallback() {
+  jq -n '{text:"nx ? db ? pi ? fp ?",tooltip:"Update status unavailable. Click to open update menu.",class:"unknown"}'
+}
+
+summary_fallback() {
+  echo "Update status unavailable. Run Check now."
+}
+
+read_source_checked_epoch() {
+  local source="$1"
+  if [ ! -f "$status_file" ]; then
+    echo 0
+    return
+  fi
+  local checked_at
+  checked_at="$(jq -r --arg source "$source" '.sources[$source].checked_at // empty' "$status_file" 2>/dev/null || true)"
+  if [ -z "$checked_at" ]; then
+    echo 0
+    return
+  fi
+  date -d "$checked_at" +%s 2>/dev/null || echo 0
+}
+
+is_due() {
+  local source="$1" interval_seconds="$2" force="${3:-false}"
+  if [ "$force" = "true" ]; then
+    return 0
+  fi
+  local last now
+  last="$(read_source_checked_epoch "$source")"
+  now="$(date +%s)"
+  [ $((now - last)) -ge "$interval_seconds" ]
+}
+
+existing_or_unknown() {
+  local source="$1" label="$2" detail="$3"
+  if [ -f "$status_file" ] && jq -e --arg source "$source" '.sources[$source]' "$status_file" >/dev/null 2>&1; then
+    jq --arg source "$source" '.sources[$source]' "$status_file"
+  else
+    source_json "$label" unknown 0 "$detail"
+  fi
+}
+
+check_nixos() {
+  if ! command_exists nix; then
+    source_json nx unknown 0 "nix command not available"
+    return
+  fi
+  if [ ! -d "$repo" ]; then
+    source_json nx error 0 "dotfiles repo missing: $repo"
+    return
+  fi
+
+  local output rc
+  set +e
+  output="$(cd "$repo" && nix flake update --dry-run 2>&1)"
+  rc=$?
+  set -e
+
+  if [ "$rc" -ne 0 ]; then
+    source_json nx unknown 0 "nix dry-run unsupported or failed"
+    log "nixos check failed rc=$rc: $output"
+    return
+  fi
+
+  if printf '%s\n' "$output" | grep -Eiq 'would update|will update|updated input|warning: updating'; then
+    source_json nx pending 1 "flake inputs have dry-run changes"
+  else
+    source_json nx ok 0 "no flake dry-run changes detected"
+  fi
+}
+
+check_flatpak() {
+  if ! command_exists flatpak; then
+    source_json fp unknown 0 "flatpak command not available"
+    return
+  fi
+
+  local output rc count
+  set +e
+  output="$(flatpak remote-ls --updates --columns=application,branch,origin,version 2>&1)"
+  rc=$?
+  set -e
+
+  if [ "$rc" -ne 0 ]; then
+    source_json fp error 0 "flatpak check failed"
+    log "flatpak check failed rc=$rc: $output"
+    return
+  fi
+
+  count="$(printf '%s\n' "$output" | sed '/^[[:space:]]*$/d' | wc -l)"
+  if [ "$count" -gt 0 ]; then
+    source_json fp pending "$count" "$count flatpak updates"
+  else
+    source_json fp ok 0 "flatpak current"
+  fi
+}
+
+check_distrobox() {
+  if ! command_exists distrobox-enter; then
+    source_json db unknown 0 "distrobox-enter command not available"
+    return
+  fi
+
+  local output rc repo_checker aur_checker repo_count aur_count total detail
+  set +e
+  output="$(distrobox-enter arch -- fish -lc '
+    set repo_checker none
+    set aur_checker none
+    set repo_count 0
+    set aur_count 0
+    if type -q checkupdates
+      set repo_checker checkupdates
+      set repo_count (checkupdates 2>/dev/null | wc -l | string trim)
+    else if type -q paru
+      set repo_checker paru
+      set repo_count (paru -Quq 2>/dev/null | wc -l | string trim)
+    end
+    if type -q paru
+      set aur_checker paru
+      set aur_count (paru -Qua --color=never 2>/dev/null | wc -l | string trim)
+    end
+    echo repo_checker=$repo_checker aur_checker=$aur_checker repo=$repo_count aur=$aur_count
+  ' 2>&1)"
+  rc=$?
+  set -e
+
+  if [ "$rc" -ne 0 ]; then
+    source_json db error 0 "distrobox arch check failed"
+    log "distrobox check failed rc=$rc: $output"
+    return
+  fi
+
+  repo_checker="$(printf '%s' "$output" | sed -n 's/.*repo_checker=\([^[:space:]]*\).*/\1/p' | tail -n1)"
+  aur_checker="$(printf '%s' "$output" | sed -n 's/.*aur_checker=\([^[:space:]]*\).*/\1/p' | tail -n1)"
+  repo_count="$(printf '%s' "$output" | sed -n 's/.*repo=\([0-9][0-9]*\).*/\1/p' | tail -n1)"
+  aur_count="$(printf '%s' "$output" | sed -n 's/.*aur=\([0-9][0-9]*\).*/\1/p' | tail -n1)"
+  repo_checker="${repo_checker:-none}"
+  aur_checker="${aur_checker:-none}"
+  repo_count="${repo_count:-0}"
+  aur_count="${aur_count:-0}"
+
+  if [ "$repo_checker" = "none" ] && [ "$aur_checker" = "none" ]; then
+    source_json db unknown 0 "checkupdates/paru unavailable in arch distrobox"
+    return
+  fi
+
+  total=$((repo_count + aur_count))
+  detail="$repo_count repo, $aur_count aur"
+  if [ "$aur_checker" = "none" ]; then
+    detail="$detail (paru unavailable)"
+  fi
+
+  if [ "$total" -gt 0 ]; then
+    source_json db pending "$total" "$detail"
+  else
+    source_json db ok 0 "$detail"
+  fi
+}
+
+check_pi() {
+  if ! command_exists distrobox-enter; then
+    source_json pi unknown 0 "distrobox-enter command not available"
+    return
+  fi
+
+  local output rc current latest
+  set +e
+  output="$(distrobox-enter arch -- fish -lc '
+    if type -q fnm
+      fnm env --shell fish | source
+    end
+    set current ""
+    set latest ""
+    if type -q pi
+      set current (command pi --version 2>/dev/null | string match -r "[0-9]+(\\.[0-9]+)+" | head -n1)
+    end
+    if type -q npm
+      set latest (npm view @earendil-works/pi-coding-agent version 2>/dev/null | string trim)
+    end
+    echo current=$current latest=$latest
+  ' 2>&1)"
+  rc=$?
+  set -e
+
+  if [ "$rc" -ne 0 ]; then
+    source_json pi error 0 "pi/npm version check failed"
+    log "pi check failed rc=$rc: $output"
+    return
+  fi
+
+  current="$(printf '%s' "$output" | sed -n 's/.*current=\([^[:space:]]*\).*/\1/p' | tail -n1)"
+  latest="$(printf '%s' "$output" | sed -n 's/.*latest=\([^[:space:]]*\).*/\1/p' | tail -n1)"
+
+  if [ -z "$current" ] || [ -z "$latest" ]; then
+    source_json pi unknown 0 "current or latest pi version unavailable"
+  elif [ "$current" != "$latest" ]; then
+    source_json pi pending 1 "installed $current, latest $latest"
+  else
+    source_json pi ok 0 "installed $current, latest $latest"
+  fi
+}
+
+build_status() {
+  local force="${1:-false}"
+  local nixos_json distrobox_json pi_json flatpak_json
+
+  if is_due nixos 21600 "$force"; then
+    nixos_json="$(check_nixos)"
+  else
+    nixos_json="$(existing_or_unknown nixos nx "nixos not checked yet")"
+  fi
+
+  if is_due distrobox 7200 "$force"; then
+    distrobox_json="$(check_distrobox)"
+  else
+    distrobox_json="$(existing_or_unknown distrobox db "distrobox not checked yet")"
+  fi
+
+  if is_due pi 600 "$force"; then
+    pi_json="$(check_pi)"
+  else
+    pi_json="$(existing_or_unknown pi pi "pi not checked yet")"
+  fi
+
+  if is_due flatpak 7200 "$force"; then
+    flatpak_json="$(check_flatpak)"
+  else
+    flatpak_json="$(existing_or_unknown flatpak fp "flatpak not checked yet")"
+  fi
+
+  jq -n \
+    --arg checked_at "$(date -Is)" \
+    --argjson nixos "$nixos_json" \
+    --argjson distrobox "$distrobox_json" \
+    --argjson pi "$pi_json" \
+    --argjson flatpak "$flatpak_json" \
+    '{checked_at:$checked_at,sources:{nixos:$nixos,distrobox:$distrobox,pi:$pi,flatpak:$flatpak}}'
+}
+
+refresh() {
+  local force="${1:-false}"
+  if ! mkdir "$lock_dir" 2>/dev/null; then
+    log "refresh skipped: lock held"
+    exit 0
+  fi
+  local tmp=""
+  trap 'if [ -n "${tmp:-}" ]; then rm -f "$tmp"; fi; rmdir "$lock_dir" 2>/dev/null || true' EXIT
+
+  tmp="$(mktemp "$state_dir/status.XXXXXX")"
+  build_status "$force" | jq . > "$tmp"
+  mv -f "$tmp" "$status_file"
+  tmp=""
+  log "refresh complete"
+}
+
+waybar() {
+  if ! status_file_valid; then
+    waybar_fallback
+    return
+  fi
+
+  local text tooltip class
+  text="$(jq -r '.sources | [.nixos,.distrobox,.pi,.flatpak] | map(.label + " " + .state) | join(" ")' "$status_file")"
+  text="${text// ok/ ✓}"
+  text="${text// pending/ 󰅐}"
+  text="${text// checking/ 󰔟}"
+  text="${text// error/ }"
+  text="${text// unknown/ ?}"
+
+  tooltip="$(jq -r '.sources | [.nixos,.distrobox,.pi,.flatpak] | map(.label + ": " + .state + " (" + (.pending|tostring) + ") - " + .detail) | join("\n")' "$status_file")"
+
+  if jq -e '.sources | to_entries | any(.value.state == "error")' "$status_file" >/dev/null; then
+    class="error"
+  elif jq -e '.sources | to_entries | any(.value.state == "pending")' "$status_file" >/dev/null; then
+    class="pending"
+  elif jq -e '.sources | to_entries | any(.value.state == "checking")' "$status_file" >/dev/null; then
+    class="checking"
+  elif jq -e '.sources | to_entries | all(.value.state == "ok")' "$status_file" >/dev/null; then
+    class="ok"
+  else
+    class="unknown"
+  fi
+
+  jq -n --arg text "$text" --arg tooltip "$tooltip" --arg class "$class" '{text:$text,tooltip:$tooltip,class:$class}'
+}
+
+summary() {
+  if ! status_file_valid; then
+    summary_fallback
+    return
+  fi
+  jq -r '.sources | [.nixos,.distrobox,.pi,.flatpak] | map(.label + ": " + .state + " (" + (.pending|tostring) + ") - " + .detail) | join("\n")' "$status_file"
+}
+
+case "${1:-waybar}" in
+  refresh)
+    refresh "${2:-false}"
+    ;;
+  force|check-now)
+    refresh true
+    ;;
+  waybar)
+    waybar
+    ;;
+  summary)
+    summary
+    ;;
+  *)
+    echo "Usage: hypr-update-status [refresh|force|check-now|waybar|summary]" >&2
+    exit 2
+    ;;
+esac
