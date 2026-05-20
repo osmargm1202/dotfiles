@@ -96,26 +96,53 @@ check_nixos() {
     return
   fi
   if [ ! -d "$repo" ]; then
-    source_json nx error 0 "dotfiles repo missing: $repo"
+    source_json nx unknown 0 "dotfiles repo missing: $repo"
+    return
+  fi
+  if [ ! -f "$repo/flake.nix" ] || [ ! -f "$repo/flake.lock" ]; then
+    source_json nx unknown 0 "flake.nix or flake.lock missing in $repo"
     return
   fi
 
-  local output rc
+  local tmp output rc
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/hypr-update-nix.XXXXXX" 2>/dev/null || true)"
+  if [ -z "$tmp" ]; then
+    source_json nx unknown 0 "failed to create temporary flake directory"
+    return
+  fi
+
+  if ! cp "$repo/flake.nix" "$repo/flake.lock" "$tmp"/; then
+    rm -rf "$tmp"
+    source_json nx unknown 0 "failed to copy flake files to temporary directory"
+    log "nixos check failed: copy flake files from $repo to $tmp"
+    return
+  fi
+
   set +e
-  output="$(cd "$repo" && nix flake update --dry-run 2>&1)"
+  output="$(nix flake update --flake "$tmp" 2>&1)"
   rc=$?
   set -e
 
   if [ "$rc" -ne 0 ]; then
-    source_json nx unknown 0 "nix dry-run unsupported or failed"
-    log "nixos check failed rc=$rc: $output"
+    rm -rf "$tmp"
+    source_json nx unknown 0 "nix flake update failed rc=$rc; see $log_dir/status.log"
+    log "nixos temp flake update failed rc=$rc: $output"
     return
   fi
 
-  if printf '%s\n' "$output" | grep -Eiq 'would update|will update|updated input|warning: updating'; then
-    source_json nx pending 1 "flake inputs have dry-run changes"
+  if [ ! -f "$tmp/flake.lock" ]; then
+    rm -rf "$tmp"
+    source_json nx unknown 0 "temporary flake.lock missing after nix flake update"
+    log "nixos check failed: temporary flake.lock missing after update output: $output"
+    return
+  fi
+
+  if cmp -s "$repo/flake.lock" "$tmp/flake.lock"; then
+    rm -rf "$tmp"
+    source_json nx ok 0 "flake inputs current"
   else
-    source_json nx ok 0 "no flake dry-run changes detected"
+    rm -rf "$tmp"
+    source_json nx pending 1 "flake inputs have pending lock updates"
   fi
 }
 
@@ -222,7 +249,7 @@ check_pi() {
     set current ""
     set latest ""
     if type -q pi
-      set current (command pi --version 2>/dev/null | string match -r "[0-9]+(\\.[0-9]+)+" | head -n1)
+      set current (command pi --version 2>&1 | string match -r "[0-9]+([.][0-9]+)+" | head -n1 | string trim)
     end
     if type -q npm
       set latest (npm view @earendil-works/pi-coding-agent version 2>/dev/null | string trim)

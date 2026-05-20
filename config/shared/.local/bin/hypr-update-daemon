@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/hypr-updates"
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/hypr-updates"
+log_dir="$cache_dir/logs"
+log_file="$log_dir/daemon.log"
+lock_dir="$state_dir/daemon.lock"
+status_bin="${HYPR_UPDATE_STATUS_BIN:-$HOME/.local/bin/hypr-update-status}"
+interval="${HYPR_UPDATE_DAEMON_INTERVAL:-600}"
+
+mkdir -p "$state_dir" "$log_dir"
+
+log() {
+  printf '[%s] %s\n' "$(date -Is)" "$*" >> "$log_file"
+}
+
+cleanup() {
+  rm -f "$lock_dir/pid" 2>/dev/null || true
+  rmdir "$lock_dir" 2>/dev/null || true
+}
+
+acquire_lock() {
+  if mkdir "$lock_dir" 2>/dev/null; then
+    printf '%s\n' "$$" > "$lock_dir/pid"
+    return 0
+  fi
+
+  local existing_pid=""
+  if [ -f "$lock_dir/pid" ]; then
+    existing_pid="$(cat "$lock_dir/pid" 2>/dev/null || true)"
+  fi
+
+  if [ -n "$existing_pid" ] && kill -0 "$existing_pid" 2>/dev/null; then
+    log "daemon already running pid=$existing_pid"
+    exit 0
+  fi
+
+  log "removing stale daemon lock"
+  rm -rf "$lock_dir"
+  mkdir "$lock_dir"
+  printf '%s\n' "$$" > "$lock_dir/pid"
+}
+
+case "$interval" in
+  ''|*[!0-9]*)
+    log "invalid HYPR_UPDATE_DAEMON_INTERVAL=$interval; using 600"
+    interval=600
+    ;;
+esac
+if [ "$interval" -lt 1 ]; then
+  log "HYPR_UPDATE_DAEMON_INTERVAL must be >= 1; using 600"
+  interval=600
+fi
+
+acquire_lock
+trap cleanup EXIT INT TERM HUP
+
+log "daemon started interval=${interval}s status_bin=$status_bin"
+
+while true; do
+  if [ -x "$status_bin" ]; then
+    if "$status_bin" refresh >> "$log_file" 2>&1; then
+      log "refresh complete"
+    else
+      rc=$?
+      log "refresh failed rc=$rc"
+    fi
+  else
+    log "status script not executable: $status_bin"
+  fi
+
+  sleep "$interval" &
+  wait "$!" || break
+done
+
+log "daemon stopped"

@@ -4,9 +4,11 @@
 
 **Goal:** Add check-only update status for NixOS, Distrobox Arch, Pi, and Flatpak, expose it in Waybar, and keep updates manual through Hyprland rofi menus.
 
-**Architecture:** One shared status script owns checks, state, Waybar JSON, and summaries. One systemd user timer runs the script every 10 minutes, while the script internally throttles expensive sources. `hypr-update-menu` remains the manual update entrypoint and wraps every update with notifications.
+**Architecture:** One shared status script owns checks, state, Waybar JSON, and summaries. A Hyprland `exec-once` daemon (`hypr-update-daemon`) starts with the Hyprland session, refreshes status every 10 minutes, and lets the status script internally throttle expensive sources. `hypr-update-menu` remains the manual update entrypoint and wraps every update with notifications.
 
-**Tech Stack:** Bash, fish, fnm, distrobox, paru/checkupdates, flatpak, nh/Nix flakes, jq, notify-send, systemd user units, Waybar custom JSON modules, rofi.
+**Amendment 2026-05-20:** Earlier systemd-unit scheduling design was replaced with the Hyprland-started daemon so activation happens through dotfile sync plus Hyprland autostart, with no enablement step.
+
+**Tech Stack:** Bash, fish, fnm, distrobox, paru/checkupdates, flatpak, nh/Nix flakes, jq, notify-send, Hyprland `exec-once`, Waybar custom JSON modules, rofi.
 
 **Safety:** Do not commit during execution unless the user explicitly asks. Do not enable auto-updates. Manual update commands may mutate system/user packages only when user clicks menu action.
 
@@ -20,13 +22,12 @@
   - Single source of truth for update checks, state file, Waybar JSON, and menu summary.
   - Writes state to `${XDG_STATE_HOME:-$HOME/.local/state}/hypr-updates/status.json`.
   - Writes logs to `${XDG_CACHE_HOME:-$HOME/.cache}/hypr-updates/logs/status.log`.
-  - Uses a lock directory so overlapping timer runs exit safely.
+  - Uses a lock directory so overlapping refresh runs exit safely.
 
-- `config/shared/.config/systemd/user/hypr-update-status.service`
-  - One-shot user service that runs `hypr-update-status refresh`.
-
-- `config/shared/.config/systemd/user/hypr-update-status.timer`
-  - User timer every 10 minutes. The script throttles each source internally.
+- `config/shared/.local/bin/hypr-update-daemon`
+  - Hyprland-session daemon that runs `hypr-update-status refresh` immediately and then every 10 minutes.
+  - Writes logs to `${XDG_CACHE_HOME:-$HOME/.cache}/hypr-updates/logs/daemon.log`.
+  - Uses a lock directory so only one daemon loop runs per session.
 
 ### Modify
 
@@ -42,8 +43,8 @@
 - `config/shared/.config/waybar-hypr/style.css`
   - Add styling for `#custom-updates` and classes: `ok`, `pending`, `checking`, `error`, `unknown`.
 
-- `config/dotfiles.json`
-  - Add `.config/systemd/user` under `shared.paths` because there is no existing managed systemd user path.
+- `config/shared/.config/hypr/20-autostart.conf`
+  - Add `exec-once = sh -lc '$HOME/.local/bin/hypr-update-daemon'` near the Waybar autostart entry.
 
 ### Read-only awareness
 
@@ -626,75 +627,45 @@ No change needed in `hypr-main-menu` if that line exists.
 
 ---
 
-## Task 3: Add systemd User Timer
+## Task 3: Add Hyprland Update Daemon
 
 **Files:**
 
-- Create: `config/shared/.config/systemd/user/hypr-update-status.service`
-- Create: `config/shared/.config/systemd/user/hypr-update-status.timer`
-- Modify: `config/dotfiles.json`
+- Create: `config/shared/.local/bin/hypr-update-daemon`
+- Modify: `config/shared/.config/hypr/20-autostart.conf`
 
-- [ ] **Step 1: Create service**
+- [ ] **Step 1: Create daemon script**
 
-Create `config/shared/.config/systemd/user/hypr-update-status.service`:
+Create `config/shared/.local/bin/hypr-update-daemon` as an executable Bash script.
 
-```ini
-[Unit]
-Description=Refresh Hypr update status cache
-Documentation=man:systemd.service(5)
+Expected behavior:
 
-[Service]
-Type=oneshot
-ExecStart=%h/.local/bin/hypr-update-status refresh
-```
+- Uses `${XDG_STATE_HOME:-$HOME/.local/state}/hypr-updates/daemon.lock` so only one daemon loop runs.
+- Writes logs to `${XDG_CACHE_HOME:-$HOME/.cache}/hypr-updates/logs/daemon.log`.
+- Runs `${HYPR_UPDATE_STATUS_BIN:-$HOME/.local/bin/hypr-update-status} refresh` immediately.
+- Sleeps `${HYPR_UPDATE_DAEMON_INTERVAL:-600}` seconds between refreshes.
+- Recovers stale daemon locks and exits cleanly when an existing daemon PID is alive.
 
-- [ ] **Step 2: Create timer**
+- [ ] **Step 2: Add Hyprland autostart**
 
-Create `config/shared/.config/systemd/user/hypr-update-status.timer`:
+In `config/shared/.config/hypr/20-autostart.conf`, add this line near the Waybar autostart entry:
 
 ```ini
-[Unit]
-Description=Refresh Hypr update status cache every 10 minutes
-Documentation=man:systemd.timer(5)
-
-[Timer]
-OnBootSec=2min
-OnUnitActiveSec=10min
-RandomizedDelaySec=90s
-Persistent=true
-Unit=hypr-update-status.service
-
-[Install]
-WantedBy=timers.target
+exec-once = sh -lc '$HOME/.local/bin/hypr-update-daemon'
 ```
 
-- [ ] **Step 3: Add systemd user config to dot.sh manifest**
+No systemd unit creation or enablement is part of the final design.
 
-In `config/dotfiles.json`, add this path under `shared.paths` near other `.config` entries:
-
-```json
-".config/systemd/user",
-```
-
-Expected local context after edit:
-
-```json
-      ".config/swaync",
-      ".config/systemd/user",
-      ".config/wallpapers",
-```
-
-- [ ] **Step 4: Validate systemd units**
+- [ ] **Step 3: Validate daemon and autostart**
 
 Run:
 
 ```bash
-systemd-analyze verify --user \
-  config/shared/.config/systemd/user/hypr-update-status.service \
-  config/shared/.config/systemd/user/hypr-update-status.timer
+bash -n config/shared/.local/bin/hypr-update-daemon
+grep -n "hypr-update-daemon" config/shared/.config/hypr/20-autostart.conf
 ```
 
-Expected: exit 0. Warnings about unavailable user manager in container are acceptable only if unit syntax still validates.
+Expected: Bash syntax check exits 0, and grep shows the `exec-once` line.
 
 ---
 
@@ -841,10 +812,10 @@ Run:
 Expected: diff shows new/changed files under. If applying on another machine, replace `lenovo` with that host name:
 
 ```text
-.config/systemd/user/hypr-update-status.service
-.config/systemd/user/hypr-update-status.timer
 .local/bin/hypr-update-status
+.local/bin/hypr-update-daemon
 .local/bin/hypr-update-menu
+.config/hypr/20-autostart.conf
 .config/waybar-hypr/config
 .config/waybar-hypr/style.css
 ```
@@ -859,17 +830,17 @@ Run only after user approves applying dotfiles:
 
 Expected: files copied/symlinked into home according to dot.sh behavior.
 
-- [ ] **Step 3: Enable timer on host**
+- [ ] **Step 3: Start daemon on host**
 
-Host-only command:
+Preferred path after `./dot.sh sync --host lenovo`: restart Hyprland so `exec-once` starts the daemon.
+
+For immediate activation without restarting Hyprland, run the daemon directly on the host:
 
 ```bash
-systemctl --user daemon-reload
-systemctl --user enable --now hypr-update-status.timer
-systemctl --user list-timers 'hypr-update-status.timer'
+~/.local/bin/hypr-update-daemon
 ```
 
-Expected: timer appears as active.
+Expected: daemon starts, performs an immediate check-only refresh, then repeats every 10 minutes while the process remains running.
 
 - [ ] **Step 4: Force first check on host**
 
@@ -902,15 +873,14 @@ Run:
 ```bash
 bash -n config/shared/.local/bin/hypr-update-status
 bash -n config/shared/.local/bin/hypr-update-menu
+bash -n config/shared/.local/bin/hypr-update-daemon
 node - <<'NODE'
 const fs = require('fs');
 const raw = fs.readFileSync('config/shared/.config/waybar-hypr/config', 'utf8').replace(/^\/\/.*\n/, '');
 JSON.parse(raw);
 console.log('waybar json ok');
 NODE
-systemd-analyze verify --user \
-  config/shared/.config/systemd/user/hypr-update-status.service \
-  config/shared/.config/systemd/user/hypr-update-status.timer
+grep -n "hypr-update-daemon" config/shared/.config/hypr/20-autostart.conf
 ```
 
 Expected:
@@ -919,7 +889,7 @@ Expected:
 waybar json ok
 ```
 
-Other commands exit 0 or report only environment warnings unrelated to unit syntax.
+Other commands exit 0, and grep shows the Hyprland `exec-once` daemon line.
 
 - [ ] **Step 2: Inspect git diff**
 
@@ -928,17 +898,16 @@ Run:
 ```bash
 git diff -- config/shared/.local/bin/hypr-update-status \
   config/shared/.local/bin/hypr-update-menu \
-  config/shared/.config/systemd/user/hypr-update-status.service \
-  config/shared/.config/systemd/user/hypr-update-status.timer \
+  config/shared/.local/bin/hypr-update-daemon \
+  config/shared/.config/hypr/20-autostart.conf \
   config/shared/.config/waybar-hypr/config \
-  config/shared/.config/waybar-hypr/style.css \
-  config/dotfiles.json
+  config/shared/.config/waybar-hypr/style.css
 ```
 
 Expected:
 
 - No unrelated edits.
-- No auto-update behavior in service/timer.
+- No auto-update behavior in the daemon.
 - Update commands only run through menu actions.
 
 - [ ] **Step 3: Report known conflict**
@@ -962,7 +931,8 @@ Cambios verificados. ¿Querés que haga commit?
 ## Acceptance Criteria
 
 - Waybar shows one compact update status module with NixOS, Distrobox, Pi, and Flatpak.
-- Timer performs check-only refreshes every 10 minutes.
+- Hyprland-started daemon performs check-only refreshes every 10 minutes.
+- No systemd timer is part of the final design.
 - Expensive checks are throttled internally: Pi 10 min, Distrobox 2 h, Flatpak 2 h, NixOS 6 h.
 - Manual update menu has actions for NixOS, Flatpak, Distrobox Arch packages, and Pi.
 - Manual update actions notify start/end/failure.
@@ -976,10 +946,10 @@ Cambios verificados. ¿Querés que haga commit?
 - Auto-update Flatpak, paru, Pi, or NixOS.
 - Support non-Arch distrobox names.
 - Build a GUI beyond rofi/Waybar.
-- Add root/system timers.
+- Add root-level schedulers or automatic update services.
 
 ## Review Notes
 
 - Fresh reviewer should check Bash quoting carefully, especially nested fish commands in `hypr-update-menu` and `hypr-update-status`.
 - Fresh reviewer should verify Waybar JSON remains valid after edits.
-- Fresh reviewer should confirm `config/dotfiles.json` path addition does not accidentally sync unwanted systemd user units.
+- Fresh reviewer should confirm Hyprland autostart starts `hypr-update-daemon` and no stale systemd unit instructions remain.
