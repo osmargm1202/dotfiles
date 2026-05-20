@@ -291,7 +291,8 @@
     "margin-right": 14,
     "modules-left": [
       "custom/orgm_logo",
-      "custom/user"
+      "custom/user",
+      "hyprland/window"
     ],
     "modules-center": [
       "idle_inhibitor",
