@@ -1,14 +1,30 @@
 #!/bin/sh
 set -eu
 
-wallpaper_dir="${HOME}/Pictures/Wallpapers"
-fallback="${HOME}/.config/wallpapers/xnm1-background.png"
+static_wallpaper_dir="${HYPR_STATIC_WALLPAPER_DIR:-${HOME}/Pictures/Wallpapers}"
+video_wallpaper_dir="${HYPR_VIDEO_WALLPAPER_DIR:-${HOME}/Videos/wallpapers}"
+fallback="${HYPR_WALLPAPER_FALLBACK:-${HOME}/.config/wallpapers/xnm1-background.png}"
 interval="${HYPR_WALLPAPER_INTERVAL:-3600}"
-state_dir="${XDG_RUNTIME_DIR:-/tmp}"
-current_file="${state_dir}/hypr-random-wallpaper.current"
-lock_wallpaper="${state_dir}/hypr-current-wallpaper"
-daemon_pid_file="${state_dir}/hypr-random-wallpaper.daemon.pid"
-hyprpaper_conf="${state_dir}/hypr-random-wallpaper.hyprpaper.conf"
+mpvpaper_options="${HYPR_MPV_WALLPAPER_OPTS:-no-audio loop hwdec=auto}"
+
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
+state_home="${XDG_STATE_HOME:-${HOME}/.local/state}"
+persistent_state_dir="${state_home}/hypr-wallpaper"
+persistent_state_file="${persistent_state_dir}/state"
+current_file="${runtime_dir}/hypr-random-wallpaper.current"
+lock_wallpaper="${runtime_dir}/hypr-current-wallpaper"
+daemon_pid_file="${runtime_dir}/hypr-random-wallpaper.daemon.pid"
+hyprpaper_conf="${runtime_dir}/hypr-random-wallpaper.hyprpaper.conf"
+
+mkdir -p "${static_wallpaper_dir}" "${video_wallpaper_dir}" "${persistent_state_dir}"
+
+shell_quote() {
+  printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\''/g")"
+}
+
+has_command_or_path() {
+  command -v "$1" >/dev/null 2>&1 || [ -x "$1" ]
+}
 
 resolve_hyprpaper() {
   if [ -n "${HYPRPAPER_BIN:-}" ] && [ -x "${HYPRPAPER_BIN}" ]; then
@@ -22,14 +38,66 @@ resolve_hyprpaper() {
   fi
 }
 
+resolve_mpvpaper() {
+  if [ -n "${MPVPAPER_BIN:-}" ] && [ -x "${MPVPAPER_BIN}" ]; then
+    printf '%s\n' "${MPVPAPER_BIN}"
+  elif command -v mpvpaper >/dev/null 2>&1; then
+    command -v mpvpaper
+  elif [ -x /run/current-system/sw/bin/mpvpaper ]; then
+    printf '%s\n' /run/current-system/sw/bin/mpvpaper
+  else
+    printf '%s\n' mpvpaper
+  fi
+}
+
 hyprpaper_bin="$(resolve_hyprpaper)"
+mpvpaper_bin="$(resolve_mpvpaper)"
 
-mkdir -p "${wallpaper_dir}"
+state_value() {
+  key="$1"
+  [ -f "${persistent_state_file}" ] || return 1
+  sed -n "s/^${key}=//p" "${persistent_state_file}" | head -n 1
+}
 
-pick_wallpaper() {
-  find "${wallpaper_dir}" -type f \( \
+current_mode() {
+  state_value mode 2>/dev/null || printf '%s\n' static-random
+}
+
+write_state() {
+  mode="$1"
+  path="$2"
+  tmp_file="${persistent_state_file}.$$"
+  {
+    printf 'mode=%s\n' "${mode}"
+    printf 'path=%s\n' "${path}"
+  } >"${tmp_file}"
+  mv "${tmp_file}" "${persistent_state_file}"
+}
+
+notify() {
+  title="$1"
+  body="$2"
+  notify-send "${title}" "${body}" >/dev/null 2>&1 || true
+}
+
+static_wallpapers() {
+  find "${static_wallpaper_dir}" -type f \( \
     -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \
-  \) | shuf -n 1
+  \) | sort
+}
+
+video_wallpapers() {
+  find "${video_wallpaper_dir}" -type f \( \
+    -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.mov' -o -iname '*.m4v' \
+  \) | sort
+}
+
+pick_static_wallpaper() {
+  static_wallpapers | shuf -n 1
+}
+
+pick_video_wallpaper() {
+  video_wallpapers | shuf -n 1
 }
 
 write_hyprpaper_config() {
@@ -44,11 +112,13 @@ EOF
 }
 
 restart_hyprpaper() {
-  if command -v "${hyprpaper_bin}" >/dev/null 2>&1 || [ -x "${hyprpaper_bin}" ]; then
-    pkill -x hyprpaper >/dev/null 2>&1 || true
+  pkill -x hyprpaper >/dev/null 2>&1 || true
+
+  if has_command_or_path "${hyprpaper_bin}"; then
     "${hyprpaper_bin}" -c "${hyprpaper_conf}" >/tmp/hyprpaper.log 2>&1 &
   elif command -v distrobox-host-exec >/dev/null 2>&1; then
-    distrobox-host-exec sh -lc "pkill -x hyprpaper >/dev/null 2>&1 || true; hyprpaper -c '$hyprpaper_conf' >/tmp/hyprpaper.log 2>&1 &"
+    conf_q="$(shell_quote "${hyprpaper_conf}")"
+    distrobox-host-exec sh -lc "pkill -x hyprpaper >/dev/null 2>&1 || true; hyprpaper -c ${conf_q} >/tmp/hyprpaper.log 2>&1 &"
   else
     echo "hyprpaper not found" >&2
     return 1
@@ -56,49 +126,229 @@ restart_hyprpaper() {
   sleep 1
 }
 
-set_wallpaper() {
-  wallpaper="$(pick_wallpaper || true)"
-  if [ -z "${wallpaper}" ]; then
-    wallpaper="${fallback}"
+start_mpvpaper() {
+  video="$1"
+  pkill -x mpvpaper >/dev/null 2>&1 || true
+
+  if has_command_or_path "${mpvpaper_bin}"; then
+    "${mpvpaper_bin}" -o "${mpvpaper_options}" "*" "${video}" >/tmp/mpvpaper.log 2>&1 &
+  elif command -v distrobox-host-exec >/dev/null 2>&1; then
+    opts_q="$(shell_quote "${mpvpaper_options}")"
+    video_q="$(shell_quote "${video}")"
+    distrobox-host-exec sh -lc "pkill -x mpvpaper >/dev/null 2>&1 || true; mpvpaper -o ${opts_q} '*' ${video_q} >/tmp/mpvpaper.log 2>&1 &"
+  else
+    echo "mpvpaper not found" >&2
+    return 1
   fi
+  sleep 1
+}
+
+ensure_lock_wallpaper() {
+  if [ -e "${lock_wallpaper}" ]; then
+    return 0
+  fi
+
+  if [ -f "${current_file}" ]; then
+    previous_static="$(cat "${current_file}" 2>/dev/null || true)"
+    if [ -n "${previous_static}" ] && [ -f "${previous_static}" ]; then
+      ln -sfn "${previous_static}" "${lock_wallpaper}"
+      return 0
+    fi
+  fi
+
+  if [ -f "${fallback}" ]; then
+    ln -sfn "${fallback}" "${lock_wallpaper}"
+  fi
+}
+
+set_static_path() {
+  wallpaper="$1"
+  mode="${2:-static}"
 
   if [ ! -f "${wallpaper}" ]; then
     echo "Wallpaper not found: ${wallpaper}" >&2
     return 1
   fi
 
+  pkill -x mpvpaper >/dev/null 2>&1 || true
   write_hyprpaper_config "${wallpaper}"
   restart_hyprpaper
-  printf '%s\n' "${wallpaper}" > "${current_file}"
+  printf '%s\n' "${wallpaper}" >"${current_file}"
   ln -sfn "${wallpaper}" "${lock_wallpaper}"
+  write_state "${mode}" "${wallpaper}"
+  notify "Wallpaper" "Normal: $(basename "${wallpaper}")"
+}
+
+set_random_static() {
+  wallpaper="$(pick_static_wallpaper || true)"
+  if [ -z "${wallpaper}" ]; then
+    wallpaper="${fallback}"
+  fi
+  set_static_path "${wallpaper}" static-random
+}
+
+set_video_path() {
+  video="$1"
+
+  if [ ! -f "${video}" ]; then
+    echo "Video wallpaper not found: ${video}" >&2
+    return 1
+  fi
+
+  pkill -x hyprpaper >/dev/null 2>&1 || true
+  start_mpvpaper "${video}"
+  ensure_lock_wallpaper
+  write_state video "${video}"
+  notify "Wallpaper" "Live: $(basename "${video}")"
+}
+
+set_random_video() {
+  video="$(pick_video_wallpaper || true)"
+  if [ -z "${video}" ]; then
+    echo "No video wallpapers found in ${video_wallpaper_dir}" >&2
+    return 1
+  fi
+  set_video_path "${video}"
+}
+
+restore_wallpaper() {
+  mode="$(current_mode)"
+  path="$(state_value path 2>/dev/null || true)"
+
+  if [ -n "${path}" ] && [ -f "${path}" ]; then
+    case "${mode}" in
+      video)
+        set_video_path "${path}"
+        ;;
+      static|static-random)
+        set_static_path "${path}" "${mode}"
+        ;;
+      *)
+        set_random_static
+        ;;
+    esac
+    return 0
+  fi
+
+  case "${mode}" in
+    video)
+      set_random_video || set_random_static
+      ;;
+    *)
+      set_random_static
+      ;;
+  esac
+}
+
+build_menu() {
+  printf '%s\n' 'Normal random'
+  if [ -n "$(pick_video_wallpaper || true)" ]; then
+    printf '%s\n' 'Live random'
+  fi
+  static_wallpapers | while IFS= read -r wallpaper; do
+    printf 'Normal: %s\n' "${wallpaper}"
+  done
+  video_wallpapers | while IFS= read -r video; do
+    printf 'Live: %s\n' "${video}"
+  done
+}
+
+menu_pick() {
+  if [ -n "${HYPR_WALLPAPER_PICKER:-}" ]; then
+    sh -c "${HYPR_WALLPAPER_PICKER}"
+  elif command -v fuzzel >/dev/null 2>&1; then
+    fuzzel --dmenu --prompt 'Wallpaper> '
+  elif command -v rofi >/dev/null 2>&1; then
+    rofi -dmenu -i -p 'Wallpaper'
+  else
+    echo "fuzzel or rofi required for wallpaper picker" >&2
+    return 1
+  fi
+}
+
+pick_wallpaper_menu() {
+  choice="$(build_menu | menu_pick || true)"
+  [ -n "${choice}" ] || exit 0
+
+  case "${choice}" in
+    'Normal random')
+      set_random_static
+      ;;
+    'Live random')
+      set_random_video
+      ;;
+    'Normal: '*)
+      set_static_path "${choice#Normal: }" static
+      ;;
+    'Live: '*)
+      set_video_path "${choice#Live: }"
+      ;;
+    *)
+      echo "Unknown wallpaper choice: ${choice}" >&2
+      return 2
+      ;;
+  esac
+}
+
+stop_old_daemon() {
+  for old_daemon in $(pgrep -f "^/bin/sh ${HOME}/.local/bin/hypr-random-wallpaper" 2>/dev/null || true); do
+    if [ "${old_daemon}" != "$$" ] && kill -0 "${old_daemon}" 2>/dev/null; then
+      kill -KILL "${old_daemon}" 2>/dev/null || true
+    fi
+  done
+
+  if [ -f "${daemon_pid_file}" ]; then
+    old_daemon="$(cat "${daemon_pid_file}" 2>/dev/null || true)"
+    if [ -n "${old_daemon}" ] && [ "${old_daemon}" != "$$" ] && kill -0 "${old_daemon}" 2>/dev/null; then
+      kill -KILL "${old_daemon}" 2>/dev/null || true
+    fi
+  fi
+}
+
+run_daemon() {
+  stop_old_daemon
+  printf '%s\n' "$$" >"${daemon_pid_file}"
+  restore_wallpaper
+
+  while true; do
+    sleep "${interval}"
+    if [ "$(current_mode)" = "static-random" ]; then
+      set_random_static
+    fi
+  done
 }
 
 case "${1:-daemon}" in
   next|change)
-    set_wallpaper
+    if [ "$(current_mode)" = "video" ]; then
+      set_random_video
+    else
+      set_random_static
+    fi
+    ;;
+  pick)
+    pick_wallpaper_menu
+    ;;
+  restore)
+    restore_wallpaper
     ;;
   daemon)
-    for old_daemon in $(pgrep -f "^/bin/sh ${HOME}/.local/bin/hypr-random-wallpaper" 2>/dev/null || true); do
-      if [ "${old_daemon}" != "$$" ] && kill -0 "${old_daemon}" 2>/dev/null; then
-        kill -KILL "${old_daemon}" 2>/dev/null || true
-      fi
-    done
-
-    if [ -f "${daemon_pid_file}" ]; then
-      old_daemon="$(cat "${daemon_pid_file}" 2>/dev/null || true)"
-      if [ -n "${old_daemon}" ] && [ "${old_daemon}" != "$$" ] && kill -0 "${old_daemon}" 2>/dev/null; then
-        kill -KILL "${old_daemon}" 2>/dev/null || true
-      fi
-    fi
-
-    printf '%s\n' "$$" > "${daemon_pid_file}"
-    while true; do
-      set_wallpaper
-      sleep "${interval}"
-    done
+    run_daemon
+    ;;
+  set-static)
+    [ -n "${2:-}" ] || { echo "usage: hypr-random-wallpaper set-static PATH" >&2; exit 2; }
+    set_static_path "$2" static
+    ;;
+  set-video)
+    [ -n "${2:-}" ] || { echo "usage: hypr-random-wallpaper set-video PATH" >&2; exit 2; }
+    set_video_path "$2"
+    ;;
+  status)
+    printf 'mode=%s\n' "$(current_mode)"
+    printf 'path=%s\n' "$(state_value path 2>/dev/null || true)"
     ;;
   *)
-    echo "usage: hypr-random-wallpaper [daemon|next]" >&2
+    echo "usage: hypr-random-wallpaper [daemon|restore|next|pick|set-static PATH|set-video PATH|status]" >&2
     exit 2
     ;;
 esac

@@ -137,6 +137,7 @@ in
     hyprlandPkgs.hyprland
     xwayland
     hyprpaperPkg
+    mpvpaper
     hypridle
     hyprlock
     hyprpicker
