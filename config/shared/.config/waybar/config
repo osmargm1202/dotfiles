@@ -155,5 +155,81 @@
       "tooltip-format": "{capacity}% {timeTo} {power}W",
       "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
     }
+  },
+  {
+    "name": "dock_bar",
+    "layer": "top",
+    "position": "right",
+    "width": 72,
+    "spacing": 4,
+    "margin-top": 72,
+    "margin-bottom": 72,
+    "margin-right": 10,
+    "modules-center": [
+      "custom/dock_windows",
+      "custom/dock_kitty",
+      "custom/dock_nautilus",
+      "custom/dock_zen",
+      "custom/dock_chromium",
+      "custom/dock_obsidian",
+      "custom/dock_software"
+    ],
+
+    "custom/dock_windows": {
+      "exec": "~/.local/bin/sway-app-dock status windows",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click windows"
+    },
+    "custom/dock_kitty": {
+      "exec": "~/.local/bin/sway-app-dock status kitty",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click kitty"
+    },
+    "custom/dock_nautilus": {
+      "exec": "~/.local/bin/sway-app-dock status nautilus",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click nautilus"
+    },
+    "custom/dock_zen": {
+      "exec": "~/.local/bin/sway-app-dock status zen",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click zen"
+    },
+    "custom/dock_chromium": {
+      "exec": "~/.local/bin/sway-app-dock status chromium",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click chromium"
+    },
+    "custom/dock_obsidian": {
+      "exec": "~/.local/bin/sway-app-dock status obsidian",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click obsidian"
+    },
+    "custom/dock_software": {
+      "exec": "~/.local/bin/sway-app-dock status software",
+      "return-type": "json",
+      "interval": 1,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "~/.local/bin/sway-app-dock click software"
+    }
   }
 ]

@@ -202,6 +202,7 @@
     gnome-calculator
     gnome-disk-utility
     gnome-logs
+    gnome-software
     seahorse
     gnome-font-viewer
     gnome-characters

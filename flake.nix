@@ -87,9 +87,6 @@
         profile = ./nixos/profiles/hyprland.nix;
       };
 
-      niri = mkProfile {
-        profile = ./nixos/profiles/niri.nix;
-      };
       labwc = mkProfile {
         profile = ./nixos/profiles/labwc.nix;
       };
@@ -106,32 +103,38 @@
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/gnome.nix;
-        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
+        extraModules = [
+          ./nixos/hosts/orgm/plymouth.nix
+          ./nixos/gaming.nix
+        ];
       };
       orgm-hyprland = mkHost {
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/hyprland.nix;
-        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
+        extraModules = [
+          ./nixos/hosts/orgm/plymouth.nix
+          ./nixos/gaming.nix
+        ];
       };
 
-      orgm-niri = mkHost {
-        hostName = "orgm";
-        hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
-        profile = ./nixos/profiles/niri.nix;
-        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
-      };
       orgm-labwc = mkHost {
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/labwc.nix;
-        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
+        extraModules = [
+          ./nixos/hosts/orgm/plymouth.nix
+          ./nixos/gaming.nix
+        ];
       };
       orgm-sway = mkHost {
         hostName = "orgm";
         hardware = ./nixos/hosts/orgm/hardware-configuration.nix;
         profile = ./nixos/profiles/sway.nix;
-        extraModules = [ ./nixos/hosts/orgm/plymouth.nix ];
+        extraModules = [
+          ./nixos/hosts/orgm/plymouth.nix
+          ./nixos/gaming.nix
+        ];
       };
 
       ero-labwc = mkHost {
@@ -181,15 +184,6 @@
         ];
       };
 
-      lenovo-niri = mkHost {
-        hostName = "lenovo";
-        hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;
-        profile = ./nixos/profiles/niri.nix;
-        extraModules = [
-          ./nixos/hosts/lenovo/plymouth.nix
-          ./nixos/hosts/lenovo/audio.nix
-        ];
-      };
       lenovo-sway = mkHost {
         hostName = "lenovo";
         hardware = ./nixos/hosts/lenovo/hardware-configuration.nix;

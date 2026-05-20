@@ -215,7 +215,6 @@
 
   programs.dconf.enable = true;
   programs.adb.enable = true;
-  programs.gamemode.enable = true;
 
   fonts.fontconfig.enable = true;
   fonts.packages = with pkgs; [
