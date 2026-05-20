@@ -760,6 +760,26 @@
         "type": "github"
       }
     },
+    "ltmnight-sddm-theme": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1779246383,
+        "narHash": "sha256-YfZJnT6YPk30qZ9nJgDMGWcm5Yh9x68243Q7G64HgP4=",
+        "owner": "osmargm1202",
+        "repo": "ltmnight-sddm-theme",
+        "rev": "d3e0a57db505dd49d1cc5819dce47e39135a0463",
+        "type": "github"
+      },
+      "original": {
+        "owner": "osmargm1202",
+        "repo": "ltmnight-sddm-theme",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1778443072,
@@ -914,6 +934,7 @@
         "home-manager": "home-manager",
         "hyprland": "hyprland",
         "hyprpaper": "hyprpaper",
+        "ltmnight-sddm-theme": "ltmnight-sddm-theme",
         "nixpkgs": "nixpkgs_3",
         "nwg-dock-hyprland-src": "nwg-dock-hyprland-src",
         "sddm-astronaut-theme": "sddm-astronaut-theme",

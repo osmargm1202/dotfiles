@@ -1,5 +1,6 @@
 .worktrees/
 .gstack/
+/result
 config/codex/.codex/
 
 # plaintext secrets; only *.age encrypted files belong in git

@@ -10,19 +10,26 @@ let
   });
 in
 {
-  # Hyprland sin display manager: login en tty1 y arranque automático.
-  # Sin autologin, PAM puede desbloquear GNOME Keyring con la clave de login.
-  services.xserver.enable = false;
+  imports = [
+    inputs.ltmnight-sddm-theme.nixosModules.default
+  ];
 
-  programs.fish.loginShellInit = ''
-    if test -z "$DISPLAY"; and test -z "$WAYLAND_DISPLAY"; and test (tty) = "/dev/tty1"
-      if command -q start-hyprland
-        exec start-hyprland
-      else
-        exec Hyprland
-      end
-    end
-  '';
+  # Hyprland through SDDM with the LTMNight theme.
+  services.xserver.enable = false;
+  services.displayManager = {
+    defaultSession = "hyprland";
+    sddm = {
+      enable = true;
+      wayland.enable = true;
+      autoNumlock = true;
+      enableHidpi = true;
+      theme = "ltmnight";
+      settings.General = {
+        InputMethod = "qtvirtualkeyboard";
+        Numlock = "on";
+      };
+    };
+  };
 
   programs.hyprland = {
     enable = true;
@@ -41,6 +48,7 @@ in
       });
     '';
   };
+  security.pam.services.sddm.enableGnomeKeyring = true;
   security.pam.services.login.enableGnomeKeyring = true;
 
   programs.nautilus-open-any-terminal = {

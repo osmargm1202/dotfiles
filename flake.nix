@@ -37,6 +37,10 @@
       url = "github:Keyitdev/sddm-astronaut-theme";
       flake = false;
     };
+    ltmnight-sddm-theme = {
+      url = "github:osmargm1202/ltmnight-sddm-theme";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
 
