@@ -127,6 +127,7 @@ bindsym --locked XF86MonBrightnessDown exec brightnessctl set 5%-
 # Window/session controls.
 bindsym $mod+Tab focus mode_toggle
 bindsym $mod+q kill
+bindsym $mod+Shift+q exec ~/.local/bin/sway-kill-windows
 
 bindsym $mod+Left focus left
 bindsym $mod+Down focus down
