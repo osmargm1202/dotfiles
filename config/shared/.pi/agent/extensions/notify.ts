@@ -70,6 +70,33 @@ function isPositiveInteger(value: string | undefined): value is string {
 	return typeof value === "string" && /^[1-9]\d*$/.test(value.trim());
 }
 
+function envFlag(name: string): boolean {
+	const value = process.env[name]?.trim().toLowerCase();
+	return value === "1" || value === "true";
+}
+
+function positiveEnvInt(name: string): boolean {
+	const value = process.env[name]?.trim();
+	if (!value || !/^\d+$/.test(value)) return false;
+	return Number(value) > 0;
+}
+
+function isSubagentRuntime(): boolean {
+	return Boolean(
+		envFlag("PI_SUBAGENT_CHILD") ||
+			positiveEnvInt("PI_SUBAGENT_DEPTH") ||
+			process.env.PI_SUBAGENT_RUN_ID?.trim() ||
+			process.env.PI_SUBAGENT_CHILD_AGENT?.trim() ||
+			process.env.PI_SUBAGENT_CHILD_INDEX?.trim() ||
+			process.env.PI_SUBAGENT_ORCHESTRATOR_TARGET?.trim() ||
+			envFlag("PI_PDD_SUBAGENT") ||
+			process.env.PI_SUBAGENT_RUNTIME_ID?.trim() ||
+			positiveEnvInt("PI_SUBAGENT_RUNTIME_DEPTH") ||
+			process.env.PI_SUBAGENT_PARENT_RUNTIME_ID?.trim() ||
+			process.env.PI_SUBAGENT_OWNER_SESSION_FILE?.trim(),
+	);
+}
+
 function getKittyPid(): string | undefined {
 	const value = process.env.KITTY_PID?.trim();
 	return isPositiveInteger(value) ? value : undefined;
@@ -311,6 +338,8 @@ export default function (pi: ExtensionAPI) {
 			notify("question", ctx, text);
 			return;
 		}
+
+		if (isSubagentRuntime()) return;
 
 		notify("done", ctx, text || "Agent loop finished.");
 	});
