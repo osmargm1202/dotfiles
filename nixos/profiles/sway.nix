@@ -184,7 +184,6 @@
     blueman
     wdisplays
     wl-screenrec
-    libnotify
     dunst
     overskride
     iwgtk

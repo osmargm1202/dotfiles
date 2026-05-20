@@ -55,7 +55,6 @@
     gnome-keyring
     dex
     xss-lock
-    libnotify
 
     flameshot
     brightnessctl

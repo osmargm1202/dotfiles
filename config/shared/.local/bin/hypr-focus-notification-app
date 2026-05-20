@@ -5,6 +5,22 @@ normalize() {
   printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/\.desktop$//; s/[^a-z0-9]+/[-_.]*/g; s/^[-_.\*]+//; s/[-_.\*]+$//'
 }
 
+is_positive_integer() {
+  [[ "$1" =~ ^[1-9][0-9]*$ ]]
+}
+
+focus_pid() {
+  local pid="$1"
+  local address
+  address="$(hyprctl -j clients | jq -r --arg pid "$pid" '
+    .[]
+    | select((.pid // "" | tostring) == $pid)
+    | .address
+  ' | head -n 1)"
+  [ -n "$address" ] || return 1
+  hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" >/dev/null
+}
+
 focus_match() {
   local pattern="$1"
   [ -n "$pattern" ] || return 1
@@ -20,6 +36,11 @@ focus_match() {
   [ -n "$address" ] || return 1
   hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" >/dev/null
 }
+
+focus_pid_hint="${SWAYNC_HINT_PI_FOCUS_PID:-}"
+if is_positive_integer "$focus_pid_hint" && focus_pid "$focus_pid_hint"; then
+  exit 0
+fi
 
 app_name="${SWAYNC_APP_NAME:-}"
 desktop_entry="${SWAYNC_DESKTOP_ENTRY:-}"

@@ -183,7 +183,6 @@ in
     networkmanagerapplet
     bluetui
     blueman
-    libnotify
     dunst
     overskride
     iwgtk

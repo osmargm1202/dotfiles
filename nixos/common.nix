@@ -183,6 +183,7 @@
     nix-search-tv
     nextcloud-client
     gtk3
+    libnotify
     git
     distrobox
     age
