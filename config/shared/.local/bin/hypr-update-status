@@ -48,7 +48,9 @@ status_file_valid() {
 }
 
 waybar_fallback() {
-  jq -n '{text:"nx ? db ? pi ? fp ?",tooltip:"Update status unavailable. Click to open update menu.",class:"unknown"}'
+  local text
+  text='<span color="#6e738d"></span> <span color="#6e738d"></span> <span color="#6e738d">Pi</span> <span color="#6e738d">FT</span>'
+  jq -n --arg text "$text" '{text:$text,tooltip:"Update status unavailable. Click to open update menu.",class:"unknown"}'
 }
 
 summary_fallback() {
@@ -337,12 +339,36 @@ waybar() {
   fi
 
   local text tooltip class
-  text="$(jq -r '.sources | [.nixos,.distrobox,.pi,.flatpak] | map(.label + " " + .state) | join(" ")' "$status_file")"
-  text="${text// ok/ ✓}"
-  text="${text// pending/ 󰅐}"
-  text="${text// checking/ 󰔟}"
-  text="${text// error/ }"
-  text="${text// unknown/ ?}"
+  text="$(jq -r '
+    def source_symbol($key):
+      if $key == "nixos" then ""
+      elif $key == "distrobox" then ""
+      elif $key == "flatpak" then "FT"
+      elif $key == "pi" then "Pi"
+      else $key
+      end;
+    def source_color($key; $source):
+      if $source.state == "pending" then
+        if $key == "flatpak" then "#eed49f"
+        elif $key == "pi" then "#a6da95"
+        else "#8aadf4"
+        end
+      elif $source.state == "checking" then "#8aadf4"
+      elif $source.state == "error" then "#ed8796"
+      else "#6e738d"
+      end;
+    def source_text($key; $source):
+      source_symbol($key) + (if ($source.pending // 0) > 0 then " " + (($source.pending // 0) | tostring) else "" end);
+    .sources
+    | [
+        ["nixos", .nixos],
+        ["distrobox", .distrobox],
+        ["pi", .pi],
+        ["flatpak", .flatpak]
+      ]
+    | map("<span color=\"" + source_color(.[0]; .[1]) + "\">" + source_text(.[0]; .[1]) + "</span>")
+    | join(" ")
+  ' "$status_file")"
 
   tooltip="$(jq -r '.sources | [.nixos,.distrobox,.pi,.flatpak] | map(.label + ": " + .state + " (" + (.pending|tostring) + ") - " + .detail) | join("\n")' "$status_file")"
 

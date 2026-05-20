@@ -148,6 +148,7 @@
       "return-type": "json",
       "interval": 60,
       "format": "{}",
+      "escape": false,
       "tooltip": true,
       "on-click": "~/.local/bin/hypr-update-menu"
     },
