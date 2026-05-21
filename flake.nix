@@ -48,6 +48,9 @@
     system = "x86_64-linux";
     # Generic profile outputs use eval-only hardware so pure flake checks do not
     # depend on /etc or any real host. Host-specific outputs pass real hardware.
+    pkgs = nixpkgs.legacyPackages.${system};
+    orgmDot = pkgs.callPackage ./nixos/packages/orgm-dot.nix { };
+    orgmHypr = pkgs.callPackage ./nixos/packages/orgm-hypr.nix { };
     defaultHardware = ./nixos/hosts/generic/hardware-configuration.nix;
     mkHost = {
       hostName,
@@ -81,7 +84,14 @@
         ] ++ extraModules;
       };
   in {
-    formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
+    formatter.${system} = pkgs.nixfmt-rfc-style;
+
+    packages.${system} = {
+      inherit orgmDot orgmHypr;
+      "orgm-dot" = orgmDot;
+      "orgm-hypr" = orgmHypr;
+      default = orgmDot;
+    };
 
     nixosConfigurations = {
       gnome = mkProfile {

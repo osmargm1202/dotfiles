@@ -4,6 +4,9 @@
 
 { config, pkgs, lib, inputs ? null, ... }:
 
+let
+  orgmDot = pkgs.callPackage ./packages/orgm-dot.nix { };
+in
 {
   imports =
     lib.optionals (inputs != null) [ inputs.home-manager.nixosModules.home-manager ]
@@ -189,6 +192,7 @@
     age
     fd
     jq
+    orgmDot
     eza
     htop
     btop
