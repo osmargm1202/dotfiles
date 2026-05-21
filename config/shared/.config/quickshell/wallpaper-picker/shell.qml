@@ -7,6 +7,7 @@ ShellRoot {
   id: root
 
   property string stateHome: Quickshell.env("XDG_STATE_HOME") || ((Quickshell.env("HOME") || "") + "/.local/state")
+  property string requestPath: Quickshell.env("HYPR_WALLPAPER_REQUEST") || (stateHome + "/hypr-wallpaper/wallpaper-picker-request.json")
   property string dataPath: Quickshell.env("HYPR_WALLPAPER_DATA") || (stateHome + "/hypr-wallpaper/wallpaper-picker.json")
   property bool panelVisible: (Quickshell.env("HYPR_WALLPAPER_SHOW") || "") === "1"
   property var data: ({ title: "Wallpapers", mode: "static", applyCommand: "set-static", script: "hypr-random-wallpaper", current: "", items: [] })
@@ -19,19 +20,46 @@ ShellRoot {
   property var pageItems: (data.items || []).slice(currentPage * pageSize, currentPage * pageSize + pageSize)
 
   FileView {
+    id: requestFile
+    path: root.requestPath
+    blockLoading: true
+    watchChanges: true
+    onFileChanged: requestReloadTimer.restart()
+  }
+
+  FileView {
     id: dataFile
     path: root.dataPath
     blockLoading: true
-    watchChanges: true
-    onFileChanged: {
-      reload()
-      root.loadData(true)
-    }
+  }
+
+  Timer {
+    id: requestReloadTimer
+    interval: 40
+    repeat: false
+    onTriggered: root.loadRequest(true)
   }
 
   Component.onCompleted: {
     if (root.panelVisible)
-      root.loadData(true)
+      root.loadRequest(true)
+  }
+
+  function loadRequest(showPanel) {
+    try {
+      requestFile.reload()
+      const requestText = requestFile.text()
+      if (requestText && requestText.length > 0) {
+        const request = JSON.parse(requestText)
+        if (request.dataPath && request.dataPath.length > 0)
+          root.dataPath = request.dataPath
+      }
+    } catch (error) {
+      console.log("wallpaper picker failed to read request: " + error)
+    }
+
+    dataFile.reload()
+    root.loadData(showPanel)
   }
 
   function loadData(showPanel) {

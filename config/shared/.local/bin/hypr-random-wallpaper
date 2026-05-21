@@ -19,6 +19,7 @@ daemon_pid_file="${runtime_dir}/hypr-random-wallpaper.daemon.pid"
 mpvpaper_pid_file="${runtime_dir}/hypr-random-wallpaper.mpvpaper.pid"
 hyprpaper_conf="${runtime_dir}/hypr-random-wallpaper.hyprpaper.conf"
 quickshell_data="${persistent_state_dir}/wallpaper-picker.json"
+quickshell_request="${persistent_state_dir}/wallpaper-picker-request.json"
 quickshell_manifest="${persistent_state_dir}/wallpaper-picker.tsv"
 quickshell_pid_file="${runtime_dir}/hypr-wallpaper-quickshell.pid"
 quickshell_config_dir="${HYPR_WALLPAPER_QUICKSHELL_DIR:-${XDG_CONFIG_HOME:-${HOME}/.config}/quickshell/wallpaper-picker}"
@@ -384,6 +385,21 @@ thumb_path_for() {
   printf '%s\n' "${wallpaper_thumb_dir}/${wallpaper_base}.jpg"
 }
 
+quickshell_data_for_mode() {
+  mode="$1"
+  printf '%s\n' "${persistent_state_dir}/wallpaper-picker-${mode}.json"
+}
+
+write_quickshell_request() {
+  mode="$1"
+  data_path="$2"
+  tmp_request="${quickshell_request}.$$"
+  mode_json="$(json_escape "${mode}")"
+  data_path_json="$(json_escape "${data_path}")"
+  printf '{\n  "mode": "%s",\n  "dataPath": "%s",\n  "nonce": "%s"\n}\n' "${mode_json}" "${data_path_json}" "$(date +%s%N 2>/dev/null || printf '%s' "$$")" >"${tmp_request}"
+  mv "${tmp_request}" "${quickshell_request}"
+}
+
 wallpaper_thumb() {
   mode="$1"
   wallpaper="$2"
@@ -423,6 +439,7 @@ wallpaper_thumb() {
 
 generate_quickshell_data() {
   mode="$1"
+  data_path="${2:-${quickshell_data}}"
   case "${mode}" in
     static)
       title="Normal wallpapers"
@@ -446,7 +463,7 @@ generate_quickshell_data() {
     current_path=""
   fi
 
-  tmp_data="${quickshell_data}.$$"
+  tmp_data="${data_path}.$$"
   tmp_manifest="${quickshell_manifest}.$$"
   : >"${tmp_manifest}"
   ordered_wallpapers "${mode}" | while IFS= read -r wallpaper; do
@@ -500,7 +517,7 @@ with open(os.environ["OUTPUT_PATH"], "w", encoding="utf-8") as output:
     output.write("\n")
 PY
   fi
-  mv "${tmp_data}" "${quickshell_data}"
+  mv "${tmp_data}" "${data_path}"
 }
 
 warm_quickshell_thumbs() {
@@ -562,13 +579,14 @@ start_quickshell_picker() {
   fi
 
   if command -v quickshell >/dev/null 2>&1; then
-    HYPR_WALLPAPER_DATA="${quickshell_data}" HYPR_WALLPAPER_SHOW="${show_flag}" quickshell -p "${quickshell_config_dir}" >/tmp/hypr-wallpaper-quickshell.log 2>&1 &
+    HYPR_WALLPAPER_DATA="${quickshell_data}" HYPR_WALLPAPER_REQUEST="${quickshell_request}" HYPR_WALLPAPER_SHOW="${show_flag}" quickshell -p "${quickshell_config_dir}" >/tmp/hypr-wallpaper-quickshell.log 2>&1 &
     printf '%s\n' "$!" >"${quickshell_pid_file}"
   elif command -v distrobox-host-exec >/dev/null 2>&1; then
     data_q="$(shell_quote "${quickshell_data}")"
+    request_q="$(shell_quote "${quickshell_request}")"
     show_q="$(shell_quote "${show_flag}")"
     config_q="$(shell_quote "${quickshell_config_dir}")"
-    distrobox-host-exec sh -lc "HYPR_WALLPAPER_DATA=${data_q} HYPR_WALLPAPER_SHOW=${show_q} quickshell -p ${config_q} >/tmp/hypr-wallpaper-quickshell.log 2>&1 &"
+    distrobox-host-exec sh -lc "HYPR_WALLPAPER_DATA=${data_q} HYPR_WALLPAPER_REQUEST=${request_q} HYPR_WALLPAPER_SHOW=${show_q} quickshell -p ${config_q} >/tmp/hypr-wallpaper-quickshell.log 2>&1 &"
   else
     echo "quickshell not found" >&2
     return 1
@@ -594,7 +612,10 @@ stop_quickshell_picker() {
 
 open_quickshell_carousel() {
   mode="$1"
-  generate_quickshell_data "${mode}"
+  data_path="$(quickshell_data_for_mode "${mode}")"
+  generate_quickshell_data "${mode}" "${data_path}"
+  cp "${data_path}" "${quickshell_data}"
+  write_quickshell_request "${mode}" "${data_path}"
 
   start_quickshell_picker 1
 }

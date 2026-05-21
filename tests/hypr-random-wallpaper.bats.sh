@@ -32,7 +32,7 @@ make_default_stubs() {
 	make_stub "$tmp" shuf 'head -n 1'
 	make_stub "$tmp" notify-send 'echo "notify-send $*" >>"$CALLS"; exit 0'
 	make_stub "$tmp" fuzzel 'cat >"$MENU"; printf "%s\n" "$PICK"'
-	make_stub "$tmp" quickshell 'echo "quickshell $* HYPR_WALLPAPER_DATA=${HYPR_WALLPAPER_DATA:-}" >>"$CALLS"; exit 0'
+	make_stub "$tmp" quickshell 'echo "quickshell $* HYPR_WALLPAPER_DATA=${HYPR_WALLPAPER_DATA:-} HYPR_WALLPAPER_REQUEST=${HYPR_WALLPAPER_REQUEST:-}" >>"$CALLS"; exit 0'
 	make_stub "$tmp" ffmpeg 'echo "ffmpeg $*" >>"$CALLS"; printf thumb >"${@: -1}"'
 }
 
@@ -191,6 +191,10 @@ test_pick_uses_fuzzel_menu_and_opens_quickshell_normal_carousel() {
     assert_file_contains "$tmp/menu" "^Live Random$" "fuzzel menu lists live random"
     assert_calls_contains "$tmp" "quickshell -p $home/.config/quickshell/wallpaper-picker" "normal choice opens quickshell carousel"
     data="$tmp/state/hypr-wallpaper/wallpaper-picker.json"
+    mode_data="$tmp/state/hypr-wallpaper/wallpaper-picker-static.json"
+    request="$tmp/state/hypr-wallpaper/wallpaper-picker-request.json"
+    assert_file_contains "$request" "wallpaper-picker-static.json" "normal carousel request points to static data"
+    assert_file_contains "$mode_data" "\"mode\": \"static\"" "normal carousel writes static mode data file"
     assert_file_contains "$data" "\"title\": \"Normal wallpapers\"" "normal carousel data title is rendered"
     assert_file_contains "$data" "\"applyCommand\": \"set-static\"" "normal carousel applies static command"
     assert_file_contains "$data" "$image" "normal carousel includes image path"
@@ -223,7 +227,11 @@ test_quickshell_carousel_launches_without_generating_thumbnails() {
       fail "carousel should launch before generating thumbnails, got $ffmpeg_count"
     }
     data="$tmp/state/hypr-wallpaper/wallpaper-picker.json"
+    mode_data="$tmp/state/hypr-wallpaper/wallpaper-picker-static.json"
+    request="$tmp/state/hypr-wallpaper/wallpaper-picker-request.json"
     manifest="$tmp/state/hypr-wallpaper/wallpaper-picker.tsv"
+    assert_file_contains "$request" "wallpaper-picker-static.json" "request points at mode-specific data"
+    assert_file_contains "$mode_data" "\"mode\": \"static\"" "mode-specific json is written"
     item_count="$(grep -c "\"path\":" "$data" || true)"
     manifest_count="$(wc -l <"$manifest")"
     [ "$item_count" -eq 20 ] || fail "json should still include all items"
@@ -374,6 +382,26 @@ test_static_mode_stops_host_mpvpaper_from_distrobox() {
     make_stub "$tmp" distrobox-host-exec "echo distrobox-host-exec \"\$*\" >>\"\$CALLS\""
     run_script "$tmp" set-static "$image"
     assert_calls_contains "$tmp" "distrobox-host-exec sh -lc .*pkill -f .*mpvpaper .*wallpapers" "static mode kills host mpvpaper when host exec exists"
+  ' bash
+}
+
+test_carousel_static_and_video_use_distinct_picker_files() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    image="$home/Pictures/Wallpapers/normal.png"
+    video="$home/Videos/wallpapers/live.mp4"
+    touch "$image" "$video"
+    run_script "$tmp" carousel static
+    static_data="$tmp/state/hypr-wallpaper/wallpaper-picker-static.json"
+    request="$tmp/state/hypr-wallpaper/wallpaper-picker-request.json"
+    assert_file_contains "$request" "wallpaper-picker-static.json" "static request points to static file"
+    assert_file_contains "$static_data" "\"mode\": \"static\"" "static data contains static mode"
+    run_script "$tmp" carousel video
+    video_data="$tmp/state/hypr-wallpaper/wallpaper-picker-video.json"
+    assert_file_contains "$request" "wallpaper-picker-video.json" "video request points to video file"
+    assert_file_contains "$video_data" "\"mode\": \"video\"" "video data contains video mode"
+    assert_file_contains "$static_data" "\"mode\": \"static\"" "static file stays static after video request"
   ' bash
 }
 
