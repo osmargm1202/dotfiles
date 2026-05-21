@@ -10,12 +10,13 @@ ShellRoot {
   property string requestPath: Quickshell.env("HYPR_WALLPAPER_REQUEST") || (stateHome + "/hypr-wallpaper/wallpaper-picker-request.json")
   property string dataPath: Quickshell.env("HYPR_WALLPAPER_DATA") || (stateHome + "/hypr-wallpaper/wallpaper-picker.json")
   property bool panelVisible: (Quickshell.env("HYPR_WALLPAPER_SHOW") || "") === "1"
-  property var data: ({ title: "Wallpapers", mode: "static", applyCommand: "set-static", script: "hypr-random-wallpaper", current: "", items: [] })
+  property var data: ({ title: "Wallpapers", mode: "static", applyCommand: "set-static", script: "orgm-hypr", scriptArgs: ["wallpaper"], current: "", items: [] })
   property int imageReloadNonce: 0
   property int pageSize: 16
   property int columns: 4
   property int currentPage: 0
   property int selectedInPage: 0
+  property bool pendingShowPanel: false
   property int pageCount: Math.max(1, Math.ceil((data.items || []).length / pageSize))
   property var pageItems: (data.items || []).slice(currentPage * pageSize, currentPage * pageSize + pageSize)
 
@@ -40,6 +41,17 @@ ShellRoot {
     onTriggered: root.loadRequest(true)
   }
 
+  Timer {
+    id: dataLoadTimer
+    interval: 40
+    repeat: false
+    onTriggered: {
+      dataFile.path = root.dataPath
+      dataFile.reload()
+      root.loadData(root.pendingShowPanel)
+    }
+  }
+
   Component.onCompleted: {
     if (root.panelVisible)
       root.loadRequest(true)
@@ -58,8 +70,8 @@ ShellRoot {
       console.log("wallpaper picker failed to read request: " + error)
     }
 
-    dataFile.reload()
-    root.loadData(showPanel)
+    root.pendingShowPanel = showPanel
+    dataLoadTimer.restart()
   }
 
   function loadData(showPanel) {
@@ -92,10 +104,15 @@ ShellRoot {
     }
   }
 
+  function commandWithScriptArgs(args) {
+    const script = root.data.script || "orgm-hypr"
+    const scriptArgs = root.data.scriptArgs || (script === "orgm-hypr" ? ["wallpaper"] : [])
+    return [script].concat(scriptArgs).concat(args)
+  }
+
   function warmCurrentPage() {
-    const script = root.data.script || "hypr-random-wallpaper"
     const mode = root.data.mode || "static"
-    warmPageProc.command = [script, "warm-page", mode, String(root.currentPage), String(root.pageSize)]
+    warmPageProc.command = root.commandWithScriptArgs(["warm-page", mode, String(root.currentPage), String(root.pageSize)])
     warmPageProc.running = true
   }
 
@@ -201,7 +218,7 @@ ShellRoot {
         const item = root.selectedItem()
         if (!item || !item.path)
           return
-        applyProc.command = [root.data.script || "hypr-random-wallpaper", root.data.applyCommand || "set-static", item.path]
+        applyProc.command = root.commandWithScriptArgs([root.data.applyCommand || "set-static", item.path])
         applyProc.startDetached()
         root.hidePanel()
       }

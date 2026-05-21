@@ -142,7 +142,7 @@ entries() {
       entry 'Win+Alt+L' 'Lock' 'hyprlock'
       entry 'Win+N' 'Notificaciones' 'swaync-client -t -sw'
       entry 'Win+Ctrl+Shift+M' 'Limpiar notificaciones' 'swaync-client -C'
-      entry 'Win+Shift+W' 'Elegir wallpaper' 'hypr-random-wallpaper pick'
+      entry 'Win+Shift+W' 'Elegir wallpaper' 'orgm-hypr wallpaper pick'
       entry 'Ctrl+Space' 'Cambiar teclado' 'hyprctl switchxkblayout all next'
       entry 'Win+Shift+E' 'Salir Hyprland' 'exit'
       entry 'Ctrl+Alt+Delete' 'Salir Hyprland' 'exit'

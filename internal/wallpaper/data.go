@@ -25,6 +25,7 @@ type PickerData struct {
 	Title        string       `json:"title"`
 	ApplyCommand string       `json:"applyCommand"`
 	Script       string       `json:"script"`
+	ScriptArgs   []string     `json:"scriptArgs,omitempty"`
 	Current      string       `json:"current"`
 	Items        []PickerItem `json:"items"`
 }
@@ -36,6 +37,7 @@ type DataOptions struct {
 	JSONPath     string
 	CurrentPath  string
 	Script       string
+	ScriptArgs   []string
 }
 
 func (o DataOptions) validate() error {
@@ -97,6 +99,7 @@ func BuildPickerData(opts DataOptions, manifest io.Reader) (PickerData, error) {
 		Title:        titleForMode(opts.Mode),
 		ApplyCommand: applyCommandForMode(opts.Mode),
 		Script:       opts.Script,
+		ScriptArgs:   opts.ScriptArgs,
 		Current:      opts.CurrentPath,
 		Items:        []PickerItem{},
 	}

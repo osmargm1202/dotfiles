@@ -4,6 +4,12 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SCRIPT="$REPO_DIR/config/shared/.local/bin/hypr-random-wallpaper"
+TMP_BIN_DIR="$(mktemp -d)"
+ORGM_HYPR_BIN="$TMP_BIN_DIR/orgm-hypr"
+
+trap 'rm -rf "$TMP_BIN_DIR"' EXIT
+
+go build -o "$ORGM_HYPR_BIN" "$REPO_DIR/cmd/orgm-hypr"
 
 fail() {
 	echo "FAIL: $*" >&2
@@ -21,12 +27,13 @@ make_default_stubs() {
 	mkdir -p "$tmp/bin" "$tmp/home/Pictures/Wallpapers" "$tmp/home/Videos/wallpapers" "$tmp/runtime" "$tmp/state"
 	: >"$tmp/calls"
 
+	cp "$ORGM_HYPR_BIN" "$tmp/bin/orgm-hypr"
 	make_stub "$tmp" hyprpaper 'echo "hyprpaper $*" >>"$CALLS"'
 	make_stub "$tmp" mpvpaper 'echo "mpvpaper $*" >>"$CALLS"'
 	make_stub "$tmp" nvidia-offload 'echo "nvidia-offload $*" >>"$CALLS"'
 	make_stub "$tmp" pkill 'echo "pkill $*" >>"$CALLS"; exit 0'
 	make_stub "$tmp" pgrep 'exit 1'
-	make_stub "$tmp" ps 'echo "ps $*" >>"$CALLS"; case "$*" in *424242*) echo "bash unrelated" ;; *31337*) echo "mpvpaper -o no-audio loop" ;; esac'
+	make_stub "$tmp" ps 'echo "ps $*" >>"$CALLS"; case "$*" in *424242*) echo "bash unrelated" ;; *515151*) echo "orgm-hypr wallpaper daemon" ;; *616161*) echo "quickshell -p /tmp/wallpaper-picker" ;; *31337*) echo "mpvpaper -o no-audio loop" ;; esac'
 	make_stub "$tmp" test-kill 'echo "test-kill $*" >>"$CALLS"; exit 0'
 	make_stub "$tmp" sleep 'echo "sleep $*" >>"$CALLS"; exit 0'
 	make_stub "$tmp" shuf 'head -n 1'
@@ -111,7 +118,9 @@ test_pick_video_uses_mpvpaper_and_persists_video_mode() {
     home="$tmp/home"
     video="$home/Videos/wallpapers/live.mp4"
     touch "$video"
+    printf "515151\n" >"$tmp/runtime/hypr-random-wallpaper.daemon.pid"
     run_script "$tmp" set-video "$video"
+    assert_calls_contains "$tmp" "test-kill -KILL 515151" "video mode stops stale wallpaper daemon"
     assert_calls_contains "$tmp" "pkill -x hyprpaper" "video mode stops static wallpaper"
     assert_calls_contains "$tmp" "mpvpaper -o no-audio loop hwdec=auto \* $video" "video mode starts mpvpaper"
     state="$tmp/state/hypr-wallpaper/state"

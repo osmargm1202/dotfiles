@@ -10,6 +10,6 @@ case "$choice" in
   *'Search files') exec ~/.local/bin/fuzzel-open-file ;;
   *'Calculator') exec gnome-calculator ;;
   *'Displays') exec nwg-displays ;;
-  *'Wallpaper') exec ~/.local/bin/hypr-random-wallpaper next ;;
+  *'Wallpaper') exec orgm-hypr wallpaper next ;;
   *) exit 0 ;;
 esac

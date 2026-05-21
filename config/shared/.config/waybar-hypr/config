@@ -156,7 +156,7 @@
       "format": "󰸉",
       "tooltip": true,
       "tooltip-format": "Cambiar fondo aleatorio",
-      "on-click": "~/.local/bin/hypr-random-wallpaper next"
+      "on-click": "orgm-hypr wallpaper next"
     },
     "bluetooth": {
       "format": "󰂯",

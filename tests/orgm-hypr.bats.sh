@@ -46,6 +46,20 @@ if grep -q 'live.mp4' "$json"; then
 	fail "static json should not include video item"
 fi
 
+"$BIN" wallpaper data \
+	--mode video \
+	--manifest "$manifest" \
+	--json "$json" \
+	--script orgm-hypr \
+	--script-arg wallpaper
+
+grep -q '"script": "orgm-hypr"' "$json" || fail "json missing orgm-hypr script"
+grep -q '"scriptArgs": \[' "$json" || fail "json missing scriptArgs"
+grep -q '"wallpaper"' "$json" || fail "json missing wallpaper script arg"
+
+PATH="$TMP_BIN_DIR:$PATH" HOME="$tmp" XDG_RUNTIME_DIR="$tmp/runtime" XDG_STATE_HOME="$tmp/state" "$BIN" wallpaper status >"$tmp/status"
+grep -q '^mode=static-random$' "$tmp/status" || fail "status should default to static-random"
+
 mkdir -p "$tmp/Pictures/Wallpapers/.thumb" "$tmp/Pictures/Wallpapers/.thumb/album"
 valid_thumb="$tmp/Pictures/Wallpapers/.thumb/normal.png.jpg"
 stale_thumb="$tmp/Pictures/Wallpapers/.thumb/removed.png.jpg"
