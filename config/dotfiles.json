@@ -86,6 +86,7 @@
       "paths": [
         ".config/DankMaterialShell",
         ".config/fish/age-host.fish",
+        ".config/fish/host-lenovo.fish",
         ".config/fuzzel/fuzzel.env",
         ".config/rofi/hypr-menu.env",
         ".local/share/applications",
