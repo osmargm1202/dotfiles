@@ -385,6 +385,21 @@ thumb_path_for() {
   printf '%s\n' "${wallpaper_thumb_dir}/${wallpaper_base}.jpg"
 }
 
+cleanup_stale_thumbs_for_dir() {
+  wallpaper_root="$1"
+  [ -d "${wallpaper_root}" ] || return 0
+
+  find "${wallpaper_root}" -path '*/.thumb/*.jpg' -type f -print | while IFS= read -r thumb; do
+    thumb_dir="${thumb%/*}"
+    [ "${thumb_dir##*/}" = ".thumb" ] || continue
+    wallpaper_dir="${thumb_dir%/.thumb}"
+    thumb_base="${thumb##*/}"
+    wallpaper_base="${thumb_base%.jpg}"
+    wallpaper="${wallpaper_dir}/${wallpaper_base}"
+    [ -f "${wallpaper}" ] || rm -f "${thumb}"
+  done
+}
+
 quickshell_data_for_mode() {
   mode="$1"
   printf '%s\n' "${persistent_state_dir}/wallpaper-picker-${mode}.json"
@@ -471,6 +486,10 @@ generate_quickshell_data() {
     printf '%s\t%s\n' "${mode}" "${wallpaper}" >>"${tmp_manifest}"
   done
   mv "${tmp_manifest}" "${quickshell_manifest}"
+  case "${mode}" in
+    static) cleanup_stale_thumbs_for_dir "${static_wallpaper_dir}" ;;
+    video) cleanup_stale_thumbs_for_dir "${video_wallpaper_dir}" ;;
+  esac
 
   if command -v orgm-hypr >/dev/null 2>&1 && \
     orgm-hypr wallpaper data \

@@ -255,6 +255,56 @@ test_thumbnails_are_reused_from_folder_local_cache() {
   ' bash
 }
 
+test_carousel_removes_stale_static_thumbnails_only() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    root="$home/Pictures/Wallpapers"
+    valid="$root/current.png"
+    stale_thumb="$root/.thumb/removed.png.jpg"
+    valid_thumb="$root/.thumb/current.png.jpg"
+    nested_valid="$root/nested/keep.webp"
+    nested_stale_thumb="$root/nested/.thumb/gone.jpg.jpg"
+    thumb_subdir_file="$root/.thumb/album/personal.jpg"
+    touch "$valid"
+    mkdir -p "$root/.thumb/album" "$root/nested/.thumb"
+    touch "$nested_valid"
+    printf stale >"$stale_thumb"
+    printf valid >"$valid_thumb"
+    printf nested-stale >"$nested_stale_thumb"
+    printf keep >"$thumb_subdir_file"
+
+    run_script "$tmp" carousel static
+
+    [ ! -e "$stale_thumb" ] || fail "stale static thumbnail should be removed"
+    [ ! -e "$nested_stale_thumb" ] || fail "nested stale static thumbnail should be removed"
+    [ -e "$valid_thumb" ] || fail "valid static thumbnail should be kept"
+    [ -e "$thumb_subdir_file" ] || fail "files below .thumb subdirectories should be kept"
+    assert_calls_not_contains "$tmp" "^ffmpeg " "static cleanup must not generate thumbnails"
+  ' bash
+}
+
+test_carousel_removes_stale_video_thumbnails_only() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    root="$home/Videos/wallpapers"
+    valid="$root/current.mp4"
+    stale_thumb="$root/.thumb/removed.mp4.jpg"
+    valid_thumb="$root/.thumb/current.mp4.jpg"
+    touch "$valid"
+    mkdir -p "$root/.thumb"
+    printf stale >"$stale_thumb"
+    printf valid >"$valid_thumb"
+
+    run_script "$tmp" carousel video
+
+    [ ! -e "$stale_thumb" ] || fail "stale video thumbnail should be removed"
+    [ -e "$valid_thumb" ] || fail "valid video thumbnail should be kept"
+    assert_calls_not_contains "$tmp" "^ffmpeg " "video cleanup must not generate thumbnails"
+  ' bash
+}
+
 test_warm_thumbs_all_generates_only_missing_thumbnails() {
 	with_tmp bash -c '
     tmp="$1"
@@ -468,6 +518,8 @@ test_pick_uses_fuzzel_menu_and_opens_quickshell_normal_carousel
 test_wallpaper_changes_do_not_send_success_notifications
 test_quickshell_carousel_launches_without_generating_thumbnails
 test_thumbnails_are_reused_from_folder_local_cache
+test_carousel_removes_stale_static_thumbnails_only
+test_carousel_removes_stale_video_thumbnails_only
 test_warm_thumbs_all_generates_only_missing_thumbnails
 test_warm_page_generates_only_requested_4x4_page
 test_warm_thumbs_generates_near_selected_index_only
