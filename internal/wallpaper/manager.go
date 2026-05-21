@@ -268,7 +268,7 @@ func randomChoice(items []string) string {
 }
 
 func (m *Manager) writeHyprpaperConfig(wallpaper string) error {
-	content := fmt.Sprintf("preload = %s\nwallpaper = ,%s\nsplash = false\nipc = off\n\nwallpaper_mode = cover\n", wallpaper, wallpaper)
+	content := fmt.Sprintf("ipc = false\nsplash = false\nwallpaper {\n    monitor = *\n    fit_mode = cover\n    path = %s\n}\n", wallpaper)
 	return os.WriteFile(m.HyprpaperConf, []byte(content), 0o644)
 }
 
