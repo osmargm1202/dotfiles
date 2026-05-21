@@ -2,8 +2,6 @@
 name: tdd-implementer
 description: Execute approved tdd-orgm plan groups with TDD-first approach
 tools: read, grep, find, ls, bash, edit, write, deploy_agent, engram_mem_search, engram_mem_context, engram_mem_get_observation, engram_mem_save, engram_mem_update
-model: openai-codex/gpt-5.4
-thinking: medium
 output: build.md
 defaultProgress: true
 interactive: true

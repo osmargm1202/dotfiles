@@ -2,8 +2,6 @@
 name: tdd-planner
 description: Write a complete implementation plan for tdd-orgm changes from evidence
 tools: read, grep, find, ls, bash, engram_mem_search, engram_mem_context, engram_mem_get_observation, engram_mem_save, engram_mem_update
-model: openai-codex/gpt-5.5
-thinking: xhigh
 output: plan.md
 defaultReads: context.md
 defaultProgress: true
