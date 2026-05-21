@@ -102,6 +102,7 @@
   "local_only": {
     "paths": [
       ".config/fish/fish_variables",
+      ".config/fish/insforge.env",
       ".config/fish/pdd",
       ".config/fish/private-env.fish",
       ".pi/agent/agent-status.json",

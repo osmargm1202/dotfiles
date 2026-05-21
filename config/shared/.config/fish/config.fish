@@ -35,6 +35,10 @@ if functions -q load_private_env
     load_private_env
 end
 
+if test -f ~/.config/fish/insforge.env
+    source ~/.config/fish/insforge.env
+end
+
 # PATH
 set -gx PATH $HOME/.local/bin $PATH
 set -gx PATH $HOME/.cargo/bin $PATH
