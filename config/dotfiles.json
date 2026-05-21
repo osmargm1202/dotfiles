@@ -4,7 +4,7 @@
     "destination": "~",
     "source_shared": "config/shared",
     "source_hosts": "config/hosts",
-    "state_dir": "~/.local/state/dot.sh",
+    "state_dir": "~/.local/state/orgm-dot",
     "poll_seconds": 5
   },
   "shared": {
@@ -74,11 +74,11 @@
       "paths": [
         ".config/DankMaterialShell",
         ".config/fish/age-host.fish",
+        ".config/fish/host-orgm.fish",
         ".config/fuzzel/fuzzel.env",
         ".config/rofi/hypr-menu.env",
         ".local/share/applications",
         ".local/share/icons",
-        ".pi/agent/mcp-cache.json",
         ".pi/agent/mcp.json"
       ]
     },
@@ -112,6 +112,7 @@
       ".pi/agent/auth.json",
       ".pi/agent/extensions/.pi-lens",
       ".pi/agent/git",
+      ".pi/agent/mcp-cache.json",
       ".pi/agent/mcp-npx-cache.json",
       ".pi/agent/mcp.json.bak-20260420-151836",
       ".pi/agent/pi-crash.log",
