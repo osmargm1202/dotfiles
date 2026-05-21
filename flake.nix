@@ -159,6 +159,15 @@
         profile = ./nixos/profiles/sway.nix;
         extraModules = [ ./nixos/hosts/ero/plymouth.nix ];
       };
+      ero-server = nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./nixos/hosts/ero/hardware-configuration.nix
+          ./nixos/server.nix
+          { networking.hostName = "ero"; }
+        ];
+      };
 
       lenovo-labwc = mkHost {
         hostName = "lenovo";
