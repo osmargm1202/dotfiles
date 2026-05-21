@@ -31,6 +31,11 @@ if test -f ~/.config/fish/age-host.fish
     source ~/.config/fish/age-host.fish
 end
 
+set -l host_config ~/.config/fish/host-(hostname).fish
+if test -f $host_config
+    source $host_config
+end
+
 if functions -q load_private_env
     load_private_env
 end
