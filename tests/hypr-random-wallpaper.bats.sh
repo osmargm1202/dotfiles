@@ -85,6 +85,15 @@ assert_file_contains() {
 	}
 }
 
+assert_file_not_contains() {
+	local file="$1" pattern="$2" name="$3"
+	if grep -qE "$pattern" "$file"; then
+		echo "--- $file ---" >&2
+		cat "$file" >&2 2>/dev/null || true
+		fail "$name expected file not to match: $pattern"
+	fi
+}
+
 dump_case() {
 	local tmp="$1"
 	echo "--- calls ---" >&2
@@ -109,7 +118,7 @@ with_tmp() {
 
 export SCRIPT
 export -f fail make_stub make_default_stubs run_script \
-	assert_calls_contains assert_calls_not_contains assert_file_contains \
+	assert_calls_contains assert_calls_not_contains assert_file_contains assert_file_not_contains \
 	dump_case with_tmp
 
 test_pick_video_uses_mpvpaper_and_persists_video_mode() {
@@ -139,6 +148,11 @@ test_pick_static_uses_hyprpaper_and_stops_mpvpaper() {
     assert_calls_not_contains "$tmp" "pkill -x mpvpaper" "static mode avoids broad mpvpaper kill"
     assert_calls_contains "$tmp" "pkill -f .*mpvpaper .*wallpapers" "static mode stops live wallpaper commands"
     assert_calls_contains "$tmp" "hyprpaper -c $tmp/runtime/hypr-random-wallpaper.hyprpaper.conf" "static mode starts hyprpaper"
+    conf="$tmp/runtime/hypr-random-wallpaper.hyprpaper.conf"
+    assert_file_contains "$conf" "^wallpaper = ,$image$" "hyprpaper config targets selected image"
+    assert_file_not_contains "$conf" "^render \\{" "hyprpaper config avoids unsupported render block"
+    assert_file_not_contains "$conf" "explicit_sync" "hyprpaper config avoids unsupported explicit_sync option"
+    assert_file_not_contains "$conf" "direct_scanout" "hyprpaper config avoids unsupported direct_scanout option"
     state="$tmp/state/hypr-wallpaper/state"
     assert_file_contains "$state" "^mode=static$" "static mode persisted"
     assert_file_contains "$state" "^path=$image$" "static path persisted"
