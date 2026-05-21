@@ -125,3 +125,50 @@ func TestBuildPickerDataRejectsInvalidMode(t *testing.T) {
 		t.Fatal("expected error")
 	}
 }
+
+func TestCleanStaleThumbnailsRemovesOnlyMissingSources(t *testing.T) {
+	root := t.TempDir()
+	current := filepath.Join(root, "current.png")
+	validThumb := filepath.Join(root, ".thumb", "current.png.jpg")
+	staleThumb := filepath.Join(root, ".thumb", "removed.png.jpg")
+	nestedCurrent := filepath.Join(root, "nested", "keep.webp")
+	nestedStaleThumb := filepath.Join(root, "nested", ".thumb", "gone.jpg.jpg")
+	thumbSubdirFile := filepath.Join(root, ".thumb", "album", "personal.jpg")
+
+	for _, dir := range []string{filepath.Join(root, ".thumb"), filepath.Join(root, "nested", ".thumb"), filepath.Join(root, ".thumb", "album")} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatalf("mkdir %s: %v", dir, err)
+		}
+	}
+	for _, file := range []string{current, nestedCurrent, validThumb, staleThumb, nestedStaleThumb, thumbSubdirFile} {
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+			t.Fatalf("mkdir parent %s: %v", file, err)
+		}
+		if err := os.WriteFile(file, []byte("x"), 0o600); err != nil {
+			t.Fatalf("write %s: %v", file, err)
+		}
+	}
+
+	if err := CleanStaleThumbnails(root); err != nil {
+		t.Fatalf("CleanStaleThumbnails failed: %v", err)
+	}
+
+	assertMissing(t, staleThumb)
+	assertMissing(t, nestedStaleThumb)
+	assertExists(t, validThumb)
+	assertExists(t, thumbSubdirFile)
+}
+
+func assertExists(t *testing.T, path string) {
+	t.Helper()
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("expected %s to exist: %v", path, err)
+	}
+}
+
+func assertMissing(t *testing.T, path string) {
+	t.Helper()
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("expected %s to be removed, stat err=%v", path, err)
+	}
+}

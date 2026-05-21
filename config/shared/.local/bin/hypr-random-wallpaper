@@ -385,7 +385,7 @@ thumb_path_for() {
   printf '%s\n' "${wallpaper_thumb_dir}/${wallpaper_base}.jpg"
 }
 
-cleanup_stale_thumbs_for_dir() {
+cleanup_stale_thumbs_fallback() {
   wallpaper_root="$1"
   [ -d "${wallpaper_root}" ] || return 0
 
@@ -398,6 +398,16 @@ cleanup_stale_thumbs_for_dir() {
     wallpaper="${wallpaper_dir}/${wallpaper_base}"
     [ -f "${wallpaper}" ] || rm -f "${thumb}"
   done
+}
+
+cleanup_stale_thumbs_for_dir() {
+  wallpaper_root="$1"
+  if command -v orgm-hypr >/dev/null 2>&1 && \
+    orgm-hypr wallpaper clean-thumbs --root "${wallpaper_root}"; then
+    :
+  else
+    cleanup_stale_thumbs_fallback "${wallpaper_root}"
+  fi
 }
 
 quickshell_data_for_mode() {

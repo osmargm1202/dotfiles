@@ -35,7 +35,7 @@ func run(args []string) error {
 
 func runWallpaper(args []string) error {
 	if len(args) < 1 {
-		return cli.UsageError("usage: orgm-hypr wallpaper data --mode static|video --manifest PATH --json PATH [--current PATH] [--script PATH]")
+		return cli.UsageError("usage: orgm-hypr wallpaper [data|clean-thumbs] ...")
 	}
 
 	switch args[0] {
@@ -55,8 +55,23 @@ func runWallpaper(args []string) error {
 			return cli.UsageError("unexpected argument: %s", flags.Arg(0))
 		}
 		return wallpaper.GeneratePickerData(opts)
+	case "clean-thumbs":
+		flags := flag.NewFlagSet("orgm-hypr wallpaper clean-thumbs", flag.ContinueOnError)
+		flags.SetOutput(os.Stderr)
+		var root string
+		flags.StringVar(&root, "root", "", "wallpaper root containing folder-local .thumb caches")
+		if err := flags.Parse(args[1:]); err != nil {
+			return cli.UsageError(err.Error())
+		}
+		if flags.NArg() != 0 {
+			return cli.UsageError("unexpected argument: %s", flags.Arg(0))
+		}
+		if root == "" {
+			return cli.UsageError("root path is required")
+		}
+		return wallpaper.CleanStaleThumbnails(root)
 	default:
-		return cli.UsageError("usage: orgm-hypr wallpaper data --mode static|video --manifest PATH --json PATH [--current PATH] [--script PATH]")
+		return cli.UsageError("usage: orgm-hypr wallpaper [data|clean-thumbs] ...")
 	}
 }
 

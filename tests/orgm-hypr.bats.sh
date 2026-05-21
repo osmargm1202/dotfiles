@@ -46,4 +46,16 @@ if grep -q 'live.mp4' "$json"; then
 	fail "static json should not include video item"
 fi
 
+mkdir -p "$tmp/Pictures/Wallpapers/.thumb" "$tmp/Pictures/Wallpapers/.thumb/album"
+valid_thumb="$tmp/Pictures/Wallpapers/.thumb/normal.png.jpg"
+stale_thumb="$tmp/Pictures/Wallpapers/.thumb/removed.png.jpg"
+thumb_subdir_file="$tmp/Pictures/Wallpapers/.thumb/album/personal.jpg"
+printf valid >"$valid_thumb"
+printf stale >"$stale_thumb"
+printf keep >"$thumb_subdir_file"
+"$BIN" wallpaper clean-thumbs --root "$tmp/Pictures/Wallpapers"
+[ -e "$valid_thumb" ] || fail "valid thumb should remain"
+[ ! -e "$stale_thumb" ] || fail "stale thumb should be removed"
+[ -e "$thumb_subdir_file" ] || fail "thumb subdirectory file should remain"
+
 echo "orgm-hypr smoke tests passed"
