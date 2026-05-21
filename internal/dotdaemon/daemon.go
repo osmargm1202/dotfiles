@@ -25,7 +25,7 @@ func Run(rt dotconfig.Runtime, opts Options) error {
 	stateFile := filepath.Join(rt.StateDir, "last-head-"+opts.Host)
 	lastBytes, _ := os.ReadFile(stateFile)
 	last := string(bytesTrimSpace(lastBytes))
-	fmt.Printf("dot.sh daemon --host %s watching %s every %ss\n", opts.Host, rt.Repo, trimSeconds(opts.Interval))
+	fmt.Printf("orgm-dot daemon --host %s watching %s every %ss\n", opts.Host, rt.Repo, trimSeconds(opts.Interval))
 	for {
 		last = CheckOnce(rt, opts.Host, stateFile, last)
 		time.Sleep(opts.Interval)

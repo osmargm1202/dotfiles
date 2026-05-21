@@ -18,16 +18,14 @@ func Run(home, executable string) ([]string, error) {
 	if err := os.MkdirAll(binDir, 0o755); err != nil {
 		return nil, err
 	}
-	links := []string{filepath.Join(binDir, "dot"), filepath.Join(binDir, "dot.sh")}
-	for _, link := range links {
-		_ = os.Remove(link)
-		if err := os.Symlink(executable, link); err != nil {
-			return nil, err
-		}
+	dotLink := filepath.Join(binDir, "dot")
+	_ = os.Remove(dotLink)
+	if err := os.Symlink(executable, dotLink); err != nil {
+		return nil, err
 	}
+	_ = os.Remove(filepath.Join(binDir, "dot.sh"))
 	return []string{
-		fmt.Sprintf("installed: %s -> %s", links[0], executable),
-		fmt.Sprintf("installed: %s -> %s", links[1], executable),
-		"launch example: dot daemon --host orgm",
+		fmt.Sprintf("installed: %s -> %s", dotLink, executable),
+		"launch example: orgm-dot daemon --host orgm",
 	}, nil
 }

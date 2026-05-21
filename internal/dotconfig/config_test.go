@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestLoadUsesRelativeDotShConfigFromCurrentDirectory(t *testing.T) {
+func TestLoadUsesRelativeOrgmDotConfigFromCurrentDirectory(t *testing.T) {
 	tmp := t.TempDir()
 	home := filepath.Join(tmp, "home")
 	repo := filepath.Join(tmp, "repo")
@@ -27,21 +27,21 @@ func TestLoadUsesRelativeDotShConfigFromCurrentDirectory(t *testing.T) {
 	}
 
 	t.Setenv("HOME", home)
-	t.Setenv("DOT_SH_CONFIG", "config/dotfiles.json")
+	t.Setenv("ORGM_DOT_CONFIG", "config/dotfiles.json")
 
 	runtime, err := Load("")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if runtime.ConfigPath != filepath.Clean("config/dotfiles.json") {
-		t.Fatalf("config path should remain cwd-relative like dot.sh, got %q", runtime.ConfigPath)
+		t.Fatalf("config path should remain cwd-relative, got %q", runtime.ConfigPath)
 	}
 	if runtime.Repo != repo {
 		t.Fatalf("repo mismatch: %q", runtime.Repo)
 	}
 }
 
-func TestLoadUsesDotShConfigAndExpandsPaths(t *testing.T) {
+func TestLoadUsesOrgmDotConfigAndExpandsPaths(t *testing.T) {
 	tmp := t.TempDir()
 	home := filepath.Join(tmp, "home")
 	repo := filepath.Join(tmp, "repo")
@@ -52,7 +52,7 @@ func TestLoadUsesDotShConfigAndExpandsPaths(t *testing.T) {
 	writeFixtureConfig(t, configPath, repo)
 
 	t.Setenv("HOME", home)
-	t.Setenv("DOT_SH_CONFIG", configPath)
+	t.Setenv("ORGM_DOT_CONFIG", configPath)
 
 	runtime, err := Load("")
 	if err != nil {
@@ -67,12 +67,12 @@ func TestLoadUsesDotShConfigAndExpandsPaths(t *testing.T) {
 	if runtime.SourceShared != filepath.Join(repo, "config", "shared") {
 		t.Fatalf("shared source mismatch: %q", runtime.SourceShared)
 	}
-	if runtime.StateDir != filepath.Join(home, ".local", "state", "dot.sh") {
+	if runtime.StateDir != filepath.Join(home, ".local", "state", "orgm-dot") {
 		t.Fatalf("state dir mismatch: %q", runtime.StateDir)
 	}
 }
 
-func TestStatusLinesIncludeDotShFieldsAndCounts(t *testing.T) {
+func TestStatusLinesIncludeOrgmDotFieldsAndCounts(t *testing.T) {
 	tmp := t.TempDir()
 	home := filepath.Join(tmp, "home")
 	repo := filepath.Join(tmp, "repo")
@@ -95,7 +95,7 @@ func TestStatusLinesIncludeDotShFieldsAndCounts(t *testing.T) {
 		"shared src:  " + filepath.Join(repo, "config", "shared"),
 		"host src:    " + filepath.Join(repo, "config", "hosts", "lenovo"),
 		"head:        ",
-		"state dir:   " + filepath.Join(home, ".local", "state", "dot.sh"),
+		"state dir:   " + filepath.Join(home, ".local", "state", "orgm-dot"),
 		"host:        lenovo",
 		"managed shared: 2",
 		"managed host:   1",
@@ -117,7 +117,7 @@ func TestLoadUsesDotfilesRepoForDefaultConfig(t *testing.T) {
 
 	t.Setenv("HOME", home)
 	t.Setenv("DOTFILES_REPO", repo)
-	t.Setenv("DOT_SH_CONFIG", "")
+	t.Setenv("ORGM_DOT_CONFIG", "")
 
 	runtime, err := Load("")
 	if err != nil {
@@ -147,7 +147,7 @@ func writeFixtureConfig(t *testing.T, path, repo string) {
     "destination": "~",
     "source_shared": "config/shared",
     "source_hosts": "config/hosts",
-    "state_dir": "~/.local/state/dot.sh",
+    "state_dir": "~/.local/state/orgm-dot",
     "poll_seconds": 7
   },
   "shared": { "paths": [".config/fish", ".tmux.conf"] },

@@ -1,6 +1,6 @@
 # Hyprland shared theme workflow
 
-Goal: generate theme files once, track them under `config/shared`, and sync the same defaults to every host with `dot.sh`.
+Goal: generate theme files once, track them under `config/shared`, and sync the same defaults to every host with `orgm-dot`.
 
 ## Recommended layout
 

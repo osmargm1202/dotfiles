@@ -1,19 +1,19 @@
 # Dotfiles agent instructions
 
-## dot.sh workflow
+## orgm-dot workflow
 
-Use `./dot.sh` from this repository (or `dot` after `./dot.sh install`) to compare and apply managed dotfiles.
+Use `orgm-dot` to compare and apply managed dotfiles.
 
 Preferred commands use the fast subcommand form, without `--` on the command:
 
 ```bash
-./dot.sh status --host orgm
-./dot.sh diff --host orgm
-./dot.sh sync --host orgm
-./dot.sh daemon --host orgm
-./dot.sh add ~/.config/example --host orgm
-./dot.sh add ~/.config/example --shared
-./dot.sh remove ~/.config/example --host orgm
+orgm-dot status --host orgm
+orgm-dot diff --host orgm
+orgm-dot sync --host orgm
+orgm-dot daemon --host orgm
+orgm-dot add ~/.config/example --host orgm
+orgm-dot add ~/.config/example --shared
+orgm-dot remove ~/.config/example --host orgm
 ```
 
 Legacy command flags like `--diff` and `--sync` may still work, but do not use them in new notes or examples.
@@ -25,13 +25,13 @@ Legacy command flags like `--diff` and `--sync` may still work, but do not use t
 3. Check what will change:
 
    ```bash
-   ./dot.sh diff --host orgm
+   orgm-dot diff --host orgm
    ```
 
 4. Apply the configuration to the destination home:
 
    ```bash
-   ./dot.sh sync --host orgm
+   orgm-dot sync --host orgm
    ```
 
 5. Verify the application or config that changed.

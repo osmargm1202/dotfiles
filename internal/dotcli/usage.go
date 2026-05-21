@@ -13,5 +13,5 @@ Legacy command flags like --diff and --sync still work, but the fast form
 without -- is preferred.
 
 Environment:
-  DOT_SH_CONFIG=/path/to/dotfiles.json
+  ORGM_DOT_CONFIG=/path/to/dotfiles.json
 `

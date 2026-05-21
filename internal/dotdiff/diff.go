@@ -45,7 +45,7 @@ func Changes(rt dotconfig.Runtime, opts Options) ([]Change, error) {
 func Format(changes []Change, host string, porcelain bool) []string {
 	lines := make([]string, 0, len(changes)+1)
 	if !porcelain {
-		lines = append(lines, fmt.Sprintf("dot.sh diff --host %s", host))
+		lines = append(lines, fmt.Sprintf("orgm-dot diff --host %s", host))
 	}
 	for _, change := range changes {
 		if porcelain {

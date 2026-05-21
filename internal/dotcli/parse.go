@@ -16,7 +16,7 @@ type Command struct {
 	Config    string
 }
 
-// Parse converts dot.sh-compatible arguments into a Command.
+// Parse converts orgm-dot arguments into a Command.
 func Parse(args []string) (Command, error) {
 	var cmd Command
 	for i := 0; i < len(args); i++ {

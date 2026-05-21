@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Expand resolves dot.sh-style paths. Relative paths are anchored at repo.
+// Expand resolves orgm-dot config paths. Relative paths are anchored at repo.
 func Expand(pathValue, repo, home string) string {
 	if pathValue == "" {
 		return ""

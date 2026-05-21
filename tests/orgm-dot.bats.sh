@@ -24,7 +24,7 @@ assert_file() {
 run_dot() {
 	local repo="$1" home="$2"
 	shift 2
-	HOME="$home" DOT_SH_CONFIG="$repo/config/dotfiles.json" "$BIN" "$@"
+	HOME="$home" ORGM_DOT_CONFIG="$repo/config/dotfiles.json" "$BIN" "$@"
 }
 
 make_fixture() {
@@ -44,7 +44,7 @@ make_fixture() {
     "destination": "~",
     "source_shared": "config/shared",
     "source_hosts": "config/hosts",
-    "state_dir": "~/.local/state/dot.sh",
+    "state_dir": "~/.local/state/orgm-dot",
     "poll_seconds": 5
   },
   "shared": { "paths": [".config/fish", ".config/app", ".tmux.conf"] },
@@ -114,6 +114,13 @@ if grep -q 'fish_variables' "$diff_out"; then
 	cat "$diff_out" >&2
 	fail "diff should skip local_only"
 fi
+human_diff_out="$TMP_ROOT/diff-human.out"
+run_dot "$repo" "$home" diff --host lenovo >"$human_diff_out"
+assert_file "$human_diff_out" "orgm-dot diff --host lenovo" "human diff prints orgm-dot command"
+if grep -q 'dot\.sh' "$human_diff_out"; then
+	cat "$human_diff_out" >&2
+	fail "human diff must not mention dot.sh"
+fi
 
 fixture="$(make_fixture syncdry)"
 repo="${fixture%%$'\t'*}"
@@ -130,8 +137,8 @@ repo="${fixture%%$'\t'*}"
 home="${fixture##*$'\t'}"
 printf 'secret\n' >"$home/.config/fish/fish_variables"
 printf 'remove me\n' >"$home/.config/fish/removed.fish"
-mkdir -p "$home/.local/state/dot.sh"
-printf 'stale lock from dot.sh\n' >"$home/.local/state/dot.sh/sync.lock"
+mkdir -p "$home/.local/state/orgm-dot"
+printf 'stale lock from orgm-dot\n' >"$home/.local/state/orgm-dot/sync.lock"
 run_dot "$repo" "$home" sync --host lenovo
 assert_file "$home/.config/fish/config.fish" "shared fish" "sync copies shared file"
 assert_file "$home/.config/fish/age-host.fish" "host age" "sync copies host file"
@@ -156,7 +163,7 @@ install_home="$TMP_ROOT/install-home"
 mkdir -p "$install_home"
 HOME="$install_home" "$BIN" install >"$TMP_ROOT/install.out"
 [ -L "$install_home/.local/bin/dot" ] || fail "install creates dot symlink"
-[ -L "$install_home/.local/bin/dot.sh" ] || fail "install creates dot.sh symlink"
-assert_file "$TMP_ROOT/install.out" "launch example: dot daemon --host orgm" "install prints launch example"
+[ ! -e "$install_home/.local/bin/dot.sh" ] || fail "install must not create dot.sh compatibility symlink"
+assert_file "$TMP_ROOT/install.out" "launch example: orgm-dot daemon --host orgm" "install prints launch example"
 
 echo "orgm-dot smoke tests passed"

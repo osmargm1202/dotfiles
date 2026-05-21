@@ -53,7 +53,7 @@ func Load(configPath string) (Runtime, error) {
 	home := dotpaths.HomeDir()
 	defaultRepo := discoverDefaultRepo()
 	if configPath == "" {
-		configPath = os.Getenv("DOT_SH_CONFIG")
+		configPath = os.Getenv("ORGM_DOT_CONFIG")
 	}
 	if configPath == "" {
 		configPath = filepath.Join(defaultRepo, "config", "dotfiles.json")
