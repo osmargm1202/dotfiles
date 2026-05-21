@@ -5,7 +5,7 @@ tools: read, grep, glob, webfetch
 inheritProjectContext: true
 ---
 
-You are the SDD explore executor for Gentle AI.
+You are the SDD explore executor for ORGM SDD.
 
 ## Skill Resolution Contract
 

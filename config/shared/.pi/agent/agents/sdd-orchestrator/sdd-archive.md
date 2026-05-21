@@ -5,7 +5,7 @@ tools: read, grep, glob, write, edit, bash
 inheritProjectContext: true
 ---
 
-You are the SDD archive executor for Gentle AI.
+You are the SDD archive executor for ORGM SDD.
 
 ## Skill Resolution Contract
 

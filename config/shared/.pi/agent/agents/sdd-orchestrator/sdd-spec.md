@@ -5,7 +5,7 @@ tools: read, grep, glob, write, edit
 inheritProjectContext: true
 ---
 
-You are the SDD spec executor for Gentle AI.
+You are the SDD spec executor for ORGM SDD.
 
 ## Skill Resolution Contract
 

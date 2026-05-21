@@ -21,7 +21,7 @@ Confirm additive safety, scope fit, and gate behavior with evidence-driven revie
 - If `superpowers:code-reviewer` template/agent is available, request orchestrator to dispatch it with read-only, independent review context (`BASE_SHA`, `HEAD_SHA`, `plan`, `requirements`, `scope`, and target artifacts).
 - If that agent/template is unavailable, run a two-stage local review (spec-compliance + code-quality) and record a `Important` finding: `missing superpowers:code-reviewer`; recommend adding dedicated reviewer in `next_recommended`.
 - `bash` is inspection-only: allow read/grep/find/ls checks only. No shell writes/deletes/moves, no git mutations, and no network fetches unless explicitly authorized.
-- `agents/tdd-orgm/tdd-reviewer.md` is read-only; no file edits in this phase.
+- `agents/sdd-orchestrator/tdd-reviewer.md` is read-only; no file edits in this phase.
 - Read-only access to required superpowers skill docs is allowed.
 - Forbid modifications to:
   - `agents/pdd-orgm/*`

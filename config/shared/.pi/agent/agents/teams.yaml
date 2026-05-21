@@ -26,7 +26,16 @@ pdd-orgm:
   - pdd-builder-fast
   - pdd-reviewer
 
-tdd-orgm:
+sdd-orchestrator:
+  - sdd-init
+  - sdd-explore
+  - sdd-proposal
+  - sdd-spec
+  - sdd-design
+  - sdd-tasks
+  - sdd-apply
+  - sdd-verify
+  - sdd-archive
   - tdd-brainstormer
   - tdd-planner
   - tdd-implementer
