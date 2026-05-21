@@ -1,1 +1,0 @@
-../../../../../Hobby/dotfiles/config/pi/.pi/agent/skills/deep-research/templates/report_template.md

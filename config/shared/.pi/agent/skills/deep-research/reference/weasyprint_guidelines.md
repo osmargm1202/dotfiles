@@ -1,1 +1,0 @@
-../../../../../Hobby/dotfiles/config/pi/.pi/agent/skills/deep-research/reference/weasyprint_guidelines.md
