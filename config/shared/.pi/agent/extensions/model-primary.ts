@@ -10,6 +10,7 @@ import {
 	restorePrimaryState,
 	SYSTEM_AGENT,
 } from "./lib/agent-discovery";
+import { resolveConfiguredPrimary } from "./lib/orgm-flow";
 
 const SUBAGENT_ENV_FLAG = "PI_PDD_SUBAGENT";
 const IS_SUBAGENT_RUNTIME = process.env[SUBAGENT_ENV_FLAG] === "1";
@@ -72,6 +73,10 @@ async function openSelectPalette(
 				render: (w: number) => container.render(w),
 				invalidate: () => container.invalidate(),
 				handleInput: (data: string) => {
+					if (data === "\u001B" || data === "Escape" || data === "escape") {
+						done(null);
+						return;
+					}
 					selectList.handleInput(data);
 					tui.requestRender();
 				},
@@ -87,7 +92,10 @@ export default function (pi: ExtensionAPI) {
 	let currentPrimary = SYSTEM_AGENT;
 
 	pi.on("session_start", async (_event, ctx) => {
-		currentPrimary = restorePrimaryState(ctx.sessionManager.getEntries(), ctx.cwd, "both");
+		currentPrimary = resolveConfiguredPrimary(
+			ctx.cwd,
+			restorePrimaryState(ctx.sessionManager.getEntries(), ctx.cwd, "both"),
+		);
 		pi.events.emit(PRIMARY_STATE_EVENT, { selectedName: currentPrimary });
 	});
 

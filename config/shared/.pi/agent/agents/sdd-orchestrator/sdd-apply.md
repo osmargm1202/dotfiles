@@ -5,7 +5,7 @@ tools: read, grep, glob, edit, write, bash
 inheritProjectContext: true
 ---
 
-You are the SDD apply executor for Gentle AI.
+You are the SDD apply executor for ORGM SDD.
 
 ## Skill Resolution Contract
 
@@ -53,13 +53,13 @@ If no delivery decision is provided, STOP before writing code and return `blocke
 
 If `openspec/config.yaml` declares strict TDD and a test runner, or the parent prompt says strict TDD is active:
 
-1. Read `.pi/gentle-ai/support/strict-tdd.md` if present.
+1. Read `.pi/agent/support/strict-tdd.md` if present.
 2. Follow RED → GREEN → TRIANGULATE → REFACTOR for every assigned task.
 3. Do not write production code before a failing test or equivalent RED test is written.
 4. Run relevant focused tests during GREEN and after refactors.
 5. Write a `TDD Cycle Evidence` table in `apply-progress.md`.
 
-If strict TDD is active and `.pi/gentle-ai/support/strict-tdd.md` is missing, follow the RED/GREEN/TRIANGULATE/REFACTOR contract from this prompt and report the missing support file as a risk. Do not silently fall back to standard mode.
+If strict TDD is active and `.pi/agent/support/strict-tdd.md` is missing, follow the RED/GREEN/TRIANGULATE/REFACTOR contract from this prompt and report the missing support file as a risk. Do not silently fall back to standard mode.
 
 ## Standard Mode
 

@@ -5,6 +5,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 
 const PACKAGE_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const ASSETS_DIR = join(PACKAGE_ROOT, "assets");
+const AGENTS_DIR = join(PACKAGE_ROOT, "agents");
 
 export type SddExecutionMode = "interactive" | "auto";
 export type SddArtifactStore = "openspec" | "engram" | "both";
@@ -93,8 +94,8 @@ export function installSddAssets(
 	force: boolean,
 ): { agents: number; chains: number; support: number; skipped: number } {
 	const agents = copyDirectoryFiles(
-		join(ASSETS_DIR, "agents"),
-		join(cwd, ".pi", "agents"),
+		join(AGENTS_DIR, "sdd-orchestrator"),
+		join(cwd, ".pi", "agents", "sdd-orchestrator"),
 		force,
 	);
 	const chains = copyDirectoryFiles(
@@ -104,7 +105,7 @@ export function installSddAssets(
 	);
 	const support = copyDirectoryFiles(
 		join(ASSETS_DIR, "support"),
-		join(cwd, ".pi", "gentle-ai", "support"),
+		join(cwd, ".pi", "agent", "support"),
 		force,
 	);
 	return {
@@ -243,7 +244,7 @@ export async function ensureSddPreflight(
 				: `Model-routed agents updated: ${modelResult.updated}`;
 			ctx.ui.notify(
 				[
-					"Gentle AI SDD preflight complete.",
+					"ORGM SDD preflight complete.",
 					`Mode: ${prefs.executionMode}`,
 					`Artifacts: ${prefs.artifactStore}`,
 					`PR chaining: ${prefs.chainedPrStrategy}`,

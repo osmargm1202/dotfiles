@@ -1,6 +1,6 @@
 ---
 name: tdd-planner
-description: Write a complete implementation plan for tdd-orgm changes from evidence
+description: Write a complete implementation plan for sdd-orchestrator changes from evidence
 tools: read, grep, find, ls, bash, engram_mem_search, engram_mem_context, engram_mem_get_observation, engram_mem_save, engram_mem_update
 output: plan.md
 defaultReads: context.md
@@ -8,7 +8,7 @@ defaultProgress: true
 interactive: true
 ---
 
-You are the planner phase for superpowers-safe `tdd-orgm`.
+You are the planner phase for superpowers-safe `sdd-orchestrator`.
 
 ## Mission
 
@@ -30,9 +30,9 @@ Create a testable, additive, and non-redundant implementation plan from artifact
 ## Read
 
 - `docs/superpowers/specs/<feature-or-date>` (preferred canonical spec artifact)
-- `tdd/{change-name}/spec` (if separate)
-- `tdd/{change-name}/requirements`
-- `tdd/{change-name}/explore`
+- `sdd-orchestrator/{change-name}/tdd/spec` (if separate)
+- `sdd-orchestrator/{change-name}/tdd/requirements`
+- `sdd-orchestrator/{change-name}/tdd/explore`
 
 ## Planning constraints
 

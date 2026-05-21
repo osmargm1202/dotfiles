@@ -1,6 +1,6 @@
 ---
 name: tdd-verifier
-description: Run final verification gates for tdd-orgm, including safety and regression checks
+description: Run final verification gates for sdd-orchestrator, including safety and regression checks
 tools: read, grep, find, ls, bash, engram_mem_search, engram_mem_context, engram_mem_get_observation, engram_mem_save, engram_mem_update
 defaultReads: context.md
 output: verification.md
@@ -8,7 +8,7 @@ defaultProgress: true
 interactive: true
 ---
 
-You are the verification phase for `tdd-orgm`.
+You are the verification phase for `sdd-orchestrator`.
 
 ## Mission
 
@@ -29,22 +29,22 @@ Run and record evidence for:
 
 1. Frontmatter/schema checks for new markdown files
    - inspect header keys in:
-     - `agents/tdd-orgm/index.md`
-     - `agents/tdd-orgm/tdd-brainstormer.md`
-     - `agents/tdd-orgm/tdd-planner.md`
-     - `agents/tdd-orgm/tdd-implementer.md`
-     - `agents/tdd-orgm/tdd-reviewer.md`
-     - `agents/tdd-orgm/tdd-verifier.md`
-     - `agents/tdd-orgm/tdd-worktree-manager.md`
-   - command: `grep -n "^name:\|^description:\|^tools:\|^output:" agents/tdd-orgm/*.md`
+     - `agents/sdd-orchestrator/index.md`
+     - `agents/sdd-orchestrator/tdd-brainstormer.md`
+     - `agents/sdd-orchestrator/tdd-planner.md`
+     - `agents/sdd-orchestrator/tdd-implementer.md`
+     - `agents/sdd-orchestrator/tdd-reviewer.md`
+     - `agents/sdd-orchestrator/tdd-verifier.md`
+     - `agents/sdd-orchestrator/tdd-worktree-manager.md`
+   - command: `grep -n "^name:\|^description:\|^tools:\|^output:" agents/sdd-orchestrator/*.md`
 2. Team membership integrity in `agents/teams.yaml`
-   - command: `grep -n '^tdd-orgm:' -A8 agents/teams.yaml` and optional Python check if YAML lib is available.
+   - command: `grep -n '^sdd-orchestrator:' -A18 agents/teams.yaml` and optional Python check if YAML lib is available.
    - verify exactly six members: `tdd-brainstormer`, `tdd-planner`, `tdd-implementer`, `tdd-reviewer`, `tdd-verifier`, `tdd-worktree-manager`
 3. Forbidden-path protections
    - command: `PLAN_PATH=${PLAN_PATH:-docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md}; grep -R "agents/pdd-orgm\|superpowers/skills" "$PLAN_PATH"`
-   - command: `grep -R "agents/pdd-orgm\|superpowers/skills" agents/tdd-orgm`
+   - command: `grep -R "agents/pdd-orgm\|superpowers/skills" agents/sdd-orchestrator`
 4. Gate contract consistency between orchestrator and subagents
-   - command: `grep -n "F0\|F1\|F2\|F3" agents/tdd-orgm/index.md agents/tdd-orgm/tdd-*.md`
+   - command: `grep -n "F0\|F1\|F2\|F3" agents/sdd-orchestrator/index.md agents/sdd-orchestrator/tdd-*.md`
 
 ## Verification artifact
 

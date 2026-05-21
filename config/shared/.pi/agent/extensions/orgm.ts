@@ -7,10 +7,14 @@ import { VERSION } from "@earendil-works/pi-coding-agent";
 import { exec } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { countActiveExtensions } from "./lib/orgm-extensions";
+import { registerSddCompatibilityCommands } from "./lib/orgm-flow";
 
 const execAsync = promisify(exec);
+const EXTENSIONS_DIR = dirname(fileURLToPath(import.meta.url));
 
 const LOGO_LINES = [
 	" ██████╗ ██████╗  ██████╗ ███╗   ███╗",
@@ -249,12 +253,10 @@ async function refreshStats(
 			"utf8",
 		);
 		const cfg = JSON.parse(raw);
-		stats.extensionsCount = Array.isArray(cfg.extensions)
-			? cfg.extensions.length
-			: 0;
+		stats.extensionsCount = countActiveExtensions(EXTENSIONS_DIR, cfg.extensions);
 		stats.packagesCount = Array.isArray(cfg.packages) ? cfg.packages.length : 0;
 	} catch {
-		stats.extensionsCount = 0;
+		stats.extensionsCount = countActiveExtensions(EXTENSIONS_DIR);
 		stats.packagesCount = 0;
 	}
 
@@ -262,6 +264,7 @@ async function refreshStats(
 }
 
 export default function (pi: ExtensionAPI) {
+	registerSddCompatibilityCommands(pi);
 	let headerHandle: HeaderHandle | null = null;
 	let animationTimer: ReturnType<typeof setInterval> | undefined;
 	let startedAt = Date.now();
