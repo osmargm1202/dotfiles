@@ -483,6 +483,20 @@ test_carousel_static_and_video_use_distinct_picker_files() {
   ' bash
 }
 
+test_visible_carousel_restarts_resident_picker_for_fresh_mode() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    image="$home/Pictures/Wallpapers/normal.png"
+    touch "$image"
+    make_stub "$tmp" pgrep '\''echo 616161; exit 0'\''
+    run_script "$tmp" carousel static
+    assert_calls_contains "$tmp" "pkill -f quickshell .*wallpaper-picker" "visible carousel stops stale resident picker"
+    assert_calls_contains "$tmp" "quickshell -p $home/.config/quickshell/wallpaper-picker" "visible carousel launches fresh picker"
+    assert_file_contains "$tmp/state/hypr-wallpaper/wallpaper-picker-request.json" "wallpaper-picker-static.json" "fresh picker request points to selected static data"
+  ' bash
+}
+
 test_carousel_does_not_mix_current_from_other_mode() {
 	with_tmp bash -c '
     tmp="$1"
@@ -557,6 +571,7 @@ test_video_start_stops_previous_processes_and_records_pid
 test_stale_pid_does_not_kill_unrelated_process
 test_mpvpaper_pid_is_killed_when_command_matches
 test_static_mode_stops_host_mpvpaper_from_distrobox
+test_visible_carousel_restarts_resident_picker_for_fresh_mode
 test_carousel_does_not_mix_current_from_other_mode
 test_nvidia_offload_is_used_when_auto_and_available
 test_nvidia_offload_can_be_forced_off

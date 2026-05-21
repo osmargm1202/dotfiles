@@ -734,7 +734,11 @@ func (m *Manager) quickshellRunning() bool {
 
 func (m *Manager) StartQuickshellPicker(show bool) error {
 	if m.quickshellRunning() {
-		return nil
+		if !show {
+			return nil
+		}
+		m.runIgnore("pkill", "-f", "quickshell .*wallpaper-picker")
+		_ = os.Remove(m.QuickshellPIDFile)
 	}
 	showFlag := "0"
 	if show {
