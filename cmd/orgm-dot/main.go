@@ -3,9 +3,16 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"time"
 
+	"github.com/osmarg/dotfiles/orgm-hypr/internal/dotadd"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/dotcli"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/dotconfig"
+	"github.com/osmarg/dotfiles/orgm-hypr/internal/dotdaemon"
+	"github.com/osmarg/dotfiles/orgm-hypr/internal/dotdiff"
+	"github.com/osmarg/dotfiles/orgm-hypr/internal/dotinstall"
+	"github.com/osmarg/dotfiles/orgm-hypr/internal/dotsync"
 )
 
 func main() {
@@ -32,9 +39,89 @@ func main() {
 		for _, line := range runtime.StatusLines(cmd.Host) {
 			fmt.Println(line)
 		}
-	case "diff", "sync", "daemon", "add", "remove", "install":
-		fmt.Fprintf(os.Stderr, "orgm-dot: %s not implemented yet\n", cmd.Name)
-		os.Exit(2)
+	case "diff":
+		if err := cmd.RequireHost(); err != nil {
+			fatal(err)
+		}
+		runtime, err := dotconfig.Load(cmd.Config)
+		if err != nil {
+			fatal(err)
+		}
+		changes, err := dotdiff.Changes(runtime, dotdiff.Options{Host: cmd.Host, Porcelain: cmd.Porcelain, Verbose: cmd.Verbose})
+		if err != nil {
+			fatal(err)
+		}
+		for _, line := range dotdiff.Format(changes, cmd.Host, cmd.Porcelain) {
+			fmt.Println(line)
+		}
+	case "sync":
+		if err := cmd.RequireHost(); err != nil {
+			fatal(err)
+		}
+		runtime, err := dotconfig.Load(cmd.Config)
+		if err != nil {
+			fatal(err)
+		}
+		actions, err := dotsync.Run(runtime, dotsync.Options{Host: cmd.Host, DryRun: cmd.DryRun})
+		if err != nil {
+			fatal(err)
+		}
+		if cmd.DryRun {
+			for _, line := range dotsync.Format(actions) {
+				fmt.Println(line)
+			}
+		}
+	case "add":
+		if err := cmd.RequireScope(); err != nil {
+			fatal(err)
+		}
+		runtime, err := dotconfig.Load(cmd.Config)
+		if err != nil {
+			fatal(err)
+		}
+		line, err := dotadd.Add(runtime, dotadd.Options{Host: cmd.Host, Scope: cmd.Scope, Target: cmd.Target})
+		if err != nil {
+			fatal(err)
+		}
+		fmt.Println(line)
+	case "remove":
+		if err := cmd.RequireScope(); err != nil {
+			fatal(err)
+		}
+		runtime, err := dotconfig.Load(cmd.Config)
+		if err != nil {
+			fatal(err)
+		}
+		line, err := dotadd.Remove(runtime, dotadd.Options{Host: cmd.Host, Scope: cmd.Scope, Target: cmd.Target})
+		if err != nil {
+			fatal(err)
+		}
+		fmt.Println(line)
+	case "daemon":
+		if err := cmd.RequireHost(); err != nil {
+			fatal(err)
+		}
+		runtime, err := dotconfig.Load(cmd.Config)
+		if err != nil {
+			fatal(err)
+		}
+		interval := time.Duration(runtime.PollSeconds) * time.Second
+		if cmd.Interval != "" {
+			seconds, err := strconv.Atoi(cmd.Interval)
+			if err != nil || seconds <= 0 {
+				fatal(fmt.Errorf("--interval requires positive seconds"))
+			}
+			interval = time.Duration(seconds) * time.Second
+		}
+		fatal(dotdaemon.Run(runtime, dotdaemon.Options{Host: cmd.Host, Interval: interval}))
+	case "install":
+		lines, err := dotinstall.Run(dotpathsHome(), "")
+		if err != nil {
+			fatal(err)
+		}
+		for _, line := range lines {
+			fmt.Println(line)
+		}
 	default:
 		fmt.Fprintf(os.Stderr, "orgm-dot: unknown command: %s\n", cmd.Name)
 		os.Exit(2)
@@ -44,4 +131,12 @@ func main() {
 func fatal(err error) {
 	fmt.Fprintf(os.Stderr, "orgm-dot: %s\n", err)
 	os.Exit(1)
+}
+
+func dotpathsHome() string {
+	if home := os.Getenv("HOME"); home != "" {
+		return home
+	}
+	home, _ := os.UserHomeDir()
+	return home
 }

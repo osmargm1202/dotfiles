@@ -113,3 +113,17 @@ func (c Command) RequireHost() error {
 	}
 	return nil
 }
+
+func (c Command) RequireScope() error {
+	switch c.Scope {
+	case "shared":
+		return nil
+	case "host":
+		if c.Host == "" {
+			return fmt.Errorf("--host is required for host scope")
+		}
+		return nil
+	default:
+		return fmt.Errorf("choose --shared or --host HOST")
+	}
+}
