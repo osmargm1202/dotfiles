@@ -23,25 +23,34 @@ make_default_stubs() {
 
 	make_stub "$tmp" hyprpaper 'echo "hyprpaper $*" >>"$CALLS"'
 	make_stub "$tmp" mpvpaper 'echo "mpvpaper $*" >>"$CALLS"'
+	make_stub "$tmp" nvidia-offload 'echo "nvidia-offload $*" >>"$CALLS"'
 	make_stub "$tmp" pkill 'echo "pkill $*" >>"$CALLS"; exit 0'
 	make_stub "$tmp" pgrep 'exit 1'
+	make_stub "$tmp" ps 'echo "ps $*" >>"$CALLS"; case "$*" in *424242*) echo "bash unrelated" ;; *31337*) echo "mpvpaper -o no-audio loop" ;; esac'
+	make_stub "$tmp" test-kill 'echo "test-kill $*" >>"$CALLS"; exit 0'
 	make_stub "$tmp" sleep 'echo "sleep $*" >>"$CALLS"; exit 0'
 	make_stub "$tmp" shuf 'head -n 1'
 	make_stub "$tmp" notify-send 'echo "notify-send $*" >>"$CALLS"; exit 0'
 	make_stub "$tmp" fuzzel 'cat >"$MENU"; printf "%s\n" "$PICK"'
+	make_stub "$tmp" quickshell 'echo "quickshell $* HYPR_WALLPAPER_DATA=${HYPR_WALLPAPER_DATA:-}" >>"$CALLS"; exit 0'
+	make_stub "$tmp" ffmpeg 'echo "ffmpeg $*" >>"$CALLS"; printf thumb >"${@: -1}"'
 }
 
 run_script() {
 	local tmp="$1" command="$2"
+	shift 2
 	PATH="$tmp/bin:/usr/bin:/bin" \
 		CALLS="$tmp/calls" \
 		MENU="$tmp/menu" \
 		HOME="$tmp/home" \
 		XDG_RUNTIME_DIR="$tmp/runtime" \
 		XDG_STATE_HOME="$tmp/state" \
+		XDG_CONFIG_HOME="$tmp/home/.config" \
 		HYPR_WALLPAPER_INTERVAL=999 \
+		HYPR_WALLPAPER_KILL_BIN="${HYPR_WALLPAPER_KILL_BIN:-test-kill}" \
+		HYPR_MPV_WALLPAPER_GPU="${HYPR_MPV_WALLPAPER_GPU:-integrated}" \
 		PICK="${PICK:-}" \
-		/bin/sh "$SCRIPT" "$command" >"$tmp/out" 2>"$tmp/err"
+		/bin/sh "$SCRIPT" "$command" "$@" >"$tmp/out" 2>"$tmp/err"
 }
 
 assert_calls_contains() {
@@ -102,7 +111,7 @@ test_pick_video_uses_mpvpaper_and_persists_video_mode() {
     home="$tmp/home"
     video="$home/Videos/wallpapers/live.mp4"
     touch "$video"
-    PICK="Live: $video" run_script "$tmp" pick
+    run_script "$tmp" set-video "$video"
     assert_calls_contains "$tmp" "pkill -x hyprpaper" "video mode stops static wallpaper"
     assert_calls_contains "$tmp" "mpvpaper -o no-audio loop hwdec=auto \* $video" "video mode starts mpvpaper"
     state="$tmp/state/hypr-wallpaper/state"
@@ -117,8 +126,9 @@ test_pick_static_uses_hyprpaper_and_stops_mpvpaper() {
     home="$tmp/home"
     image="$home/Pictures/Wallpapers/static.png"
     touch "$image"
-    PICK="Normal: $image" run_script "$tmp" pick
-    assert_calls_contains "$tmp" "pkill -x mpvpaper" "static mode stops live wallpaper"
+    run_script "$tmp" set-static "$image"
+    assert_calls_not_contains "$tmp" "pkill -x mpvpaper" "static mode avoids broad mpvpaper kill"
+    assert_calls_contains "$tmp" "pkill -f .*mpvpaper .*wallpapers" "static mode stops live wallpaper commands"
     assert_calls_contains "$tmp" "hyprpaper -c $tmp/runtime/hypr-random-wallpaper.hyprpaper.conf" "static mode starts hyprpaper"
     state="$tmp/state/hypr-wallpaper/state"
     assert_file_contains "$state" "^mode=static$" "static mode persisted"
@@ -126,7 +136,7 @@ test_pick_static_uses_hyprpaper_and_stops_mpvpaper() {
   ' bash
 }
 
-test_next_is_mode_aware_for_video_mode() {
+test_next_opens_single_wallpaper_menu() {
 	with_tmp bash -c '
     tmp="$1"
     home="$tmp/home"
@@ -134,9 +144,11 @@ test_next_is_mode_aware_for_video_mode() {
     touch "$video"
     mkdir -p "$tmp/state/hypr-wallpaper"
     printf "mode=video\npath=%s\n" "$video" >"$tmp/state/hypr-wallpaper/state"
-    run_script "$tmp" next
-    assert_calls_contains "$tmp" "mpvpaper -o no-audio loop hwdec=auto \* $video" "next in video mode keeps mpvpaper flow"
-    assert_calls_not_contains "$tmp" "hyprpaper -c" "next in video mode does not start hyprpaper"
+    PICK="" run_script "$tmp" next
+    assert_file_contains "$tmp/menu" "^Normal$" "next opens fuzzel wallpaper menu"
+    assert_calls_not_contains "$tmp" "quickshell .*wallpaper-picker" "next does not open carousel until mode selection"
+    assert_calls_not_contains "$tmp" "mpvpaper -o" "next does not directly start mpvpaper"
+    assert_calls_not_contains "$tmp" "hyprpaper -c" "next does not directly start hyprpaper"
   ' bash
 }
 
@@ -165,25 +177,281 @@ test_restore_uses_persisted_static_or_video_without_randomizing() {
   ' bash
 }
 
-test_pick_menu_lists_normal_and_live_sources() {
+test_pick_uses_fuzzel_menu_and_opens_quickshell_normal_carousel() {
 	with_tmp bash -c '
     tmp="$1"
     home="$tmp/home"
     image="$home/Pictures/Wallpapers/a.png"
     video="$home/Videos/wallpapers/a.mp4"
     touch "$image" "$video"
-    PICK="Normal random" run_script "$tmp" pick
-    assert_file_contains "$tmp/menu" "Normal random" "picker lists normal random"
-    assert_file_contains "$tmp/menu" "Live random" "picker lists live random"
-    assert_file_contains "$tmp/menu" "Normal: $image" "picker lists static image"
-    assert_file_contains "$tmp/menu" "Live: $video" "picker lists live video"
+    PICK="Normal" run_script "$tmp" pick
+    assert_file_contains "$tmp/menu" "^Normal$" "fuzzel menu lists normal"
+    assert_file_contains "$tmp/menu" "^Normal Random$" "fuzzel menu lists normal random"
+    assert_file_contains "$tmp/menu" "^Live$" "fuzzel menu lists live"
+    assert_file_contains "$tmp/menu" "^Live Random$" "fuzzel menu lists live random"
+    assert_calls_contains "$tmp" "quickshell -p $home/.config/quickshell/wallpaper-picker" "normal choice opens quickshell carousel"
+    data="$tmp/state/hypr-wallpaper/wallpaper-picker.json"
+    assert_file_contains "$data" "\"title\": \"Normal wallpapers\"" "normal carousel data title is rendered"
+    assert_file_contains "$data" "\"applyCommand\": \"set-static\"" "normal carousel applies static command"
+    assert_file_contains "$data" "$image" "normal carousel includes image path"
+    assert_file_contains "$data" "$home/Pictures/Wallpapers/.thumb/" "normal carousel uses folder-local thumbnail cache"
+  ' bash
+}
+
+test_wallpaper_changes_do_not_send_success_notifications() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    image="$home/Pictures/Wallpapers/no-notify.png"
+    video="$home/Videos/wallpapers/no-notify.mp4"
+    touch "$image" "$video"
+    run_script "$tmp" set-static "$image"
+    run_script "$tmp" set-video "$video"
+    assert_calls_not_contains "$tmp" "notify-send" "successful wallpaper changes should stay silent"
+  ' bash
+}
+
+test_quickshell_carousel_launches_without_generating_thumbnails() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    for i in $(seq 1 20); do touch "$home/Pictures/Wallpapers/$i.png"; done
+    run_script "$tmp" carousel static
+    ffmpeg_count="$(grep -c "^ffmpeg " "$tmp/calls" || true)"
+    [ "$ffmpeg_count" -eq 0 ] || {
+      dump_case "$tmp"
+      fail "carousel should launch before generating thumbnails, got $ffmpeg_count"
+    }
+    data="$tmp/state/hypr-wallpaper/wallpaper-picker.json"
+    manifest="$tmp/state/hypr-wallpaper/wallpaper-picker.tsv"
+    item_count="$(grep -c "\"path\":" "$data" || true)"
+    manifest_count="$(wc -l <"$manifest")"
+    [ "$item_count" -eq 20 ] || fail "json should still include all items"
+    [ "$manifest_count" -eq 20 ] || fail "manifest should include all items for lazy warming"
+  ' bash
+}
+
+test_thumbnails_are_reused_from_folder_local_cache() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    image="$home/Pictures/Wallpapers/cached.png"
+    touch "$image"
+    mkdir -p "$home/Pictures/Wallpapers/.thumb"
+    thumb="$home/Pictures/Wallpapers/.thumb/cached.png.jpg"
+    printf cached >"$thumb"
+    run_script "$tmp" carousel static
+    assert_calls_not_contains "$tmp" "^ffmpeg " "existing .thumb cache avoids regeneration"
+    data="$tmp/state/hypr-wallpaper/wallpaper-picker.json"
+    assert_file_contains "$data" "$thumb" "json points to existing folder-local thumbnail"
+  ' bash
+}
+
+test_warm_thumbs_all_generates_only_missing_thumbnails() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    for i in $(seq 1 5); do touch "$home/Pictures/Wallpapers/$i.png"; done
+    mkdir -p "$home/Pictures/Wallpapers/.thumb"
+    first="$home/Pictures/Wallpapers/1.png"
+    first_thumb="$home/Pictures/Wallpapers/.thumb/1.png.jpg"
+    printf cached >"$first_thumb"
+    run_script "$tmp" carousel static
+    : >"$tmp/calls"
+    run_script "$tmp" warm-thumbs static all
+    ffmpeg_count="$(grep -c "^ffmpeg " "$tmp/calls" || true)"
+    [ "$ffmpeg_count" -eq 4 ] || {
+      dump_case "$tmp"
+      fail "warm-thumbs all should generate only 4 missing thumbnails, got $ffmpeg_count"
+    }
+  ' bash
+}
+
+test_warm_page_generates_only_requested_4x4_page() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    for i in $(seq 1 40); do touch "$home/Pictures/Wallpapers/$i.png"; done
+    run_script "$tmp" carousel static
+    : >"$tmp/calls"
+    run_script "$tmp" warm-page static 1 16
+    ffmpeg_count="$(grep -c "^ffmpeg " "$tmp/calls" || true)"
+    [ "$ffmpeg_count" -eq 16 ] || {
+      dump_case "$tmp"
+      fail "warm-page should generate exactly 16 thumbnails, got $ffmpeg_count"
+    }
+  ' bash
+}
+
+test_warm_thumbs_generates_near_selected_index_only() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    for i in $(seq 1 20); do touch "$home/Pictures/Wallpapers/$i.png"; done
+    run_script "$tmp" carousel static
+    : >"$tmp/calls"
+    run_script "$tmp" warm-thumbs static 10
+    ffmpeg_count="$(grep -c "^ffmpeg " "$tmp/calls" || true)"
+    [ "$ffmpeg_count" -eq 11 ] || {
+      dump_case "$tmp"
+      fail "warm-thumbs should generate 11 nearby thumbnails, got $ffmpeg_count"
+    }
+  ' bash
+}
+
+test_pick_live_random_applies_without_carousel() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    video="$home/Videos/wallpapers/random.mp4"
+    touch "$video"
+    PICK="Live Random" run_script "$tmp" pick
+    assert_calls_not_contains "$tmp" "quickshell .*wallpaper-picker" "random choices do not open carousel"
+    assert_calls_contains "$tmp" "mpvpaper -o no-audio loop hwdec=auto \* $video" "live random applies video"
+  ' bash
+}
+
+test_process_cleanup_is_scoped_to_wallpaper_processes() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    video="$home/Videos/wallpapers/scoped.mp4"
+    touch "$video"
+    run_script "$tmp" set-video "$video"
+    assert_calls_not_contains "$tmp" "pkill -x mpvpaper" "cleanup should not kill unrelated mpvpaper by executable name"
+    assert_calls_contains "$tmp" "pkill -f .*mpvpaper .*wallpapers" "cleanup kills only wallpaper mpvpaper commands"
+  ' bash
+}
+
+test_video_start_stops_previous_processes_and_records_pid() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    video="$home/Videos/wallpapers/pid.mp4"
+    touch "$video"
+    mkdir -p "$tmp/state/hypr-wallpaper"
+    printf "not-a-real-pid\n" >"$tmp/runtime/hypr-random-wallpaper.mpvpaper.pid"
+    run_script "$tmp" set-video "$video"
+    assert_calls_not_contains "$tmp" "pkill -x mpvpaper" "video start avoids broad exact mpvpaper kill"
+    assert_calls_contains "$tmp" "pkill -f .*mpvpaper .*wallpapers" "video start kills wrapper mpvpaper commands"
+    [ -s "$tmp/runtime/hypr-random-wallpaper.mpvpaper.pid" ] || fail "mpvpaper pid file should be written"
+  ' bash
+}
+
+test_stale_pid_does_not_kill_unrelated_process() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    video="$home/Videos/wallpapers/safe-pid.mp4"
+    touch "$video"
+    printf "424242\n" >"$tmp/runtime/hypr-random-wallpaper.mpvpaper.pid"
+    run_script "$tmp" set-video "$video"
+    assert_calls_contains "$tmp" "ps -p 424242 -o command=" "stale pid is inspected"
+    assert_calls_not_contains "$tmp" "test-kill -TERM 424242" "unrelated pid is not killed"
+    assert_calls_not_contains "$tmp" "test-kill -KILL 424242" "unrelated pid is not force killed"
+  ' bash
+}
+
+test_mpvpaper_pid_is_killed_when_command_matches() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    video="$home/Videos/wallpapers/safe-pid.mp4"
+    touch "$video"
+    printf "31337\n" >"$tmp/runtime/hypr-random-wallpaper.mpvpaper.pid"
+    run_script "$tmp" set-video "$video"
+    assert_calls_contains "$tmp" "ps -p 31337 -o command=" "mpvpaper pid is inspected"
+    assert_calls_contains "$tmp" "test-kill -TERM 31337" "mpvpaper pid is terminated"
+  ' bash
+}
+
+test_static_mode_stops_host_mpvpaper_from_distrobox() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    image="$home/Pictures/Wallpapers/host-static.png"
+    touch "$image"
+    make_stub "$tmp" distrobox-host-exec "echo distrobox-host-exec \"\$*\" >>\"\$CALLS\""
+    run_script "$tmp" set-static "$image"
+    assert_calls_contains "$tmp" "distrobox-host-exec sh -lc .*pkill -f .*mpvpaper .*wallpapers" "static mode kills host mpvpaper when host exec exists"
+  ' bash
+}
+
+test_carousel_does_not_mix_current_from_other_mode() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    image="$home/Pictures/Wallpapers/normal.png"
+    video="$home/Videos/wallpapers/live.mp4"
+    touch "$image" "$video"
+    mkdir -p "$tmp/state/hypr-wallpaper"
+    printf "mode=video\npath=%s\n" "$video" >"$tmp/state/hypr-wallpaper/state"
+    run_script "$tmp" carousel static
+    data="$tmp/state/hypr-wallpaper/wallpaper-picker.json"
+    assert_file_contains "$data" "$image" "static carousel includes static image"
+    if grep -q "$video" "$data"; then
+      dump_case "$tmp"
+      fail "static carousel must not include current video path"
+    fi
+  ' bash
+}
+
+test_nvidia_offload_is_used_when_auto_and_available() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    video="$home/Videos/wallpapers/gpu.mp4"
+    touch "$video"
+    HYPR_MPV_WALLPAPER_GPU=auto run_script "$tmp" set-video "$video"
+    assert_calls_contains "$tmp" "nvidia-offload .*mpvpaper -o no-audio loop hwdec=auto \* $video" "auto mode uses nvidia-offload when available"
+  ' bash
+}
+
+test_nvidia_offload_can_be_forced_off() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    video="$home/Videos/wallpapers/gpu-off.mp4"
+    touch "$video"
+    HYPR_MPV_WALLPAPER_GPU=integrated run_script "$tmp" set-video "$video"
+    assert_calls_not_contains "$tmp" "nvidia-offload .*mpvpaper -o" "integrated mode bypasses nvidia-offload launcher"
+    assert_calls_contains "$tmp" "mpvpaper -o no-audio loop hwdec=auto \* $video" "integrated mode starts mpvpaper directly"
+  ' bash
+}
+
+test_distrobox_branch_checks_nvidia_offload_on_host() {
+	with_tmp bash -c '
+    tmp="$1"
+    home="$tmp/home"
+    video="$home/Videos/wallpapers/host-gpu.mp4"
+    touch "$video"
+    rm -f "$tmp/bin/mpvpaper" "$tmp/bin/nvidia-offload"
+    make_stub "$tmp" distrobox-host-exec "echo distrobox-host-exec \"\$*\" >>\"\$CALLS\""
+    HYPR_MPV_WALLPAPER_GPU=auto run_script "$tmp" set-video "$video"
+    assert_calls_contains "$tmp" "distrobox-host-exec sh -lc .*command -v nvidia-offload.*nvidia-offload mpvpaper" "distrobox mode checks nvidia-offload on host"
   ' bash
 }
 
 test_pick_video_uses_mpvpaper_and_persists_video_mode
 test_pick_static_uses_hyprpaper_and_stops_mpvpaper
-test_next_is_mode_aware_for_video_mode
+test_next_opens_single_wallpaper_menu
 test_restore_uses_persisted_static_or_video_without_randomizing
-test_pick_menu_lists_normal_and_live_sources
+test_pick_uses_fuzzel_menu_and_opens_quickshell_normal_carousel
+test_wallpaper_changes_do_not_send_success_notifications
+test_quickshell_carousel_launches_without_generating_thumbnails
+test_thumbnails_are_reused_from_folder_local_cache
+test_warm_thumbs_all_generates_only_missing_thumbnails
+test_warm_page_generates_only_requested_4x4_page
+test_warm_thumbs_generates_near_selected_index_only
+test_pick_live_random_applies_without_carousel
+test_process_cleanup_is_scoped_to_wallpaper_processes
+test_video_start_stops_previous_processes_and_records_pid
+test_stale_pid_does_not_kill_unrelated_process
+test_mpvpaper_pid_is_killed_when_command_matches
+test_static_mode_stops_host_mpvpaper_from_distrobox
+test_carousel_does_not_mix_current_from_other_mode
+test_nvidia_offload_is_used_when_auto_and_available
+test_nvidia_offload_can_be_forced_off
+test_distrobox_branch_checks_nvidia_offload_on_host
 
 echo "hypr-random-wallpaper tests passed"

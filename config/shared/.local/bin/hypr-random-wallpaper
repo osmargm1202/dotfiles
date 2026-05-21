@@ -6,6 +6,8 @@ video_wallpaper_dir="${HYPR_VIDEO_WALLPAPER_DIR:-${HOME}/Videos/wallpapers}"
 fallback="${HYPR_WALLPAPER_FALLBACK:-${HOME}/.config/wallpapers/xnm1-background.png}"
 interval="${HYPR_WALLPAPER_INTERVAL:-3600}"
 mpvpaper_options="${HYPR_MPV_WALLPAPER_OPTS:-no-audio loop hwdec=auto}"
+mpvpaper_gpu="${HYPR_MPV_WALLPAPER_GPU:-auto}"
+kill_bin="${HYPR_WALLPAPER_KILL_BIN:-kill}"
 
 runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
 state_home="${XDG_STATE_HOME:-${HOME}/.local/state}"
@@ -14,7 +16,12 @@ persistent_state_file="${persistent_state_dir}/state"
 current_file="${runtime_dir}/hypr-random-wallpaper.current"
 lock_wallpaper="${runtime_dir}/hypr-current-wallpaper"
 daemon_pid_file="${runtime_dir}/hypr-random-wallpaper.daemon.pid"
+mpvpaper_pid_file="${runtime_dir}/hypr-random-wallpaper.mpvpaper.pid"
 hyprpaper_conf="${runtime_dir}/hypr-random-wallpaper.hyprpaper.conf"
+quickshell_data="${persistent_state_dir}/wallpaper-picker.json"
+quickshell_manifest="${persistent_state_dir}/wallpaper-picker.tsv"
+quickshell_pid_file="${runtime_dir}/hypr-wallpaper-quickshell.pid"
+quickshell_config_dir="${HYPR_WALLPAPER_QUICKSHELL_DIR:-${XDG_CONFIG_HOME:-${HOME}/.config}/quickshell/wallpaper-picker}"
 
 mkdir -p "${static_wallpaper_dir}" "${video_wallpaper_dir}" "${persistent_state_dir}"
 
@@ -53,6 +60,21 @@ resolve_mpvpaper() {
 hyprpaper_bin="$(resolve_hyprpaper)"
 mpvpaper_bin="$(resolve_mpvpaper)"
 
+use_nvidia_offload() {
+  case "${mpvpaper_gpu}" in
+    nvidia|auto)
+      command -v nvidia-offload >/dev/null 2>&1
+      ;;
+    integrated|none|off|false|0)
+      return 1
+      ;;
+    *)
+      echo "Unknown HYPR_MPV_WALLPAPER_GPU=${mpvpaper_gpu}; use auto, nvidia, or integrated" >&2
+      return 1
+      ;;
+  esac
+}
+
 state_value() {
   key="$1"
   [ -f "${persistent_state_file}" ] || return 1
@@ -74,22 +96,16 @@ write_state() {
   mv "${tmp_file}" "${persistent_state_file}"
 }
 
-notify() {
-  title="$1"
-  body="$2"
-  notify-send "${title}" "${body}" >/dev/null 2>&1 || true
-}
-
 static_wallpapers() {
-  find "${static_wallpaper_dir}" -type f \( \
-    -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \
-  \) | sort
+  find "${static_wallpaper_dir}" \
+    -path '*/.thumb/*' -prune -o \
+    -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -print | sort
 }
 
 video_wallpapers() {
-  find "${video_wallpaper_dir}" -type f \( \
-    -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.mov' -o -iname '*.m4v' \
-  \) | sort
+  find "${video_wallpaper_dir}" \
+    -path '*/.thumb/*' -prune -o \
+    -type f \( -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.mov' -o -iname '*.m4v' \) -print | sort
 }
 
 pick_static_wallpaper() {
@@ -98,6 +114,34 @@ pick_static_wallpaper() {
 
 pick_video_wallpaper() {
   video_wallpapers | shuf -n 1
+}
+
+ordered_wallpapers() {
+  mode="$1"
+  current="$(state_value path 2>/dev/null || true)"
+  case "${mode}" in
+    static)
+      list_cmd=static_wallpapers
+      case "${current}" in
+        *.jpg|*.jpeg|*.png|*.webp|*.JPG|*.JPEG|*.PNG|*.WEBP) current_matches=1 ;;
+        *) current_matches=0 ;;
+      esac
+      ;;
+    video)
+      list_cmd=video_wallpapers
+      case "${current}" in
+        *.mp4|*.mkv|*.webm|*.mov|*.m4v|*.MP4|*.MKV|*.WEBM|*.MOV|*.M4V) current_matches=1 ;;
+        *) current_matches=0 ;;
+      esac
+      ;;
+    *) return 2 ;;
+  esac
+
+  if [ "${current_matches}" = 1 ] && [ -n "${current}" ] && [ -f "${current}" ]; then
+    "$list_cmd" | awk -v current="${current}" 'BEGIN { print current } $0 != current { print }'
+  else
+    "$list_cmd"
+  fi
 }
 
 write_hyprpaper_config() {
@@ -126,16 +170,59 @@ restart_hyprpaper() {
   sleep 1
 }
 
+stop_mpvpaper() {
+  if [ -f "${mpvpaper_pid_file}" ]; then
+    old_pid="$(cat "${mpvpaper_pid_file}" 2>/dev/null || true)"
+    case "${old_pid}" in
+      ''|*[!0-9]*) ;;
+      *)
+        old_cmd="$(ps -p "${old_pid}" -o command= 2>/dev/null || true)"
+        case "${old_cmd}" in
+          *mpvpaper*)
+            "${kill_bin}" -TERM "${old_pid}" >/dev/null 2>&1 || true
+            sleep 0.2
+            "${kill_bin}" -KILL "${old_pid}" >/dev/null 2>&1 || true
+            ;;
+        esac
+        ;;
+    esac
+    rm -f "${mpvpaper_pid_file}"
+  fi
+
+  pkill -f '^([^ ]+/)?(nvidia-offload )?([^ ]+/)?mpvpaper .*wallpapers' >/dev/null 2>&1 || true
+  if command -v distrobox-host-exec >/dev/null 2>&1; then
+    distrobox-host-exec sh -lc "pkill -f '^([^ ]+/)?(nvidia-offload )?([^ ]+/)?mpvpaper .*wallpapers' >/dev/null 2>&1 || true" >/dev/null 2>&1 || true
+  fi
+}
+
+record_mpvpaper_pid() {
+  pid="$1"
+  [ -n "${pid}" ] || return 0
+  printf '%s\n' "${pid}" >"${mpvpaper_pid_file}"
+}
+
 start_mpvpaper() {
   video="$1"
-  pkill -x mpvpaper >/dev/null 2>&1 || true
+  stop_mpvpaper
 
   if has_command_or_path "${mpvpaper_bin}"; then
-    "${mpvpaper_bin}" -o "${mpvpaper_options}" "*" "${video}" >/tmp/mpvpaper.log 2>&1 &
+    if use_nvidia_offload; then
+      nvidia-offload "${mpvpaper_bin}" -o "${mpvpaper_options}" "*" "${video}" >/tmp/mpvpaper.log 2>&1 &
+    else
+      "${mpvpaper_bin}" -o "${mpvpaper_options}" "*" "${video}" >/tmp/mpvpaper.log 2>&1 &
+    fi
+    record_mpvpaper_pid "$!"
   elif command -v distrobox-host-exec >/dev/null 2>&1; then
     opts_q="$(shell_quote "${mpvpaper_options}")"
     video_q="$(shell_quote "${video}")"
-    distrobox-host-exec sh -lc "pkill -x mpvpaper >/dev/null 2>&1 || true; mpvpaper -o ${opts_q} '*' ${video_q} >/tmp/mpvpaper.log 2>&1 &"
+    case "${mpvpaper_gpu}" in
+      nvidia|auto)
+        distrobox-host-exec sh -lc "pkill -f '^([^ ]+/)?(nvidia-offload )?([^ ]+/)?mpvpaper .*wallpapers' >/dev/null 2>&1 || true; ( if command -v nvidia-offload >/dev/null 2>&1; then exec nvidia-offload mpvpaper -o ${opts_q} '*' ${video_q}; else exec mpvpaper -o ${opts_q} '*' ${video_q}; fi ) >/tmp/mpvpaper.log 2>&1 &"
+        ;;
+      *)
+        distrobox-host-exec sh -lc "pkill -f '^([^ ]+/)?(nvidia-offload )?([^ ]+/)?mpvpaper .*wallpapers' >/dev/null 2>&1 || true; mpvpaper -o ${opts_q} '*' ${video_q} >/tmp/mpvpaper.log 2>&1 &"
+        ;;
+    esac
   else
     echo "mpvpaper not found" >&2
     return 1
@@ -170,13 +257,12 @@ set_static_path() {
     return 1
   fi
 
-  pkill -x mpvpaper >/dev/null 2>&1 || true
+  stop_mpvpaper
   write_hyprpaper_config "${wallpaper}"
   restart_hyprpaper
   printf '%s\n' "${wallpaper}" >"${current_file}"
   ln -sfn "${wallpaper}" "${lock_wallpaper}"
   write_state "${mode}" "${wallpaper}"
-  notify "Wallpaper" "Normal: $(basename "${wallpaper}")"
 }
 
 set_random_static() {
@@ -199,7 +285,6 @@ set_video_path() {
   start_mpvpaper "${video}"
   ensure_lock_wallpaper
   write_state video "${video}"
-  notify "Wallpaper" "Live: $(basename "${video}")"
 }
 
 set_random_video() {
@@ -240,19 +325,6 @@ restore_wallpaper() {
   esac
 }
 
-build_menu() {
-  printf '%s\n' 'Normal random'
-  if [ -n "$(pick_video_wallpaper || true)" ]; then
-    printf '%s\n' 'Live random'
-  fi
-  static_wallpapers | while IFS= read -r wallpaper; do
-    printf 'Normal: %s\n' "${wallpaper}"
-  done
-  video_wallpapers | while IFS= read -r video; do
-    printf 'Live: %s\n' "${video}"
-  done
-}
-
 menu_pick() {
   if [ -n "${HYPR_WALLPAPER_PICKER:-}" ]; then
     sh -c "${HYPR_WALLPAPER_PICKER}"
@@ -267,27 +339,264 @@ menu_pick() {
 }
 
 pick_wallpaper_menu() {
-  choice="$(build_menu | menu_pick || true)"
+  choice="$(printf '%s\n' 'Normal' 'Normal Random' 'Live' 'Live Random' | menu_pick || true)"
   [ -n "${choice}" ] || exit 0
 
   case "${choice}" in
-    'Normal random')
+    Normal)
+      open_quickshell_carousel static
+      ;;
+    'Normal Random')
       set_random_static
       ;;
-    'Live random')
+    Live)
+      open_quickshell_carousel video
+      ;;
+    'Live Random')
       set_random_video
-      ;;
-    'Normal: '*)
-      set_static_path "${choice#Normal: }" static
-      ;;
-    'Live: '*)
-      set_video_path "${choice#Live: }"
       ;;
     *)
       echo "Unknown wallpaper choice: ${choice}" >&2
       return 2
       ;;
   esac
+}
+
+json_escape() {
+  printf '%s' "$1" | awk '
+    BEGIN { ORS="" }
+    {
+      gsub(/\\/, "\\\\")
+      gsub(/"/, "\\\"")
+      gsub(/\t/, "\\t")
+      gsub(/\r/, "\\r")
+      gsub(/\n/, "\\n")
+      print
+    }
+  '
+}
+
+thumb_path_for() {
+  wallpaper="$1"
+  wallpaper_dir="${wallpaper%/*}"
+  wallpaper_base="${wallpaper##*/}"
+  wallpaper_thumb_dir="${wallpaper_dir}/.thumb"
+  printf '%s\n' "${wallpaper_thumb_dir}/${wallpaper_base}.jpg"
+}
+
+wallpaper_thumb() {
+  mode="$1"
+  wallpaper="$2"
+  thumb="$(thumb_path_for "${wallpaper}")"
+
+  if [ -s "${thumb}" ]; then
+    printf '%s\n' "${thumb}"
+    return 0
+  fi
+
+  mkdir -p "${thumb%/*}"
+
+  tmp_thumb="${thumb}.$$.jpg"
+  if command -v ffmpeg >/dev/null 2>&1; then
+    case "${mode}" in
+      video)
+        ffmpeg -hide_banner -loglevel error -y -ss 00:00:01 -i "${wallpaper}" -frames:v 1 \
+          -vf 'scale=320:180:force_original_aspect_ratio=decrease,pad=320:180:(ow-iw)/2:(oh-ih)/2:color=black' \
+          "${tmp_thumb}" >/dev/null 2>&1 || true
+        ;;
+      *)
+        ffmpeg -hide_banner -loglevel error -y -i "${wallpaper}" -frames:v 1 \
+          -vf 'scale=320:180:force_original_aspect_ratio=decrease,pad=320:180:(ow-iw)/2:(oh-ih)/2:color=black' \
+          "${tmp_thumb}" >/dev/null 2>&1 || true
+        ;;
+    esac
+  fi
+
+  if [ -s "${tmp_thumb}" ]; then
+    mv "${tmp_thumb}" "${thumb}"
+  else
+    rm -f "${tmp_thumb}"
+  fi
+
+  printf '%s\n' "${thumb}"
+}
+
+generate_quickshell_data() {
+  mode="$1"
+  case "${mode}" in
+    static)
+      title="Normal wallpapers"
+      apply_command="set-static"
+      ;;
+    video)
+      title="Live wallpapers"
+      apply_command="set-video"
+      ;;
+    *)
+      echo "usage: hypr-random-wallpaper carousel [static|video]" >&2
+      return 2
+      ;;
+  esac
+
+  current_path="$(state_value path 2>/dev/null || true)"
+  current_mode_value="$(current_mode 2>/dev/null || true)"
+  if [ "${mode}" = "static" ] && [ "${current_mode_value}" != "static" ]; then
+    current_path=""
+  elif [ "${mode}" = "video" ] && [ "${current_mode_value}" != "video" ]; then
+    current_path=""
+  fi
+
+  tmp_data="${quickshell_data}.$$"
+  tmp_manifest="${quickshell_manifest}.$$"
+  : >"${tmp_manifest}"
+  ordered_wallpapers "${mode}" | while IFS= read -r wallpaper; do
+    [ -f "${wallpaper}" ] || continue
+    printf '%s\t%s\n' "${mode}" "${wallpaper}" >>"${tmp_manifest}"
+  done
+  mv "${tmp_manifest}" "${quickshell_manifest}"
+
+  if command -v orgm-hypr >/dev/null 2>&1 && \
+    orgm-hypr wallpaper data \
+      --mode "${mode}" \
+      --manifest "${quickshell_manifest}" \
+      --json "${tmp_data}" \
+      --current "${current_path}" \
+      --script "$0"; then
+    :
+  else
+    MODE="${mode}" \
+    TITLE="${title}" \
+    APPLY_COMMAND="${apply_command}" \
+    SCRIPT_PATH="$0" \
+    CURRENT_PATH="${current_path}" \
+    MANIFEST_PATH="${quickshell_manifest}" \
+    OUTPUT_PATH="${tmp_data}" \
+    python3 - <<'PY'
+import json, os
+mode = os.environ["MODE"]
+items = []
+with open(os.environ["MANIFEST_PATH"], "r", encoding="utf-8") as manifest:
+    for line in manifest:
+        line = line.rstrip("\n")
+        if not line:
+            continue
+        row_mode, path = line.split("\t", 1)
+        if row_mode != mode:
+            continue
+        directory, name = os.path.split(path)
+        thumb = os.path.join(directory, ".thumb", f"{name}.jpg")
+        items.append({"name": name, "path": path, "thumb": thumb})
+
+data = {
+    "mode": mode,
+    "title": os.environ["TITLE"],
+    "applyCommand": os.environ["APPLY_COMMAND"],
+    "script": os.environ["SCRIPT_PATH"],
+    "current": os.environ.get("CURRENT_PATH", ""),
+    "items": items,
+}
+with open(os.environ["OUTPUT_PATH"], "w", encoding="utf-8") as output:
+    json.dump(data, output, ensure_ascii=False, indent=2)
+    output.write("\n")
+PY
+  fi
+  mv "${tmp_data}" "${quickshell_data}"
+}
+
+warm_quickshell_thumbs() {
+  mode="$1"
+  selected_index="${2:-all}"
+  before_after="${3:-5}"
+
+  [ -f "${quickshell_manifest}" ] || return 0
+
+  if [ "${selected_index}" = "all" ]; then
+    awk -F '\t' -v mode="${mode}" '$1 == mode { print $2 }' "${quickshell_manifest}"
+  else
+    start=$((selected_index - before_after + 1))
+    end=$((selected_index + before_after + 1))
+    [ "${start}" -lt 1 ] && start=1
+    awk -F '\t' -v mode="${mode}" -v start="${start}" -v end="${end}" '
+      NR >= start && NR <= end && $1 == mode { print $2 }
+    ' "${quickshell_manifest}"
+  fi | while IFS= read -r wallpaper; do
+    [ -f "${wallpaper}" ] || continue
+    wallpaper_thumb "${mode}" "${wallpaper}" >/dev/null
+  done
+}
+
+warm_quickshell_page() {
+  mode="$1"
+  page="${2:-0}"
+  page_size="${3:-16}"
+  start=$((page * page_size + 1))
+  end=$((start + page_size - 1))
+
+  [ -f "${quickshell_manifest}" ] || return 0
+  awk -F '\t' -v mode="${mode}" -v start="${start}" -v end="${end}" '
+    NR >= start && NR <= end && $1 == mode { print $2 }
+  ' "${quickshell_manifest}" | while IFS= read -r wallpaper; do
+    [ -f "${wallpaper}" ] || continue
+    wallpaper_thumb "${mode}" "${wallpaper}" >/dev/null
+  done
+}
+
+quickshell_picker_running() {
+  if [ -f "${quickshell_pid_file}" ]; then
+    picker_pid="$(cat "${quickshell_pid_file}" 2>/dev/null || true)"
+    if [ -n "${picker_pid}" ] && kill -0 "${picker_pid}" 2>/dev/null; then
+      picker_cmd="$(ps -p "${picker_pid}" -o command= 2>/dev/null || true)"
+      case "${picker_cmd}" in
+        *quickshell*wallpaper-picker*) return 0 ;;
+      esac
+    fi
+  fi
+
+  pgrep -f 'quickshell .*wallpaper-picker' >/dev/null 2>&1
+}
+
+start_quickshell_picker() {
+  show_flag="${1:-0}"
+  if quickshell_picker_running; then
+    return 0
+  fi
+
+  if command -v quickshell >/dev/null 2>&1; then
+    HYPR_WALLPAPER_DATA="${quickshell_data}" HYPR_WALLPAPER_SHOW="${show_flag}" quickshell -p "${quickshell_config_dir}" >/tmp/hypr-wallpaper-quickshell.log 2>&1 &
+    printf '%s\n' "$!" >"${quickshell_pid_file}"
+  elif command -v distrobox-host-exec >/dev/null 2>&1; then
+    data_q="$(shell_quote "${quickshell_data}")"
+    show_q="$(shell_quote "${show_flag}")"
+    config_q="$(shell_quote "${quickshell_config_dir}")"
+    distrobox-host-exec sh -lc "HYPR_WALLPAPER_DATA=${data_q} HYPR_WALLPAPER_SHOW=${show_q} quickshell -p ${config_q} >/tmp/hypr-wallpaper-quickshell.log 2>&1 &"
+  else
+    echo "quickshell not found" >&2
+    return 1
+  fi
+}
+
+stop_quickshell_picker() {
+  if [ -f "${quickshell_pid_file}" ]; then
+    old_pid="$(cat "${quickshell_pid_file}" 2>/dev/null || true)"
+    if [ -n "${old_pid}" ] && kill -0 "${old_pid}" 2>/dev/null; then
+      old_cmd="$(ps -p "${old_pid}" -o command= 2>/dev/null || true)"
+      case "${old_cmd}" in
+        *quickshell*wallpaper-picker*)
+          "${kill_bin}" -TERM "${old_pid}" >/dev/null 2>&1 || true
+          ;;
+      esac
+    fi
+    rm -f "${quickshell_pid_file}"
+  fi
+
+  pkill -f 'quickshell .*wallpaper-picker' >/dev/null 2>&1 || true
+}
+
+open_quickshell_carousel() {
+  mode="$1"
+  generate_quickshell_data "${mode}"
+
+  start_quickshell_picker 1
 }
 
 stop_old_daemon() {
@@ -318,13 +627,9 @@ run_daemon() {
   done
 }
 
-case "${1:-daemon}" in
+case "${1:-restore}" in
   next|change)
-    if [ "$(current_mode)" = "video" ]; then
-      set_random_video
-    else
-      set_random_static
-    fi
+    pick_wallpaper_menu
     ;;
   pick)
     pick_wallpaper_menu
@@ -335,6 +640,9 @@ case "${1:-daemon}" in
   daemon)
     run_daemon
     ;;
+  picker-daemon)
+    start_quickshell_picker 0
+    ;;
   set-static)
     [ -n "${2:-}" ] || { echo "usage: hypr-random-wallpaper set-static PATH" >&2; exit 2; }
     set_static_path "$2" static
@@ -343,12 +651,24 @@ case "${1:-daemon}" in
     [ -n "${2:-}" ] || { echo "usage: hypr-random-wallpaper set-video PATH" >&2; exit 2; }
     set_video_path "$2"
     ;;
+  carousel)
+    [ -n "${2:-}" ] || { echo "usage: hypr-random-wallpaper carousel [static|video]" >&2; exit 2; }
+    open_quickshell_carousel "$2"
+    ;;
+  warm-thumbs)
+    [ -n "${2:-}" ] || { echo "usage: hypr-random-wallpaper warm-thumbs [static|video] [index]" >&2; exit 2; }
+    warm_quickshell_thumbs "$2" "${3:-0}" 5
+    ;;
+  warm-page)
+    [ -n "${2:-}" ] || { echo "usage: hypr-random-wallpaper warm-page [static|video] [page] [page-size]" >&2; exit 2; }
+    warm_quickshell_page "$2" "${3:-0}" "${4:-16}"
+    ;;
   status)
     printf 'mode=%s\n' "$(current_mode)"
     printf 'path=%s\n' "$(state_value path 2>/dev/null || true)"
     ;;
   *)
-    echo "usage: hypr-random-wallpaper [daemon|restore|next|pick|set-static PATH|set-video PATH|status]" >&2
+    echo "usage: hypr-random-wallpaper [restore|pick|carousel static|carousel video|set-static PATH|set-video PATH|status]" >&2
     exit 2
     ;;
 esac

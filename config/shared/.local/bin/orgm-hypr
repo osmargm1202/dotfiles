@@ -1,0 +1,17 @@
+#!/bin/sh
+# Dotfiles-managed launcher. Prefer Nix-installed binary, fall back to source tree.
+set -eu
+
+system_bin="/run/current-system/sw/bin/orgm-hypr"
+repo_dir="${ORGM_HYPR_REPO:-$HOME/Hobby/dotfiles}"
+
+if [ -x "$system_bin" ]; then
+  exec "$system_bin" "$@"
+fi
+
+if command -v go >/dev/null 2>&1 && [ -d "$repo_dir/cmd/orgm-hypr" ]; then
+  exec go run "$repo_dir/cmd/orgm-hypr" "$@"
+fi
+
+echo "orgm-hypr: installed binary not found; rebuild NixOS or set ORGM_HYPR_REPO" >&2
+exit 127

@@ -8,6 +8,7 @@ let
     version = "git-${inputs.nwg-dock-hyprland-src.shortRev or "unknown"}";
     src = inputs.nwg-dock-hyprland-src;
   });
+  orgmHypr = pkgs.callPackage ../packages/orgm-hypr.nix { };
 in
 {
   imports = [
@@ -138,6 +139,10 @@ in
     xwayland
     hyprpaperPkg
     mpvpaper
+    quickshell
+    orgmHypr
+    ffmpeg
+    python3Minimal
     hypridle
     hyprlock
     hyprpicker

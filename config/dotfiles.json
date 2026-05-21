@@ -35,6 +35,7 @@
       ".config/posting",
       ".config/qt5ct",
       ".config/qt6ct",
+      ".config/quickshell",
       ".config/rofi",
       ".config/starship.toml",
       ".config/swappy",
