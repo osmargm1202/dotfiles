@@ -50,6 +50,14 @@ function saveAgentModel(agent: AgentConfig, model: string): AgentConfig {
 	return { ...agent, model: model.trim() };
 }
 
+function isArrowEscapeSequence(key: string): boolean {
+	return key === "\u001b[A" || key === "\u001b[B" || key === "\u001b[C" || key === "\u001b[D";
+}
+
+export function isEscapeKey(key: string): boolean {
+	return (key === "\u001B" || key === "Escape" || key === "escape") && !isArrowEscapeSequence(key);
+}
+
 // ─── Agent model selector palette ──────────────────────────────────────────
 interface AgentModelPaletteState {
 	agents: AgentConfig[];
@@ -171,7 +179,7 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 			const agent = getSelectedAgent();
 			container.addChild(new Text(ctx.ui.theme.fg("text", `Agent: ${agent?.displayName || "unknown"}`)));
 			container.addChild(new Text(ctx.ui.theme.fg("muted", "Select the model for this agent")));
-			container.addChild(new Text(ctx.ui.theme.fg("dim", "↑↓ navigate · Enter save · Esc back")));
+			container.addChild(new Text(ctx.ui.theme.fg("dim", "↑↓ navigate · Enter save · Esc cancel/close")));
 		} else {
 			container.addChild(new Text(ctx.ui.theme.fg("text", "Select an agent, then press Enter to choose its model")));
 			container.addChild(new Text(ctx.ui.theme.fg("muted", `Filter: ${state.agentFilter || "—"}`)));
@@ -191,8 +199,7 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 			invalidate: () => container?.invalidate(),
 			handleInput: (key) => {
 				if (state.mode === "agents") {
-					const isArrowKey = key === "\u001b[A" || key === "\u001b[B" || key === "\u001b[C" || key === "\u001b[D";
-					if (key === "\u001B" && !isArrowKey) {
+					if (isEscapeKey(key)) {
 						if (state.agentFilter) {
 							state.agentFilter = "";
 							renderUI();
@@ -252,10 +259,8 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 					return;
 				}
 
-				if (key === "\u001B") {
-					state.mode = "agents";
-					renderUI();
-					tui.requestRender();
+				if (isEscapeKey(key)) {
+					done();
 					return;
 				}
 
