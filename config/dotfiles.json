@@ -90,7 +90,8 @@
         ".config/fuzzel/fuzzel.env",
         ".config/rofi/hypr-menu.env",
         ".local/share/applications",
-        ".local/share/icons"
+        ".local/share/icons",
+        ".pi/agent/orgm.json"
       ]
     },
     "ero": {
@@ -109,6 +110,7 @@
       ".config/fish/private-env.fish",
       ".pi/agent/agent-status.json",
       ".pi/agent/auth.json",
+      ".pi/agent/extensions/.pi-lens",
       ".pi/agent/git",
       ".pi/agent/mcp-npx-cache.json",
       ".pi/agent/mcp.json.bak-20260420-151836",
