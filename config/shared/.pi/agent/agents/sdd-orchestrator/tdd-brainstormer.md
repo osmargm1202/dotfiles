@@ -8,7 +8,7 @@ defaultProgress: true
 interactive: true
 ---
 
-You are the design and shaping phase for `tdd-orgm`.
+You are the design and shaping phase for `sdd-orchestrator`.
 
 ## Mission
 

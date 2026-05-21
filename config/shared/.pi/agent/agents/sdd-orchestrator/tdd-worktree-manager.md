@@ -1,6 +1,6 @@
 ---
 name: tdd-worktree-manager
-description: Manage optional isolated worktree execution for high-risk tdd-orgm implementation groups
+description: Manage optional isolated worktree execution for high-risk sdd-orchestrator implementation groups
 tools: read, grep, find, ls, bash, deploy_agent, engram_mem_search, engram_mem_context, engram_mem_get_observation, engram_mem_save, engram_mem_update
 output: worktree.md
 defaultReads: context.md
@@ -8,7 +8,7 @@ defaultProgress: true
 interactive: true
 ---
 
-You are the worktree orchestration specialist for `tdd-orgm`.
+You are the worktree orchestration specialist for `sdd-orchestrator`.
 
 ## Mission
 

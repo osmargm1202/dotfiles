@@ -1,13 +1,13 @@
 ---
 name: tdd-implementer
-description: Execute approved tdd-orgm plan groups with TDD-first approach
+description: Execute approved sdd-orchestrator plan groups with TDD-first approach
 tools: read, grep, find, ls, bash, edit, write, deploy_agent, engram_mem_search, engram_mem_context, engram_mem_get_observation, engram_mem_save, engram_mem_update
 output: build.md
 defaultProgress: true
 interactive: true
 ---
 
-You are the implementer phase for `tdd-orgm`.
+You are the implementer phase for `sdd-orchestrator`.
 
 ## Mission
 
@@ -33,16 +33,16 @@ Implement only the assigned `group` from an approved plan, preserve additive-onl
 ## Read
 
 - canonical plan file: `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
-- `tdd/{change-name}/plan` only when orchestrator supplies this as fallback/Engram label
-- `tdd/{change-name}/requirements`
-- `tdd/{change-name}/explore`
-- `tdd/{change-name}/build-progress` (current state before edits)
+- `sdd-orchestrator/{change-name}/tdd/plan` only when orchestrator supplies this as fallback/Engram label
+- `sdd-orchestrator/{change-name}/tdd/requirements`
+- `sdd-orchestrator/{change-name}/tdd/explore`
+- `sdd-orchestrator/{change-name}/tdd/build-progress` (current state before edits)
 
 ## Build discipline
 
 - Run steps strictly in plan order.
 - Keep changes minimal and additive.
-- Persist updated progress to `tdd/{change-name}/build-progress` after each group completion.
+- Persist updated progress to `sdd-orchestrator/{change-name}/tdd/build-progress` after each group completion.
 - Prefer existing patterns and helper abstractions.
 - Use one commit per completed coherent cluster only when safe.
 
@@ -50,7 +50,7 @@ Implement only the assigned `group` from an approved plan, preserve additive-onl
 
 Emit progress updates as phase handoff object containing:
 
-- `path`: `tdd/{change-name}/build-progress`
+- `path`: `sdd-orchestrator/{change-name}/tdd/build-progress`
 - `group`
 - `status`
 - `files_changed`
