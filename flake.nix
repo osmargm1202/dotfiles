@@ -109,7 +109,7 @@
         profile = ./nixos/profiles/gnome.nix;
         extraModules = [
           ./nixos/hosts/orgm/plymouth.nix
-          ./nixos/gaming.nix
+          ./nixos/gaming/default.nix
         ];
       };
       orgm-hyprland = mkHost {
@@ -118,7 +118,7 @@
         profile = ./nixos/profiles/hyprland.nix;
         extraModules = [
           ./nixos/hosts/orgm/plymouth.nix
-          ./nixos/gaming.nix
+          ./nixos/gaming/default.nix
         ];
       };
 
@@ -128,7 +128,7 @@
         profile = ./nixos/profiles/labwc.nix;
         extraModules = [
           ./nixos/hosts/orgm/plymouth.nix
-          ./nixos/gaming.nix
+          ./nixos/gaming/default.nix
         ];
       };
       orgm-sway = mkHost {
@@ -137,7 +137,7 @@
         profile = ./nixos/profiles/sway.nix;
         extraModules = [
           ./nixos/hosts/orgm/plymouth.nix
-          ./nixos/gaming.nix
+          ./nixos/gaming/default.nix
         ];
       };
 
@@ -167,6 +167,8 @@
         extraModules = [
           ./nixos/hosts/lenovo/plymouth.nix
           ./nixos/hosts/lenovo/audio.nix
+          ./nixos/gaming/steam.nix
+          ./nixos/gaming/emulators.nix
         ];
       };
       lenovo-gnome = mkHost {
@@ -176,6 +178,8 @@
         extraModules = [
           ./nixos/hosts/lenovo/plymouth.nix
           ./nixos/hosts/lenovo/audio.nix
+          ./nixos/gaming/steam.nix
+          ./nixos/gaming/emulators.nix
         ];
       };
       lenovo-hyprland = mkHost {
@@ -185,6 +189,8 @@
         extraModules = [
           ./nixos/hosts/lenovo/plymouth.nix
           ./nixos/hosts/lenovo/audio.nix
+          ./nixos/gaming/steam.nix
+          ./nixos/gaming/emulators.nix
         ];
       };
 
@@ -195,6 +201,8 @@
         extraModules = [
           ./nixos/hosts/lenovo/plymouth.nix
           ./nixos/hosts/lenovo/audio.nix
+          ./nixos/gaming/steam.nix
+          ./nixos/gaming/emulators.nix
         ];
       };
     };
