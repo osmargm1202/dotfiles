@@ -6,7 +6,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
-import { applySavedModelConfig } from "./gentle-ai.ts";
+import { applySavedModelConfig } from "./lib/orgm-flow";
 import { ensureSddPreflight, installSddAssets } from "../lib/sdd-preflight.ts";
 type ExtensionAPI = any;
 
@@ -771,6 +771,17 @@ function ensureOpenSpecDirs(cwd: string): void {
 }
 
 export default function (pi: ExtensionAPI) {
+	pi.registerCommand("sdd-preflight", {
+		description: "Run ORGM SDD preflight and install current SDD orchestrator assets.",
+		handler: async (_args: unknown, ctx: any) => {
+			await ensureSddPreflight(ctx, {
+				pi,
+				installAssets: (cwd) => installSddAssets(cwd, false),
+				applyModelConfig: (cwd) => applySavedModelConfig(cwd),
+			});
+		},
+	});
+
 	pi.registerCommand("sdd-init", {
 		description:
 			"Auto-detect project stack and bootstrap openspec/config.yaml for SDD.",
@@ -778,7 +789,7 @@ export default function (pi: ExtensionAPI) {
 			await ensureSddPreflight(ctx, {
 				pi,
 				installAssets: (cwd) => installSddAssets(cwd, false),
-				applyModelConfig: () => applySavedModelConfig(ctx),
+				applyModelConfig: (cwd) => applySavedModelConfig(cwd),
 			});
 			const configPath = join(ctx.cwd, CONFIG_REL_PATH);
 			if (existsSync(configPath)) {
