@@ -30,12 +30,11 @@
       "custom/date"
     ],
     "modules-right": [
-      "custom/updates",
+      "privacy",
+      "tray",
       "custom/wallpaper",
       "bluetooth",
       "network",
-      "privacy",
-      "tray",
       "custom/logout_menu"
     ],
     "custom/menu": {
@@ -142,15 +141,6 @@
       "exec": "~/.local/bin/waybar-date-es",
       "interval": 60,
       "tooltip": false
-    },
-    "custom/updates": {
-      "exec": "~/.local/bin/hypr-update-status waybar",
-      "return-type": "json",
-      "interval": 60,
-      "format": "{}",
-      "escape": false,
-      "tooltip": true,
-      "on-click": "~/.local/bin/hypr-update-menu"
     },
     "custom/wallpaper": {
       "format": "󰸉",

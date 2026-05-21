@@ -17,13 +17,15 @@ padding_y="${HYPR_ROFI_POWER_PADDING_Y:-$(awk -v s="$scale" 'BEGIN { printf "%dp
 padding_x="${HYPR_ROFI_POWER_PADDING_X:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 8 * s }')}"
 input_padding="${HYPR_ROFI_POWER_INPUT_PADDING:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 8 * s }')}"
 
-choice="$(printf '%s\n' '󰌾 Lock' '󰗼 Logout' '󰜉 Reboot' '󰐥 Power off' '󰅖 Cancel' \
+choice="$(printf '%s\n' '󰌾 Lock' '󰤄 Suspend' '󰒲 Hibernate' '󰗼 Logout' '󰜉 Reboot' '󰐥 Power off' '󰅖 Cancel' \
   | rofi -dmenu -i -p 'Power' -theme "$theme" \
-      -theme-str "configuration { font: \"JetBrainsMono Nerd Font $font_size\"; } window { width: $width; } listview { lines: 5; } element { padding: $padding_y $padding_x; } element-icon { size: $icon_size; } inputbar { padding: $input_padding; }" \
+      -theme-str "configuration { font: \"JetBrainsMono Nerd Font $font_size\"; } window { width: $width; } listview { lines: 7; } element { padding: $padding_y $padding_x; } element-icon { size: $icon_size; } inputbar { padding: $input_padding; }" \
   || true)"
 
 case "$choice" in
   *'Lock') exec "$HOME/.local/bin/hypr-lock" ;;
+  *'Suspend') systemctl suspend ;;
+  *'Hibernate') systemctl hibernate ;;
   *'Logout') hyprctl dispatch exit ;;
   *'Reboot') systemctl reboot ;;
   *'Power off') systemctl poweroff ;;

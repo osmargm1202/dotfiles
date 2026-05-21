@@ -25,7 +25,6 @@ pick() {
 choice="$(printf '%s\n' \
   '󰀻 Apps' \
   '󰒓 Tools' \
-  '󰚰 Update' \
   '󱐋 Performance' \
   '󰖩 WiFi' \
   '󰂯 Bluetooth' \
@@ -41,7 +40,6 @@ choice="$(printf '%s\n' \
 case "$choice" in
   *'Apps') exec rofi -show drun -theme "$theme" ;;
   *'Tools') exec "$bin_dir/hypr-tools-menu" ;;
-  *'Update') exec "$bin_dir/hypr-update-menu" ;;
   *'Performance') exec "$bin_dir/hypr-performance-menu" ;;
   *'WiFi') exec "$bin_dir/hypr-wifi-menu" ;;
   *'Bluetooth') exec "$bin_dir/hypr-bluetooth-menu" ;;
