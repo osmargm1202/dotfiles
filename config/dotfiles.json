@@ -98,8 +98,7 @@
         ".config/fuzzel/fuzzel.env",
         ".config/rofi/hypr-menu.env",
         ".local/share/applications",
-        ".local/share/icons",
-        ".pi/agent/mcp.json"
+        ".local/share/icons"
       ]
     }
   },
@@ -117,6 +116,7 @@
       ".pi/agent/git",
       ".pi/agent/mcp-cache.json",
       ".pi/agent/mcp-npx-cache.json",
+      ".pi/agent/mcp.json",
       ".pi/agent/mcp.json.bak-20260420-151836",
       ".pi/agent/pi-crash.log",
       ".pi/agent/settings.json"

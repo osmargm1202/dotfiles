@@ -55,11 +55,13 @@ let overlayCtx: ExtensionContext | null = null;
 let overlayMounted = false;
 let overlayHandle: { requestRender(): void } | null = null;
 let statusChangedThisTurn = false;
-let autoReviewRequested = false;
+let autoReviewFollowUpCount = 0;
+let autoReviewRequestedThisTurn = false;
 let autoReviewTurn = false;
+const AUTO_REVIEW_MAX_FOLLOWUPS = 1;
 
 const OVERLAY_KEY = "orgm-todos";
-const OVERLAY_MAX_LINES = 12;
+const OVERLAY_TASK_LIMIT = 20;
 const AUTO_REVIEW_MARKER = "[orgm-todo-auto-review]";
 const AUTO_REVIEW_PROMPT = `${AUTO_REVIEW_MARKER} Before finishing this turn, review the current todo list. If any todo status should be updated, call the todo tool now. If everything is already correct, answer briefly: todo status already current.`;
 
@@ -344,15 +346,14 @@ function buildOverlayLines(theme: Theme, width: number): string[] {
 	if (tasks.length === 0) return [];
 	const completed = tasks.filter((task) => task.status === "completed").length;
 	const lines = [theme.fg("accent", `Todos (${completed}/${tasks.length})`)];
-	const taskLimit = OVERLAY_MAX_LINES - 1;
-	const display = tasks.slice(0, taskLimit);
+	const display = tasks.slice(0, OVERLAY_TASK_LIMIT);
 	for (const task of display) {
 		const color = task.status === "completed" ? "success" : task.status === "in_progress" ? "warning" : "muted";
 		const blockedBy = task.blockedBy && task.blockedBy.length > 0 ? theme.fg("dim", ` ← ${task.blockedBy.map((id) => `#${id}`).join(",")}`) : "";
 		lines.push(`${theme.fg(color, statusIcon(task.status))} ${theme.fg("accent", `#${task.id}`)} ${theme.fg(task.status === "completed" ? "dim" : "text", truncateToWidth(task.subject, Math.max(8, width - 12)))}${blockedBy}`);
 	}
-	if (tasks.length > display.length) lines[OVERLAY_MAX_LINES - 1] = theme.fg("dim", `+${tasks.length - display.length + 1} more`);
-	return lines.slice(0, OVERLAY_MAX_LINES).map((line) => truncateToWidth(line, width));
+	if (tasks.length > display.length) lines.push(theme.fg("dim", `+${tasks.length - display.length} more`));
+	return lines.map((line) => truncateToWidth(line, width));
 }
 
 function installOverlay(ctx: ExtensionContext): void {
@@ -411,6 +412,24 @@ function didStatusChange(before: TaskState, after: TaskState): boolean {
 	return false;
 }
 
+function getMessageText(content: unknown): string {
+	if (typeof content === "string") return content;
+	if (Array.isArray(content)) return content.map(getMessageText).join(" ");
+	if (!content || typeof content !== "object") return "";
+	if (typeof (content as { text?: unknown }).text === "string") return String((content as { text?: unknown }).text);
+	if ("content" in content && typeof (content as { content?: unknown }).content !== "undefined") return getMessageText((content as { content?: unknown }).content);
+	return "";
+}
+
+function countExistingAutoReviewFollowUps(ctx: ExtensionContext): number {
+	return ctx.sessionManager.getEntries().reduce((total, entry) => {
+		if (entry.type !== "message") return total;
+		const message = entry.message as { role?: string; content?: unknown };
+		if (message.role !== "assistant") return total;
+		return message.content && getMessageText(message.content).includes(AUTO_REVIEW_MARKER) ? total + 1 : total;
+	}, 0);
+}
+
 function isMainAgentRuntime(): boolean {
 	return process.env.PI_PDD_SUBAGENT !== "1";
 }
@@ -419,15 +438,16 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_start", async (_event, ctx) => {
 		replayFromBranch(ctx);
 		statusChangedThisTurn = false;
-		autoReviewRequested = false;
+		autoReviewRequestedThisTurn = false;
 		autoReviewTurn = false;
+		autoReviewFollowUpCount = Math.min(countExistingAutoReviewFollowUps(ctx), AUTO_REVIEW_MAX_FOLLOWUPS);
 		refreshOverlay(ctx);
 	});
 
 	pi.on("before_agent_start", async (event) => {
 		autoReviewTurn = typeof event.prompt === "string" && event.prompt.includes(AUTO_REVIEW_MARKER);
 		statusChangedThisTurn = false;
-		if (!autoReviewTurn) autoReviewRequested = false;
+		autoReviewRequestedThisTurn = false;
 	});
 
 	pi.on("agent_end", async () => {
@@ -437,9 +457,11 @@ export default function (pi: ExtensionAPI) {
 			statusChangedThisTurn = false;
 			return;
 		}
-		if (!statusChangedThisTurn || autoReviewRequested || !hasActiveTodos()) return;
-		autoReviewRequested = true;
+		if (!statusChangedThisTurn || autoReviewRequestedThisTurn || !hasActiveTodos()) return;
+		if (autoReviewFollowUpCount >= AUTO_REVIEW_MAX_FOLLOWUPS) return;
+		autoReviewRequestedThisTurn = true;
 		statusChangedThisTurn = false;
+		autoReviewFollowUpCount += 1;
 		pi.sendUserMessage(AUTO_REVIEW_PROMPT, { deliverAs: "followUp" });
 	});
 

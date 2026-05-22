@@ -14,36 +14,12 @@ const MAX_BODY_LENGTH = 220;
 const FOCUS_PID_HINT = "pi-focus-pid";
 const KITTY_DESKTOP_ENTRY = "kitty";
 
-type NotificationType = "question" | "permission" | "done";
+type NotificationType = "question" | "done";
 
 type NotifyCommand = {
 	command: string;
 	argsPrefix: string[];
 };
-
-const PERMISSION_BASH_PATTERNS: RegExp[] = [
-	/\bsudo\b/i,
-	/\brm\b(?=[^\n;&|]*\s+(?:-[^\n;&|]*r|--recursive)\b)(?=[^\n;&|]*\s+(?:-[^\n;&|]*f|--force)\b)/i,
-	/\bchmod\b/i,
-	/\bchown\b/i,
-	/\bmkfs(?:\.[\w-]+)?\b/i,
-	/\bdd\b/i,
-	/\b(?:reboot|shutdown|poweroff)\b/i,
-	/\bgit\s+reset\s+--hard\b/i,
-	/\bgit\s+clean\b(?=[^\n;&|]*(?:-[^\n;&|]*f|--force))(?=[^\n;&|]*(?:-[^\n;&|]*d|--directories))/i,
-	/\bgit\s+push\b/i,
-	/\bgit\s+rebase\b/i,
-	/\bgit\s+branch\s+-D\b/i,
-	/\bnpm\s+publish\b/i,
-	/\bpi\s+remove\b/i,
-];
-
-const FINAL_QUESTION_PATTERNS: RegExp[] = [
-	/[?？]\s*$/,
-	/\b(?:would you like|do you want|should i|shall i|can i|may i)\b/i,
-	/\b(?:approve|approval|confirm|confirmation|decision|decide|which option|need your input|need your approval|let me know if)\b/i,
-	/\b(?:choose|pick|select)\s+(?:one|an option|between|whether)\b/i,
-];
 
 let notifyCommandCache: NotifyCommand | null | undefined;
 
@@ -203,7 +179,7 @@ function notify(
 		if (!notifyCommand) return;
 
 		const folder = folderName(ctx.cwd);
-		const sticky = type === "question" || type === "permission";
+		const sticky = type === "question";
 		const title = `Pi ${type} · ${folder}`;
 		const body = truncate(`${folder} · ${type} · ${text}`);
 		const args = [
@@ -268,24 +244,6 @@ function getQuestionText(event: ToolCallEvent): string {
 	return `${labels.length} questions: ${labels.slice(0, 2).join(" · ")}`;
 }
 
-function getBashCommandFromInput(input: unknown): string | undefined {
-	if (!isRecord(input)) return undefined;
-	const command = input.command;
-	return typeof command === "string" ? command : undefined;
-}
-
-function getToolStartBashCommand(event: {
-	toolName: string;
-	args?: unknown;
-}): string | undefined {
-	if (event.toolName !== "bash") return undefined;
-	return getBashCommandFromInput(event.args);
-}
-
-function needsPermissionNotification(command: string): boolean {
-	return PERMISSION_BASH_PATTERNS.some((pattern) => pattern.test(command));
-}
-
 function getAssistantText(event: AgentEndEvent): string {
 	for (let index = event.messages.length - 1; index >= 0; index -= 1) {
 		const message = event.messages[index];
@@ -309,20 +267,7 @@ function getAssistantText(event: AgentEndEvent): string {
 	return "";
 }
 
-function looksLikeQuestion(text: string): boolean {
-	const clean = cleanText(text);
-	if (!clean) return false;
-	return FINAL_QUESTION_PATTERNS.some((pattern) => pattern.test(clean));
-}
-
 export default function (pi: ExtensionAPI) {
-	pi.on("tool_execution_start", (event, ctx) => {
-		const command = getToolStartBashCommand(event);
-		if (command && needsPermissionNotification(command)) {
-			notify("permission", ctx, command);
-		}
-	});
-
 	pi.on("tool_call", (event, ctx) => {
 		if (QUESTION_TOOL_NAMES.has(event.toolName)) {
 			notify("question", ctx, getQuestionText(event));
@@ -333,14 +278,9 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.on("agent_end", (event, ctx) => {
-		const text = getAssistantText(event);
-		if (looksLikeQuestion(text)) {
-			notify("question", ctx, text);
-			return;
-		}
-
 		if (isSubagentRuntime()) return;
 
+		const text = getAssistantText(event);
 		notify("done", ctx, text || "Agent loop finished.");
 	});
 }
