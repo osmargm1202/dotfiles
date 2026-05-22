@@ -6,9 +6,10 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, basename } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { DynamicBorder } from "@mariozechner/pi-coding-agent";
-import { Container, SelectList, Text, type SelectItem } from "@mariozechner/pi-tui";
+import { Container, Key, matchesKey, SelectList, Text, type SelectItem } from "@mariozechner/pi-tui";
 import { discoverDeployableAgents, type AgentConfig } from "./lib/agent-discovery";
 
 function collectConfiguredAgentModels(ctx: ExtensionContext, preferredModel?: string): string[] {
@@ -55,7 +56,11 @@ function isArrowEscapeSequence(key: string): boolean {
 }
 
 export function isEscapeKey(key: string): boolean {
-	return (key === "\u001B" || key === "Escape" || key === "escape") && !isArrowEscapeSequence(key);
+	return (matchesKey(key, Key.escape) || key === "\u001B" || key === "Escape" || key === "escape" || key === "esc") && !isArrowEscapeSequence(key);
+}
+
+function isTextEditingKey(key: string): boolean {
+	return (key.length === 1 && key >= " " && key !== "\u007F") || key === "\u007F" || key === "\u0015";
 }
 
 // ─── Agent model selector palette ──────────────────────────────────────────
@@ -65,16 +70,23 @@ interface AgentModelPaletteState {
 	agentIndex: number;
 	modelIndex: number;
 	modelItems: Array<{ value: string; label: string }>;
-	agentFilter: string;
+}
+
+function padCell(value: string, width: number): string {
+	const clean = value.replace(/\s+/g, " ").trim();
+	if (clean.length <= width) return clean.padEnd(width);
+	return `${clean.slice(0, Math.max(0, width - 1))}…`;
+}
+
+function getAgentFolder(agent: AgentConfig): string {
+	if (agent.namespace) return agent.namespace;
+	const parent = basename(dirname(agent.filePath));
+	if (parent && parent !== "agents") return parent;
+	return agent.source;
 }
 
 function buildAgentLabel(agent: AgentConfig): string {
-	const scope = agent.source === "user" ? "(u)" : "(p)";
-	return `${agent.displayName} ${scope} · ${agent.model || "no model"}`;
-}
-
-function buildAgentDescription(agent: AgentConfig): string {
-	return agent.description || agent.displayName;
+	return `${padCell(getAgentFolder(agent), 18)} | ${padCell(agent.displayName, 30)} | ${agent.model || "default"}`;
 }
 
 async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
@@ -90,39 +102,19 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 		agentIndex: 0,
 		modelIndex: 0,
 		modelItems: [],
-		agentFilter: "",
 	};
 
 	let container: Container | null = null;
 	let selectList: SelectList | null = null;
+	let closePalette: (() => void) | null = null;
 
 	const clampIndex = (value: number, length: number) => {
 		if (length <= 0) return 0;
 		return Math.max(0, Math.min(length - 1, value));
 	};
 
-	const getFilteredAgents = () => {
-		const filter = state.agentFilter.trim().toLowerCase();
-		if (!filter) return state.agents;
-		return state.agents.filter((agent) => {
-			const haystack = `${agent.name} ${agent.displayName}`.toLowerCase();
-			return haystack.includes(filter);
-		});
-	};
 	const getSelectedAgent = () => state.agents[clampIndex(state.agentIndex, state.agents.length)];
 	const findAgentIndex = (name: string) => state.agents.findIndex((agent) => agent.name === name);
-	const syncFilteredSelection = () => {
-		const filteredAgents = getFilteredAgents();
-		if (filteredAgents.length === 0) {
-			state.agentIndex = 0;
-			return;
-		}
-		const currentAgent = getSelectedAgent();
-		const nextAgent = currentAgent && filteredAgents.some((agent) => agent.name === currentAgent.name)
-			? currentAgent
-			: filteredAgents[0];
-		state.agentIndex = clampIndex(findAgentIndex(nextAgent.name), state.agents.length);
-	};
 
 	const ensureModelItems = (agent: AgentConfig) => {
 		const models = collectConfiguredAgentModels(ctx, agent.model);
@@ -141,20 +133,17 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 			return state.modelItems.map((model, idx) => ({
 				value: String(idx),
 				label: model.label,
-				description: idx === state.modelIndex ? "current selection" : undefined,
 			}));
 		}
 
-		return getFilteredAgents().map((agent) => ({
+		return state.agents.map((agent) => ({
 			value: agent.name,
 			label: buildAgentLabel(agent),
-			description: buildAgentDescription(agent),
 		}));
 	};
 
 	const renderUI = () => {
 		if (!container) return;
-		if (state.mode === "agents") syncFilteredSelection();
 		const items = buildItems();
 		selectList = new SelectList(items, Math.min(Math.max(items.length, 1), 12), {
 			selectedPrefix: (text) => ctx.ui.theme.fg("accent", text),
@@ -170,6 +159,7 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 				items.length,
 			);
 		selectList.setSelectedIndex(selectedIndex);
+		selectList.onCancel = () => closePalette?.();
 
 		container.clear();
 		container.addChild(new DynamicBorder((s) => ctx.ui.theme.fg("accent", s)));
@@ -181,9 +171,8 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 			container.addChild(new Text(ctx.ui.theme.fg("muted", "Select the model for this agent")));
 			container.addChild(new Text(ctx.ui.theme.fg("dim", "↑↓ navigate · Enter save · Esc cancel/close")));
 		} else {
-			container.addChild(new Text(ctx.ui.theme.fg("text", "Select an agent, then press Enter to choose its model")));
-			container.addChild(new Text(ctx.ui.theme.fg("muted", `Filter: ${state.agentFilter || "—"}`)));
-			container.addChild(new Text(ctx.ui.theme.fg("dim", "type filter · ↑↓ navigate · Enter open models · Backspace delete · Esc clear/cancel")));
+			container.addChild(new Text(ctx.ui.theme.fg("text", "Folder | Subagent | Current model")));
+			container.addChild(new Text(ctx.ui.theme.fg("dim", "↑↓ navigate · Enter open models · Esc close")));
 		}
 
 		container.addChild(selectList);
@@ -191,6 +180,7 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 	};
 
 	await ctx.ui.custom<void>((tui, _theme, _kb, done) => {
+		closePalette = done;
 		container = new Container();
 		renderUI();
 
@@ -200,29 +190,7 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 			handleInput: (key) => {
 				if (state.mode === "agents") {
 					if (isEscapeKey(key)) {
-						if (state.agentFilter) {
-							state.agentFilter = "";
-							renderUI();
-							tui.requestRender();
-							return;
-						}
 						done();
-						return;
-					}
-
-					if (key === "\u007F") {
-						state.agentFilter = state.agentFilter.slice(0, -1);
-						syncFilteredSelection();
-						renderUI();
-						tui.requestRender();
-						return;
-					}
-
-					if (key === "\u0015") {
-						state.agentFilter = "";
-						syncFilteredSelection();
-						renderUI();
-						tui.requestRender();
 						return;
 					}
 
@@ -239,14 +207,7 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 						return;
 					}
 
-					const isPrintable = key.length === 1 && key >= " " && key !== "\u007F";
-					if (isPrintable) {
-						state.agentFilter += key;
-						syncFilteredSelection();
-						renderUI();
-						tui.requestRender();
-						return;
-					}
+					if (isTextEditingKey(key)) return;
 
 					selectList?.handleInput(key);
 					const current = selectList?.getSelectedItem();
@@ -285,6 +246,8 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 					return;
 				}
 
+				if (isTextEditingKey(key)) return;
+
 				selectList?.handleInput(key);
 				const current = selectList?.getSelectedItem();
 				if (current) {
@@ -295,7 +258,10 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 				tui.requestRender();
 			},
 		};
-	}, { overlay: true });
+	}, {
+		overlay: true,
+		overlayOptions: { width: "90%", minWidth: 90, maxHeight: "80%" },
+	});
 }
 
 // ─── Extension Registration ─────────────────────────────────────────────────
