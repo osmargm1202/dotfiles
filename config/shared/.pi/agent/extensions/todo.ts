@@ -54,9 +54,14 @@ let state: TaskState = { tasks: [], nextId: 1 };
 let overlayCtx: ExtensionContext | null = null;
 let overlayMounted = false;
 let overlayHandle: { requestRender(): void } | null = null;
+let statusChangedThisTurn = false;
+let autoReviewRequested = false;
+let autoReviewTurn = false;
 
 const OVERLAY_KEY = "orgm-todos";
 const OVERLAY_MAX_LINES = 12;
+const AUTO_REVIEW_MARKER = "[orgm-todo-auto-review]";
+const AUTO_REVIEW_PROMPT = `${AUTO_REVIEW_MARKER} Before finishing this turn, review the current todo list. If any todo status should be updated, call the todo tool now. If everything is already correct, answer briefly: todo status already current.`;
 
 export function cloneState(input: TaskState): TaskState {
 	return {
@@ -394,10 +399,48 @@ function refreshOverlay(ctx = overlayCtx): void {
 	installOverlay(ctx);
 }
 
+function hasActiveTodos(): boolean {
+	return state.tasks.some((task) => task.status === "in_progress");
+}
+
+function didStatusChange(before: TaskState, after: TaskState): boolean {
+	const beforeStatuses = new Map(before.tasks.map((task) => [task.id, task.status]));
+	for (const task of after.tasks) {
+		if (beforeStatuses.get(task.id) !== task.status) return true;
+	}
+	return false;
+}
+
+function isMainAgentRuntime(): boolean {
+	return process.env.PI_PDD_SUBAGENT !== "1";
+}
+
 export default function (pi: ExtensionAPI) {
 	pi.on("session_start", async (_event, ctx) => {
 		replayFromBranch(ctx);
+		statusChangedThisTurn = false;
+		autoReviewRequested = false;
+		autoReviewTurn = false;
 		refreshOverlay(ctx);
+	});
+
+	pi.on("before_agent_start", async (event) => {
+		autoReviewTurn = typeof event.prompt === "string" && event.prompt.includes(AUTO_REVIEW_MARKER);
+		statusChangedThisTurn = false;
+		if (!autoReviewTurn) autoReviewRequested = false;
+	});
+
+	pi.on("agent_end", async () => {
+		if (!isMainAgentRuntime()) return;
+		if (autoReviewTurn) {
+			autoReviewTurn = false;
+			statusChangedThisTurn = false;
+			return;
+		}
+		if (!statusChangedThisTurn || autoReviewRequested || !hasActiveTodos()) return;
+		autoReviewRequested = true;
+		statusChangedThisTurn = false;
+		pi.sendUserMessage(AUTO_REVIEW_PROMPT, { deliverAs: "followUp" });
 	});
 
 	pi.registerCommand("todos", {
@@ -424,8 +467,12 @@ export default function (pi: ExtensionAPI) {
 		parameters: TaskMutationParamsSchema,
 
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+			const before = cloneState(state);
 			const result = applyMutation(state, params.action, params);
-			if (!result.error) state = result.state;
+			if (!result.error) {
+				state = result.state;
+				if (isMainAgentRuntime() && !autoReviewTurn && didStatusChange(before, state)) statusChangedThisTurn = true;
+			}
 			const details = detailsFor(params.action, params, state, result.error);
 			refreshOverlay(ctx);
 			return {
