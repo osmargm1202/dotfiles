@@ -351,8 +351,17 @@ function buildOverlayLines(theme: Theme, width: number): string[] {
 }
 
 function installOverlay(ctx: ExtensionContext): void {
+	if (overlayCtx && overlayCtx !== ctx) {
+		if (overlayMounted && overlayCtx.hasUI) overlayCtx.ui.setWidget(OVERLAY_KEY, undefined);
+		overlayMounted = false;
+		overlayHandle = null;
+	}
 	overlayCtx = ctx;
-	if (!ctx.hasUI) return;
+	if (!ctx.hasUI) {
+		overlayMounted = false;
+		overlayHandle = null;
+		return;
+	}
 	const hasTasks = visibleTasks(state).length > 0;
 	if (!hasTasks) {
 		if (overlayMounted) ctx.ui.setWidget(OVERLAY_KEY, undefined);
@@ -394,6 +403,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerCommand("todos", {
 		description: "Show all todos on the current branch, grouped by status",
 		handler: async (_args, ctx) => {
+			if (!ctx.hasUI) return;
 			const tasks = visibleTasks(state);
 			if (tasks.length === 0) {
 				ctx.ui.notify("No todos yet.", "info");
