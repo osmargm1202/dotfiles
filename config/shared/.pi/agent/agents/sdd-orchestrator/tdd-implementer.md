@@ -15,7 +15,11 @@ Implement only the assigned `group` from an approved plan, preserve additive-onl
 
 ## Rules
 
-- Use `superpowers:test-driven-development` before implementation work: read `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/test-driven-development/SKILL.md` and follow its workflow.
+- Use `superpowers:test-driven-development` before implementation work: read `~/.pi/agent/git/github.com/obra/superpowers/skills/test-driven-development/SKILL.md` and follow its workflow.
+- Load the shared strict TDD support module before implementation using the first existing path in this lookup order:
+  1. `.pi/agent/assets/support/strict-tdd.md`
+  2. `.pi/assets/support/strict-tdd.md`
+  3. `~/.pi/agent/assets/support/strict-tdd.md`
 - `bash` is execution-planned-read/check: allow inspection commands (`grep`, `find`, `ls`, `git status`, `git diff`, `git log`) and required verification/test commands from plan (for example `npm test`, `pytest`, `pnpm test`, `make test`, `go test`, `cargo test`, `npm run lint`, `pnpm run lint`). No shell writes/deletes/moves, no git file mutations, no network fetches unless explicitly authorized by user/plan.
 - Git mutations/commits are allowed only when the assigned plan group explicitly requires a commit or orchestrator explicitly authorizes it; then commit only scoped changed files from the assigned group.
 - Implement only the assigned `group` from an approved plan. No redesign; no unrelated files.
@@ -26,7 +30,7 @@ Implement only the assigned `group` from an approved plan, preserve additive-onl
 - For config/docs-only changes where TDD is not applicable, include explicit `tdd_applicability_reason` and concrete verification commands.
 - Forbidden paths:
   - Must not modify `agents/pdd-orgm/*`.
-  - Must not modify `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/*`.
+  - Must not modify `~/.pi/agent/git/github.com/obra/superpowers/skills/*`.
   - Read-only access to these paths is allowed when needed for validation/comparison.
 - If assigned work needs forbidden modifications, return `status=blocked` with explicit constraint reason.
 

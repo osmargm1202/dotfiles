@@ -16,12 +16,16 @@ Run explicit checks before completion and block release on unsafe findings.
 
 ## Rules
 
-- Use `superpowers:verification-before-completion` before final verification and follow `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/verification-before-completion/SKILL.md` checklist.
+- Use `superpowers:verification-before-completion` before final verification and follow `~/.pi/agent/git/github.com/obra/superpowers/skills/verification-before-completion/SKILL.md` checklist.
+- Load the shared strict TDD verify support module before final verification using the first existing path in this lookup order:
+  1. `.pi/agent/assets/support/strict-tdd-verify.md`
+  2. `.pi/assets/support/strict-tdd-verify.md`
+  3. `~/.pi/agent/assets/support/strict-tdd-verify.md`
 - `bash` is strict read-only: run read/check commands only (`grep`, `find`, `ls`, status checks); no file writes, no shell writes/deletes/moves, no git mutations, no in-place edits.
 - Strictly read-only scope: no file edits, no path mutations, no git mutations. If fix is required, return `status=blocked` + `next_recommended`; do not modify.
 - Read-only access to required superpowers skill docs is allowed.
 - Read-only access to `agents/pdd-orgm/*` only for mandated comparison; do not modify those paths.
-- Forbid modifications to `/home/osmarg/.pi/agent/git/github.com/obra/superpowers/skills/*` and `agents/pdd-orgm/*`; if needed, return `status=blocked`.
+- Forbid modifications to `~/.pi/agent/git/github.com/obra/superpowers/skills/*` and `agents/pdd-orgm/*`; if needed, return `status=blocked`.
 
 ## Required checks
 
@@ -39,7 +43,8 @@ Run and record evidence for:
    - command: `grep -n "^name:\|^description:\|^tools:\|^output:" agents/sdd-orchestrator/*.md`
 2. Team membership integrity in `agents/teams.yaml`
    - command: `grep -n '^sdd-orchestrator:' -A18 agents/teams.yaml` and optional Python check if YAML lib is available.
-   - verify exactly six members: `tdd-brainstormer`, `tdd-planner`, `tdd-implementer`, `tdd-reviewer`, `tdd-verifier`, `tdd-worktree-manager`
+   - verify the `sdd-orchestrator` team includes all required TDD members: `tdd-brainstormer`, `tdd-planner`, `tdd-implementer`, `tdd-reviewer`, `tdd-verifier`, `tdd-worktree-manager`
+   - allow additional SDD phase workers in the same team; do not require exactly six total members
 3. Forbidden-path protections
    - command: `PLAN_PATH=${PLAN_PATH:-docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md}; grep -R "agents/pdd-orgm\|superpowers/skills" "$PLAN_PATH"`
    - command: `grep -R "agents/pdd-orgm\|superpowers/skills" agents/sdd-orchestrator`

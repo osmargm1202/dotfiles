@@ -25,11 +25,11 @@
       ".config/i3",
       ".config/kdeglobals",
       ".config/kitty",
-      ".config/nwg-dock-hyprland",
       ".config/labwc",
       ".config/mpv",
       ".config/niri",
       ".config/nvim",
+      ".config/nwg-dock-hyprland",
       ".config/picom",
       ".config/polybar",
       ".config/posting",
@@ -71,16 +71,11 @@
     ]
   },
   "hosts": {
-    "orgm": {
+    "ero": {
       "paths": [
-        ".config/DankMaterialShell",
         ".config/fish/age-host.fish",
-        ".config/fish/host-orgm.fish",
-        ".config/fuzzel/fuzzel.env",
-        ".config/rofi/hypr-menu.env",
         ".local/share/applications",
-        ".local/share/icons",
-        ".pi/agent/mcp.json"
+        ".local/share/icons"
       ]
     },
     "lenovo": {
@@ -95,11 +90,16 @@
         ".pi/agent/orgm.json"
       ]
     },
-    "ero": {
+    "orgm": {
       "paths": [
+        ".config/DankMaterialShell",
         ".config/fish/age-host.fish",
+        ".config/fish/host-orgm.fish",
+        ".config/fuzzel/fuzzel.env",
+        ".config/rofi/hypr-menu.env",
         ".local/share/applications",
-        ".local/share/icons"
+        ".local/share/icons",
+        ".pi/agent/mcp.json"
       ]
     }
   },
@@ -109,6 +109,8 @@
       ".config/fish/insforge.env",
       ".config/fish/pdd",
       ".config/fish/private-env.fish",
+      ".local/bin/dot",
+      ".local/bin/dot.sh",
       ".pi/agent/agent-status.json",
       ".pi/agent/auth.json",
       ".pi/agent/extensions/.pi-lens",

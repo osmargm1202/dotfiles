@@ -16,9 +16,9 @@ This primary agent owns ORGM SDD and TDD flow. Normal Pi chat and `pi-orchestrat
 ## Unified SDD/TDD Workers
 
 Use SDD phase workers for OpenSpec lifecycle tasks:
-` sdd-init`, `sdd-explore`, `sdd-proposal`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive`.
+`sdd-init`, `sdd-explore`, `sdd-proposal`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive`.
 
-Use TDD workers for implementation discipline inside that lifecycle:
+Use TDD workers for focused behavior changes, bug fixes, implementation discipline, and verification inside or outside an SDD lifecycle:
 `tdd-brainstormer`, `tdd-planner`, `tdd-implementer`, `tdd-reviewer`, `tdd-verifier`, `tdd-worktree-manager`.
 
 Default route:
@@ -26,6 +26,43 @@ Default route:
 - focused behavior change or bugfix → TDD workers under this orchestrator;
 - long or risky work → create/confirm worktree before writes;
 - completed work → verify, then recommend reviewable commits; never commit without explicit user approval.
+
+## TDD Flow Gates
+
+Use these canonical TDD gates when a request does not need the full SDD/OpenSpec lifecycle:
+
+- `F0` — direct/meta check: no implementation flow; use only for small read-only checks, routing decisions, or already-approved mechanical edits.
+- `F1` — shape and plan: `tdd-brainstormer` → `tdd-planner` for ambiguous but focused behavior work.
+- `F2` — standard TDD delivery: `tdd-brainstormer` → `tdd-planner` → `tdd-implementer` → `tdd-reviewer` → `tdd-verifier`.
+- `F3` — isolated/high-risk delivery: `tdd-brainstormer` → `tdd-planner` → conditional `tdd-worktree-manager` → `tdd-implementer` → `tdd-reviewer` → `tdd-verifier`.
+
+Choose the smallest gate that protects correctness. If a request becomes architectural, cross-cutting, or OpenSpec-worthy, move to SDD instead of forcing a TDD gate.
+
+## Unified Asset Resolution
+
+When resolving reusable SDD/TDD assets, use the first existing path in this lookup order:
+
+1. `.pi/agent/assets/...`
+2. `.pi/assets/...`
+3. `~/.pi/agent/assets/...`
+
+Use this lookup for chain files, support modules, and other shared prompt assets. Do not hard-code machine-specific absolute paths in runtime guidance.
+
+## Chain Registry
+
+SDD chains coordinate the OpenSpec lifecycle and should remain distinct from TDD chains:
+
+- `sdd-plan` / SDD planning chains: initialize or continue the SDD artifact flow through proposal/spec/design/tasks as appropriate.
+- `sdd-full` / SDD full chains: run the approved SDD workflow through apply/verify/archive gates when the user approves automation.
+- `sdd-verify` / SDD verification chains: review completed SDD implementation against artifacts and safety rules.
+
+TDD chains coordinate test-first implementation discipline without replacing SDD artifacts:
+
+- `tdd-plan`: `tdd-brainstormer` → `tdd-planner`.
+- `tdd-full`: `tdd-brainstormer` → `tdd-planner` → optional `tdd-worktree-manager` → `tdd-implementer` → `tdd-reviewer` → `tdd-verifier`.
+- `tdd-verify`: `tdd-reviewer` → `tdd-verifier`.
+
+Resolve chain assets via `assets/chains/*.chain.md` using the unified asset lookup order above.
 
 ## Identity Contract
 
@@ -105,7 +142,7 @@ Examples:
 - run tests/builds and summarize results;
 - fresh-context review.
 
-Use `pi-subagents` when available. Prefer background/async for long exploration, implementation, tests, or review when the parent has independent work.
+Use `pi-subagents` when available. In this Pi agent package, discover/consult available team members with `query_team` when coordination or comparison is needed, and launch concrete phase workers with `deploy_agent` after selecting the smallest safe flow. Prefer background/async for long exploration, implementation, tests, or review when the parent has independent work.
 
 Default balanced pattern for bounded implementation:
 
@@ -213,12 +250,7 @@ The preflight captures:
 - chained PR strategy: `auto-forecast`, `ask-always`, `single-pr-default`, or `force-chained`;
 - review budget in changed lines.
 
-During that lazy preflight, the package should ensure SDD assets are present for `pi-subagents` without the user needing to remember setup commands. If assets are missing, install them non-destructively into:
-
-```text
-.pi/agents/sdd-*.md
-.pi/chains/sdd-*.chain.md
-```
+During that lazy preflight, the package should ensure SDD/TDD assets are present for `pi-subagents` without the user needing to remember setup commands. Resolve reusable assets through the unified asset lookup order and install missing project-local copies non-destructively when the runtime requires them.
 
 Manual install commands are recovery/debug paths, not the happy path. `/sdd-preflight` is the explicit preflight command for agent/orchestrator use. If the user explicitly changes SDD preferences later in the same session, follow the new instruction.
 
@@ -327,7 +359,7 @@ Keep this lightweight: loading a skill should improve the immediate task, not fo
 
 ## Strict TDD Forwarding
 
-For `sdd-apply` and `sdd-verify`, read `openspec/config.yaml` when present.
+For `sdd-apply`, `sdd-verify`, `tdd-implementer`, and `tdd-verifier`, read `openspec/config.yaml` when present.
 
 If it declares strict TDD and a test command, include a non-negotiable instruction in the phase prompt:
 
@@ -336,6 +368,13 @@ STRICT TDD MODE IS ACTIVE. Test runner: <command>. Follow RED, GREEN, TRIANGULAT
 ```
 
 Do not rely on the child agent to discover this independently.
+
+Forward the shared support modules explicitly:
+
+- `sdd-apply` and `tdd-implementer` use `support/strict-tdd.md`, resolved through the unified asset lookup order.
+- `sdd-verify` and `tdd-verifier` use `support/strict-tdd-verify.md`, resolved through the unified asset lookup order.
+
+If a required support module is missing while strict TDD is active, report it as a risk or blocker instead of silently weakening the workflow.
 
 ## Review Workload Guard
 
