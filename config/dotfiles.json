@@ -60,6 +60,7 @@
       ".pi/agent/AGENTS.md",
       ".pi/agent/RTK.md",
       ".pi/agent/agents",
+      ".pi/agent/ask.jsonc",
       ".pi/agent/assets",
       ".pi/agent/extensions",
       ".pi/agent/lib",
