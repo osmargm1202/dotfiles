@@ -78,11 +78,16 @@ function M.setup(programs)
   hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }))
   hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = 0 }))
   hl.bind(mainMod .. " + SHIFT + Space", hl.dsp.window.float({ action = "toggle" }))
+  hl.bind(mainMod .. " + G", hl.dsp.group.toggle())
   hl.bind(mainMod .. " + T", hl.dsp.layout("togglesplit"))
   hl.bind(mainMod .. " + C", hl.dsp.window.center())
   hl.bind(mainMod .. " + R", hl.dsp.layout("togglesplit"))
-  hl.bind(mainMod .. " + minus", dispatch("resizeactive -20 0"))
-  hl.bind(mainMod .. " + equal", dispatch("resizeactive 20 0"))
+
+  -- Group navigation (tabbed windows): Win+` next, Win+Shift+` back
+  hl.bind(mainMod .. " + grave", hl.dsp.group.next())
+  hl.bind(mainMod .. " + SHIFT + grave", hl.dsp.group.prev())
+  hl.bind(mainMod .. " + CTRL + minus", dispatch("resizeactive -20 0"))
+  hl.bind(mainMod .. " + CTRL + equal", dispatch("resizeactive 20 0"))
   hl.bind(mainMod .. " + SHIFT + minus", dispatch("resizeactive 0 -20"))
   hl.bind(mainMod .. " + SHIFT + equal", dispatch("resizeactive 0 20"))
 
@@ -92,6 +97,8 @@ function M.setup(programs)
   for key, dir in pairs(dirs) do
     hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ direction = dir }))
   end
+
+
   for key, dir in pairs(moveDirs) do
     hl.bind(mainMod .. " + CTRL + " .. key, hl.dsp.window.move({ direction = dir }))
   end
