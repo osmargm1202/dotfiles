@@ -86,9 +86,9 @@ function getAgentFolder(agent: AgentConfig): string {
 }
 
 function getAgentColumnWidths(width: number): { folder: number; agent: number; model: number } {
-	const usable = Math.max(42, width - 10);
+	const available = Math.max(42, width);
 	const separators = 6;
-	const columns = Math.max(30, usable - separators);
+	const columns = Math.max(30, available - separators);
 	const folder = Math.max(10, Math.floor(columns * 0.24));
 	const agent = Math.max(14, Math.floor(columns * 0.34));
 	const model = Math.max(12, columns - folder - agent);
@@ -171,12 +171,21 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 		if (!container) return;
 		lastRenderWidth = width;
 		const items = buildItems(width);
+		const listTextWidth = Math.max(1, width - 4);
 		selectList = new SelectList(items, Math.min(Math.max(items.length, 1), 12), {
 			selectedPrefix: (text) => ctx.ui.theme.fg("accent", text),
 			selectedText: (text) => ctx.ui.theme.fg("accent", text),
 			description: (text) => ctx.ui.theme.fg("muted", text),
 			scrollInfo: (text) => ctx.ui.theme.fg("dim", text),
 			noMatch: (text) => ctx.ui.theme.fg("warning", text),
+		}, {
+			minPrimaryColumnWidth: listTextWidth,
+			maxPrimaryColumnWidth: listTextWidth,
+			truncatePrimary: ({ item, maxWidth, text }) => {
+				if (state.mode !== "agents") return padCell(text, maxWidth);
+				const agent = state.agents.find((candidate) => candidate.name === item.value);
+				return agent ? buildAgentLabel(agent, maxWidth) : padCell(text, maxWidth);
+			},
 		});
 		const selectedIndex = state.mode === "models"
 			? clampIndex(state.modelIndex, items.length)
@@ -197,7 +206,7 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 			container.addChild(new Text(ctx.ui.theme.fg("muted", "Select the model for this agent")));
 			container.addChild(new Text(ctx.ui.theme.fg("dim", "↑↓ navigate · Enter save · Esc cancel/close")));
 		} else {
-			container.addChild(new Text(ctx.ui.theme.fg("text", buildAgentHeader(width))));
+			container.addChild(new Text(ctx.ui.theme.fg("text", buildAgentHeader(listTextWidth))));
 			container.addChild(new Text(ctx.ui.theme.fg("dim", "↑↓ navigate · Enter open models · Esc close")));
 		}
 
