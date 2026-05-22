@@ -1,5 +1,5 @@
 import { StringEnum } from "@earendil-works/pi-ai";
-import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
 import { Text, truncateToWidth } from "@earendil-works/pi-tui";
 import { Type, type Static } from "typebox";
 
@@ -51,6 +51,12 @@ const TaskMutationParamsSchema = Type.Object({
 export type TaskMutationParams = Static<typeof TaskMutationParamsSchema>;
 
 let state: TaskState = { tasks: [], nextId: 1 };
+let overlayCtx: ExtensionContext | null = null;
+let overlayMounted = false;
+let overlayHandle: { requestRender(): void } | null = null;
+
+const OVERLAY_KEY = "orgm-todos";
+const OVERLAY_MAX_LINES = 12;
 
 export function cloneState(input: TaskState): TaskState {
 	return {
@@ -262,10 +268,40 @@ function formatCall(args: Partial<TaskMutationParams>): string {
 	return parts.join(": ").replace(": #", " #");
 }
 
+function statusIcon(status: TaskStatus): string {
+	if (status === "completed") return "✓";
+	if (status === "in_progress") return "◐";
+	if (status === "deleted") return "✕";
+	return "○";
+}
+
+function taskSummary(task: Task): string {
+	const owner = task.owner ? ` @${task.owner}` : "";
+	const blockedBy = task.blockedBy && task.blockedBy.length > 0 ? ` blocked by ${task.blockedBy.map((id) => `#${id}`).join(", ")}` : "";
+	return `#${task.id} ${statusIcon(task.status)} ${task.subject}${owner}${blockedBy}`;
+}
+
+function groupTasksByStatus(tasks: Task[]): string {
+	const sections: Array<[TaskStatus, string]> = [
+		["pending", "Pending"],
+		["in_progress", "In Progress"],
+		["completed", "Completed"],
+	];
+	const lines: string[] = [];
+	for (const [status, label] of sections) {
+		const group = tasks.filter((task) => task.status === status);
+		if (group.length === 0) continue;
+		if (lines.length > 0) lines.push("");
+		lines.push(`${label}:`);
+		lines.push(...group.map((task) => `  ${taskSummary(task)}`));
+	}
+	return lines.join("\n");
+}
+
 function renderTaskLines(tasks: Task[], theme: Theme, limit: number): string {
 	const display = tasks.slice(0, limit);
 	const lines = display.map((task) => {
-		const icon = task.status === "completed" ? theme.fg("success", "✓") : task.status === "in_progress" ? theme.fg("warning", "◐") : task.status === "deleted" ? theme.fg("dim", "✕") : theme.fg("dim", "○");
+		const icon = task.status === "completed" ? theme.fg("success", statusIcon(task.status)) : task.status === "in_progress" ? theme.fg("warning", statusIcon(task.status)) : task.status === "deleted" ? theme.fg("dim", statusIcon(task.status)) : theme.fg("dim", statusIcon(task.status));
 		const subject = task.status === "completed" || task.status === "deleted" ? theme.fg("dim", task.subject) : theme.fg("muted", task.subject);
 		return `${icon} ${theme.fg("accent", `#${task.id}`)} ${subject} ${theme.fg("dim", `[${task.status}]`)}`;
 	});
@@ -273,7 +309,100 @@ function renderTaskLines(tasks: Task[], theme: Theme, limit: number): string {
 	return lines.join("\n");
 }
 
+function isTaskSnapshot(value: unknown): value is TaskState {
+	if (!value || typeof value !== "object") return false;
+	const candidate = value as { tasks?: unknown; nextId?: unknown };
+	return Array.isArray(candidate.tasks) && typeof candidate.nextId === "number";
+}
+
+function detailsSnapshot(details: unknown): TaskState | undefined {
+	if (!details || typeof details !== "object") return undefined;
+	const candidate = details as { tasks?: unknown; nextId?: unknown };
+	if (!isTaskSnapshot(candidate)) return undefined;
+	return { tasks: candidate.tasks as Task[], nextId: candidate.nextId };
+}
+
+function replayFromBranch(ctx: ExtensionContext): void {
+	let snapshot: TaskState | undefined;
+	for (const entry of ctx.sessionManager.getBranch()) {
+		if (entry.type !== "message") continue;
+		const message = entry.message as { role?: string; toolName?: string; details?: unknown };
+		if (message.role !== "toolResult" || message.toolName !== "todo") continue;
+		const candidate = detailsSnapshot(message.details);
+		if (candidate) snapshot = candidate;
+	}
+	state = snapshot ? cloneState(snapshot) : { tasks: [], nextId: 1 };
+}
+
+function buildOverlayLines(theme: Theme, width: number): string[] {
+	const tasks = visibleTasks(state);
+	if (tasks.length === 0) return [];
+	const completed = tasks.filter((task) => task.status === "completed").length;
+	const lines = [theme.fg("accent", `Todos (${completed}/${tasks.length})`)];
+	const taskLimit = OVERLAY_MAX_LINES - 1;
+	const display = tasks.slice(0, taskLimit);
+	for (const task of display) {
+		const color = task.status === "completed" ? "success" : task.status === "in_progress" ? "warning" : "muted";
+		const blockedBy = task.blockedBy && task.blockedBy.length > 0 ? theme.fg("dim", ` ← ${task.blockedBy.map((id) => `#${id}`).join(",")}`) : "";
+		lines.push(`${theme.fg(color, statusIcon(task.status))} ${theme.fg("accent", `#${task.id}`)} ${theme.fg(task.status === "completed" ? "dim" : "text", truncateToWidth(task.subject, Math.max(8, width - 12)))}${blockedBy}`);
+	}
+	if (tasks.length > display.length) lines[OVERLAY_MAX_LINES - 1] = theme.fg("dim", `+${tasks.length - display.length + 1} more`);
+	return lines.slice(0, OVERLAY_MAX_LINES).map((line) => truncateToWidth(line, width));
+}
+
+function installOverlay(ctx: ExtensionContext): void {
+	overlayCtx = ctx;
+	if (!ctx.hasUI) return;
+	const hasTasks = visibleTasks(state).length > 0;
+	if (!hasTasks) {
+		if (overlayMounted) ctx.ui.setWidget(OVERLAY_KEY, undefined);
+		overlayMounted = false;
+		overlayHandle = null;
+		return;
+	}
+	if (overlayMounted) {
+		overlayHandle?.requestRender();
+		return;
+	}
+	ctx.ui.setWidget(
+		OVERLAY_KEY,
+		(tui, theme) => {
+			overlayHandle = { requestRender: () => tui.requestRender() };
+			return {
+				render(width: number): string[] {
+					return buildOverlayLines(theme, width);
+				},
+				invalidate() {},
+			};
+		},
+		{ placement: "aboveEditor" },
+	);
+	overlayMounted = true;
+}
+
+function refreshOverlay(ctx = overlayCtx): void {
+	if (!ctx) return;
+	installOverlay(ctx);
+}
+
 export default function (pi: ExtensionAPI) {
+	pi.on("session_start", async (_event, ctx) => {
+		replayFromBranch(ctx);
+		refreshOverlay(ctx);
+	});
+
+	pi.registerCommand("todos", {
+		description: "Show all todos on the current branch, grouped by status",
+		handler: async (_args, ctx) => {
+			const tasks = visibleTasks(state);
+			if (tasks.length === 0) {
+				ctx.ui.notify("No todos yet.", "info");
+				return;
+			}
+			ctx.ui.notify(groupTasksByStatus(tasks), "info");
+		},
+	});
+
 	pi.registerTool({
 		name: "todo",
 		label: "Todo",
@@ -284,10 +413,11 @@ export default function (pi: ExtensionAPI) {
 		],
 		parameters: TaskMutationParamsSchema,
 
-		async execute(_toolCallId, params) {
+		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
 			const result = applyMutation(state, params.action, params);
 			if (!result.error) state = result.state;
 			const details = detailsFor(params.action, params, state, result.error);
+			refreshOverlay(ctx);
 			return {
 				content: [{ type: "text" as const, text: result.summary }],
 				details,
