@@ -47,7 +47,7 @@ function M.setup(programs)
 
   -- Scratchpad equivalent: special workspace.
   hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))
-  hl.bind(mainMod .. " + SHIFT + S", dispatch("movetoworkspacesilent special:magic"))
+  hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic", follow = false }))
   hl.bind(mainMod .. " + CTRL + S", hl.dsp.window.move({ workspace = "current" }))
 
   -- Media keys.
