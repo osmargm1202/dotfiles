@@ -43,6 +43,12 @@ type Answer = {
 };
 type QuestionnaireResult = { answers: Answer[]; cancelled: boolean; error?: string };
 
+const ASK_USAGE_GUIDANCE = `ask_user_question guidance:
+- When you need clarification, a decision, a preference, or missing requirements from the user, call ask_user_question instead of asking in plain assistant text.
+- Group related clarification questions into one ask_user_question call; do not stack separate calls.
+- Use multiSelect when multiple answers are valid.
+- If ask_user_question returns cancelled or kind=chat, continue with normal conversation.`;
+
 type Row =
 	| { kind: "option"; option: Option; optionIndex: number }
 	| { kind: "custom" }
@@ -384,6 +390,11 @@ async function runQuestionnaire(ctx: ExtensionContext, params: QuestionParams) {
 }
 
 export default function (pi: ExtensionAPI) {
+	pi.on("before_agent_start", async (event, ctx) => {
+		if (!ctx.hasUI) return;
+		return { systemPrompt: `${event.systemPrompt}\n\n${ASK_USAGE_GUIDANCE}` };
+	});
+
 	pi.on("tool_call", async (event, ctx) => {
 		if (event.toolName !== "bash") return;
 		const command = String((event.input as { command?: unknown }).command ?? "");
@@ -400,7 +411,8 @@ export default function (pi: ExtensionAPI) {
 		description: "Ask the user one or more structured questions with tabs, multi-select, and text answers.",
 		promptSnippet: "Ask the user up to 4 structured questions when requirements are ambiguous",
 		promptGuidelines: [
-			"Use ask_user_question when the user's request is underspecified and you need concrete decisions.",
+			"Use ask_user_question instead of plain assistant text whenever you need clarification, a decision, a preference, or missing requirements from the user.",
+			"Do not ask free-form clarification questions in chat when ask_user_question can present structured choices.",
 			"Group related questions in one ask_user_question call instead of stacking multiple calls.",
 			"Use multiSelect when multiple answers are valid; otherwise allow the user to pick an option, type an answer, or chat about it.",
 		],
