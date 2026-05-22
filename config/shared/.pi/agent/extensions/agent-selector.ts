@@ -85,8 +85,32 @@ function getAgentFolder(agent: AgentConfig): string {
 	return agent.source;
 }
 
-function buildAgentLabel(agent: AgentConfig): string {
-	return `${padCell(getAgentFolder(agent), 18)} | ${padCell(agent.displayName, 30)} | ${agent.model || "default"}`;
+function getAgentColumnWidths(width: number): { folder: number; agent: number; model: number } {
+	const usable = Math.max(42, width - 10);
+	const separators = 6;
+	const columns = Math.max(30, usable - separators);
+	const folder = Math.max(10, Math.floor(columns * 0.24));
+	const agent = Math.max(14, Math.floor(columns * 0.34));
+	const model = Math.max(12, columns - folder - agent);
+	return { folder, agent, model };
+}
+
+function buildAgentLabel(agent: AgentConfig, width: number): string {
+	const columns = getAgentColumnWidths(width);
+	return [
+		padCell(getAgentFolder(agent), columns.folder),
+		padCell(agent.displayName, columns.agent),
+		padCell(agent.model || "default", columns.model),
+	].join(" | ");
+}
+
+function buildAgentHeader(width: number): string {
+	const columns = getAgentColumnWidths(width);
+	return [
+		padCell("carpeta", columns.folder),
+		padCell("subagente", columns.agent),
+		padCell("modelo actual", columns.model),
+	].join(" | ");
 }
 
 async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
@@ -107,6 +131,7 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 	let container: Container | null = null;
 	let selectList: SelectList | null = null;
 	let closePalette: (() => void) | null = null;
+	let lastRenderWidth = 100;
 
 	const clampIndex = (value: number, length: number) => {
 		if (length <= 0) return 0;
@@ -128,7 +153,7 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 		);
 	};
 
-	const buildItems = (): SelectItem[] => {
+	const buildItems = (width = lastRenderWidth): SelectItem[] => {
 		if (state.mode === "models") {
 			return state.modelItems.map((model, idx) => ({
 				value: String(idx),
@@ -138,13 +163,14 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 
 		return state.agents.map((agent) => ({
 			value: agent.name,
-			label: buildAgentLabel(agent),
+			label: buildAgentLabel(agent, width),
 		}));
 	};
 
-	const renderUI = () => {
+	const renderUI = (width = lastRenderWidth) => {
 		if (!container) return;
-		const items = buildItems();
+		lastRenderWidth = width;
+		const items = buildItems(width);
 		selectList = new SelectList(items, Math.min(Math.max(items.length, 1), 12), {
 			selectedPrefix: (text) => ctx.ui.theme.fg("accent", text),
 			selectedText: (text) => ctx.ui.theme.fg("accent", text),
@@ -171,7 +197,7 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 			container.addChild(new Text(ctx.ui.theme.fg("muted", "Select the model for this agent")));
 			container.addChild(new Text(ctx.ui.theme.fg("dim", "↑↓ navigate · Enter save · Esc cancel/close")));
 		} else {
-			container.addChild(new Text(ctx.ui.theme.fg("text", "Folder | Subagent | Current model")));
+			container.addChild(new Text(ctx.ui.theme.fg("text", buildAgentHeader(width))));
 			container.addChild(new Text(ctx.ui.theme.fg("dim", "↑↓ navigate · Enter open models · Esc close")));
 		}
 
@@ -185,8 +211,14 @@ async function openAgentModelPalette(ctx: ExtensionContext): Promise<void> {
 		renderUI();
 
 		return {
-			render: (w) => container!.render(w),
-			invalidate: () => container?.invalidate(),
+			render: (w) => {
+				if (w !== lastRenderWidth) renderUI(w);
+				return container!.render(w);
+			},
+			invalidate: () => {
+				container?.invalidate();
+				renderUI(lastRenderWidth);
+			},
 			handleInput: (key) => {
 				if (state.mode === "agents") {
 					if (isEscapeKey(key)) {
