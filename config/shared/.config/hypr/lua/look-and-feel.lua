@@ -12,6 +12,26 @@ hl.config({
     layout = "dwindle",
   },
 
+  group = {
+    col = {
+      border_active = { colors = { "rgba(ff3355ee)", "rgba(b455ffee)" }, angle = 45 },
+      border_inactive = { colors = { "rgba(80305099)", "rgba(5a3d8a99)" }, angle = 45 },
+      border_locked_active = { colors = { "rgba(ff6b35ee)", "rgba(b455ffee)" }, angle = 45 },
+      border_locked_inactive = { colors = { "rgba(5a223899)", "rgba(3f2a6099)" }, angle = 45 },
+    },
+    groupbar = {
+      font_size = 24,
+      height = 42,
+      gradients = true,
+      col = {
+        active = "rgba(001f24dd)",
+        inactive = "rgba(00161acc)",
+        locked_active = "rgba(002a30dd)",
+        locked_inactive = "rgba(00161acc)",
+      },
+    },
+  },
+
   decoration = {
     rounding = 12,
     rounding_power = 2,
