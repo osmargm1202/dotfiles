@@ -1,34 +1,30 @@
 {
   "path": "sdd-orchestrator/orgm-hypr-theme-system/tdd/build-progress",
-  "group": "Slice 3: core desktop targets",
-  "status": "completed_with_verification_failure",
+  "group": "Final review blocker: backup/rollback metadata for non-cache writes",
+  "status": "completed_with_nix_unavailable",
   "files_changed": [
     "cmd/orgm-hypr/main.go",
     "cmd/orgm-hypr/main_test.go",
-    "config/shared/.config/orgm-hypr/themes.json",
-    "internal/theme/plan.go",
-    "internal/theme/plan_test.go",
-    "internal/theme/renderer_test.go",
+    "internal/theme/manifest.go",
+    "internal/theme/writer.go",
+    "internal/theme/writer_test.go",
     "sdd-orchestrator/orgm-hypr-theme-system/tdd/build-progress"
   ],
   "tdd_applicability_reason": null,
   "verification": [
-    "Safety net: go test ./internal/theme ./cmd/orgm-hypr passed before production edits",
-    "RED: go test ./internal/theme -run 'TestBuildApplyPlanRendersCoreDesktopTargets|TestBuildApplyPlanTriangulatesLightModeAndWarnings' failed with unknown PlanOptions.ConfigHome",
-    "GREEN: go test ./internal/theme -run 'TestBuildApplyPlanRendersCoreDesktopTargets|TestBuildApplyPlanTriangulatesLightModeAndWarnings' passed after renderer implementation",
-    "RED: go test ./internal/theme -run TestBuildApplyPlanRendersCoreDesktopTargets failed missing waybar reload",
-    "GREEN: go test ./internal/theme -run TestBuildApplyPlanRendersCoreDesktopTargets passed after reload hooks",
-    "RED: go test ./cmd/orgm-hypr -run TestRunThemePreviewRendersConfigHomeDesktopTargetWrites failed with themeCommandEnv.ConfigHome undefined",
-    "GREEN: go test ./cmd/orgm-hypr -run TestRunThemePreviewRendersConfigHomeDesktopTargetWrites passed after ConfigHome env wiring",
-    "Focused final: go test ./cmd/orgm-hypr ./internal/theme passed",
-    "Required final: go test ./... failed in internal/waybar due undefined FormatDate, SwapUsageFromMeminfo, WorkspaceStatusJSON, WatchPlan",
+    "Safety net: go test ./internal/theme ./cmd/orgm-hypr passed before backup/manifest edits",
+    "RED writer: go test ./internal/theme -run 'TestAtomicWriter' failed with assignment mismatch because AtomicWriter.Write did not return WriteResult",
+    "RED apply manifest: go test ./cmd/orgm-hypr -run 'TestRunWithIOThemeApply' failed because last-apply.json was missing after non-dry apply",
+    "GREEN writer: go test ./internal/theme -run 'TestAtomicWriter' passed after WriteResult and deterministic .bak backup support",
+    "GREEN apply manifest: go test ./cmd/orgm-hypr -run 'TestRunWithIOThemeApply' passed after saving last-apply manifest with backup paths",
+    "Focused final: go test ./internal/theme ./cmd/orgm-hypr passed",
+    "Required final: go test ./... passed",
     "Required final: bash tests/orgm-hypr.bats.sh passed",
     "Required final: nix flake check failed: /bin/bash: line 1: nix: command not found"
   ],
   "risks": [
-    "Generated desktop target files require manual imports/includes or app restarts before visible effect",
-    "go test ./... is blocked by pre-existing/unrelated internal/waybar tests outside Slice 3 scope",
-    "Reload hooks are planned commands only; apply currently writes files and reports reloads without executing them",
-    "No edits were made to config/shared/.config/waybar-hypr/style.css or openspec/changes/hypr-lua-orgm-hypr-migration/**"
+    "Backup path is deterministic <path>.bak and overwritten on subsequent applies; no rollback command implemented yet by scope",
+    "Manifest writes are generated JSON under XDG state and guarded by generated marker on later overwrites",
+    "Repository had pre-existing unrelated modified live config and hypr-lua migration files; this task did not edit them"
   ]
 }

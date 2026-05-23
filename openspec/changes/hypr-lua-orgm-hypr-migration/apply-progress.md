@@ -490,3 +490,76 @@ Fallback remains intact. No script, caller, or manifest changed through Slice 3.
 - Webapp maker/remover wrappers remain behavior-owning because converting them would break current no-arg interactive rofi prompt flow. Required follow-up: `orgm-hypr webapp create/remove --interactive` or equivalent prompt flags.
 - Generic fuzzel/file/tmux/calc/Pi/lock/notification helpers remain out of scope for this SDD change; exact exceptions are listed in `wrapper-migration-audit.md`.
 - `nix`, `orgm-dot`, and project-local `./dot.sh` remain blocked in this runtime; no `orgm-dot sync` was run.
+
+## Final exception closure progress: Slices 11-13
+
+### Workload / PR boundary
+
+- Delivery path: user explicitly requested continuing all listed remaining exceptions; treated as final auto-chain exception closure.
+- PR boundary: Slices 11-13 close former exception wrappers/caller only; no dotfile sync or destructive runtime commands executed.
+
+### Completed tasks
+
+- [x] 11.1 Final exception audit refreshed in `wrapper-migration-audit.md`.
+- [x] 11.2 RED CLI contract tests added in `cmd/orgm-hypr/final_exception_test.go`.
+- [x] 11.3 Wrapper behavior model tests covered at CLI/plan layer for lock, launcher, notify, file, SSH, tmux, calc, Pi, and webapp cancellation.
+- [x] 12.1 `webapp create/remove --interactive` command surface added with safe cancellation path; wrappers converted thin.
+- [x] 12.2 `launcher apps`, `session lock`, and `notify focus-app` command surfaces added; wrappers converted thin.
+- [x] 12.3 `file open|open-dir|open-terminal`, `ssh host`, `tmux arch`, `calc fuzzel`, and `pi prompt` command surfaces added; wrappers converted thin.
+- [x] 12.4 Shared command runner/picker helpers reused; no larger refactor beyond safe helper additions.
+- [x] 13.1 Sway `waybar-watch` caller migrated to `orgm-hypr waybar watch ~/.config/waybar`.
+- [x] 13.2 Final audit/evidence updated.
+- [x] 13.3 Partial final validation run; blocked validators recorded.
+
+### Files changed in final closure
+
+- `cmd/orgm-hypr/main.go` — added final exception command surfaces: `launcher/fuzzel apps`, `session lock`, `notify focus-app`, `file`, `ssh`, `tmux`, `calc`, `pi`, and webapp interactive cancel gates.
+- `cmd/orgm-hypr/final_exception_test.go` — new RED/GREEN CLI contract tests.
+- `cmd/orgm-hypr/main_test.go` — `notify` removed from placeholder group after implementation.
+- `config/shared/.local/bin/hypr-webapp-maker`, `hypr-webapp-remover`, `hypr-fuzzel`, `hypr-lock`, `hypr-focus-notification-app`, `fuzzel-open-file`, `fuzzel-open-file-dir`, `fuzzel-open-file-terminal`, `fuzzel-ssh-host`, `fuzzel-tmux-arch`, `fuzzel-calc` — converted to thin `exec orgm-hypr ... "$@"` wrappers.
+- `config/shared/.config/hypr/scripts/pi-walker-prompt.sh` — converted to thin `exec orgm-hypr pi prompt --launcher walker "$@"` wrapper.
+- `config/shared/.config/sway/config` — `waybar-watch` caller replaced with `orgm-hypr waybar watch ~/.config/waybar`.
+- `openspec/changes/hypr-lua-orgm-hypr-migration/final-exception-tasks.md`, `wrapper-migration-audit.md`, `apply-progress.md`, `verify-report.md` — final closure evidence.
+
+### TDD Cycle Evidence
+
+| Task | Test File / Check | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| 11.1 | `wrapper-migration-audit.md` | Docs/static | Existing final tasks/audit/progress read first | ✅ Audit listed open exceptions before closure | ✅ Final closure table added | ✅ Every target path has command/wrapper/rollback row | ➖ Docs-only |
+| 11.2 | `cmd/orgm-hypr/final_exception_test.go` | CLI/unit | Existing command/router code read first | ✅ `go test ./cmd/orgm-hypr -run 'TestRunWithIOFinalException'` failed for missing command surfaces/flags | ✅ Focused final exception tests passed after implementation | ✅ Covers lock, launcher, notify, file, SSH, tmux, calc, Pi, webapp cancel | ✅ `gofmt` and focused tests |
+| 11.3 | `cmd/orgm-hypr/final_exception_test.go` | CLI/plan characterization | Existing wrapper bodies read before tests | ✅ Tests expressed current wrapper plans before command surfaces existed | ✅ Print/cancel plans pass without launching GUI/processes | ✅ Path args, selected rows, host discovery, tmux session parse, calc/Pi plans | ✅ Shared runner helpers reused |
+| 12.1 | `cmd/orgm-hypr/final_exception_test.go` + existing webapp tests | CLI/safety | Existing `internal/webapp` tests retained | ✅ `--interactive` flag missing before implementation | ✅ `webapp create --interactive --cancel` exits 0 with `cancelled` and no mutation | ✅ Existing dry-run/remove/profile gate tests remain in full suite | ➖ Full rofi UX not live-smoked in runtime |
+| 12.2 | `cmd/orgm-hypr/final_exception_test.go` | CLI/plan | Existing session/windows tests retained | ✅ `session lock`, `launcher apps`, `notify focus-app` missing before implementation | ✅ Focused tests pass | ✅ Lock print vs forced live gate; launcher scaled args; notify pid plan | ✅ No destructive live lock without `--force` |
+| 12.3 | `cmd/orgm-hypr/final_exception_test.go` | CLI/plan | Existing command tests retained | ✅ file/ssh/tmux/calc/pi groups missing before implementation | ✅ Focused tests pass | ✅ Terminal/file path, SSH config parse, tmux row parse, calc/Pi print plans | ✅ Shared `runOrPrintCommand` used |
+| 12.4 | `go test ./cmd/orgm-hypr ./...` | Refactor safety | ✅ Focused final tests green | ➖ No new behavior beyond helper reuse | ✅ Full Go suite passed | ✅ Static wrapper audit checked converted paths | ✅ `gofmt`; no broad risky refactor |
+| 13.1 | Static grep + Waybar tests | Static/caller | Existing `waybar watch --print` tests already passed | ✅ Sway config invoked `~/.local/bin/waybar-watch` before edit | ✅ Static grep found `orgm-hypr waybar watch ~/.config/waybar` | ✅ `go test ./...` includes Waybar tests | ➖ Caller string only |
+| 13.2 | Wrapper static loop | Static | Go tests green before wrapper conversion | ✅ Listed wrappers had behavior-owning bodies before conversion | ✅ Static loop confirmed direct `exec orgm-hypr` lines | ✅ All final exception wrappers checked | ➖ Wrapper replacement only |
+| 13.3 | Verification commands | CLI/static | N/A | ✅ Blocked external validators attempted and failed with tool/runtime blockers | ✅ `go test ./cmd/orgm-hypr ./...`, `git diff --check`, Lua syntax passed | ✅ Manual-safe print/cancel tests cover smoke checklist subset | ➖ No destructive smoke |
+
+### Verification commands run in final closure
+
+| Command | Result | Notes |
+|---|---|---|
+| `go test ./cmd/orgm-hypr -run 'TestRunWithIOFinalException'` after RED tests | FAIL expected | Missing command surfaces/flags before implementation. |
+| `gofmt -w cmd/orgm-hypr/main.go cmd/orgm-hypr/final_exception_test.go && go test ./cmd/orgm-hypr -run 'TestRunWithIOFinalException'` | PASS | Focused final exception CLI tests. |
+| `go test ./cmd/orgm-hypr ./...` | PASS | Full Go suite passed. |
+| `git diff --check` | PASS | No whitespace errors. |
+| `find config/shared/.config/hypr -name '*.lua' -print0 \| xargs -0 luac -p` | PASS | Lua syntax untouched/valid. |
+| Static wrapper loop for final exception paths | PASS | All converted wrappers contain `exec orgm-hypr ...`. |
+| Static grep for Sway `orgm-hypr waybar watch ~/.config/waybar` | PASS | Sway caller migrated. |
+| `nix flake check` | BLOCKED | `/bin/bash: line 2: nix: command not found`; exit 127. |
+| `orgm-dot diff --host orgm` | BLOCKED | `/bin/bash: line 4: orgm-dot: command not found`; exit 127. |
+| `./dot.sh diff --host orgm` | BLOCKED | `/bin/bash: line 6: ./dot.sh: No such file or directory`; exit 127. |
+| `nix fmt` | BLOCKED | `/bin/bash: line 8: nix: command not found`; exit 127. |
+| `nix build .#packages.x86_64-linux.orgm-hypr --no-link` | BLOCKED | `/bin/bash: line 10: nix: command not found`; exit 127. |
+
+### Deviations / notes
+
+- Full rofi/fuzzel/walker GUI smoke not run in this executor. Command surfaces expose print/cancel paths and wrappers now delegate, but host manual smoke remains recommended.
+- `hypr-lock` compatibility wrapper passes `--force` to preserve one-command lock behavior; safe non-destructive test surface is `orgm-hypr session lock --print`.
+- Webapp interactive command surface currently has safe cancellation and explicit non-interactive dry-run/write paths; live rofi prompts were not host-smoked here.
+
+### Remaining tasks
+
+- No listed final exception remains behavior-owning.
+- Run Nix/dot validators and manual Hypr/Sway smoke on host/runtime where tools are available.

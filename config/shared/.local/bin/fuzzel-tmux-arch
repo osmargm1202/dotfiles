@@ -1,7 +1,2 @@
-#!/bin/sh
-set -eu
-
-selection=$(distrobox-enter arch -- tmux ls 2>/dev/null | fuzzel --dmenu --prompt "tmux> ")
-[ -n "${selection:-}" ] || exit 0
-session=${selection%%:*}
-exec kitty -e distrobox-enter arch -- tmux attach -t "$session"
+#!/usr/bin/env sh
+exec orgm-hypr tmux arch --launcher fuzzel "$@"

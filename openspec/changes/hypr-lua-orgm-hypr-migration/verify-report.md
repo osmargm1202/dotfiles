@@ -134,3 +134,49 @@ Coverage analysis skipped; no coverage command was requested, and required verif
 ## Final finding
 
 PASS with blocked external validators. No implementation defect found in fresh read-only verification. Remaining behavior-owning scripts match documented deferred/out-of-scope exceptions.
+
+## Final exception closure verification addendum: Slices 11-13
+
+Status: PASS with blocked external validators.
+
+All user-listed remaining exceptions now have `orgm-hypr` command surfaces and thin compatibility wrappers, or migrated caller in Sway config. No `orgm-dot sync` or destructive live command was run.
+
+### Final exception status
+
+| Target | Result |
+|---|---|
+| `hypr-webapp-maker` | Thin wrapper to `orgm-hypr webapp create --interactive "$@"` |
+| `hypr-webapp-remover` | Thin wrapper to `orgm-hypr webapp remove --interactive "$@"` |
+| `hypr-fuzzel` | Thin wrapper to `orgm-hypr launcher apps "$@"`; chosen canonical command documented |
+| `hypr-lock` | Thin wrapper to `orgm-hypr session lock --force "$@"`; safe plan available via `--print` |
+| `hypr-focus-notification-app` | Thin wrapper to `orgm-hypr notify focus-app "$@"` |
+| `fuzzel-open-file*` | Thin wrappers to `orgm-hypr file open|open-dir|open-terminal --launcher fuzzel "$@"` |
+| `fuzzel-ssh-host` | Thin wrapper to `orgm-hypr ssh host --launcher fuzzel "$@"` |
+| `fuzzel-tmux-arch` | Thin wrapper to `orgm-hypr tmux arch --launcher fuzzel "$@"` |
+| `fuzzel-calc` | Thin wrapper to `orgm-hypr calc fuzzel "$@"` |
+| `pi-walker-prompt.sh` | Thin wrapper to `orgm-hypr pi prompt --launcher walker "$@"` |
+| Sway `waybar-watch` caller | Migrated to `orgm-hypr waybar watch ~/.config/waybar` |
+
+### Commands run
+
+| Command | Result |
+|---|---|
+| `go test ./cmd/orgm-hypr -run 'TestRunWithIOFinalException'` | PASS after expected RED failure |
+| `go test ./cmd/orgm-hypr ./...` | PASS |
+| `git diff --check` | PASS |
+| `find config/shared/.config/hypr -name '*.lua' -print0 \| xargs -0 luac -p` | PASS |
+| Final exception wrapper static grep | PASS |
+| Sway caller static grep | PASS |
+| `nix fmt` | BLOCKED: `nix: command not found` |
+| `nix flake check` | BLOCKED: `nix: command not found` |
+| `nix build .#packages.x86_64-linux.orgm-hypr --no-link` | BLOCKED: `nix: command not found` |
+| `orgm-dot diff --host orgm` | BLOCKED: `orgm-dot: command not found` |
+| `./dot.sh diff --host orgm` | BLOCKED: `./dot.sh: No such file or directory` |
+
+### Manual smoke
+
+Not run in this executor: GUI fuzzel/rofi/walker, real lock, Sway session, notification focus, kitty/distrobox/tmux. Safe print/cancel tests cover non-destructive command plans.
+
+### Final finding
+
+PASS with blocked external validators. No behavior-owning listed final exception remains; remaining work is host manual smoke plus unavailable Nix/dot validators.

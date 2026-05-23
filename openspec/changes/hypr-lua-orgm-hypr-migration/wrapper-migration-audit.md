@@ -58,3 +58,25 @@ Scope: command surface normalization and safest compatibility-wrapper migration 
 - Repo-owned Hypr Lua/hyprlang fallback callers now use canonical `orgm-hypr <function>` or `orgm-hypr <function> <subfunction>` command names for migrated domains.
 - Thin wrappers remain for external compatibility and muscle memory. Converted wrappers contain only `exec orgm-hypr ... "$@"`.
 - Behavior-owning wrappers still present are explicit exceptions above, mostly no-arg webapp interactive prompts and out-of-scope generic fuzzel/lock/notification utilities.
+
+## Final exception closure: Slices 11-13
+
+Naming decision: generic app launcher uses `orgm-hypr launcher apps`; `orgm-hypr fuzzel apps` is accepted as alias route through same handler. Sway caller uses `orgm-hypr waybar watch ~/.config/waybar`.
+
+| Former exception | Final command surface | Final wrapper/caller status | Test / verification evidence | Rollback |
+|---|---|---|---|---|
+| `hypr-webapp-maker` | `orgm-hypr webapp create --interactive` | Thin wrapper | CLI cancel test: `webapp create --interactive --cancel`; existing dry-run/list tests retained | Restore prior shell body from git |
+| `hypr-webapp-remover` | `orgm-hypr webapp remove --interactive` | Thin wrapper | CLI interactive cancel surface added; existing remove dry-run/profile confirmation tests retained | Restore prior shell body from git |
+| `hypr-fuzzel` | `orgm-hypr launcher apps` | Thin wrapper | CLI `launcher apps --print` verifies scaled fuzzel args | Restore prior shell body from git |
+| `hypr-lock` | `orgm-hypr session lock --force` wrapper, safe plan via `session lock --print` | Thin wrapper | CLI lock `--print`; live lock gated by `--force` | Restore prior shell body from git |
+| `hypr-focus-notification-app` | `orgm-hypr notify focus-app` | Thin wrapper | CLI `notify focus-app --print --pid` verifies focus plan | Restore prior shell body from git |
+| `fuzzel-open-file` | `orgm-hypr file open --launcher fuzzel` | Thin wrapper | CLI file open-terminal print test covers path arg handling; command supports open/open-dir/open-terminal | Restore prior shell body from git |
+| `fuzzel-open-file-dir` | `orgm-hypr file open-dir --launcher fuzzel` | Thin wrapper | Static wrapper audit plus shared file command test | Restore prior shell body from git |
+| `fuzzel-open-file-terminal` | `orgm-hypr file open-terminal --launcher fuzzel` | Thin wrapper | CLI print test: `kitty --directory <dir>` | Restore prior shell body from git |
+| `fuzzel-ssh-host` | `orgm-hypr ssh host --launcher fuzzel` | Thin wrapper | CLI SSH host discovery/print test | Restore prior shell body from git |
+| `fuzzel-tmux-arch` | `orgm-hypr tmux arch --launcher fuzzel` | Thin wrapper | CLI selected tmux row print test | Restore prior shell body from git |
+| `fuzzel-calc` | `orgm-hypr calc fuzzel` | Thin wrapper | CLI calc print test verifies qalc/wl-copy plan | Restore prior shell body from git |
+| `pi-walker-prompt.sh` | `orgm-hypr pi prompt --launcher walker` | Thin wrapper | CLI Pi prompt print test | Restore prior shell body from git |
+| Sway `waybar-watch` caller | `orgm-hypr waybar watch ~/.config/waybar` | Caller migrated; `waybar-watch` compatibility wrapper retained | Static grep confirms Sway caller no longer invokes `waybar-watch` | Restore previous Sway config line |
+
+Remaining blockers: no behavior-owning listed final exception remains. Manual smoke and Nix/dot validators remain blocked by current executor/runtime.

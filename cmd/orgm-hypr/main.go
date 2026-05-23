@@ -67,7 +67,21 @@ func runWithIO(args []string, stdout, stderr io.Writer) error {
 		return runMenuWithIO(args[1:], stdout, stderr)
 	case "webapp":
 		return runWebappWithIO(args[1:], stdout, stderr)
-	case "updates", "notify":
+	case "launcher", "fuzzel":
+		return runLauncherWithIO(args[1:], stdout, stderr)
+	case "notify":
+		return runNotifyWithIO(args[1:], stdout, stderr)
+	case "file":
+		return runFileWithIO(args[1:], stdout, stderr)
+	case "ssh":
+		return runSSHWithIO(args[1:], stdout, stderr)
+	case "tmux":
+		return runTmuxWithIO(args[1:], stdout, stderr)
+	case "calc":
+		return runCalcWithIO(args[1:], stdout, stderr)
+	case "pi":
+		return runPiWithIO(args[1:], stdout, stderr)
+	case "updates":
 		return cli.UsageError("%s: command group not implemented yet", args[0])
 	default:
 		return cli.UsageError(usage())
@@ -80,7 +94,7 @@ func runThemeWithIO(args []string, stdout, stderr io.Writer) error {
 
 func runThemeWithEnv(args []string, stdout, stderr io.Writer, env themeCommandEnv) error {
 	if len(args) < 1 {
-		return cli.UsageError("usage: orgm-hypr theme [list|validate|status|preview|apply]")
+		return cli.UsageError("usage: orgm-hypr theme [list|validate|status|preview|apply|export-neutral]")
 	}
 	opts, err := parseThemeFlags(args[1:], env.RegistryPath)
 	if err != nil {
@@ -121,6 +135,20 @@ func runThemeWithEnv(args []string, stdout, stderr io.Writer, env themeCommandEn
 		}
 		fmt.Fprintf(stdout, "active=%s\nmode=%s\nwallpaper=%s\nlastApply=none\n", active.ID, active.DefaultMode, wallpaperMode)
 		return nil
+	case "export-neutral":
+		if len(opts.positionals) != 0 || opts.mode != "" {
+			return cli.UsageError("usage: orgm-hypr theme export-neutral [--dry-run] [--registry PATH]")
+		}
+		updated := theme.UpsertNeutralTheme(registry)
+		if opts.dryRun {
+			fmt.Fprintf(stdout, "dryRun=true\nwould update neutral theme in %s\n", opts.registryPath)
+			return nil
+		}
+		if err := theme.SaveRegistryAtomic(opts.registryPath, updated); err != nil {
+			return err
+		}
+		fmt.Fprintf(stdout, "updated neutral theme in %s\n", opts.registryPath)
+		return nil
 	case "preview", "apply":
 		if len(opts.positionals) != 1 {
 			return cli.UsageError("usage: orgm-hypr theme %s THEME [--mode dark|light|auto] [--dry-run] [--registry PATH]", args[0])
@@ -140,15 +168,21 @@ func runThemeWithEnv(args []string, stdout, stderr io.Writer, env themeCommandEn
 		printThemePlan(stdout, plan, dryRun)
 		if args[0] == "apply" && !opts.dryRun {
 			writer := theme.AtomicWriter{Marker: theme.GeneratedMarker}
+			manifest := theme.LastApplyManifest{ThemeID: plan.ThemeID, Mode: plan.Mode}
 			for _, write := range plan.Writes {
-				if err := writer.Write(write.Path, write.Content, write.Mode); err != nil {
+				result, err := writer.Write(write.Path, write.Content, write.Mode)
+				if err != nil {
 					return err
 				}
+				manifest.Writes = append(manifest.Writes, theme.LastApplyManifestWrite{Target: write.Target, Path: write.Path, BackupPath: result.BackupPath})
+			}
+			if err := theme.SaveLastApplyManifest(env.StateHome, manifest); err != nil {
+				return err
 			}
 		}
 		return nil
 	default:
-		return cli.UsageError("usage: orgm-hypr theme [list|validate|status|preview|apply]")
+		return cli.UsageError("usage: orgm-hypr theme [list|validate|status|preview|apply|export-neutral]")
 	}
 }
 
@@ -309,6 +343,32 @@ func runSessionWithIO(args []string, stdout, stderr io.Writer) error {
 			return nil
 		}
 		return runCommand(command.Name, command.Args, stdout, stderr, false)
+	case "lock":
+		flags := flag.NewFlagSet("orgm-hypr session lock", flag.ContinueOnError)
+		flags.SetOutput(stderr)
+		printOnly := flags.Bool("print", false, "print command without locking")
+		force := flags.Bool("force", false, "run live lock command")
+		if err := flags.Parse(args[1:]); err != nil {
+			return cli.UsageError(err.Error())
+		}
+		if flags.NArg() != 0 {
+			return cli.UsageError("unexpected argument: %s", flags.Arg(0))
+		}
+		command := windows.Command{Name: "hyprlock", Args: []string{"--immediate-render", "--no-fade-in"}}
+		if *printOnly {
+			fmt.Fprintln(stdout, shellCommand(command.Name, command.Args))
+			return nil
+		}
+		if !*force {
+			return cli.UsageError("session lock live mode requires --force or --print")
+		}
+		if exec.Command("pgrep", "-x", "hyprlock").Run() == nil {
+			return nil
+		}
+		if commandExists("hyprlock") {
+			return runCommand(command.Name, command.Args, stdout, stderr, false)
+		}
+		return runCommand("loginctl", []string{"lock-session"}, stdout, stderr, false)
 	case "start-discord":
 		flags := flag.NewFlagSet("orgm-hypr session start-discord", flag.ContinueOnError)
 		flags.SetOutput(stderr)
@@ -1033,6 +1093,8 @@ func runWebappWithIO(args []string, stdout, stderr io.Writer) error {
 		return nil
 	case "create":
 		dryRun := flags.Bool("dry-run", false, "print plan without writing")
+		interactive := flags.Bool("interactive", false, "prompt for app details")
+		cancel := flags.Bool("cancel", false, "test-only interactive cancellation")
 		name := flags.String("name", "", "app name")
 		url := flags.String("url", "", "app URL")
 		browser := flags.String("browser", "chromium", "browser command")
@@ -1041,6 +1103,31 @@ func runWebappWithIO(args []string, stdout, stderr io.Writer) error {
 		}
 		if flags.NArg() != 0 {
 			return cli.UsageError("unexpected argument: %s", flags.Arg(0))
+		}
+		if *interactive {
+			if *cancel {
+				fmt.Fprintln(stdout, "cancelled")
+				return nil
+			}
+			if *name == "" {
+				picked, err := rofiText("App name", "", stderr)
+				if err != nil || strings.TrimSpace(picked) == "" {
+					return err
+				}
+				*name = strings.TrimSpace(picked)
+			}
+			if *url == "" {
+				picked, err := rofiText("URL", "https://", stderr)
+				if err != nil || strings.TrimSpace(picked) == "" {
+					return err
+				}
+				*url = strings.TrimSpace(picked)
+			}
+			if *browser == "chromium" {
+				if picked, err := rofiPick("Browser", browserCandidates(), stderr); err == nil && strings.TrimSpace(picked) != "" {
+					*browser = strings.TrimSpace(picked)
+				}
+			}
 		}
 		plan, err := webapp.CreatePlan(webapp.CreateOptions{DataHome: *dataHome, Name: *name, URL: *url, Browser: *browser})
 		if err != nil {
@@ -1053,6 +1140,8 @@ func runWebappWithIO(args []string, stdout, stderr io.Writer) error {
 		return writeWebappCreatePlan(plan)
 	case "remove":
 		dryRun := flags.Bool("dry-run", false, "print plan without deleting")
+		interactive := flags.Bool("interactive", false, "prompt for app removal")
+		cancel := flags.Bool("cancel", false, "test-only interactive cancellation")
 		desktop := flags.String("desktop", "", "desktop file path")
 		profile := flags.Bool("profile", false, "remove profile data")
 		confirm := flags.String("confirm", "", "confirmation token")
@@ -1061,6 +1150,40 @@ func runWebappWithIO(args []string, stdout, stderr io.Writer) error {
 		}
 		if flags.NArg() != 0 {
 			return cli.UsageError("unexpected argument: %s", flags.Arg(0))
+		}
+		if *interactive {
+			if *cancel {
+				fmt.Fprintln(stdout, "cancelled")
+				return nil
+			}
+			apps, err := webapp.List(*dataHome)
+			if err != nil {
+				return err
+			}
+			if len(apps) == 0 {
+				return nil
+			}
+			labels := []string{}
+			byLabel := map[string]webapp.App{}
+			for _, app := range apps {
+				label := app.Name + " — " + app.URL
+				labels = append(labels, label)
+				byLabel[label] = app
+			}
+			picked, err := rofiPick("Remove web app", labels, stderr)
+			if err != nil || picked == "" {
+				return err
+			}
+			app := byLabel[picked]
+			*desktop = app.DesktopPath
+			choice, err := rofiPick("Remove "+app.Name+"?", []string{"Remove launcher only", "Remove launcher and profile data", "Cancel"}, stderr)
+			if err != nil || choice == "" || choice == "Cancel" {
+				return err
+			}
+			if choice == "Remove launcher and profile data" {
+				*profile = true
+				*confirm = "delete-profile"
+			}
 		}
 		plan, err := webapp.RemovePlan(webapp.RemoveOptions{DataHome: *dataHome, DesktopPath: *desktop, RemoveProfile: *profile, Confirm: *confirm})
 		if err != nil {
@@ -1084,6 +1207,352 @@ func runWebappWithIO(args []string, stdout, stderr io.Writer) error {
 	default:
 		return cli.UsageError("usage: orgm-hypr webapp [list|create|remove]")
 	}
+}
+
+func runLauncherWithIO(args []string, stdout, stderr io.Writer) error {
+	if len(args) < 1 || args[0] != "apps" {
+		return cli.UsageError("usage: orgm-hypr launcher apps [--print]")
+	}
+	flags := flag.NewFlagSet("orgm-hypr launcher apps", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	printOnly := flags.Bool("print", false, "print fuzzel command without running")
+	height := flags.Float64("height", 1080, "monitor height for tests")
+	scaleIn := flags.Float64("scale", 1, "monitor scale for tests")
+	if err := flags.Parse(args[1:]); err != nil {
+		return cli.UsageError(err.Error())
+	}
+	if flags.NArg() != 0 {
+		return cli.UsageError("unexpected argument: %s", flags.Arg(0))
+	}
+	scale := (*height / *scaleIn) / 1080
+	if scale < 1 {
+		scale = 1
+	}
+	if scale > 1.35 {
+		scale = 1.35
+	}
+	fargs := []string{fmt.Sprintf("--font=JetBrainsMono Nerd Font:size=%d", int(12*scale)), fmt.Sprintf("--width=%d", int(34*scale)), fmt.Sprintf("--lines=%d", int(10*scale)), fmt.Sprintf("--line-height=%d", int(22*scale))}
+	if *printOnly {
+		fmt.Fprintln(stdout, shellCommand("fuzzel", fargs))
+		return nil
+	}
+	return runCommand("fuzzel", fargs, stdout, stderr, false)
+}
+
+func runNotifyWithIO(args []string, stdout, stderr io.Writer) error {
+	if len(args) < 1 || args[0] != "focus-app" {
+		return cli.UsageError("usage: orgm-hypr notify focus-app [--print]")
+	}
+	flags := flag.NewFlagSet("orgm-hypr notify focus-app", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	printOnly := flags.Bool("print", false, "print focus plan")
+	pid := flags.String("pid", os.Getenv("SWAYNC_HINT_PI_FOCUS_PID"), "pid hint")
+	pattern := flags.String("match", "", "class/title match")
+	if err := flags.Parse(args[1:]); err != nil {
+		return cli.UsageError(err.Error())
+	}
+	if flags.NArg() != 0 {
+		return cli.UsageError("unexpected argument: %s", flags.Arg(0))
+	}
+	if *pid != "" {
+		if *printOnly {
+			fmt.Fprintf(stdout, "focus-pid=%s\n", *pid)
+			return nil
+		}
+		return focusNotifyPID(*pid, stdout, stderr)
+	}
+	if *pattern == "" {
+		*pattern = firstNonEmpty(os.Getenv("SWAYNC_DESKTOP_ENTRY"), os.Getenv("SWAYNC_APP_NAME"), os.Getenv("SWAYNC_SUMMARY"))
+	}
+	if *printOnly {
+		fmt.Fprintf(stdout, "focus-match=%s\n", normalizeNotifyPattern(*pattern))
+		return nil
+	}
+	return focusNotifyMatch(*pattern, stdout, stderr)
+}
+
+func runFileWithIO(args []string, stdout, stderr io.Writer) error {
+	if len(args) < 1 {
+		return cli.UsageError("usage: orgm-hypr file [open|open-dir|open-terminal]")
+	}
+	mode := args[0]
+	flags := flag.NewFlagSet("orgm-hypr file", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	printOnly := flags.Bool("print", false, "print opener command")
+	home := flags.String("home", os.Getenv("HOME"), "home directory")
+	selectValue := flags.String("select", "", "selected relative path")
+	launcher := flags.String("launcher", "fuzzel", "launcher")
+	if err := flags.Parse(args[1:]); err != nil {
+		return cli.UsageError(err.Error())
+	}
+	if flags.NArg() != 0 {
+		return cli.UsageError("unexpected argument: %s", flags.Arg(0))
+	}
+	selection := *selectValue
+	if selection == "" {
+		rows, _ := recentFiles(*home)
+		selection, _ = dmenuPick(*launcher, filePrompt(mode), rows, stderr)
+		if selection == "" {
+			return nil
+		}
+	}
+	path := filepath.Join(*home, selection)
+	cmd := windows.Command{Name: "xdg-open", Args: []string{path}}
+	if mode == "open-dir" {
+		cmd = windows.Command{Name: "nautilus", Args: []string{filepath.Dir(path)}}
+	}
+	if mode == "open-terminal" {
+		cmd = windows.Command{Name: "kitty", Args: []string{"--directory", filepath.Dir(path)}}
+	}
+	if mode != "open" && mode != "open-dir" && mode != "open-terminal" {
+		return cli.UsageError("usage: orgm-hypr file [open|open-dir|open-terminal]")
+	}
+	return runOrPrintCommand(cmd, *printOnly, stdout, stderr)
+}
+
+func runSSHWithIO(args []string, stdout, stderr io.Writer) error {
+	if len(args) < 1 || args[0] != "host" {
+		return cli.UsageError("usage: orgm-hypr ssh host")
+	}
+	flags := flag.NewFlagSet("orgm-hypr ssh host", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	printOnly := flags.Bool("print", false, "print ssh command")
+	home := flags.String("home", os.Getenv("HOME"), "home directory")
+	selectValue := flags.String("select", "", "selected host")
+	launcher := flags.String("launcher", "fuzzel", "launcher")
+	if err := flags.Parse(args[1:]); err != nil {
+		return cli.UsageError(err.Error())
+	}
+	selection := *selectValue
+	if selection == "" {
+		hosts := sshHosts(*home)
+		selection, _ = dmenuPick(*launcher, "SSH> ", hosts, stderr)
+		if selection == "" {
+			return nil
+		}
+	}
+	return runOrPrintCommand(windows.Command{Name: "kitty", Args: []string{"-e", "ssh", selection}}, *printOnly, stdout, stderr)
+}
+
+func runTmuxWithIO(args []string, stdout, stderr io.Writer) error {
+	if len(args) < 1 || args[0] != "arch" {
+		return cli.UsageError("usage: orgm-hypr tmux arch")
+	}
+	flags := flag.NewFlagSet("orgm-hypr tmux arch", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	printOnly := flags.Bool("print", false, "print tmux command")
+	selectValue := flags.String("select", "", "selected tmux ls row")
+	launcher := flags.String("launcher", "fuzzel", "launcher")
+	if err := flags.Parse(args[1:]); err != nil {
+		return cli.UsageError(err.Error())
+	}
+	selection := *selectValue
+	if selection == "" {
+		data, _ := exec.Command("distrobox-enter", "arch", "--", "tmux", "ls").Output()
+		lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+		selection, _ = dmenuPick(*launcher, "tmux> ", lines, stderr)
+		if selection == "" {
+			return nil
+		}
+	}
+	sessionName, _, _ := strings.Cut(selection, ":")
+	return runOrPrintCommand(windows.Command{Name: "kitty", Args: []string{"-e", "distrobox-enter", "arch", "--", "tmux", "attach", "-t", sessionName}}, *printOnly, stdout, stderr)
+}
+
+func runCalcWithIO(args []string, stdout, stderr io.Writer) error {
+	if len(args) < 1 || args[0] != "fuzzel" {
+		return cli.UsageError("usage: orgm-hypr calc fuzzel")
+	}
+	flags := flag.NewFlagSet("orgm-hypr calc fuzzel", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	printOnly := flags.Bool("print", false, "print calc command")
+	expr := flags.String("expr", "", "expression")
+	if err := flags.Parse(args[1:]); err != nil {
+		return cli.UsageError(err.Error())
+	}
+	if *expr == "" {
+		picked, _ := dmenuPick("fuzzel", "Calc> ", []string{}, stderr)
+		*expr = picked
+		if *expr == "" {
+			return nil
+		}
+	}
+	if *printOnly {
+		fmt.Fprintf(stdout, "qalc -t %s\nwl-copy\nnotify-send Calc\n", *expr)
+		return nil
+	}
+	data, err := exec.Command("qalc", "-t", *expr).Output()
+	if err != nil {
+		return err
+	}
+	result := strings.TrimSpace(string(data))
+	return runExecutionPlan(smartrun.ExecutionPlan{Commands: []smartrun.Command{{Name: "wl-copy", Stdin: result}, {Name: "notify-send", Args: []string{"Calc", *expr + " = " + result}}}}, stdout, stderr)
+}
+
+func runPiWithIO(args []string, stdout, stderr io.Writer) error {
+	if len(args) < 1 || args[0] != "prompt" {
+		return cli.UsageError("usage: orgm-hypr pi prompt")
+	}
+	flags := flag.NewFlagSet("orgm-hypr pi prompt", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	printOnly := flags.Bool("print", false, "print pi command")
+	input := flags.String("input", "", "prompt input")
+	launcher := flags.String("launcher", "walker", "walker, rofi, or stdin")
+	if err := flags.Parse(args[1:]); err != nil {
+		return cli.UsageError(err.Error())
+	}
+	value := strings.TrimSpace(*input)
+	if value == "" && !*printOnly {
+		picked, _ := dmenuPick(*launcher, "Pedir instrucción a Pi", []string{}, stderr)
+		value = strings.TrimSpace(picked)
+	}
+	if value == "" {
+		return nil
+	}
+	cmd := windows.Command{Name: "kitty", Args: []string{"--class", "kitty", "--hold", "-e", "distrobox-enter", "arch", "--", "pi", value}}
+	return runOrPrintCommand(cmd, *printOnly, stdout, stderr)
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func normalizeNotifyPattern(value string) string {
+	value = strings.TrimSuffix(strings.ToLower(value), ".desktop")
+	parts := strings.FieldsFunc(value, func(r rune) bool { return !(r >= 'a' && r <= 'z' || r >= '0' && r <= '9') })
+	return strings.Join(parts, "[-_.]*")
+}
+
+func focusNotifyPID(pid string, stdout, stderr io.Writer) error {
+	data, err := readHyprClientsJSON("")
+	if err != nil {
+		return err
+	}
+	var clients []struct {
+		PID     int    `json:"pid"`
+		Address string `json:"address"`
+	}
+	if err := json.Unmarshal(data, &clients); err != nil {
+		return err
+	}
+	for _, client := range clients {
+		if strconv.Itoa(client.PID) == pid {
+			cmd, _ := windows.FocusCommand(client.Address)
+			return runOrPrintCommand(cmd, false, stdout, stderr)
+		}
+	}
+	return nil
+}
+
+func focusNotifyMatch(pattern string, stdout, stderr io.Writer) error {
+	pattern = normalizeNotifyPattern(pattern)
+	if pattern == "" {
+		return nil
+	}
+	data, err := readHyprClientsJSON("")
+	if err != nil {
+		return err
+	}
+	rows, err := windows.ClientRowsFromJSON(data)
+	if err != nil {
+		return err
+	}
+	for _, row := range rows {
+		if strings.Contains(normalizeNotifyPattern(row.Label), pattern) {
+			cmd, _ := windows.FocusCommand(row.Address)
+			return runOrPrintCommand(cmd, false, stdout, stderr)
+		}
+	}
+	return nil
+}
+
+func recentFiles(home string) ([]string, error) {
+	out := []string{}
+	err := filepath.WalkDir(home, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		rel, relErr := filepath.Rel(home, path)
+		if relErr == nil && !strings.HasPrefix(rel, ".") && !strings.Contains(rel, "/.") {
+			out = append(out, rel)
+		}
+		return nil
+	})
+	return out, err
+}
+
+func filePrompt(mode string) string {
+	if mode == "open-dir" {
+		return "Dir> "
+	}
+	if mode == "open-terminal" {
+		return "Term dir> "
+	}
+	return "File> "
+}
+
+func sshHosts(home string) []string {
+	seen := map[string]bool{}
+	add := func(host string) {
+		if host != "" && !strings.ContainsAny(host, "*?") {
+			seen[host] = true
+		}
+	}
+	if data, err := os.ReadFile(filepath.Join(home, ".ssh", "config")); err == nil {
+		for _, line := range strings.Split(string(data), "\n") {
+			fields := strings.Fields(line)
+			if len(fields) > 1 && strings.EqualFold(fields[0], "host") {
+				for _, h := range fields[1:] {
+					add(h)
+				}
+			}
+		}
+	}
+	if data, err := os.ReadFile(filepath.Join(home, ".ssh", "known_hosts")); err == nil {
+		for _, line := range strings.Split(string(data), "\n") {
+			field := strings.FieldsFunc(line, func(r rune) bool { return r == ' ' || r == ',' })
+			if len(field) > 0 && !strings.HasPrefix(field[0], "|") {
+				add(strings.Trim(strings.TrimPrefix(field[0], "["), "]"))
+			}
+		}
+	}
+	out := []string{}
+	for host := range seen {
+		out = append(out, host)
+	}
+	return out
+}
+
+func rofiText(prompt, initial string, stderr io.Writer) (string, error) {
+	cmd := exec.Command("rofi", "-dmenu", "-i", "-p", prompt)
+	cmd.Stdin = strings.NewReader(initial)
+	cmd.Stderr = stderr
+	data, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(data)), nil
+}
+
+func browserCandidates() []string {
+	candidates := []string{}
+	for _, name := range []string{"chromium", "brave", "brave-browser"} {
+		if commandExists(name) {
+			candidates = append(candidates, name)
+		}
+	}
+	if commandExists("flatpak") && flatpakAppExists("com.brave.Browser") {
+		candidates = append(candidates, "flatpak:com.brave.Browser")
+	}
+	if len(candidates) == 0 {
+		candidates = append(candidates, "chromium")
+	}
+	return candidates
 }
 
 func rofiPick(prompt string, labels []string, stderr io.Writer) (string, error) {
@@ -1512,5 +1981,5 @@ func (f *csvFlag) Set(value string) error {
 }
 
 func usage() string {
-	return "usage: orgm-hypr [version|wallpaper|theme|session|waybar|dock|windows|zen|osd|menu|updates|webapp|notify|smart-run] ..."
+	return "usage: orgm-hypr [version|wallpaper|theme|session|waybar|dock|windows|zen|osd|menu|updates|webapp|notify|smart-run|launcher|fuzzel|file|ssh|tmux|calc|pi] ..."
 }

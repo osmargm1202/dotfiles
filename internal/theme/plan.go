@@ -3,6 +3,7 @@ package theme
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -124,8 +125,40 @@ func BuildApplyPlan(theme Theme, opts PlanOptions) (ApplyPlan, error) {
 		case "qt":
 			plan.Writes = append(plan.Writes, renderQt(resolved, opts)...)
 			plan.Warnings = append(plan.Warnings, "qt: generated qt5ct/qt6ct files require selecting orgm-hypr config or restarting Qt apps")
-		case "chromium", "zen":
-			plan.Warnings = append(plan.Warnings, fmt.Sprintf("%s target placeholder: export renderer not implemented in this slice", target))
+		case "fuzzel":
+			plan.Writes = append(plan.Writes, renderFuzzel(resolved, opts)...)
+			plan.Warnings = append(plan.Warnings, "fuzzel: include or pass generated theme file manually; existing config was not modified")
+			warnIfMissingConfigDir(&plan, opts, "fuzzel", "fuzzel")
+		case "rofi":
+			plan.Writes = append(plan.Writes, renderRofi(resolved, opts)...)
+			plan.Warnings = append(plan.Warnings, "rofi: import generated theme from config.rasi manually; existing config was not modified")
+			warnIfMissingConfigDir(&plan, opts, "rofi", "rofi")
+		case "kitty":
+			plan.Writes = append(plan.Writes, renderKitty(resolved, opts)...)
+			plan.Warnings = append(plan.Warnings, "kitty: add include orgm-hypr-theme.conf to kitty.conf manually; existing config was not modified")
+			warnIfMissingConfigDir(&plan, opts, "kitty", "kitty")
+		case "yazi":
+			plan.Writes = append(plan.Writes, renderYazi(resolved, opts)...)
+			plan.Warnings = append(plan.Warnings, "yazi: generated theme.toml may replace Yazi theme file; review before enabling")
+			warnIfMissingConfigDir(&plan, opts, "yazi", "yazi")
+		case "helix":
+			plan.Writes = append(plan.Writes, renderHelix(resolved, opts)...)
+			plan.Warnings = append(plan.Warnings, "helix: set theme = \"orgm-hypr\" in config.toml manually; existing config was not modified")
+			warnIfMissingConfigDir(&plan, opts, "helix", "helix")
+		case "kvantum":
+			plan.Writes = append(plan.Writes, renderKvantum(resolved, opts)...)
+			plan.Warnings = append(plan.Warnings, "kvantum: select orgm-hypr in Kvantum Manager manually; existing config was not modified")
+			warnIfMissingConfigDir(&plan, opts, "kvantum", "Kvantum")
+		case "kde":
+			plan.Writes = append(plan.Writes, renderKDE(resolved, opts)...)
+			plan.Warnings = append(plan.Warnings, "kde: import generated kdeglobals.orgm-hypr manually; existing config was not modified")
+			warnIfMissingConfigDir(&plan, opts, "kde", "")
+		case "chromium":
+			plan.Writes = append(plan.Writes, renderChromium(theme, resolved, opts)...)
+			plan.Warnings = append(plan.Warnings, "chromium: generated theme export only; load unpacked extension manually and restart Chromium if needed; profile was not modified")
+		case "zen":
+			plan.Writes = append(plan.Writes, renderZen(theme, resolved, opts)...)
+			plan.Warnings = append(plan.Warnings, "zen: generated browser export notes only; copy files manually after reviewing profile path; profile was not modified")
 		default:
 			return ApplyPlan{}, fmt.Errorf("invalid target %q", target)
 		}
@@ -266,6 +299,265 @@ style=%s
 		)
 	}
 	return writes
+}
+
+func renderFuzzel(resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
+	p := resolved.Palette
+	content := fmt.Sprintf(`# %s
+[colors]
+background=%sff
+text=%sff
+prompt=%sff
+placeholder=%sff
+input=%sff
+match=%sff
+selection=%sff
+selection-text=%sff
+selection-match=%sff
+border=%sff
+`, GeneratedMarker, p.Background, p.Foreground, p.Accent, p.Muted, p.Foreground, p.Accent, p.SurfaceAlt, p.Foreground, p.Accent2, p.Border)
+	return []PlannedWrite{{Target: "fuzzel", Path: filepath.Join(opts.ConfigHome, "fuzzel", "orgm-hypr-theme.ini"), Content: []byte(content), Mode: 0o600}}
+}
+
+func renderRofi(resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
+	p := resolved.Palette
+	content := fmt.Sprintf(`/* %s */
+* {
+    background: %s;
+    foreground: %s;
+    selected: %s;
+    active: %s;
+    urgent: %s;
+    border: %s;
+}
+
+window {
+    background-color: @background;
+    border-color: @border;
+}
+
+element selected {
+    background-color: @selected;
+    text-color: @foreground;
+}
+`, GeneratedMarker, p.Background, p.Foreground, p.Accent, p.Success, p.Urgent, p.Border)
+	return []PlannedWrite{{Target: "rofi", Path: filepath.Join(opts.ConfigHome, "rofi", "orgm-hypr-theme.rasi"), Content: []byte(content), Mode: 0o600}}
+}
+
+func renderKitty(resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
+	p := resolved.Palette
+	content := fmt.Sprintf(`# %s
+background %s
+foreground %s
+selection_background %s
+selection_foreground %s
+cursor %s
+url_color %s
+active_border_color %s
+inactive_border_color %s
+bell_border_color %s
+`, GeneratedMarker, p.Background, p.Foreground, p.SurfaceAlt, p.Foreground, p.Accent, p.Accent2, p.Accent, p.Border, p.Urgent)
+	return []PlannedWrite{{Target: "kitty", Path: filepath.Join(opts.ConfigHome, "kitty", "orgm-hypr-theme.conf"), Content: []byte(content), Mode: 0o600}}
+}
+
+func renderYazi(resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
+	p := resolved.Palette
+	content := fmt.Sprintf(`# %s
+syntect_theme = "base16-orgm-hypr"
+
+[manager]
+cwd = { fg = "%s" }
+hovered = { fg = "%s", bg = "%s" }
+preview_hovered = { underline = true }
+
+[status]
+separator_open = ""
+separator_close = ""
+separator_style = { fg = "%s", bg = "%s" }
+
+[filetype]
+rules = [
+  { mime = "inode/directory", fg = "%s" },
+]
+`, GeneratedMarker, p.Accent, p.Foreground, p.SurfaceAlt, p.SurfaceAlt, p.Background, p.Accent)
+	return []PlannedWrite{{Target: "yazi", Path: filepath.Join(opts.ConfigHome, "yazi", "theme.toml"), Content: []byte(content), Mode: 0o600}}
+}
+
+func renderHelix(resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
+	p := resolved.Palette
+	content := fmt.Sprintf(`# %s
+"ui.background" = { bg = "background" }
+"ui.text" = { fg = "foreground" }
+"ui.selection" = { bg = "surface_alt" }
+"ui.cursor" = { fg = "background", bg = "accent" }
+"ui.statusline" = { fg = "foreground", bg = "surface" }
+"warning" = "urgent"
+"error" = "urgent"
+
+[palette]
+background = "%s"
+surface = "%s"
+surface_alt = "%s"
+foreground = "%s"
+muted = "%s"
+accent = "%s"
+urgent = "%s"
+success = "%s"
+`, GeneratedMarker, p.Background, p.Surface, p.SurfaceAlt, p.Foreground, p.Muted, p.Accent, p.Urgent, p.Success)
+	return []PlannedWrite{{Target: "helix", Path: filepath.Join(opts.ConfigHome, "helix", "themes", "orgm-hypr.toml"), Content: []byte(content), Mode: 0o600}}
+}
+
+func renderKvantum(resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
+	p := resolved.Palette
+	content := fmt.Sprintf(`# %s
+[General]
+base.color=%s
+text.color=%s
+highlight.color=%s
+highlight.text.color=%s
+window.color=%s
+alternate.color=%s
+disabled.text.color=%s
+contrast=%s
+`, GeneratedMarker, p.Background, p.Foreground, p.Accent, p.Foreground, p.Surface, p.SurfaceAlt, p.Muted, p.Border)
+	return []PlannedWrite{{Target: "kvantum", Path: filepath.Join(opts.ConfigHome, "Kvantum", "orgm-hypr", "orgm-hypr.kvconfig"), Content: []byte(content), Mode: 0o600}}
+}
+
+func renderKDE(resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
+	p := resolved.Palette
+	br, bg, bb := rgbValues(p.Background)
+	fr, fg, fb := rgbValues(p.Foreground)
+	sr, sg, sb := rgbValues(p.Surface)
+	ar, ag, ab := rgbValues(p.Accent)
+	content := fmt.Sprintf(`# %s
+[Colors:Window]
+BackgroundNormal=%d,%d,%d
+ForegroundNormal=%d,%d,%d
+
+[Colors:View]
+BackgroundNormal=%d,%d,%d
+ForegroundNormal=%d,%d,%d
+
+[Colors:Selection]
+BackgroundNormal=%d,%d,%d
+ForegroundNormal=%d,%d,%d
+`, GeneratedMarker, br, bg, bb, fr, fg, fb, sr, sg, sb, fr, fg, fb, ar, ag, ab, fr, fg, fb)
+	return []PlannedWrite{{Target: "kde", Path: filepath.Join(opts.ConfigHome, "kdeglobals.orgm-hypr"), Content: []byte(content), Mode: 0o600}}
+}
+
+func renderChromium(theme Theme, resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
+	p := resolved.Palette
+	exportDir := filepath.Join(opts.StateHome, "orgm-hypr", "theme", "exports", "chromium", theme.ID+"-"+resolved.Mode)
+	manifest := struct {
+		Marker          string `json:"_comment"`
+		ManifestVersion int    `json:"manifest_version"`
+		Name            string `json:"name"`
+		Version         string `json:"version"`
+		Theme           struct {
+			Colors map[string][]int  `json:"colors"`
+			Images map[string]string `json:"images,omitempty"`
+		} `json:"theme"`
+	}{
+		Marker:          GeneratedMarker,
+		ManifestVersion: 3,
+		Name:            fmt.Sprintf("orgm-hypr %s %s", theme.ID, resolved.Mode),
+		Version:         "1.0.0",
+	}
+	manifest.Theme.Colors = map[string][]int{
+		"bookmark_text":       rgbSlice(p.Foreground),
+		"button_background":   rgbSlice(p.SurfaceAlt),
+		"frame":               rgbSlice(p.Accent),
+		"frame_inactive":      rgbSlice(p.Surface),
+		"ntp_background":      rgbSlice(p.Background),
+		"ntp_text":            rgbSlice(p.Foreground),
+		"tab_background_text": rgbSlice(p.Muted),
+		"tab_text":            rgbSlice(p.Foreground),
+		"toolbar":             rgbSlice(p.Surface),
+		"toolbar_button_icon": rgbSlice(p.Foreground),
+	}
+	writes := []PlannedWrite{}
+	if theme.Wallpaper.Path != "" {
+		if wallpaper, err := os.ReadFile(theme.Wallpaper.Path); err == nil {
+			ext := filepath.Ext(theme.Wallpaper.Path)
+			if ext == "" {
+				ext = ".png"
+			}
+			assetName := "wallpaper" + ext
+			manifest.Theme.Images = map[string]string{"theme_ntp_background": assetName}
+			writes = append(writes, PlannedWrite{Target: "chromium", Path: filepath.Join(exportDir, assetName), Content: wallpaper, Mode: 0o600})
+		}
+	}
+	data, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return nil
+	}
+	manifestWrite := PlannedWrite{Target: "chromium", Path: filepath.Join(exportDir, "manifest.json"), Content: append(data, '\n'), Mode: 0o600}
+	return append([]PlannedWrite{manifestWrite}, writes...)
+}
+
+func renderZen(theme Theme, resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
+	p := resolved.Palette
+	exportDir := filepath.Join(opts.StateHome, "orgm-hypr", "theme", "exports", "zen", theme.ID+"-"+resolved.Mode)
+	readme := fmt.Sprintf(`# orgm-hypr Zen Browser theme export
+
+%s
+
+Mode: %s
+Theme: %s
+
+No Zen profile files were modified.
+
+Manual steps:
+1. Open about:profiles in Zen Browser and choose the profile to theme.
+2. Back up the profile's chrome/userChrome.css if it exists.
+3. Copy userChrome.css from this directory into that profile's chrome directory.
+4. Restart Zen Browser.
+
+Copy userChrome.css manually only after backing up your selected profile.
+`, GeneratedMarker, resolved.Mode, theme.ID)
+	css := fmt.Sprintf(`/* %s */
+:root {
+  --orgm-hypr-background: %s;
+  --orgm-hypr-surface: %s;
+  --orgm-hypr-foreground: %s;
+  --orgm-hypr-muted: %s;
+  --orgm-hypr-accent: %s;
+  --orgm-hypr-border: %s;
+}
+
+#navigator-toolbox,
+#TabsToolbar,
+#nav-bar {
+  background-color: var(--orgm-hypr-background) !important;
+  color: var(--orgm-hypr-foreground) !important;
+}
+
+tab[selected="true"] .tab-background {
+  background-color: var(--orgm-hypr-surface) !important;
+  outline: 1px solid var(--orgm-hypr-accent) !important;
+}
+`, GeneratedMarker, p.Background, p.Surface, p.Foreground, p.Muted, p.Accent, p.Border)
+	return []PlannedWrite{
+		{Target: "zen", Path: filepath.Join(exportDir, "README.md"), Content: []byte(readme), Mode: 0o600},
+		{Target: "zen", Path: filepath.Join(exportDir, "userChrome.css"), Content: []byte(css), Mode: 0o600},
+	}
+}
+
+func rgbSlice(value string) []int {
+	r, g, b := rgbValues(value)
+	return []int{r, g, b}
+}
+
+func warnIfMissingConfigDir(plan *ApplyPlan, opts PlanOptions, target, dir string) {
+	path := filepath.Join(opts.ConfigHome, dir)
+	if dir == "" {
+		path = filepath.Join(opts.ConfigHome, "kdeglobals")
+	}
+	info, err := os.Stat(path)
+	if err == nil && (dir == "" || info.IsDir()) {
+		return
+	}
+	plan.Warnings = append(plan.Warnings, fmt.Sprintf("%s: no existing config directory found; generated file is a safe pointer only", target))
 }
 
 func hexNoHash(value string) string {

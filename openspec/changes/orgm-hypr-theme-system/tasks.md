@@ -50,11 +50,11 @@ planned
 
 ## Slice 5: browser export targets
 
-- [ ] RED: Chromium manifest generation test.
-- [ ] Implement Chromium theme export directory with manifest and optional wallpaper asset.
-- [ ] Implement Zen Browser best-effort export notes/files, no profile mutation by default.
-- [ ] Add docs for manual load/restart and profile safety.
-- [ ] GREEN: browser exporters never mutate profiles unless configured.
+- [x] RED: Chromium manifest generation test.
+- [x] Implement Chromium theme export directory with manifest and optional wallpaper asset.
+- [x] Implement Zen Browser best-effort export notes/files, no profile mutation by default.
+- [x] Add docs for manual load/restart and profile safety.
+- [x] GREEN: browser exporters never mutate profiles unless configured.
 
 ## Slice 6: verification and docs
 

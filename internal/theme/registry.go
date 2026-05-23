@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 )
@@ -135,6 +136,110 @@ func ActiveTheme(registry Registry) (Theme, bool) {
 		}
 	}
 	return Theme{}, false
+}
+
+func BuiltInNeutralTheme() Theme {
+	return Theme{
+		ID:          "neutral",
+		Name:        "Neutral",
+		Description: "Neutral theme derived from current Hyprland/Matugen palette.",
+		DefaultMode: "dark",
+		Wallpaper:   Wallpaper{Mode: "current", DeriveColors: false},
+		Palettes: map[string]Palette{
+			"dark": {
+				Background: "#131317",
+				Surface:    "#201f23",
+				SurfaceAlt: "#353438",
+				Foreground: "#e5e1e7",
+				Muted:      "#918f9a",
+				Accent:     "#c2c1ff",
+				Accent2:    "#f5b2e0",
+				Border:     "#47464f",
+				Urgent:     "#ffb4ab",
+				Success:    "#b5ccba",
+			},
+			"light": {
+				Background: "#fffbff",
+				Surface:    "#f4eff4",
+				SurfaceAlt: "#e7e0e7",
+				Foreground: "#1c1b1f",
+				Muted:      "#767680",
+				Accent:     "#595992",
+				Accent2:    "#8a4f7b",
+				Border:     "#c8c5d1",
+				Urgent:     "#ba1a1a",
+				Success:    "#386a20",
+			},
+		},
+		Targets: map[string]map[string]string{
+			"chromium": {"mode": "export"},
+			"fuzzel":   {"mode": "generated"},
+			"gtk":      {"mode": "generated"},
+			"helix":    {"mode": "generated"},
+			"hypr":     {"mode": "generated"},
+			"kde":      {"mode": "generated"},
+			"kitty":    {"mode": "generated"},
+			"kvantum":  {"mode": "generated"},
+			"nwg-dock": {"mode": "generated"},
+			"qt":       {"mode": "generated"},
+			"rofi":     {"mode": "generated"},
+			"waybar":   {"mode": "generated"},
+			"yazi":     {"mode": "generated"},
+			"zen":      {"mode": "export"},
+		},
+		ReloadPolicy: map[string]string{
+			"gtk":      "restart-hint",
+			"hypr":     "hyprctl reload",
+			"nwg-dock": "restart-hint",
+			"qt":       "restart-hint",
+			"waybar":   "SIGUSR2",
+		},
+		SafetyPolicy: map[string]string{"profileMutation": "disabled"},
+	}
+}
+
+func UpsertNeutralTheme(registry Registry) Registry {
+	neutral := BuiltInNeutralTheme()
+	for i, existing := range registry.Themes {
+		if existing.ID == neutral.ID {
+			registry.Themes[i] = neutral
+			return registry
+		}
+	}
+	registry.Themes = append(registry.Themes, neutral)
+	return registry
+}
+
+func SaveRegistryAtomic(path string, registry Registry) error {
+	data, err := json.MarshalIndent(registry, "", "  ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(path), ".orgm-hypr-registry-*")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	if err := os.Chmod(tmpPath, 0o600); err != nil {
+		return err
+	}
+	return os.Rename(tmpPath, path)
 }
 
 func validMode(mode string) bool {

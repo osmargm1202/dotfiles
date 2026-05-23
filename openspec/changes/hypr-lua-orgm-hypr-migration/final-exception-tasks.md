@@ -51,7 +51,7 @@ Chain strategy: pending
 
 ## Slice 11: Characterize remaining wrappers and add command surface tests
 
-- [ ] 11.1 Refresh final exception audit before implementation.
+- [x] 11.1 Refresh final exception audit before implementation.
   - Owner target: discovery/docs.
   - Files/discovery targets: `openspec/changes/hypr-lua-orgm-hypr-migration/wrapper-migration-audit.md`, `openspec/changes/hypr-lua-orgm-hypr-migration/final-exception-tasks.md`, `config/shared/.local/bin/hypr-webapp-maker`, `config/shared/.local/bin/hypr-webapp-remover`, `config/shared/.local/bin/hypr-fuzzel`, `config/shared/.local/bin/hypr-lock`, `config/shared/.local/bin/hypr-focus-notification-app`, `config/shared/.local/bin/fuzzel-open-file`, `config/shared/.local/bin/fuzzel-open-file-dir`, `config/shared/.local/bin/fuzzel-open-file-terminal`, `config/shared/.local/bin/fuzzel-ssh-host`, `config/shared/.local/bin/fuzzel-tmux-arch`, `config/shared/.local/bin/fuzzel-calc`, `config/shared/.config/hypr/scripts/pi-walker-prompt.sh`, `config/shared/.config/sway/config`, `config/dotfiles.json`.
   - RED boundary: no Go, wrapper, or caller edits yet.
@@ -60,7 +60,7 @@ Chain strategy: pending
   - Verification: docs diff only; `git diff --check`; record blocked Nix/dot validators if attempted.
   - Rollback: revert audit/task artifact edits only.
 
-- [ ] 11.2 Add RED CLI contract tests for final command names and safety flags.
+- [x] 11.2 Add RED CLI contract tests for final command names and safety flags.
   - Owner target: `orgm-hypr` command router.
   - Files/discovery targets: `cmd/orgm-hypr/main_test.go`, `cmd/orgm-hypr/main.go`, future `internal/launcher/**` or `internal/fuzzel/**`, `internal/session/**`, `internal/notify/**`, future `internal/filelauncher/**`, future `internal/sshmenu/**`, future `internal/tmuxmenu/**`, future `internal/calc/**`, future `internal/pi/**`, `internal/webapp/**`, `internal/waybar/**`.
   - RED tasks: assert usage/help and stable exit behavior for `webapp create --interactive`, `webapp remove --interactive`, launcher/fuzzel app command chosen in 11.1, `session lock`, `notify focus-app`, `file open`, `file open-dir`, `file open-terminal`, `ssh host`, `tmux arch`, `calc fuzzel`, `pi prompt`, and `waybar watch` direct sway usage.
@@ -69,7 +69,7 @@ Chain strategy: pending
   - Verification: RED `go test ./cmd/orgm-hypr ./internal/...`; `git diff --check`.
   - Rollback: revert tests only; existing wrappers remain behavior owners.
 
-- [ ] 11.3 Add RED characterization tests for wrapper behavior models.
+- [x] 11.3 Add RED characterization tests for wrapper behavior models.
   - Owner target: domain packages.
   - Files/discovery targets: `internal/webapp/**`, future `internal/launcher/**` or `internal/fuzzel/**`, `internal/session/**`, `internal/notify/**`, future `internal/filelauncher/**`, future `internal/sshmenu/**`, future `internal/tmuxmenu/**`, future `internal/calc/**`, future `internal/pi/**`.
   - RED tasks: create fake runner/filesystem tests for current wrapper behavior: fuzzel row generation, selected row parsing, file path quoting, opener command plans, ssh host discovery, tmux arch container/session plan, calculator output plan, Pi walker prompt plan, notification app focus matching, lock command plan, webapp interactive prompts and remove choices.
@@ -80,7 +80,7 @@ Chain strategy: pending
 
 ## Slice 12: Implement interactive command surfaces and convert safe wrappers to thin exec
 
-- [ ] 12.1 Implement interactive webapp create/remove in `orgm-hypr webapp`.
+- [x] 12.1 Implement interactive webapp create/remove in `orgm-hypr webapp`.
   - Owner target: `orgm-hypr webapp`.
   - Files/discovery targets: `cmd/orgm-hypr/main.go`, `internal/webapp/**`, `config/shared/.local/bin/hypr-webapp-maker`, `config/shared/.local/bin/hypr-webapp-remover`.
   - GREEN tasks: implement no-arg interactive rofi-compatible UX in Go for maker/remover; keep prompt/data/action planning testable; preserve `webapp list`, `create --dry-run`, `remove --dry-run`; add `--print` where useful.
@@ -89,7 +89,7 @@ Chain strategy: pending
   - Verification: GREEN `go test ./internal/webapp ./cmd/orgm-hypr`; `go test ./...`; wrapper static grep for `exec orgm-hypr`; `git diff --check`; record blocked Nix/dot validators.
   - Rollback: restore previous `hypr-webapp-maker` / `hypr-webapp-remover` bodies and keep Go command unused.
 
-- [ ] 12.2 Implement fuzzel/app launcher and lock/notification command surfaces.
+- [x] 12.2 Implement fuzzel/app launcher and lock/notification command surfaces.
   - Owner target: launcher/session/notify.
   - Files/discovery targets: `cmd/orgm-hypr/main.go`, future `internal/launcher/**` or `internal/fuzzel/**`, `internal/session/**`, `internal/notify/**`, `config/shared/.local/bin/hypr-fuzzel`, `config/shared/.local/bin/hypr-lock`, `config/shared/.local/bin/hypr-focus-notification-app`, `config/shared/.config/swaync/config.json`.
   - GREEN tasks: implement chosen app launcher command preserving `hypr-fuzzel` monitor/scale behavior; implement `session lock` with safe command planning and optional `--print`; implement `notify focus-app` by moving focus-notification app matching/dispatch into Go.
@@ -98,7 +98,7 @@ Chain strategy: pending
   - Verification: focused package tests; `go test ./cmd/orgm-hypr ./internal/session ./internal/notify ./...`; wrapper static checks; `git diff --check`; manual lock/notify smoke only if safe and approved, otherwise record blocked/manual-not-run reason.
   - Rollback: restore prior wrapper bodies and any swaync caller if changed.
 
-- [ ] 12.3 Implement file/ssh/tmux/calc/Pi interactive command surfaces.
+- [x] 12.3 Implement file/ssh/tmux/calc/Pi interactive command surfaces.
   - Owner target: file launcher, ssh menu, tmux menu, calc, Pi prompt.
   - Files/discovery targets: `cmd/orgm-hypr/main.go`, future `internal/filelauncher/**`, future `internal/sshmenu/**`, future `internal/tmuxmenu/**`, future `internal/calc/**`, future `internal/pi/**`, `config/shared/.local/bin/fuzzel-open-file`, `config/shared/.local/bin/fuzzel-open-file-dir`, `config/shared/.local/bin/fuzzel-open-file-terminal`, `config/shared/.local/bin/fuzzel-ssh-host`, `config/shared/.local/bin/fuzzel-tmux-arch`, `config/shared/.local/bin/fuzzel-calc`, `config/shared/.config/hypr/scripts/pi-walker-prompt.sh`.
   - GREEN tasks: move file discovery/selection/open plans, ssh host discovery/selection, tmux arch session/container plan, calculator prompt/evaluation plan, and Pi walker prompt/kitty launch plan into Go with fake runner tests.
@@ -107,7 +107,7 @@ Chain strategy: pending
   - Verification: focused package tests; `go test ./cmd/orgm-hypr ./...`; wrapper static checks for all listed paths; `git diff --check`; blocked Nix/dot validators recorded.
   - Rollback: restore previous script bodies; leave new commands unused or revert Slice 12 package files.
 
-- [ ] 12.4 TRIANGULATE and REFACTOR shared launcher primitives.
+- [x] 12.4 TRIANGULATE and REFACTOR shared launcher primitives.
   - Owner target: shared command runner/interactive selection helpers.
   - Files/discovery targets: new `internal/*` packages from 12.1-12.3, `internal/cli/**`, `cmd/orgm-hypr/main.go`.
   - Tasks: remove duplicated fuzzel/rofi/walker runner code only after two or more domains pass tests; keep pure model functions separate from live runners; maintain small package boundaries.
@@ -117,7 +117,7 @@ Chain strategy: pending
 
 ## Slice 13: Update sway caller, final audit, and verification
 
-- [ ] 13.1 Update Sway `waybar-watch` caller to canonical `orgm-hypr waybar watch`.
+- [x] 13.1 Update Sway `waybar-watch` caller to canonical `orgm-hypr waybar watch`.
   - Owner target: non-Hypr explicit caller migration.
   - Files/discovery targets: `config/shared/.config/sway/config`, `config/shared/.local/bin/waybar-watch`, `internal/waybar/**`, `cmd/orgm-hypr/main.go`.
   - Start boundary: existing `orgm-hypr waybar watch` tests pass and command supports the Sway config path.
@@ -125,7 +125,7 @@ Chain strategy: pending
   - Verification: focused Waybar tests; static grep confirms Sway caller no longer invokes `waybar-watch`; `git diff --check`; manual Sway smoke or documented blocker.
   - Rollback: restore previous Sway caller string.
 
-- [ ] 13.2 Run final wrapper/caller audit and update OpenSpec evidence.
+- [x] 13.2 Run final wrapper/caller audit and update OpenSpec evidence.
   - Owner target: docs/audit.
   - Files/discovery targets: `openspec/changes/hypr-lua-orgm-hypr-migration/wrapper-migration-audit.md`, `openspec/changes/hypr-lua-orgm-hypr-migration/apply-progress.md`, `openspec/changes/hypr-lua-orgm-hypr-migration/verify-report.md`, `openspec/changes/hypr-lua-orgm-hypr-migration/final-exception-tasks.md`, `config/shared/.local/bin/**`, `config/shared/.config/hypr/scripts/*.sh`, `config/shared/.config/sway/config`, `config/shared/.config/swaync/config.json`, `config/dotfiles.json`.
   - Tasks: record final state for every former exception: target command, wrapper thin/removed/blocked status, caller list, test evidence, manual smoke evidence or blocker, rollback action.
@@ -133,7 +133,7 @@ Chain strategy: pending
   - Verification: static audit for old script callers and non-thin wrapper logic; `git diff --check`.
   - Rollback: docs-only revert does not affect live behavior.
 
-- [ ] 13.3 Final validation gate for closure.
+- [x] 13.3 Final validation gate for closure.
   - Owner target: verification.
   - Commands to run when available: `go test ./...`; `git diff --check`; `nix fmt`; `nix flake check`; `nix build .#packages.x86_64-linux.orgm-hypr --no-link`; `orgm-dot diff --host orgm`; `./dot.sh diff --host orgm`.
   - Blocked validator rule: if Nix/dot commands are blocked by current runtime, record exact command and blocker in `verify-report.md`; do not claim those validators passed.

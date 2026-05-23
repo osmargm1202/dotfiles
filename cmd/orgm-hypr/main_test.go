@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/cli"
+	"github.com/osmarg/dotfiles/orgm-hypr/internal/theme"
 )
 
 func TestRunWithIOVersionWritesCurrentDevVersion(t *testing.T) {
@@ -43,7 +44,7 @@ func TestRunWithIOReportsUsageForMissingCommand(t *testing.T) {
 }
 
 func TestRunWithIOCurrentPlaceholderGroupsReturnNotImplemented(t *testing.T) {
-	groups := []string{"updates", "notify"}
+	groups := []string{"updates"}
 
 	for _, group := range groups {
 		t.Run(group, func(t *testing.T) {
@@ -142,6 +143,112 @@ func TestRunWithIOThemeValidateReportsValidRegistry(t *testing.T) {
 	}
 }
 
+func TestRunWithIOThemeExportNeutralAppendsNeutralAndPreservesOtherThemes(t *testing.T) {
+	registryPath := writeCLIRegistryContent(t, `{
+		"schemaVersion": 1,
+		"activeDefault": "ocean",
+		"themes": [{
+			"id": "ocean",
+			"name": "Ocean",
+			"defaultMode": "light",
+			"palettes": {
+				"dark": {"background": "#000001", "surface": "#000002", "surfaceAlt": "#000003", "foreground": "#ffffff", "muted": "#aaaaaa", "accent": "#111111", "accent2": "#222222", "border": "#333333", "urgent": "#444444", "success": "#555555"},
+				"light": {"background": "#fefefe", "surface": "#eeeeee", "surfaceAlt": "#dddddd", "foreground": "#010101", "muted": "#666666", "accent": "#777777", "accent2": "#888888", "border": "#999999", "urgent": "#aaaaaa", "success": "#bbbbbb"}
+			}
+		}]
+	}`)
+	var stdout, stderr bytes.Buffer
+
+	err := runWithIO([]string{"theme", "export-neutral", "--registry", registryPath}, &stdout, &stderr)
+
+	if err != nil {
+		t.Fatalf("runWithIO(theme export-neutral) error = %v", err)
+	}
+	registry := readRegistryJSON(t, registryPath)
+	if got, want := len(registry.Themes), 2; got != want {
+		t.Fatalf("theme count = %d, want %d", got, want)
+	}
+	if got, want := registry.Themes[0].ID, "ocean"; got != want {
+		t.Fatalf("first theme id = %q, want preserved %q", got, want)
+	}
+	neutral := registryThemeByID(t, registry, "neutral")
+	if got, want := neutral.Name, "Neutral"; got != want {
+		t.Fatalf("neutral name = %q, want %q", got, want)
+	}
+	if got, want := neutral.Palettes["dark"].Accent, "#c2c1ff"; got != want {
+		t.Fatalf("neutral dark accent = %q, want built-in %q", got, want)
+	}
+	if got := stdout.String(); !strings.Contains(got, "updated neutral theme in "+registryPath) {
+		t.Fatalf("stdout = %q, want export-neutral update message", got)
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("stderr = %q, want empty", got)
+	}
+}
+
+func TestRunWithIOThemeExportNeutralUpdatesExistingNeutralPreservesOtherThemesAndDryRunNoWrite(t *testing.T) {
+	registryPath := writeCLIRegistryContent(t, `{
+		"schemaVersion": 1,
+		"activeDefault": "neutral",
+		"themes": [{
+			"id": "neutral",
+			"name": "Old Neutral",
+			"defaultMode": "light",
+			"palettes": {
+				"dark": {"background": "#000001", "surface": "#000002", "surfaceAlt": "#000003", "foreground": "#ffffff", "muted": "#aaaaaa", "accent": "#111111", "accent2": "#222222", "border": "#333333", "urgent": "#444444", "success": "#555555"},
+				"light": {"background": "#fefefe", "surface": "#eeeeee", "surfaceAlt": "#dddddd", "foreground": "#010101", "muted": "#666666", "accent": "#777777", "accent2": "#888888", "border": "#999999", "urgent": "#aaaaaa", "success": "#bbbbbb"}
+			}
+		}, {
+			"id": "forest",
+			"name": "Forest",
+			"defaultMode": "dark",
+			"palettes": {
+				"dark": {"background": "#010101", "surface": "#020202", "surfaceAlt": "#030303", "foreground": "#f0f0f0", "muted": "#a0a0a0", "accent": "#101010", "accent2": "#202020", "border": "#303030", "urgent": "#404040", "success": "#505050"},
+				"light": {"background": "#fdfdfd", "surface": "#ededed", "surfaceAlt": "#dcdcdc", "foreground": "#111111", "muted": "#606060", "accent": "#707070", "accent2": "#808080", "border": "#909090", "urgent": "#a0a0a0", "success": "#b0b0b0"}
+			}
+		}]
+	}`)
+	before := readFile(t, registryPath)
+	var dryStdout, dryStderr bytes.Buffer
+
+	err := runWithIO([]string{"theme", "export-neutral", "--dry-run", "--registry", registryPath}, &dryStdout, &dryStderr)
+
+	if err != nil {
+		t.Fatalf("runWithIO(theme export-neutral --dry-run) error = %v", err)
+	}
+	if got := readFile(t, registryPath); got != before {
+		t.Fatalf("dry-run changed registry = %q, want unchanged", got)
+	}
+	if got := dryStdout.String(); !strings.Contains(got, "dryRun=true") || !strings.Contains(got, "would update neutral theme in "+registryPath) {
+		t.Fatalf("dry-run stdout = %q, want no-write plan", got)
+	}
+	if got := dryStderr.String(); got != "" {
+		t.Fatalf("dry-run stderr = %q, want empty", got)
+	}
+	var stdout, stderr bytes.Buffer
+
+	err = runWithIO([]string{"theme", "export-neutral", "--registry", registryPath}, &stdout, &stderr)
+
+	if err != nil {
+		t.Fatalf("runWithIO(theme export-neutral) error = %v", err)
+	}
+	registry := readRegistryJSON(t, registryPath)
+	neutral := registryThemeByID(t, registry, "neutral")
+	if got, want := neutral.Name, "Neutral"; got != want {
+		t.Fatalf("neutral name = %q, want updated %q", got, want)
+	}
+	if got, want := neutral.Palettes["light"].Accent, "#595992"; got != want {
+		t.Fatalf("neutral light accent = %q, want built-in %q", got, want)
+	}
+	forest := registryThemeByID(t, registry, "forest")
+	if got, want := forest.Name, "Forest"; got != want {
+		t.Fatalf("forest name = %q, want preserved %q", got, want)
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("stderr = %q, want empty", got)
+	}
+}
+
 func TestRunWithIOThemeStatusReportsNoAppliedThemeYet(t *testing.T) {
 	registryPath := writeCLIRegistry(t)
 	var stdout, stderr bytes.Buffer
@@ -173,8 +280,11 @@ func TestRunWithIOThemePreviewPrintsApplyPlanWithRegistryOverride(t *testing.T) 
 	wantParts := []string{
 		"theme=neutral\nmode=dark\n",
 		"Writes:\n  " + filepath.Join(env.StateHome, "orgm-hypr", "theme", "current", "palette.json") + "\n",
+		filepath.Join(env.StateHome, "orgm-hypr", "theme", "exports", "chromium", "neutral-dark", "manifest.json") + "\n",
+		filepath.Join(env.StateHome, "orgm-hypr", "theme", "exports", "zen", "neutral-dark", "README.md") + "\n",
 		"Reloads:\n  hypr: hyprctl reload\n",
-		"Warnings:\n  chromium target placeholder: export renderer not implemented in this slice\n  zen target placeholder: export renderer not implemented in this slice\n",
+		"chromium: generated theme export only; load unpacked extension manually and restart Chromium if needed; profile was not modified\n",
+		"zen: generated browser export notes only; copy files manually after reviewing profile path; profile was not modified\n",
 	}
 	for _, want := range wantParts {
 		if got := stdout.String(); !strings.Contains(got, want) {
@@ -190,6 +300,7 @@ func TestRunWithIOThemeApplyDryRunPrintsPlanAndDoesNotWrite(t *testing.T) {
 	registryPath := writeCLIRegistry(t)
 	env := writeThemeCommandEnv(t)
 	writePath := filepath.Join(env.StateHome, "orgm-hypr", "theme", "current", "palette.json")
+	manifestPath := filepath.Join(env.StateHome, "orgm-hypr", "theme", "last-apply.json")
 	var stdout, stderr bytes.Buffer
 
 	err := runThemeWithEnv([]string{"apply", "neutral", "--dry-run", "--registry", registryPath}, &stdout, &stderr, env)
@@ -202,6 +313,45 @@ func TestRunWithIOThemeApplyDryRunPrintsPlanAndDoesNotWrite(t *testing.T) {
 	}
 	if _, statErr := os.Stat(writePath); !os.IsNotExist(statErr) {
 		t.Fatalf("dry-run write path stat error = %v, want not exist", statErr)
+	}
+	if _, statErr := os.Stat(manifestPath); !os.IsNotExist(statErr) {
+		t.Fatalf("dry-run manifest stat error = %v, want not exist", statErr)
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("stderr = %q, want empty", got)
+	}
+}
+
+func TestRunWithIOThemeApplyWritesLastApplyManifestWithBackupPaths(t *testing.T) {
+	registryPath := writeCLIRegistry(t)
+	env := writeThemeCommandEnv(t)
+	writePath := filepath.Join(env.StateHome, "orgm-hypr", "theme", "current", "palette.json")
+	previous := theme.GeneratedMarker + "\nprevious\n"
+	writeFileAt(t, writePath, previous)
+	var stdout, stderr bytes.Buffer
+
+	err := runThemeWithEnv([]string{"apply", "neutral", "--registry", registryPath}, &stdout, &stderr, env)
+
+	if err != nil {
+		t.Fatalf("runThemeWithEnv(theme apply) error = %v", err)
+	}
+	manifestPath := filepath.Join(env.StateHome, "orgm-hypr", "theme", "last-apply.json")
+	manifest := readLastApplyManifest(t, manifestPath)
+	if got, want := manifest.ThemeID, "neutral"; got != want {
+		t.Fatalf("manifest themeID = %q, want %q", got, want)
+	}
+	if got, want := manifest.Mode, "dark"; got != want {
+		t.Fatalf("manifest mode = %q, want %q", got, want)
+	}
+	write := manifestWriteByPath(t, manifest, writePath)
+	if got, want := write.BackupPath, writePath+".bak"; got != want {
+		t.Fatalf("manifest backupPath = %q, want %q", got, want)
+	}
+	if got := readFile(t, write.BackupPath); got != previous {
+		t.Fatalf("backup content = %q, want previous content %q", got, previous)
+	}
+	if got := stdout.String(); !strings.Contains(got, "dryRun=false\n") {
+		t.Fatalf("stdout = %q, want non-dry-run plan", got)
 	}
 	if got := stderr.String(); got != "" {
 		t.Fatalf("stderr = %q, want empty", got)
@@ -797,6 +947,13 @@ func writeCLIRegistry(t *testing.T) string {
 	return path
 }
 
+func writeCLIRegistryContent(t *testing.T, content string) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "themes.json")
+	writeFileAt(t, path, content)
+	return path
+}
+
 func writeCLIRegistryWithTargets(t *testing.T, targets map[string]map[string]string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "themes.json")
@@ -870,6 +1027,79 @@ func readFile(t *testing.T, path string) string {
 		t.Fatalf("ReadFile(%q) error = %v", path, err)
 	}
 	return string(data)
+}
+
+type lastApplyManifestJSON struct {
+	ThemeID string                   `json:"themeID"`
+	Mode    string                   `json:"mode"`
+	Writes  []lastApplyManifestWrite `json:"writes"`
+}
+
+type lastApplyManifestWrite struct {
+	Path       string `json:"path"`
+	BackupPath string `json:"backupPath,omitempty"`
+}
+
+func readLastApplyManifest(t *testing.T, path string) lastApplyManifestJSON {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%q) error = %v", path, err)
+	}
+	var manifest lastApplyManifestJSON
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatalf("Unmarshal(last-apply) error = %v", err)
+	}
+	return manifest
+}
+
+func manifestWriteByPath(t *testing.T, manifest lastApplyManifestJSON, path string) lastApplyManifestWrite {
+	t.Helper()
+	for _, write := range manifest.Writes {
+		if write.Path == path {
+			return write
+		}
+	}
+	t.Fatalf("write path %q not found in manifest %+v", path, manifest.Writes)
+	return lastApplyManifestWrite{}
+}
+
+type registryJSON struct {
+	Themes []themeJSON `json:"themes"`
+}
+
+type themeJSON struct {
+	ID       string                 `json:"id"`
+	Name     string                 `json:"name"`
+	Palettes map[string]paletteJSON `json:"palettes"`
+}
+
+type paletteJSON struct {
+	Accent string `json:"accent"`
+}
+
+func readRegistryJSON(t *testing.T, path string) registryJSON {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%q) error = %v", path, err)
+	}
+	var registry registryJSON
+	if err := json.Unmarshal(data, &registry); err != nil {
+		t.Fatalf("Unmarshal(registry) error = %v", err)
+	}
+	return registry
+}
+
+func registryThemeByID(t *testing.T, registry registryJSON, id string) themeJSON {
+	t.Helper()
+	for _, theme := range registry.Themes {
+		if theme.ID == id {
+			return theme
+		}
+	}
+	t.Fatalf("theme %q not found in %+v", id, registry.Themes)
+	return themeJSON{}
 }
 
 func writeThemeCommandEnv(t *testing.T) themeCommandEnv {

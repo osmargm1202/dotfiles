@@ -41,10 +41,25 @@
         "chromium": {
           "mode": "export"
         },
+        "fuzzel": {
+          "mode": "generated"
+        },
         "gtk": {
           "mode": "generated"
         },
+        "helix": {
+          "mode": "generated"
+        },
         "hypr": {
+          "mode": "generated"
+        },
+        "kde": {
+          "mode": "generated"
+        },
+        "kitty": {
+          "mode": "generated"
+        },
+        "kvantum": {
           "mode": "generated"
         },
         "nwg-dock": {
@@ -53,7 +68,13 @@
         "qt": {
           "mode": "generated"
         },
+        "rofi": {
+          "mode": "generated"
+        },
         "waybar": {
+          "mode": "generated"
+        },
+        "yazi": {
           "mode": "generated"
         },
         "zen": {
