@@ -1231,7 +1231,9 @@ func runLauncherWithIO(args []string, stdout, stderr io.Writer) error {
 	if scale > 1.35 {
 		scale = 1.35
 	}
-	fargs := []string{fmt.Sprintf("--font=JetBrainsMono Nerd Font:size=%d", int(12*scale)), fmt.Sprintf("--width=%d", int(34*scale)), fmt.Sprintf("--lines=%d", int(10*scale)), fmt.Sprintf("--line-height=%d", int(22*scale))}
+	fenv := loadFuzzelEnv()
+	scale = fuzzelFloat(fenv, "HYPR_FUZZEL_SCALE", scale)
+	fargs := []string{fmt.Sprintf("--font=JetBrainsMono Nerd Font:size=%d", fuzzelInt(fenv, "HYPR_FUZZEL_FONT_SIZE", int(12*scale))), fmt.Sprintf("--width=%d", fuzzelInt(fenv, "HYPR_FUZZEL_WIDTH", int(34*scale))), fmt.Sprintf("--lines=%d", fuzzelInt(fenv, "HYPR_FUZZEL_LINES", int(10*scale))), fmt.Sprintf("--line-height=%d", fuzzelInt(fenv, "HYPR_FUZZEL_LINE_HEIGHT", int(22*scale)))}
 	if *printOnly {
 		fmt.Fprintln(stdout, shellCommand("fuzzel", fargs))
 		return nil
@@ -1474,7 +1476,17 @@ func focusNotifyMatch(pattern string, stdout, stderr io.Writer) error {
 func recentFiles(home string) ([]string, error) {
 	out := []string{}
 	err := filepath.WalkDir(home, func(path string, d os.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
+		if err != nil {
+			return nil
+		}
+		if d.IsDir() {
+			if path == home {
+				return nil
+			}
+			name := d.Name()
+			if strings.HasPrefix(name, ".") || isHeavyFileSearchDir(name) {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		rel, relErr := filepath.Rel(home, path)
@@ -1484,6 +1496,15 @@ func recentFiles(home string) ([]string, error) {
 		return nil
 	})
 	return out, err
+}
+
+func isHeavyFileSearchDir(name string) bool {
+	switch name {
+	case "go", "paru", "node_modules", "target", ".cache", ".local", ".mozilla", ".npm", ".cargo", ".rustup":
+		return true
+	default:
+		return false
+	}
 }
 
 func filePrompt(mode string) string {
@@ -1575,7 +1596,7 @@ func dmenuPick(kind, prompt string, labels []string, stderr io.Writer) (string, 
 		args = []string{"-dmenu", "-i", "-p", strings.TrimSpace(prompt)}
 	default:
 		kind = "fuzzel"
-		args = []string{"--dmenu", "--prompt", prompt, "--width", "72", "--lines", "14"}
+		args = fuzzelDmenuArgs(prompt, 72, 14)
 	}
 	cmd := exec.Command(kind, args...)
 	cmd.Stdin = strings.NewReader(strings.Join(labels, "\n") + "\n")
@@ -1585,6 +1606,19 @@ func dmenuPick(kind, prompt string, labels []string, stderr io.Writer) (string, 
 		return "", err
 	}
 	return strings.TrimSpace(string(data)), nil
+}
+
+func fuzzelDmenuArgs(prompt string, baseWidth, baseLines int) []string {
+	fenv := loadFuzzelEnv()
+	scale := fuzzelFloat(fenv, "HYPR_FUZZEL_SCALE", 1)
+	return []string{
+		"--dmenu",
+		"--prompt", prompt,
+		fmt.Sprintf("--font=JetBrainsMono Nerd Font:size=%d", fuzzelInt(fenv, "HYPR_FUZZEL_FONT_SIZE", int(12*scale))),
+		"--width", strconv.Itoa(fuzzelInt(fenv, "HYPR_FUZZEL_WIDTH", int(float64(baseWidth)*scale))),
+		"--lines", strconv.Itoa(fuzzelInt(fenv, "HYPR_FUZZEL_LINES", int(float64(baseLines)*scale))),
+		"--line-height", strconv.Itoa(fuzzelInt(fenv, "HYPR_FUZZEL_LINE_HEIGHT", int(22*scale))),
+	}
 }
 
 func runOrPrintCommand(command windows.Command, printOnly bool, stdout, stderr io.Writer) error {
@@ -1723,6 +1757,16 @@ func runSmartRunWithIO(args []string, stdout, stderr io.Writer) error {
 		if err != nil {
 			return cli.UsageError(err.Error())
 		}
+		if query == "" && !printOnly && !printExec {
+			picked, _ := dmenuPick("fuzzel", "Search or URL> ", []string{"!a ChatGPT", "!c Claude", "!g Google", "!y YouTube"}, stderr)
+			query = strings.TrimSpace(picked)
+			if query == "" {
+				return nil
+			}
+		}
+		if query == "" {
+			return cli.UsageError("usage: orgm-hypr smart-run run QUERY... [--print|--print-exec]")
+		}
 		plan := smartrun.Parse(query, commandExists)
 		if printOnly {
 			printSmartRunPlan(stdout, plan)
@@ -1756,9 +1800,6 @@ func parseSmartRunArgs(args []string) (string, bool, bool, error) {
 			query = append(query, arg)
 		}
 	}
-	if len(query) == 0 {
-		return "", false, false, fmt.Errorf("usage: orgm-hypr smart-run run QUERY... [--print|--print-exec]")
-	}
 	return strings.Join(query, " "), printOnly, printExec, nil
 }
 
@@ -1772,6 +1813,54 @@ func envDefault(name, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func loadFuzzelEnv() map[string]string {
+	path := os.Getenv("HYPR_FUZZEL_ENV")
+	if path == "" {
+		path = filepath.Join(os.Getenv("HOME"), ".config", "fuzzel", "fuzzel.env")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return map[string]string{}
+	}
+	out := map[string]string{}
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+		out[strings.TrimSpace(key)] = strings.Trim(strings.TrimSpace(value), "\"'")
+	}
+	return out
+}
+
+func fuzzelFloat(env map[string]string, name string, fallback float64) float64 {
+	value := firstNonEmpty(os.Getenv(name), env[name])
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil || parsed <= 0 {
+		return fallback
+	}
+	return parsed
+}
+
+func fuzzelInt(env map[string]string, name string, fallback int) int {
+	value := firstNonEmpty(os.Getenv(name), env[name])
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed <= 0 {
+		return fallback
+	}
+	return parsed
 }
 
 func printExecutionPlan(stdout io.Writer, plan smartrun.ExecutionPlan) {

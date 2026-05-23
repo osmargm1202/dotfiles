@@ -20,6 +20,7 @@ func TestRunWithIOFinalExceptionSessionLockPrintsSafePlan(t *testing.T) {
 }
 
 func TestRunWithIOFinalExceptionLauncherAppsPrintsHyprFuzzelPlan(t *testing.T) {
+	t.Setenv("HYPR_FUZZEL_ENV", filepath.Join(t.TempDir(), "missing.env"))
 	var stdout, stderr bytes.Buffer
 	err := runWithIO([]string{"launcher", "apps", "--print", "--height", "2160", "--scale", "2"}, &stdout, &stderr)
 	if err != nil {

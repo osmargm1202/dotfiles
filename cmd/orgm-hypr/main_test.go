@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/cli"
+	"github.com/osmarg/dotfiles/orgm-hypr/internal/menu"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/theme"
 )
 
@@ -815,6 +816,66 @@ func TestRunWithIOSmartRunLivePrintsExecutionPlan(t *testing.T) {
 	}
 }
 
+func TestRunWithIOLauncherAppsHonorsFuzzelEnvOverrides(t *testing.T) {
+	envPath := filepath.Join(t.TempDir(), "fuzzel.env")
+	writeFileAt(t, envPath, "HYPR_FUZZEL_SCALE=1.50\nHYPR_FUZZEL_WIDTH=66\n")
+	t.Setenv("HYPR_FUZZEL_ENV", envPath)
+	var stdout, stderr bytes.Buffer
+
+	err := runWithIO([]string{"launcher", "apps", "--print"}, &stdout, &stderr)
+
+	if err != nil {
+		t.Fatalf("runWithIO(launcher apps --print) error = %v", err)
+	}
+	got := stdout.String()
+	wantParts := []string{"--font=JetBrainsMono Nerd Font:size=18", "--width=66", "--lines=15", "--line-height=33"}
+	for _, want := range wantParts {
+		if !strings.Contains(got, want) {
+			t.Fatalf("stdout = %q, want substring %q", got, want)
+		}
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("stderr = %q, want empty", got)
+	}
+}
+
+func TestMenuSystemRestartWaybarUsesOrgmHyprWatcher(t *testing.T) {
+	plan, ok := menu.PlanSelection("system", "󰑓 Restart Waybar")
+	if !ok {
+		t.Fatalf("PlanSelection(system, Restart Waybar) ok = false")
+	}
+	got := shellCommand(plan.Command.Name, plan.Command.Args)
+	wantParts := []string{"pkill", "orgm-hypr waybar watch", "waybar-hypr", "orgm-hypr waybar watch"}
+	for _, want := range wantParts {
+		if !strings.Contains(got, want) {
+			t.Fatalf("command = %q, want substring %q", got, want)
+		}
+	}
+}
+
+func TestRecentFilesPrunesHiddenAndHeavyDirectories(t *testing.T) {
+	home := t.TempDir()
+	writeFileAt(t, filepath.Join(home, "Documents", "visible.txt"), "ok")
+	writeFileAt(t, filepath.Join(home, ".cache", "hidden.txt"), "skip")
+	writeFileAt(t, filepath.Join(home, "go", "pkg", "mod", "heavy.txt"), "skip")
+	writeFileAt(t, filepath.Join(home, "project", "node_modules", "dep.js"), "skip")
+
+	rows, err := recentFiles(home)
+
+	if err != nil {
+		t.Fatalf("recentFiles() error = %v", err)
+	}
+	got := strings.Join(rows, "\n")
+	if !strings.Contains(got, "Documents/visible.txt") {
+		t.Fatalf("rows = %#v, want visible file", rows)
+	}
+	for _, unwanted := range []string{".cache/hidden.txt", "go/pkg/mod/heavy.txt", "project/node_modules/dep.js"} {
+		if strings.Contains(got, unwanted) {
+			t.Fatalf("rows = %#v, did not prune %s", rows, unwanted)
+		}
+	}
+}
+
 func TestRunWithIOOSDVolumePrintsPlan(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 
@@ -880,6 +941,17 @@ func TestRunWithIOSmartRunParsePrintsPlan(t *testing.T) {
 	}
 	if got := stderr.String(); got != "" {
 		t.Fatalf("stderr = %q, want empty", got)
+	}
+}
+
+func TestParseSmartRunArgsAllowsInteractiveEmptyQuery(t *testing.T) {
+	query, printOnly, printExec, err := parseSmartRunArgs(nil)
+
+	if err != nil {
+		t.Fatalf("parseSmartRunArgs(nil) error = %v", err)
+	}
+	if query != "" || printOnly || printExec {
+		t.Fatalf("query=%q print=%t printExec=%t, want empty false false", query, printOnly, printExec)
 	}
 }
 
