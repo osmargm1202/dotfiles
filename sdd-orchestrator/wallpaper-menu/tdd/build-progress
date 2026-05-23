@@ -1,0 +1,20 @@
+path: sdd-orchestrator/wallpaper-menu/tdd/build-progress
+group: Task 1 - Add dual picker schema tests
+status: DONE
+files_changed:
+  - internal/wallpaper/data_test.go
+  - internal/wallpaper/data.go
+  - sdd-orchestrator/wallpaper-menu/tdd/build-progress
+tdd_applicability_reason: null
+verification:
+  safety_net:
+    command: go test ./internal/wallpaper -run 'TestBuildPickerData|TestGeneratePickerData' -count=1
+    result: PASS
+  red:
+    command: go test ./internal/wallpaper -run 'TestBuildCombinedPickerData|TestGenerateCombinedPickerData' -count=1
+    result: FAIL as expected with undefined BuildCombinedPickerData, CombinedDataOptions, GenerateCombinedPickerData, CombinedPickerData
+  green:
+    command: go test ./internal/wallpaper -run 'TestBuildPickerData|TestGeneratePickerData|TestBuildCombinedPickerData|TestGenerateCombinedPickerData' -count=1
+    result: PASS
+risks:
+  - Progress artifact path did not exist before this task; created to satisfy apply-phase handoff requirements.
