@@ -233,9 +233,9 @@ ShellRoot {
 
     Rectangle {
       id: overlay
-      width: 1120
-      height: 660
-      radius: 18
+      width: 1180
+      height: 720
+      radius: 20
       color: "#dd000000"
       border.color: "#33494d64"
       border.width: 1
@@ -273,8 +273,8 @@ ShellRoot {
 
       Column {
         anchors.fill: parent
-        anchors.margins: 18
-        spacing: 14
+        anchors.margins: 32
+        spacing: 18
 
         Row {
           width: parent.width
@@ -293,8 +293,8 @@ ShellRoot {
 
           Rectangle {
             width: 100
-            height: 30
-            radius: 8
+            height: 32
+            radius: 9
             color: root.activeMode === "static" ? "#33494d64" : "#22363a4f"
             border.color: root.activeMode === "static" ? "#8aadf4" : "#494d64"
             Text { anchors.centerIn: parent; text: "NORMAL"; color: root.activeMode === "static" ? "#8aadf4" : "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
@@ -303,8 +303,8 @@ ShellRoot {
 
           Rectangle {
             width: 100
-            height: 30
-            radius: 8
+            height: 32
+            radius: 9
             color: root.activeMode === "video" ? "#33494d64" : "#22363a4f"
             border.color: root.activeMode === "video" ? "#8aadf4" : "#494d64"
             Text { anchors.centerIn: parent; text: "LIVE"; color: root.activeMode === "video" ? "#8aadf4" : "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
@@ -335,7 +335,7 @@ ShellRoot {
         GridView {
           id: grid
           width: parent.width
-          height: 548
+          height: 550
           cellWidth: 270
           cellHeight: 132
           clip: true
@@ -397,13 +397,13 @@ ShellRoot {
 
         Row {
           width: parent.width
-          height: 28
+          height: 30
           spacing: 10
 
           Rectangle {
             width: 74
-            height: 26
-            radius: 6
+            height: 28
+            radius: 7
             color: root.currentPage > 0 ? "#22363a4f" : "transparent"
             border.color: root.currentPage > 0 ? "#8aadf4" : "#494d64"
             Text { anchors.centerIn: parent; text: "← Prev"; color: root.currentPage > 0 ? "#8aadf4" : "#494d64"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13 }
@@ -412,8 +412,8 @@ ShellRoot {
 
           Rectangle {
             width: 74
-            height: 26
-            radius: 6
+            height: 28
+            radius: 7
             color: root.currentPage < root.pageCount - 1 ? "#22363a4f" : "transparent"
             border.color: root.currentPage < root.pageCount - 1 ? "#8aadf4" : "#494d64"
             Text { anchors.centerIn: parent; text: "Next →"; color: root.currentPage < root.pageCount - 1 ? "#8aadf4" : "#494d64"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13 }
@@ -424,8 +424,8 @@ ShellRoot {
 
           Rectangle {
             width: 130
-            height: 26
-            radius: 6
+            height: 28
+            radius: 7
             color: "#22363a4f"
             border.color: "#a6da95"
             Text { anchors.centerIn: parent; text: "󰒟 Random"; color: "#a6da95"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
