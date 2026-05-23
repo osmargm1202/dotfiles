@@ -524,39 +524,7 @@ func (m *Manager) Restore() error {
 }
 
 func (m *Manager) MenuPick() error {
-	choices := "Normal\nNormal Random\nLive\nLive Random\n"
-	var cmd *exec.Cmd
-	if picker := os.Getenv("HYPR_WALLPAPER_PICKER"); picker != "" {
-		cmd = exec.Command("sh", "-c", picker)
-	} else if commandExists("fuzzel") {
-		cmd = exec.Command("fuzzel", "--dmenu", "--prompt", "Wallpaper> ")
-	} else if commandExists("rofi") {
-		cmd = exec.Command("rofi", "-dmenu", "-i", "-p", "Wallpaper")
-	} else {
-		return fmt.Errorf("fuzzel or rofi required for wallpaper picker")
-	}
-	cmd.Stdin = strings.NewReader(choices)
-	cmd.Stderr = m.Stderr
-	out, err := cmd.Output()
-	if err != nil {
-		return err
-	}
-	choice := strings.TrimSpace(string(out))
-	if choice == "" {
-		return nil
-	}
-	switch choice {
-	case "Normal":
-		return m.OpenQuickshellCarousel("static")
-	case "Normal Random":
-		return m.SetRandomStatic()
-	case "Live":
-		return m.OpenQuickshellCarousel("video")
-	case "Live Random":
-		return m.SetRandomVideo()
-	default:
-		return fmt.Errorf("Unknown wallpaper choice: %s", choice)
-	}
+	return m.OpenUnifiedQuickshellPicker()
 }
 
 func (m *Manager) dataPathForMode(mode string) string {
@@ -625,6 +593,56 @@ func (m *Manager) GenerateQuickshellData(mode, jsonPath string) error {
 	}
 	tmpJSON := fmt.Sprintf("%s.%d", jsonPath, os.Getpid())
 	if err := GeneratePickerData(DataOptions{Mode: mode, ManifestPath: m.QuickshellManifest, JSONPath: tmpJSON, CurrentPath: current, Script: "orgm-hypr", ScriptArgs: []string{"wallpaper"}}); err != nil {
+		return err
+	}
+	return os.Rename(tmpJSON, jsonPath)
+}
+
+func (m *Manager) GenerateCombinedQuickshellData(jsonPath string) error {
+	if err := m.ensureDirs(); err != nil {
+		return err
+	}
+	manifestTmp := fmt.Sprintf("%s.%d", m.QuickshellManifest, os.Getpid())
+	mf, err := os.Create(manifestTmp)
+	if err != nil {
+		return err
+	}
+	static, err := m.OrderedWallpapers("static")
+	if err != nil {
+		_ = mf.Close()
+		return err
+	}
+	video, err := m.OrderedWallpapers("video")
+	if err != nil {
+		_ = mf.Close()
+		return err
+	}
+	for _, path := range static {
+		fmt.Fprintf(mf, "static\t%s\n", path)
+	}
+	for _, path := range video {
+		fmt.Fprintf(mf, "video\t%s\n", path)
+	}
+	if err := mf.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(manifestTmp, m.QuickshellManifest); err != nil {
+		return err
+	}
+	_ = CleanStaleThumbnails(m.StaticDir)
+	_ = CleanStaleThumbnails(m.VideoDir)
+
+	currentMode := m.CurrentMode()
+	currentPath := m.StateValue("path")
+	tmpJSON := fmt.Sprintf("%s.%d", jsonPath, os.Getpid())
+	if err := GenerateCombinedPickerData(CombinedDataOptions{
+		ManifestPath: m.QuickshellManifest,
+		JSONPath:     tmpJSON,
+		CurrentMode:  currentMode,
+		CurrentPath:  currentPath,
+		Script:       "orgm-hypr",
+		ScriptArgs:   []string{"wallpaper"},
+	}); err != nil {
 		return err
 	}
 	return os.Rename(tmpJSON, jsonPath)
@@ -723,6 +741,24 @@ func (m *Manager) OpenQuickshellCarousel(mode string) error {
 		return err
 	}
 	if err := m.WriteQuickshellRequest(mode, dataPath); err != nil {
+		return err
+	}
+	return m.StartQuickshellPicker(true)
+}
+
+func (m *Manager) OpenUnifiedQuickshellPicker() error {
+	dataPath := filepath.Join(m.StateDir, "wallpaper-picker-combined.json")
+	if err := m.GenerateCombinedQuickshellData(dataPath); err != nil {
+		return err
+	}
+	input, err := os.ReadFile(dataPath)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(m.QuickshellData, input, 0o644); err != nil {
+		return err
+	}
+	if err := m.WriteQuickshellRequest("combined", dataPath); err != nil {
 		return err
 	}
 	return m.StartQuickshellPicker(true)

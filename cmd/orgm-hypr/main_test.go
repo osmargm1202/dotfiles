@@ -909,7 +909,7 @@ func TestRunWithIOCapturesCurrentWallpaperUsageErrors(t *testing.T) {
 		{
 			name: "unknown subcommand",
 			args: []string{"wallpaper", "bogus"},
-			want: "usage: orgm-hypr wallpaper [restore|current|pick|carousel static|carousel video|set-static PATH|set-video PATH|status]",
+			want: "usage: orgm-hypr wallpaper [restore|current|pick|random static|random video|carousel static|carousel video|set-static PATH|set-video PATH|status]",
 		},
 		{
 			name: "missing set-static path",
