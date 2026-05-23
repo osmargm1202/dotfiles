@@ -1,20 +1,25 @@
 path: sdd-orchestrator/wallpaper-menu/tdd/build-progress
-group: Task 1 - Add dual picker schema tests
-status: DONE
+group: Task 2 - Add CLI and manager support for direct picker + random by mode
+status: DONE_WITH_CONCERNS
 files_changed:
-  - internal/wallpaper/data_test.go
-  - internal/wallpaper/data.go
+  - internal/wallpaper/manager_test.go
+  - internal/wallpaper/manager.go
+  - cmd/orgm-hypr/main.go
+  - cmd/orgm-hypr/main_test.go
   - sdd-orchestrator/wallpaper-menu/tdd/build-progress
 tdd_applicability_reason: null
 verification:
   safety_net:
-    command: go test ./internal/wallpaper -run 'TestBuildPickerData|TestGeneratePickerData' -count=1
+    command: go test ./internal/wallpaper ./cmd/orgm-hypr -count=1
     result: PASS
   red:
-    command: go test ./internal/wallpaper -run 'TestBuildCombinedPickerData|TestGenerateCombinedPickerData' -count=1
-    result: FAIL as expected with undefined BuildCombinedPickerData, CombinedDataOptions, GenerateCombinedPickerData, CombinedPickerData
+    command: go test ./internal/wallpaper -run TestGenerateCombinedQuickshellDataUsesCurrentModeForInitialTab -count=1
+    result: FAIL as expected with GenerateCombinedQuickshellData undefined
   green:
-    command: go test ./internal/wallpaper -run 'TestBuildPickerData|TestGeneratePickerData|TestBuildCombinedPickerData|TestGenerateCombinedPickerData' -count=1
+    command: go test ./internal/wallpaper -run TestGenerateCombinedQuickshellDataUsesCurrentModeForInitialTab -count=1
+    result: PASS
+  final:
+    command: go test ./internal/wallpaper ./cmd/orgm-hypr -count=1
     result: PASS
 risks:
-  - Progress artifact path did not exist before this task; created to satisfy apply-phase handoff requirements.
+  - Updated cmd/orgm-hypr/main_test.go usage expectation to keep existing CLI usage test aligned with the required new default usage string; this file was not listed in the original Task 2 file list.

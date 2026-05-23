@@ -1921,6 +1921,22 @@ func runWallpaperWithIO(args []string, stdout, stderr io.Writer) error {
 			return cli.UsageError("usage: orgm-hypr wallpaper set-video PATH")
 		}
 		return m.SetVideo(args[1])
+	case "random-static":
+		return m.SetRandomStatic()
+	case "random-video":
+		return m.SetRandomVideo()
+	case "random":
+		if len(args) < 2 {
+			return cli.UsageError("usage: orgm-hypr wallpaper random [static|video]")
+		}
+		switch args[1] {
+		case "static", "normal":
+			return m.SetRandomStatic()
+		case "video", "live":
+			return m.SetRandomVideo()
+		default:
+			return cli.UsageError("usage: orgm-hypr wallpaper random [static|video]")
+		}
 	case "pick", "next", "change":
 		return m.MenuPick()
 	case "carousel":
@@ -1949,7 +1965,7 @@ func runWallpaperWithIO(args []string, stdout, stderr io.Writer) error {
 	case "daemon":
 		return m.RunDaemon()
 	default:
-		return cli.UsageError("usage: orgm-hypr wallpaper [restore|current|pick|carousel static|carousel video|set-static PATH|set-video PATH|status]")
+		return cli.UsageError("usage: orgm-hypr wallpaper [restore|current|pick|random static|random video|carousel static|carousel video|set-static PATH|set-video PATH|status]")
 	}
 }
 
