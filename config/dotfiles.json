@@ -98,8 +98,7 @@
         ".config/rofi/hypr-menu.env",
         ".local/share/applications",
         ".local/share/icons",
-        ".pi/agent/orgm.json",
-        ".pi/agent/settings.json"
+        ".pi/agent/orgm.json"
       ]
     },
     "orgm": {
@@ -129,7 +128,8 @@
       ".pi/agent/mcp-npx-cache.json",
       ".pi/agent/mcp.json",
       ".pi/agent/mcp.json.bak-20260420-151836",
-      ".pi/agent/pi-crash.log"
+      ".pi/agent/pi-crash.log",
+      ".pi/agent/settings.json"
     ]
   },
   "diff": {
