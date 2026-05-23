@@ -1,5 +1,5 @@
 -- Hyprland 0.55 Lua config.
--- Legacy .conf files remain as fallback, but Hyprland prefers this file at startup.
+-- Canonical config for this setup; legacy split .conf fallbacks were removed.
 
 require("lua.monitors")
 local programs = require("lua.programs")
