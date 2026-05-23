@@ -151,8 +151,8 @@
     "custom/wallpaper": {
       "format": "󰸉",
       "tooltip": true,
-      "tooltip-format": "Cambiar fondo aleatorio",
-      "on-click": "orgm-hypr wallpaper next"
+      "tooltip-format": "Elegir wallpaper",
+      "on-click": "orgm-hypr wallpaper pick"
     },
     "bluetooth": {
       "format": "󰂯",
