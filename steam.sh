@@ -17,6 +17,32 @@ fail() {
 	printf '\nERROR: %s\n' "$*" >&2
 	exit 1
 }
+count_find() {
+	local dir="$1"
+	shift
+	if [ -d "$dir" ]; then
+		find "$dir" "$@" 2>/dev/null | wc -l
+	else
+		printf '0\n'
+	fi
+}
+bytes_human() {
+	if command -v numfmt >/dev/null 2>&1; then
+		numfmt --to=iec --suffix=B "$1"
+	else
+		printf '%s bytes\n' "$1"
+	fi
+}
+existing_parent() {
+	local path="$1"
+	while [ ! -d "$path" ]; do
+		local parent
+		parent=$(dirname "$path")
+		[ "$parent" = "$path" ] && return 1
+		path="$parent"
+	done
+	printf '%s\n' "$path"
+}
 
 usage() {
 	cat <<EOF
@@ -67,23 +93,25 @@ printf '%s\n' "$DST"
 
 say "Resumen antes de copiar"
 printf 'Flatpak manifests: '
-find "$SRC" -maxdepth 1 -name 'appmanifest_*.acf' 2>/dev/null | wc -l
+count_find "$SRC" -maxdepth 1 -name 'appmanifest_*.acf'
 printf 'Flatpak common dirs: '
-find "$SRC/common" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l
+count_find "$SRC/common" -mindepth 1 -maxdepth 1 -type d
 printf 'Destino manifests actuales: '
-find "$DST" -maxdepth 1 -name 'appmanifest_*.acf' 2>/dev/null | wc -l
+count_find "$DST" -maxdepth 1 -name 'appmanifest_*.acf'
 printf 'Destino common dirs actuales: '
-find "$DST/common" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l
+count_find "$DST/common" -mindepth 1 -maxdepth 1 -type d
 
 say "Conflictos que se van a respaldar si se pisan archivos"
 conflicts=0
-while IFS= read -r -d '' src_dir; do
-	name=$(basename "$src_dir")
-	if [ -e "$DST/common/$name" ]; then
-		printf 'common/%s\n' "$name"
-		conflicts=$((conflicts + 1))
-	fi
-done < <(find "$SRC/common" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null)
+if [ -d "$DST/common" ]; then
+	while IFS= read -r -d '' src_dir; do
+		name=$(basename "$src_dir")
+		if [ -e "$DST/common/$name" ]; then
+			printf 'common/%s\n' "$name"
+			conflicts=$((conflicts + 1))
+		fi
+	done < <(find "$SRC/common" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null)
+fi
 
 shopt -s nullglob
 manifests=("$SRC"/appmanifest_*.acf)
@@ -104,6 +132,13 @@ if ((DRY_RUN)); then
 		[ -e "$SRC/$d" ] && rsync -aHn --itemize-changes "$SRC/$d/" "$DST/$d/"
 	done
 	exit 0
+fi
+
+dst_parent=$(existing_parent "$DST") || fail "No encontre un directorio padre existente para destino: $DST"
+required_bytes=$(du -sb "$SRC" | awk '{print $1}')
+available_bytes=$(df -P -B1 "$dst_parent" | awk 'NR == 2 {print $4}')
+if ((required_bytes > available_bytes)); then
+	fail "No hay suficiente espacio para copiar: origen $(bytes_human "$required_bytes"), libre en $dst_parent $(bytes_human "$available_bytes"). Libera espacio o usa otro DST antes de migrar."
 fi
 
 printf '\nEsto copia/mergea hacia Steam native. Si pisa archivos existentes, los guarda en backup dentro de steamapps.\n'
