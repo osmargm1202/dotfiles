@@ -1,0 +1,17 @@
+{
+  "lastChangelogVersion": "0.75.4",
+  "theme": "nord",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.5",
+  "shellPath": "/usr/sbin/fish",
+  "packages": [
+    "npm:pi-mcp-adapter",
+    "git:https://github.com/obra/superpowers"
+  ],
+  "quietStartup": true,
+  "hideThinkingBlock": true,
+  "terminal": {
+    "showTerminalProgress": true
+  },
+  "defaultThinkingLevel": "medium"
+}

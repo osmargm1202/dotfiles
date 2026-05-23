@@ -98,7 +98,8 @@
         ".config/rofi/hypr-menu.env",
         ".local/share/applications",
         ".local/share/icons",
-        ".pi/agent/orgm.json"
+        ".pi/agent/orgm.json",
+        ".pi/agent/settings.json"
       ]
     },
     "orgm": {
@@ -119,8 +120,6 @@
       ".config/fish/insforge.env",
       ".config/fish/pdd",
       ".config/fish/private-env.fish",
-      ".local/bin/dot",
-      ".local/bin/dot.sh",
       ".local/bin/orgm-hypr",
       ".pi/agent/agent-status.json",
       ".pi/agent/auth.json",
@@ -130,8 +129,7 @@
       ".pi/agent/mcp-npx-cache.json",
       ".pi/agent/mcp.json",
       ".pi/agent/mcp.json.bak-20260420-151836",
-      ".pi/agent/pi-crash.log",
-      ".pi/agent/settings.json"
+      ".pi/agent/pi-crash.log"
     ]
   },
   "diff": {
