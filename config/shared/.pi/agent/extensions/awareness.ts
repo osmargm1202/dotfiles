@@ -54,6 +54,7 @@ printf '\n===== CONTENEDORES =====\n'; \
 echo "--- Docker ---"; docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' 2>/dev/null || echo "Docker no disponible"; \
 echo "--- Podman ---"; podman ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' 2>/dev/null || echo "Podman no disponible"; \
 echo "--- Distrobox ---"; distrobox list 2>/dev/null || echo "Distrobox no disponible"; \
+command -v distrobox-host-exec >/dev/null 2>&1 && echo "distrobox-host-exec: $(command -v distrobox-host-exec)" || echo "distrobox-host-exec: no disponible"; \
 printf '\n===== TMUX =====\n'; \
 tmux list-sessions 2>/dev/null || echo "No hay sesiones tmux o tmux no disponible"; \
 printf '\n===== ARCHIVOS CLAVE =====\n'; \
