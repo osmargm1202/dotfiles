@@ -7,6 +7,7 @@ let
   nwgDockHyprlandGit = pkgs.nwg-dock-hyprland.overrideAttrs (old: {
     version = "git-${inputs.nwg-dock-hyprland-src.shortRev or "unknown"}";
     src = inputs.nwg-dock-hyprland-src;
+    vendorHash = "sha256-AJGyBCTWtgTpn+e4HLlX/8EgWITw25py4UJJJDLhoOM=";
   });
   orgmHypr = pkgs.callPackage ../packages/orgm-hypr.nix { };
 in
