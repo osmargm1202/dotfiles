@@ -1,11 +1,2 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
-theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
-choice="$(printf '%s\n' '󰌌 Toggle layout' '󰌌 US' '󰌌 Latam' '󰅖 Cancel' | rofi -dmenu -i -p 'Keyboard' -theme "$theme" || true)"
-case "$choice" in
-  *'Toggle') exec hyprctl switchxkblayout all next ;;
-  *'US') exec hyprctl switchxkblayout all 0 ;;
-  *'Latam') exec hyprctl switchxkblayout all 1 ;;
-  *) exit 0 ;;
-esac
+exec orgm-hypr menu keyboard "$@"

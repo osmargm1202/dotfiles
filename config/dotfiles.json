@@ -29,6 +29,7 @@
       ".config/mpv",
       ".config/niri",
       ".config/nvim",
+      ".config/orgm-hypr",
       ".config/nwg-dock-hyprland",
       ".config/picom",
       ".config/polybar",

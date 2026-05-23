@@ -7,11 +7,13 @@
   font-size: 17px;
 }
 
-window.top_bar#waybar,
-window.bottom_bar#waybar {
-  background-color: rgba(0, 0, 0, 0.80);
+window.top_bar#waybar {
+  background-color: transparent;
   border: none;
-  border-radius: 6px;
+}
+window.bottom_bar#waybar {
+  background-color: transparent;
+  border: none;
 }
 #custom-ws_1, #custom-ws_2, #custom-ws_3, #custom-ws_4, #custom-ws_5,
 #custom-ws_6, #custom-ws_7, #custom-ws_8, #custom-ws_9, #custom-ws_10 {
@@ -26,25 +28,59 @@ window.bottom_bar#waybar {
 #custom-ws_6.empty, #custom-ws_7.empty, #custom-ws_8.empty, #custom-ws_9.empty, #custom-ws_10.empty { color: @overlay0; }
 #custom-ws_1.active, #custom-ws_2.active, #custom-ws_3.active, #custom-ws_4.active, #custom-ws_5.active,
 #custom-ws_6.active, #custom-ws_7.active, #custom-ws_8.active, #custom-ws_9.active, #custom-ws_10.active { color: @blue; }
-#mode, #submap, window.top_bar .modules-center, window.top_bar .modules-right,
-window.bottom_bar .modules-left, window.bottom_bar .modules-center, window.bottom_bar .modules-right,
-#group-system, #system {
+#mode, #submap {
   background: transparent;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0 14px;
   margin-top: 7px;
   margin-bottom: 7px;
+}
+window.top_bar .modules-right,
+window.bottom_bar .modules-left,
+window.bottom_bar .modules-right {
+  background: rgba(0, 0, 0, 0.50);
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 10px 10px;
+}
+window.top_bar .modules-left {
+  background: transparent;
+  padding: 0;
+}
+#group-workspaces,
+#workspaces {
+  background: rgba(0, 0, 0, 0.50);
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 10px 10px;
+}
+#group-system,
+#system {
+  background: rgba(4, 18, 40, 0.50);
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 10px 10px;
+}
+window.top_bar .modules-center {
+  background: rgba(10, 24, 52, 0.50);
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 10px 10px;
+}
+window.bottom_bar .modules-center {
+  background: rgba(4, 18, 40, 0.50);
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 10px 10px;
 }
 window.top_bar .modules-center {
   font-weight: bold;
   color: @overlay2;
   padding: 0 8px;
-  margin-top: 0;
-  margin-bottom: 0;
 }
 window.top_bar .modules-right { padding-left: 24px; padding-right: 24px; }
-window.bottom_bar .modules-left { border-radius: 6px; margin-left: 13px; }
-window.bottom_bar .modules-right { border-radius: 6px; margin-right: 13px; }
+window.bottom_bar .modules-left { border-radius: 8px; margin-left: 13px; }
+window.bottom_bar .modules-right { border-radius: 8px; margin-right: 13px; }
 #custom-day_month, #custom-date {
   color: @overlay2;
   padding: 0 14px;
@@ -66,7 +102,7 @@ window.bottom_bar .modules-right { border-radius: 6px; margin-right: 13px; }
   font-size: 29px;
   padding: 0;
   min-width: 47px;
-  margin: 7px 0 7px 13px;
+  margin: 0;
 }
 #custom-orgm_logo {
   background: transparent;

@@ -10,17 +10,7 @@
     "margin-left": 14,
     "margin-right": 24,
     "modules-left": [
-      "custom/menu",
-      "custom/ws_1",
-      "custom/ws_2",
-      "custom/ws_3",
-      "custom/ws_4",
-      "custom/ws_5",
-      "custom/ws_6",
-      "custom/ws_7",
-      "custom/ws_8",
-      "custom/ws_9",
-      "custom/ws_10",
+      "group/workspaces",
       "group/system",
       "hyprland/submap"
     ],
@@ -37,108 +27,124 @@
       "network",
       "custom/logout_menu"
     ],
+    "group/workspaces": {
+      "orientation": "horizontal",
+      "modules": [
+        "custom/menu",
+        "custom/ws_1",
+        "custom/ws_2",
+        "custom/ws_3",
+        "custom/ws_4",
+        "custom/ws_5",
+        "custom/ws_6",
+        "custom/ws_7",
+        "custom/ws_8",
+        "custom/ws_9",
+        "custom/ws_10"
+      ]
+    },
     "custom/menu": {
       "format": "",
       "tooltip": true,
       "tooltip-format": "Abrir menú ORGM-HYPR",
-      "on-click": "~/.local/bin/hypr-main-menu"
+      "on-click": "orgm-hypr menu main"
     },
     "custom/ws_1": {
-      "exec": "~/.local/bin/hypr-workspace-button status 1",
+      "exec": "orgm-hypr waybar workspace status 1",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "~/.local/bin/hypr-workspace-button click 1"
+      "on-click": "orgm-hypr waybar workspace click 1"
     },
     "custom/ws_2": {
-      "exec": "~/.local/bin/hypr-workspace-button status 2",
+      "exec": "orgm-hypr waybar workspace status 2",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "~/.local/bin/hypr-workspace-button click 2"
+      "on-click": "orgm-hypr waybar workspace click 2"
     },
     "custom/ws_3": {
-      "exec": "~/.local/bin/hypr-workspace-button status 3",
+      "exec": "orgm-hypr waybar workspace status 3",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "~/.local/bin/hypr-workspace-button click 3"
+      "on-click": "orgm-hypr waybar workspace click 3"
     },
     "custom/ws_4": {
-      "exec": "~/.local/bin/hypr-workspace-button status 4",
+      "exec": "orgm-hypr waybar workspace status 4",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "~/.local/bin/hypr-workspace-button click 4"
+      "on-click": "orgm-hypr waybar workspace click 4"
     },
     "custom/ws_5": {
-      "exec": "~/.local/bin/hypr-workspace-button status 5",
+      "exec": "orgm-hypr waybar workspace status 5",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "~/.local/bin/hypr-workspace-button click 5"
+      "on-click": "orgm-hypr waybar workspace click 5"
     },
     "custom/ws_6": {
-      "exec": "~/.local/bin/hypr-workspace-button status 6",
+      "exec": "orgm-hypr waybar workspace status 6",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "~/.local/bin/hypr-workspace-button click 6"
+      "on-click": "orgm-hypr waybar workspace click 6"
     },
     "custom/ws_7": {
-      "exec": "~/.local/bin/hypr-workspace-button status 7",
+      "exec": "orgm-hypr waybar workspace status 7",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "~/.local/bin/hypr-workspace-button click 7"
+      "on-click": "orgm-hypr waybar workspace click 7"
     },
     "custom/ws_8": {
-      "exec": "~/.local/bin/hypr-workspace-button status 8",
+      "exec": "orgm-hypr waybar workspace status 8",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "~/.local/bin/hypr-workspace-button click 8"
+      "on-click": "orgm-hypr waybar workspace click 8"
     },
     "custom/ws_9": {
-      "exec": "~/.local/bin/hypr-workspace-button status 9",
+      "exec": "orgm-hypr waybar workspace status 9",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "~/.local/bin/hypr-workspace-button click 9"
+      "on-click": "orgm-hypr waybar workspace click 9"
     },
     "custom/ws_10": {
-      "exec": "~/.local/bin/hypr-workspace-button status 10",
+      "exec": "orgm-hypr waybar workspace status 10",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "~/.local/bin/hypr-workspace-button click 10"
+      "on-click": "orgm-hypr waybar workspace click 10"
     },
     "hyprland/submap": {
       "format": "<span color='#a6da95'>Mode:</span> {}",
       "tooltip": false
     },
     "custom/day_month": {
-      "exec": "~/.local/bin/waybar-day-month-es",
+      "exec": "orgm-hypr waybar date --format day-month-es",
       "interval": 60,
       "tooltip": false
     },
     "custom/time": {
-      "exec": "~/.local/bin/waybar-time-ampm",
+      "exec": "orgm-hypr waybar date --format time-ampm",
       "interval": 1,
       "tooltip": false
     },
     "custom/date": {
-      "exec": "~/.local/bin/waybar-date-es",
+      "exec": "orgm-hypr waybar date --format date-es",
       "interval": 60,
       "tooltip": false
     },
@@ -183,7 +189,7 @@
       "on-click": "kitty -e btop"
     },
     "custom/swap": {
-      "exec": "~/.local/bin/waybar-swap-usage",
+      "exec": "orgm-hypr waybar swap-usage",
       "interval": 5,
       "tooltip": false,
       "on-click": "kitty -e btop"
@@ -277,7 +283,7 @@
     "custom/logout_menu": {
       "format": "󰐥",
       "tooltip": false,
-      "on-click": "~/.local/bin/hypr-power-menu"
+      "on-click": "orgm-hypr menu power"
     }
   },
   {
@@ -307,7 +313,7 @@
       "format": " ",
       "tooltip": true,
       "tooltip-format": "Abrir menú ORGM-HYPR",
-      "on-click": "~/.local/bin/hypr-main-menu"
+      "on-click": "orgm-hypr menu main"
     },
     "custom/user": {
       "format": "  osmarg",
@@ -361,7 +367,7 @@
       "on-click": "kitty -e btop"
     },
     "custom/swap": {
-      "exec": "~/.local/bin/waybar-swap-usage",
+      "exec": "orgm-hypr waybar swap-usage",
       "interval": 5,
       "tooltip": false,
       "on-click": "kitty -e btop"
@@ -406,7 +412,7 @@
       "format": "?",
       "tooltip": true,
       "tooltip-format": "Atajos Hyprland (Win+/)",
-      "on-click": "~/.local/bin/hypr-keybindings-help"
+      "on-click": "orgm-hypr menu keybindings"
     },
     "battery": {
       "states": {

@@ -1,3 +1,2 @@
 #!/bin/sh
-
-date +%d/%m/%Y
+exec orgm-hypr waybar date --format date-es "$@"

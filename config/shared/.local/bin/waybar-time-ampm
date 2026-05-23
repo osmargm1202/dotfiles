@@ -1,3 +1,2 @@
 #!/bin/sh
-
-LC_TIME=C date '+%-I:%M %p'
+exec orgm-hypr waybar date --format time-ampm "$@"

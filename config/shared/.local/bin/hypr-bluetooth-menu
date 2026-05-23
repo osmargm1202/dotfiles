@@ -1,10 +1,2 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
-theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
-choice="$(printf '%s\n' '󰂯 Bluetooth GUI' '󰂯 bluetui' '󰅖 Cancel' | rofi -dmenu -i -p 'Bluetooth' -theme "$theme" || true)"
-case "$choice" in
-  *'GUI') exec blueman-manager ;;
-  *'bluetui') exec kitty -e bluetui ;;
-  *) exit 0 ;;
-esac
+exec orgm-hypr menu bluetooth "$@"

@@ -1,23 +1,2 @@
 #!/bin/sh
-set -eu
-
-PATH="/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$HOME/.nix-profile/bin:$PATH"
-export PATH
-
-config_dir="${1:-${WAYBAR_CONFIG_DIR:-$HOME/.config/waybar}}"
-profile="$(basename "$config_dir")"
-log="${XDG_STATE_HOME:-$HOME/.local/state}/waybar/${profile}.log"
-mkdir -p "$(dirname "$log")"
-
-# One watcher only per config dir.
-for old in $(pgrep -f "^/bin/sh ${HOME}/.local/bin/waybar-watch ${config_dir}" 2>/dev/null || true); do
-  if [ "$old" != "$$" ]; then
-    kill -KILL "$old" 2>/dev/null || true
-  fi
-done
-
-while true; do
-  pkill -KILL -f '(^|/)waybar($| )|[.]waybar-wrapped' 2>/dev/null || true
-  waybar -c "${config_dir}/config" -s "${config_dir}/style.css" >>"$log" 2>&1 || true
-  sleep 2
-done
+exec orgm-hypr waybar watch "$@"

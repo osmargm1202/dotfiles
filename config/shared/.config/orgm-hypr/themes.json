@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "activeDefault": "neutral",
+  "themes": [
+    {
+      "id": "neutral",
+      "name": "Neutral",
+      "description": "Neutral theme derived from current Hyprland/Matugen palette.",
+      "defaultMode": "dark",
+      "wallpaper": {
+        "mode": "current",
+        "deriveColors": false
+      },
+      "palettes": {
+        "dark": {
+          "background": "#131317",
+          "surface": "#201f23",
+          "surfaceAlt": "#353438",
+          "foreground": "#e5e1e7",
+          "muted": "#918f9a",
+          "accent": "#c2c1ff",
+          "accent2": "#f5b2e0",
+          "border": "#47464f",
+          "urgent": "#ffb4ab",
+          "success": "#b5ccba"
+        },
+        "light": {
+          "background": "#fffbff",
+          "surface": "#f4eff4",
+          "surfaceAlt": "#e7e0e7",
+          "foreground": "#1c1b1f",
+          "muted": "#767680",
+          "accent": "#595992",
+          "accent2": "#8a4f7b",
+          "border": "#c8c5d1",
+          "urgent": "#ba1a1a",
+          "success": "#386a20"
+        }
+      },
+      "targets": {
+        "chromium": {
+          "mode": "export"
+        },
+        "gtk": {
+          "mode": "generated"
+        },
+        "hypr": {
+          "mode": "generated"
+        },
+        "nwg-dock": {
+          "mode": "generated"
+        },
+        "qt": {
+          "mode": "generated"
+        },
+        "waybar": {
+          "mode": "generated"
+        },
+        "zen": {
+          "mode": "export"
+        }
+      },
+      "reloadPolicy": {
+        "gtk": "restart-hint",
+        "hypr": "hyprctl reload",
+        "nwg-dock": "restart-hint",
+        "qt": "restart-hint",
+        "waybar": "SIGUSR2"
+      },
+      "safetyPolicy": {
+        "profileMutation": "disabled"
+      }
+    }
+  ]
+}

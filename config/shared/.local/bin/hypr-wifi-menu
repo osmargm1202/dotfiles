@@ -1,10 +1,2 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
-theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
-choice="$(printf '%s\n' '󰖩 NetworkManager GUI' '󰖩 nmtui' '󰅖 Cancel' | rofi -dmenu -i -p 'WiFi' -theme "$theme" || true)"
-case "$choice" in
-  *'GUI') exec nm-connection-editor ;;
-  *'nmtui') exec kitty -e nmtui ;;
-  *) exit 0 ;;
-esac
+exec orgm-hypr menu wifi "$@"

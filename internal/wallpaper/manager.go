@@ -387,16 +387,25 @@ func (m *Manager) StartMPVPaper(video string) error {
 }
 
 func (m *Manager) ensureLockWallpaper() {
-	if _, err := os.Lstat(m.LockWallpaper); err == nil {
-		return
+	_, _ = m.CompatibilityCurrent()
+}
+
+func (m *Manager) CompatibilityCurrent() (string, error) {
+	wallpaper := readTrim(m.CurrentFile)
+	if wallpaper == "" || !fileExists(wallpaper) {
+		wallpaper = m.Fallback
 	}
-	if current := readTrim(m.CurrentFile); current != "" && fileExists(current) {
-		_ = os.Symlink(current, m.LockWallpaper)
-		return
+	if wallpaper == "" || !fileExists(wallpaper) {
+		return m.LockWallpaper, nil
 	}
-	if fileExists(m.Fallback) {
-		_ = os.Symlink(m.Fallback, m.LockWallpaper)
+	if err := os.MkdirAll(filepath.Dir(m.LockWallpaper), 0o755); err != nil {
+		return "", err
 	}
+	_ = os.Remove(m.LockWallpaper)
+	if err := os.Symlink(wallpaper, m.LockWallpaper); err != nil {
+		return "", err
+	}
+	return m.LockWallpaper, nil
 }
 
 func readTrim(path string) string {

@@ -1,8 +1,7 @@
 local exec_once = {
-  "systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL XCURSOR_THEME XCURSOR_SIZE",
-  "dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME QT_QPA_PLATFORMTHEME_QT6 ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND NIXOS_OZONE_WL TERMINAL XCURSOR_THEME XCURSOR_SIZE",
+  "orgm-hypr session import-env",
   "systemctl --user start graphical-session.target",
-  "~/.local/bin/waybar-watch ~/.config/waybar-hypr",
+  "orgm-hypr waybar watch ~/.config/waybar-hypr",
   "swaync",
   "nm-applet --indicator",
   "blueman-applet",
@@ -11,12 +10,12 @@ local exec_once = {
   "orgm-hypr wallpaper restore",
   "orgm-hypr wallpaper picker-daemon",
   "nextcloud --background",
-  "sh -lc 'if command -v docker >/dev/null 2>&1; then docker start arch windows >/dev/null 2>&1 || true; elif command -v podman >/dev/null 2>&1; then podman start arch windows >/dev/null 2>&1 || true; fi'",
-  "sh -lc 'if command -v discord >/dev/null 2>&1; then discord --start-minimized; elif command -v flatpak >/dev/null 2>&1 && flatpak info com.discordapp.Discord >/dev/null 2>&1; then flatpak run com.discordapp.Discord --start-minimized; fi'",
+  "orgm-hypr session start-containers arch windows",
+  "orgm-hypr session start-discord",
   "wl-paste --type text --watch cliphist store",
   "wl-paste --type image --watch cliphist store",
   "hypridle",
-  "sh -lc '$HOME/.local/bin/hypr-nwg-dock' 2>/tmp/hypr-nwg-dock.log",
+  "sh -lc 'orgm-hypr dock start 2>/tmp/hypr-nwg-dock.log'",
 }
 
 hl.on("hyprland.start", function()
