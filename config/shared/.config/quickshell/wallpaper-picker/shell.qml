@@ -10,15 +10,18 @@ ShellRoot {
   property string requestPath: Quickshell.env("HYPR_WALLPAPER_REQUEST") || (stateHome + "/hypr-wallpaper/wallpaper-picker-request.json")
   property string dataPath: Quickshell.env("HYPR_WALLPAPER_DATA") || (stateHome + "/hypr-wallpaper/wallpaper-picker.json")
   property bool panelVisible: (Quickshell.env("HYPR_WALLPAPER_SHOW") || "") === "1"
-  property var data: ({ title: "Wallpapers", mode: "static", applyCommand: "set-static", script: "orgm-hypr", scriptArgs: ["wallpaper"], current: "", items: [] })
+  property var data: ({ mode: "combined", initialMode: "static", script: "orgm-hypr", scriptArgs: ["wallpaper"], tabs: ({ static: { title: "Normal wallpapers", applyCommand: "set-static", randomCommand: "random-static", current: "", items: [] }, video: { title: "Live wallpapers", applyCommand: "set-video", randomCommand: "random-video", current: "", items: [] } }) })
+  property string activeMode: "static"
   property int imageReloadNonce: 0
   property int pageSize: 16
   property int columns: 4
   property int currentPage: 0
   property int selectedInPage: 0
   property bool pendingShowPanel: false
-  property int pageCount: Math.max(1, Math.ceil((data.items || []).length / pageSize))
-  property var pageItems: (data.items || []).slice(currentPage * pageSize, currentPage * pageSize + pageSize)
+  property var activeTab: root.tabForMode(root.activeMode)
+  property var activeItems: activeTab.items || []
+  property int pageCount: Math.max(1, Math.ceil(activeItems.length / pageSize))
+  property var pageItems: activeItems.slice(currentPage * pageSize, currentPage * pageSize + pageSize)
 
   FileView {
     id: requestFile
@@ -83,10 +86,18 @@ ShellRoot {
       if (!text || text.length === 0)
         return
 
-      root.data = JSON.parse(text)
-      const currentIndex = Math.max(0, root.data.items.findIndex(item => item.path === root.data.current))
-      root.currentPage = Math.floor(currentIndex / root.pageSize)
-      root.selectedInPage = currentIndex % root.pageSize
+      const parsed = JSON.parse(text)
+      if (!parsed.tabs) {
+        const mode = parsed.mode === "video" ? "video" : "static"
+        parsed.initialMode = mode
+        parsed.tabs = ({})
+        parsed.tabs[mode] = { title: parsed.title || (mode === "video" ? "Live wallpapers" : "Normal wallpapers"), applyCommand: parsed.applyCommand || (mode === "video" ? "set-video" : "set-static"), randomCommand: mode === "video" ? "random-video" : "random-static", current: parsed.current || "", items: parsed.items || [] }
+        parsed.script = parsed.script || "orgm-hypr"
+        parsed.scriptArgs = parsed.scriptArgs || ["wallpaper"]
+      }
+      root.data = parsed
+      root.activeMode = parsed.initialMode === "video" ? "video" : "static"
+      root.resetSelectionForActiveTab()
       if (showPanel)
         root.showPanel()
       root.warmCurrentPage()
@@ -110,9 +121,33 @@ ShellRoot {
     return [script].concat(scriptArgs).concat(args)
   }
 
+  function tabForMode(mode) {
+    const tabs = root.data.tabs || ({})
+    if (mode === "video" && tabs.video)
+      return tabs.video
+    if (tabs.static)
+      return tabs.static
+    return ({ title: mode === "video" ? "Live wallpapers" : "Normal wallpapers", applyCommand: mode === "video" ? "set-video" : "set-static", randomCommand: mode === "video" ? "random-video" : "random-static", current: "", items: [] })
+  }
+
+  function resetSelectionForActiveTab() {
+    const current = root.activeTab.current || ""
+    const index = Math.max(0, root.activeItems.findIndex(item => item.path === current))
+    root.currentPage = Math.floor(index / root.pageSize)
+    root.selectedInPage = index % root.pageSize
+  }
+
+  function setActiveMode(mode) {
+    const nextMode = mode === "video" ? "video" : "static"
+    if (nextMode === root.activeMode)
+      return
+    root.activeMode = nextMode
+    root.resetSelectionForActiveTab()
+    root.warmCurrentPage()
+  }
+
   function warmCurrentPage() {
-    const mode = root.data.mode || "static"
-    warmPageProc.command = root.commandWithScriptArgs(["warm-page", mode, String(root.currentPage), String(root.pageSize)])
+    warmPageProc.command = root.commandWithScriptArgs(["warm-page", root.activeMode, String(root.currentPage), String(root.pageSize)])
     warmPageProc.running = true
   }
 
@@ -218,7 +253,13 @@ ShellRoot {
         const item = root.selectedItem()
         if (!item || !item.path)
           return
-        applyProc.command = root.commandWithScriptArgs([root.data.applyCommand || "set-static", item.path])
+        applyProc.command = root.commandWithScriptArgs([root.activeTab.applyCommand || (root.activeMode === "video" ? "set-video" : "set-static"), item.path])
+        applyProc.startDetached()
+        root.hidePanel()
+      }
+
+      function applyRandom() {
+        applyProc.command = root.commandWithScriptArgs([root.activeTab.randomCommand || (root.activeMode === "video" ? "random-video" : "random-static")])
         applyProc.startDetached()
         root.hidePanel()
       }
@@ -241,14 +282,36 @@ ShellRoot {
           spacing: 12
 
           Text {
-            text: root.data.title || "Wallpapers"
+            text: "Wallpapers"
             color: "#cad3f5"
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 22
             font.bold: true
-            width: parent.width - pager.width - helper.width - 40
+            width: 190
             elide: Text.ElideRight
           }
+
+          Rectangle {
+            width: 100
+            height: 30
+            radius: 8
+            color: root.activeMode === "static" ? "#33494d64" : "#22363a4f"
+            border.color: root.activeMode === "static" ? "#8aadf4" : "#494d64"
+            Text { anchors.centerIn: parent; text: "NORMAL"; color: root.activeMode === "static" ? "#8aadf4" : "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
+            MouseArea { anchors.fill: parent; onClicked: root.setActiveMode("static") }
+          }
+
+          Rectangle {
+            width: 100
+            height: 30
+            radius: 8
+            color: root.activeMode === "video" ? "#33494d64" : "#22363a4f"
+            border.color: root.activeMode === "video" ? "#8aadf4" : "#494d64"
+            Text { anchors.centerIn: parent; text: "LIVE"; color: root.activeMode === "video" ? "#8aadf4" : "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
+            MouseArea { anchors.fill: parent; onClicked: root.setActiveMode("video") }
+          }
+
+          Item { width: parent.width - 190 - 100 - 100 - pager.width - helper.width - 88; height: 1 }
 
           Text {
             id: pager
@@ -280,6 +343,15 @@ ShellRoot {
           model: root.pageItems
           interactive: false
           Keys.onPressed: event => root.handleKey(event)
+
+          Text {
+            anchors.centerIn: parent
+            visible: root.activeItems.length === 0
+            text: root.activeMode === "video" ? "No live wallpapers found" : "No normal wallpapers found"
+            color: "#6e738d"
+            font.family: "JetBrainsMono Nerd Font"
+            font.pixelSize: 18
+          }
 
           delegate: Item {
             required property var modelData
@@ -346,6 +418,18 @@ ShellRoot {
             border.color: root.currentPage < root.pageCount - 1 ? "#8aadf4" : "#494d64"
             Text { anchors.centerIn: parent; text: "Next →"; color: root.currentPage < root.pageCount - 1 ? "#8aadf4" : "#494d64"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13 }
             MouseArea { anchors.fill: parent; onClicked: root.changePage(1) }
+          }
+
+          Item { width: parent.width - 74 - 74 - 130 - 30; height: 1 }
+
+          Rectangle {
+            width: 130
+            height: 26
+            radius: 6
+            color: "#22363a4f"
+            border.color: "#a6da95"
+            Text { anchors.centerIn: parent; text: "󰒟 Random"; color: "#a6da95"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
+            MouseArea { anchors.fill: parent; onClicked: overlay.applyRandom() }
           }
         }
       }
