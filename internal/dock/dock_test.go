@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestStartArgsMatchHyprNWGDockWrapperDefaults(t *testing.T) {
+func TestStartArgsUseCanonicalOrgmHyprMenuByDefault(t *testing.T) {
 	args := StartArgs(Env{
 		Home: "/home/osmarg",
 	})
@@ -21,7 +21,7 @@ func TestStartArgsMatchHyprNWGDockWrapperDefaults(t *testing.T) {
 		"-mb", "0",
 		"-lp", "start",
 		"-ico", "/home/osmarg/.local/share/icons/nixos.svg",
-		"-c", "/home/osmarg/.local/bin/hypr-main-menu",
+		"-c", "orgm-hypr menu main",
 	}
 	if !reflect.DeepEqual(args, want) {
 		t.Fatalf("StartArgs(default) = %#v, want %#v", args, want)

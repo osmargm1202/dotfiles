@@ -19,7 +19,7 @@ func TestModelMainListsCompatibilityItems(t *testing.T) {
 	}
 }
 
-func TestPlanSelectionBuildsSubmenuAndKeyboardActions(t *testing.T) {
+func TestPlanSelectionBuildsCanonicalOrgmHyprActions(t *testing.T) {
 	tests := []struct {
 		name      string
 		menuName  string
@@ -31,6 +31,24 @@ func TestPlanSelectionBuildsSubmenuAndKeyboardActions(t *testing.T) {
 			menuName:  "main",
 			selection: "󰒓 Tools",
 			want:      ActionPlan{Command: Command{Name: "orgm-hypr", Args: []string{"menu", "tools"}}},
+		},
+		{
+			name:      "main apps uses orgm-hypr launcher",
+			menuName:  "main",
+			selection: "󰀻 Apps",
+			want:      ActionPlan{Command: Command{Name: "orgm-hypr", Args: []string{"launcher", "apps"}}},
+		},
+		{
+			name:      "tools search files uses orgm-hypr file command",
+			menuName:  "tools",
+			selection: "󰍉 Search files",
+			want:      ActionPlan{Command: Command{Name: "orgm-hypr", Args: []string{"file", "open", "--launcher", "fuzzel"}}},
+		},
+		{
+			name:      "power lock uses orgm-hypr session command",
+			menuName:  "power",
+			selection: "󰌾 Lock",
+			want:      ActionPlan{Command: Command{Name: "orgm-hypr", Args: []string{"session", "lock", "--force"}}},
 		},
 		{
 			name:      "keyboard latam switches explicit layout",
@@ -70,12 +88,12 @@ func TestKeybindingEntriesFilterCategories(t *testing.T) {
 	if len(launchers) == 0 {
 		t.Fatalf("launchers entries empty")
 	}
-	if launchers[0].Key != "Win+/" || launchers[0].Command != "hypr-keybindings-help" {
-		t.Fatalf("first launcher entry = %#v, want Win+/ hypr-keybindings-help", launchers[0])
+	if launchers[0].Key != "Win+/" || launchers[0].Command != "orgm-hypr menu keybindings" {
+		t.Fatalf("first launcher entry = %#v, want Win+/ orgm-hypr menu keybindings", launchers[0])
 	}
 	media := KeybindingEntries("media")
-	if len(media) == 0 || media[0].Command != "volume-osd up/down" {
-		t.Fatalf("media entries = %#v, want first volume-osd up/down", media)
+	if len(media) == 0 || media[0].Command != "orgm-hypr osd volume up/down" {
+		t.Fatalf("media entries = %#v, want first orgm-hypr osd volume up/down", media)
 	}
 }
 

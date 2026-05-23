@@ -503,7 +503,7 @@ func TestRunWithIOSessionImportEnvPrintsCompatibilityCommands(t *testing.T) {
 	}
 }
 
-func TestRunWithIODockStartPrintArgsMatchesCompatibilityWrapper(t *testing.T) {
+func TestRunWithIODockStartPrintArgsUsesCanonicalOrgmHyprMenu(t *testing.T) {
 	home := filepath.Join(t.TempDir(), "home")
 	t.Setenv("HOME", home)
 	var stdout, stderr bytes.Buffer
@@ -513,7 +513,7 @@ func TestRunWithIODockStartPrintArgsMatchesCompatibilityWrapper(t *testing.T) {
 	if err != nil {
 		t.Fatalf("runWithIO(dock start --print-args) error = %v", err)
 	}
-	want := "nwg-dock-hyprland -r -p right -a center -i 56 -x -mr 8 -mt 0 -mb 0 -lp start -ico " + filepath.Join(home, ".local/share/icons/nixos.svg") + " -c " + filepath.Join(home, ".local/bin/hypr-main-menu") + "\n"
+	want := "nwg-dock-hyprland -r -p right -a center -i 56 -x -mr 8 -mt 0 -mb 0 -lp start -ico " + filepath.Join(home, ".local/share/icons/nixos.svg") + " -c orgm-hypr menu main\n"
 	if got := stdout.String(); got != want {
 		t.Fatalf("stdout = %q, want %q", got, want)
 	}

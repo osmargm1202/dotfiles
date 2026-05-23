@@ -24,7 +24,7 @@
   "script-fail-notify": true,
   "scripts": {
     "focus-app-on-action": {
-      "exec": "~/.local/bin/hypr-focus-notification-app",
+      "exec": "orgm-hypr notify focus-app",
       "app-name": ".*",
       "run-on": "action"
     }
