@@ -52,6 +52,16 @@ set -gx PATH $HOME/go/bin $PATH
 # Node: usar pnpm por defecto; npx ejecuta pnpm dlx (ver functions/npx.fish)
 alias npm="pnpm"
 
+# Nix cleanup helpers.
+alias nixgc='sudo nix-collect-garbage -d'
+function nixg
+    set -l keep 2
+    if test (count $argv) -gt 0
+        set keep $argv[1]
+    end
+    sudo nix-env --profile /nix/var/nix/profiles/system --delete-generations +$keep
+end
+
 # Prompt más vistoso (starship opcional)
 if type -q starship
     starship init fish | source
