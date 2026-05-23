@@ -62,6 +62,11 @@ function nixg
     sudo nix-env --profile /nix/var/nix/profiles/system --delete-generations +$keep
 end
 
+function nixclean
+    nixg 2
+    nixgc
+end
+
 # Prompt más vistoso (starship opcional)
 if type -q starship
     starship init fish | source
