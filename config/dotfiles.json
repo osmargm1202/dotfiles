@@ -119,7 +119,6 @@
       ".config/fish/insforge.env",
       ".config/fish/pdd",
       ".config/fish/private-env.fish",
-      ".local/bin/orgm-hypr",
       ".pi/agent/agent-status.json",
       ".pi/agent/auth.json",
       ".pi/agent/extensions/.pi-lens",
