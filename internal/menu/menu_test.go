@@ -71,15 +71,47 @@ func TestPlanSelectionBuildsCanonicalOrgmHyprActions(t *testing.T) {
 }
 
 func TestPlanSelectionMarksPowerActionsDestructive(t *testing.T) {
-	got, ok := PlanSelection("power", "󰜉 Reboot")
-	if !ok {
-		t.Fatalf("PlanSelection(power, reboot) ok = false")
+	tests := []struct {
+		selection string
+		confirm   string
+		args      []string
+	}{
+		{selection: "󰤄 Suspend", confirm: "suspend", args: []string{"suspend"}},
+		{selection: "󰒲 Hibernate", confirm: "hibernate", args: []string{"hibernate"}},
+		{selection: "󰜉 Reboot", confirm: "reboot", args: []string{"reboot"}},
 	}
-	if got.Command.Name != "systemctl" || len(got.Command.Args) != 1 || got.Command.Args[0] != "reboot" {
-		t.Fatalf("command = %#v, want systemctl reboot", got.Command)
+	for _, tt := range tests {
+		t.Run(tt.confirm, func(t *testing.T) {
+			got, ok := PlanSelection("power", tt.selection)
+			if !ok {
+				t.Fatalf("PlanSelection(power, %q) ok = false", tt.selection)
+			}
+			want := ActionPlan{Command: Command{Name: "systemctl", Args: tt.args}, Destructive: true, Confirmation: tt.confirm}
+			if !plansEqual(got, want) {
+				t.Fatalf("PlanSelection() = %#v, want %#v", got, want)
+			}
+		})
 	}
-	if !got.Destructive || got.Confirmation != "reboot" {
-		t.Fatalf("destructive = %t confirmation = %q, want destructive reboot", got.Destructive, got.Confirmation)
+}
+
+func TestSystemMenuUsesCanonicalOrgmHyprCommands(t *testing.T) {
+	tests := []struct {
+		selection string
+		want      ActionPlan
+	}{
+		{selection: "󰑓 Reload Hyprland", want: ActionPlan{Command: Command{Name: "hyprctl", Args: []string{"reload"}}}},
+		{selection: "󰑓 Reload Dock", want: ActionPlan{Command: Command{Name: "orgm-hypr", Args: []string{"dock", "start", "reload"}}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.selection, func(t *testing.T) {
+			got, ok := PlanSelection("system", tt.selection)
+			if !ok {
+				t.Fatalf("PlanSelection(system, %q) ok = false", tt.selection)
+			}
+			if !plansEqual(got, tt.want) {
+				t.Fatalf("PlanSelection() = %#v, want %#v", got, tt.want)
+			}
+		})
 	}
 }
 

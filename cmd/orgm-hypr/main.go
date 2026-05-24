@@ -1577,7 +1577,14 @@ func browserCandidates() []string {
 }
 
 func rofiPick(prompt string, labels []string, stderr io.Writer) (string, error) {
-	cmd := exec.Command("rofi", "-dmenu", "-i", "-p", prompt)
+	args := []string{"-dmenu", "-i", "-p", prompt}
+	if themePath := rofiMenuThemePath(); themePath != "" {
+		args = append(args, "-theme", themePath)
+	}
+	if theme := rofiMenuThemeStr(); theme != "" {
+		args = append(args, "-theme-str", theme)
+	}
+	cmd := exec.Command("rofi", args...)
 	cmd.Stdin = strings.NewReader(strings.Join(labels, "\n") + "\n")
 	cmd.Stderr = stderr
 	data, err := cmd.Output()
@@ -1585,6 +1592,28 @@ func rofiPick(prompt string, labels []string, stderr io.Writer) (string, error) 
 		return "", err
 	}
 	return strings.TrimSpace(string(data)), nil
+}
+
+func rofiMenuThemePath() string {
+	path := os.Getenv("HYPR_ROFI_THEME")
+	if path == "" {
+		path = filepath.Join(os.Getenv("HOME"), ".config", "rofi", "hypr-menu.rasi")
+	}
+	if _, err := os.Stat(path); err != nil {
+		return ""
+	}
+	return path
+}
+
+func rofiMenuThemeStr() string {
+	renv := loadRofiEnv()
+	scale := rofiFloat(renv, "HYPR_ROFI_SCALE", 1)
+	fontSize := rofiInt(renv, "HYPR_ROFI_FONT_SIZE", int(12*scale))
+	width := rofiInt(renv, "HYPR_ROFI_WIDTH", int(600*scale))
+	lines := rofiInt(renv, "HYPR_ROFI_LINES", 8)
+	padding := rofiInt(renv, "HYPR_ROFI_PADDING", int(8*scale))
+	iconSize := rofiInt(renv, "HYPR_ROFI_ICON_SIZE", int(32*scale))
+	return fmt.Sprintf(`configuration { font: "JetBrainsMono Nerd Font %d"; } * { width: %dpx; } listview { lines: %d; } element { padding: %dpx; } element-icon { size: %dpx; }`, fontSize, width, lines, padding, iconSize)
 }
 
 func dmenuPick(kind, prompt string, labels []string, stderr io.Writer) (string, error) {
@@ -1820,6 +1849,18 @@ func loadFuzzelEnv() map[string]string {
 	if path == "" {
 		path = filepath.Join(os.Getenv("HOME"), ".config", "fuzzel", "fuzzel.env")
 	}
+	return loadSimpleEnv(path)
+}
+
+func loadRofiEnv() map[string]string {
+	path := os.Getenv("HYPR_ROFI_ENV")
+	if path == "" {
+		path = filepath.Join(os.Getenv("HOME"), ".config", "rofi", "hypr-menu.env")
+	}
+	return loadSimpleEnv(path)
+}
+
+func loadSimpleEnv(path string) map[string]string {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return map[string]string{}
@@ -1840,6 +1881,22 @@ func loadFuzzelEnv() map[string]string {
 }
 
 func fuzzelFloat(env map[string]string, name string, fallback float64) float64 {
+	return envFloat(env, name, fallback)
+}
+
+func fuzzelInt(env map[string]string, name string, fallback int) int {
+	return envInt(env, name, fallback)
+}
+
+func rofiFloat(env map[string]string, name string, fallback float64) float64 {
+	return envFloat(env, name, fallback)
+}
+
+func rofiInt(env map[string]string, name string, fallback int) int {
+	return envInt(env, name, fallback)
+}
+
+func envFloat(env map[string]string, name string, fallback float64) float64 {
 	value := firstNonEmpty(os.Getenv(name), env[name])
 	if value == "" {
 		return fallback
@@ -1851,7 +1908,7 @@ func fuzzelFloat(env map[string]string, name string, fallback float64) float64 {
 	return parsed
 }
 
-func fuzzelInt(env map[string]string, name string, fallback int) int {
+func envInt(env map[string]string, name string, fallback int) int {
 	value := firstNonEmpty(os.Getenv(name), env[name])
 	if value == "" {
 		return fallback

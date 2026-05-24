@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/cli"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/menu"
@@ -757,6 +758,49 @@ func TestRunWithIOMenuPowerRequiresConfirmationForDestructiveLiveAction(t *testi
 	assertUsageError(t, err, "destructive action requires --confirm reboot or --print")
 }
 
+func TestRunWithIOMenuMainUsesRofiThemeAndScaleOverrides(t *testing.T) {
+	bin := t.TempDir()
+	logPath := filepath.Join(t.TempDir(), "menu-main-rofi.log")
+	writeExecutable(t, filepath.Join(bin, "rofi"), "#!/bin/sh\n{ echo rofi-args; for arg in \"$@\"; do printf '[%s]\\n' \"$arg\"; done; } >>\"$ORGM_TEST_LOG\"\necho 'Cancel'\n")
+	home := t.TempDir()
+	writeFileAt(t, filepath.Join(home, ".config", "rofi", "hypr-menu.env"), "HYPR_ROFI_SCALE=1.50\nHYPR_ROFI_LINES=13\n")
+	writeFileAt(t, filepath.Join(home, ".config", "rofi", "hypr-menu.rasi"), "window { background-color: transparent; }\n")
+	t.Setenv("PATH", bin)
+	t.Setenv("HOME", home)
+	t.Setenv("ORGM_TEST_LOG", logPath)
+	var stdout, stderr bytes.Buffer
+
+	err := runWithIO([]string{"menu", "main"}, &stdout, &stderr)
+
+	if err != nil {
+		t.Fatalf("runWithIO(menu main via rofi) error = %v", err)
+	}
+	waitForFileContains(t, logPath, "[-theme]\n["+filepath.Join(home, ".config", "rofi", "hypr-menu.rasi")+"]\n")
+	waitForFileContains(t, logPath, "[-theme-str]\n[configuration { font: \"JetBrainsMono Nerd Font 18\"; } * { width: 900px; } listview { lines: 13; } element { padding: 12px; } element-icon { size: 48px; }]\n")
+	if got := stdout.String(); got != "" {
+		t.Fatalf("stdout = %q, want empty", got)
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("stderr = %q, want empty", got)
+	}
+}
+
+func TestRunWithIOMenuMainPowerOpensOrgmHyprPowerMenu(t *testing.T) {
+	bin := t.TempDir()
+	logPath := filepath.Join(t.TempDir(), "menu-main.log")
+	writeExecutable(t, filepath.Join(bin, "orgm-hypr"), "#!/bin/sh\necho orgm-hypr:$* >>\"$ORGM_TEST_LOG\"\n")
+	t.Setenv("PATH", bin)
+	t.Setenv("ORGM_TEST_LOG", logPath)
+	var stdout, stderr bytes.Buffer
+
+	err := runWithIO([]string{"menu", "main", "--select", "Power"}, &stdout, &stderr)
+
+	if err != nil {
+		t.Fatalf("runWithIO(menu main Power) error = %v", err)
+	}
+	waitForFileContains(t, logPath, "orgm-hypr:menu power\n")
+}
+
 func TestRunWithIOWebappCreateDryRunPrintsPlanWithoutWriting(t *testing.T) {
 	dataHome := t.TempDir()
 	var stdout, stderr bytes.Buffer
@@ -1099,6 +1143,20 @@ func readFile(t *testing.T, path string) string {
 		t.Fatalf("ReadFile(%q) error = %v", path, err)
 	}
 	return string(data)
+}
+
+func waitForFileContains(t *testing.T, path, want string) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		data, err := os.ReadFile(path)
+		if err == nil && strings.Contains(string(data), want) {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	data, _ := os.ReadFile(path)
+	t.Fatalf("file %q = %q, want substring %q", path, string(data), want)
 }
 
 type lastApplyManifestJSON struct {

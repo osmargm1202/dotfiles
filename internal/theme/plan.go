@@ -305,27 +305,28 @@ func renderFuzzel(resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
 	p := resolved.Palette
 	content := fmt.Sprintf(`# %s
 [colors]
-background=%sff
+background=000000dd
 text=%sff
 prompt=%sff
 placeholder=%sff
 input=%sff
 match=%sff
-selection=%sff
+selection=%sdd
 selection-text=%sff
 selection-match=%sff
 border=%sff
-`, GeneratedMarker, p.Background, p.Foreground, p.Accent, p.Muted, p.Foreground, p.Accent, p.SurfaceAlt, p.Foreground, p.Accent2, p.Border)
+`, GeneratedMarker, hexNoHash(p.Foreground), hexNoHash(p.Accent), hexNoHash(p.Muted), hexNoHash(p.Foreground), hexNoHash(p.Accent), hexNoHash(p.SurfaceAlt), hexNoHash(p.Foreground), hexNoHash(p.Accent2), hexNoHash(p.Accent))
 	return []PlannedWrite{{Target: "fuzzel", Path: filepath.Join(opts.ConfigHome, "fuzzel", "orgm-hypr-theme.ini"), Content: []byte(content), Mode: 0o600}}
 }
 
 func renderRofi(resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
 	p := resolved.Palette
+	r, g, b := rgbValues(p.SurfaceAlt)
 	content := fmt.Sprintf(`/* %s */
 * {
-    background: %s;
+    background: rgba(0, 0, 0, 0.86);
     foreground: %s;
-    selected: %s;
+    selected: rgba(%d, %d, %d, 0.86);
     active: %s;
     urgent: %s;
     border: %s;
@@ -334,13 +335,30 @@ func renderRofi(resolved ResolvedPalette, opts PlanOptions) []PlannedWrite {
 window {
     background-color: @background;
     border-color: @border;
+    border-radius: 15px;
 }
 
-element selected {
+mainbox,
+inputbar,
+listview,
+element,
+element-icon,
+element-text {
+    background-color: transparent;
+}
+
+entry {
     background-color: @selected;
     text-color: @foreground;
 }
-`, GeneratedMarker, p.Background, p.Foreground, p.Accent, p.Success, p.Urgent, p.Border)
+
+element selected,
+element-text selected,
+element-icon selected {
+    background-color: @selected;
+    text-color: @foreground;
+}
+`, GeneratedMarker, p.Foreground, r, g, b, p.Success, p.Urgent, p.Accent)
 	return []PlannedWrite{{Target: "rofi", Path: filepath.Join(opts.ConfigHome, "rofi", "orgm-hypr-theme.rasi"), Content: []byte(content), Mode: 0o600}}
 }
 

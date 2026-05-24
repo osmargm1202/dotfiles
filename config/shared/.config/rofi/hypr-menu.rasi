@@ -1,5 +1,4 @@
-// Hyprland rofi menu theme
-// Adapted from https://github.com/binoymanoj/dotfiles rofi catppuccin theme.
+// Hyprland rofi menu theme: dark translucent surface with orgm-hypr-like accent border.
 
 configuration {
     font: "JetBrainsMono Nerd Font 12";
@@ -7,17 +6,15 @@ configuration {
     show-icons: true;
     icon-theme: "Papirus";
     drun-display-format: "{icon} {name}";
-
 }
 
 * {
-    bg-col: #11111b;
-    bg-col-light: #313244;
-    border-col: #9199CB;
-    selected-col: #313244;
-    purple: #9199CB;
-    fg-col: #cdd6f4;
-    fg-col2: #9199CB;
+    bg-col: rgba(0, 0, 0, 0.86);
+    surface-col: rgba(53, 52, 56, 0.86);
+    border-col: #c2c1ff;
+    selected-col: rgba(53, 52, 56, 0.86);
+    fg-col: #e5e1e7;
+    fg-col2: #c2c1ff;
     width: 600px;
 }
 
@@ -32,21 +29,21 @@ window {
 }
 
 mainbox {
-    background-color: @bg-col;
+    background-color: transparent;
 }
 
 inputbar {
     children: [prompt, entry];
-    background-color: @bg-col;
+    background-color: transparent;
     border-radius: 10px;
     padding: 2px;
     margin: 0px 5px 0px 0px;
 }
 
 prompt {
-    background-color: @purple;
+    background-color: @border-col;
     padding: 10px;
-    text-color: @bg-col;
+    text-color: #000000;
     border-radius: 10px;
     margin: 5px 0px 0px 5px;
 }
@@ -60,7 +57,7 @@ entry {
     padding: 10px;
     margin: 5px 0px 0px 5px;
     text-color: @fg-col;
-    background-color: @bg-col-light;
+    background-color: @surface-col;
     border-radius: 10px;
 }
 
@@ -70,13 +67,13 @@ listview {
     margin: 10px 5px 5px 5px;
     columns: 1;
     lines: 8;
-    background-color: @bg-col;
+    background-color: transparent;
     scrollbar: false;
 }
 
 element {
     padding: 8px;
-    background-color: @bg-col;
+    background-color: transparent;
     border-radius: 10px;
     text-color: @fg-col;
 }
@@ -84,11 +81,11 @@ element {
 element-icon {
     size: 32px;
     padding: 0px 10px 0px 0px;
-    background-color: @bg-col;
+    background-color: transparent;
 }
 
 element-text {
-    background-color: @bg-col;
+    background-color: transparent;
     text-color: @fg-col;
     vertical-align: 0.5;
 }
@@ -108,7 +105,7 @@ element-icon selected {
 }
 
 message {
-    background-color: @bg-col-light;
+    background-color: @surface-col;
     margin: 2px;
     padding: 2px;
     border-radius: 5px;
@@ -117,5 +114,5 @@ message {
 textbox {
     padding: 6px;
     text-color: @fg-col;
-    background-color: @bg-col-light;
+    background-color: @surface-col;
 }
