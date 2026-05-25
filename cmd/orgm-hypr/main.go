@@ -15,6 +15,7 @@ import (
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/calendar"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/cli"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/dock"
+	"github.com/osmarg/dotfiles/orgm-hypr/internal/helper"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/menu"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/osd"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/session"
@@ -68,6 +69,8 @@ func runWithIO(args []string, stdout, stderr io.Writer) error {
 		return runSmartRunWithIO(args[1:], stdout, stderr)
 	case "menu":
 		return runMenuWithIO(args[1:], stdout, stderr)
+	case "helper":
+		return helper.Run(args[1:], stdout, stderr)
 	case "webapp":
 		return runWebappWithIO(args[1:], stdout, stderr)
 	case "launcher", "fuzzel":
@@ -2146,5 +2149,5 @@ func (f *csvFlag) Set(value string) error {
 }
 
 func usage() string {
-	return "usage: orgm-hypr [version|wallpaper|theme|session|waybar|calendar|dock|windows|zen|osd|menu|updates|webapp|notify|smart-run|launcher|fuzzel|file|ssh|tmux|calc|pi] ..."
+	return "usage: orgm-hypr [version|wallpaper|theme|session|waybar|calendar|dock|windows|zen|osd|menu|helper|updates|webapp|notify|smart-run|launcher|fuzzel|file|ssh|tmux|calc|pi] ..."
 }
