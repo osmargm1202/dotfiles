@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/osmarg/dotfiles/orgm-hypr/internal/calendar"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/cli"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/dock"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/menu"
@@ -53,6 +54,8 @@ func runWithIO(args []string, stdout, stderr io.Writer) error {
 		return runSessionWithIO(args[1:], stdout, stderr)
 	case "waybar":
 		return runWaybarWithIO(args[1:], stdout, stderr)
+	case "calendar":
+		return calendar.Run(args[1:], stdout, stderr)
 	case "dock":
 		return runDockWithIO(args[1:], stdout, stderr)
 	case "windows":
@@ -2143,5 +2146,5 @@ func (f *csvFlag) Set(value string) error {
 }
 
 func usage() string {
-	return "usage: orgm-hypr [version|wallpaper|theme|session|waybar|dock|windows|zen|osd|menu|updates|webapp|notify|smart-run|launcher|fuzzel|file|ssh|tmux|calc|pi] ..."
+	return "usage: orgm-hypr [version|wallpaper|theme|session|waybar|calendar|dock|windows|zen|osd|menu|updates|webapp|notify|smart-run|launcher|fuzzel|file|ssh|tmux|calc|pi] ..."
 }

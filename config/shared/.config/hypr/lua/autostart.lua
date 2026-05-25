@@ -9,6 +9,7 @@ local exec_once = {
   "hyprpolkitagent",
   "orgm-hypr wallpaper restore",
   "orgm-hypr wallpaper picker-daemon",
+  "sh -lc 'mkdir -p ${XDG_STATE_HOME:-$HOME/.local/state}/orgm-calendar && orgm-hypr calendar daemon >>${XDG_STATE_HOME:-$HOME/.local/state}/orgm-calendar/helper.log 2>&1'",
   "nextcloud --background",
   "orgm-hypr session start-containers arch windows",
   "orgm-hypr session start-discord",

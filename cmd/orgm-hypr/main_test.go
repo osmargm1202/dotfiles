@@ -454,6 +454,34 @@ func TestRunWithIOWaybarWatchPrintsWatcherPlan(t *testing.T) {
 	}
 }
 
+func TestRunWithIOCalendarStatusPrintsMissingStatus(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("HOME", filepath.Join(root, "home"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(root, "cache"))
+	t.Setenv("XDG_STATE_HOME", filepath.Join(root, "state"))
+	var stdout, stderr bytes.Buffer
+
+	err := runWithIO([]string{"calendar", "status"}, &stdout, &stderr)
+
+	if err != nil {
+		t.Fatalf("runWithIO(calendar status) error = %v", err)
+	}
+	if got := stdout.String(); !strings.Contains(got, `"state": "missing"`) || !strings.Contains(got, filepath.Join(root, "cache", "orgm-calendar", "events.json")) {
+		t.Fatalf("stdout = %q, want missing status with cache path", got)
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("stderr = %q, want empty", got)
+	}
+}
+
+func TestRunWithIOCalendarReportsUsage(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+
+	err := runWithIO([]string{"calendar"}, &stdout, &stderr)
+
+	assertUsageError(t, err, "usage: orgm-hypr calendar [sync|daemon|status|toggle-ui|open-web|open-event|add]")
+}
+
 func TestRunWithIOWaybarDateUsesRequestedFormat(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 

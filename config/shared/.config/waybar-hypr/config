@@ -136,17 +136,20 @@
     "custom/day_month": {
       "exec": "orgm-hypr waybar date --format day-month-es",
       "interval": 60,
-      "tooltip": false
+      "tooltip": false,
+      "on-click": "orgm-hypr calendar toggle-ui"
     },
     "custom/time": {
       "exec": "orgm-hypr waybar date --format time-ampm",
       "interval": 1,
-      "tooltip": false
+      "tooltip": false,
+      "on-click": "orgm-hypr calendar toggle-ui"
     },
     "custom/date": {
       "exec": "orgm-hypr waybar date --format date-es",
       "interval": 60,
-      "tooltip": false
+      "tooltip": false,
+      "on-click": "orgm-hypr calendar toggle-ui"
     },
     "custom/wallpaper": {
       "format": "󰸉",

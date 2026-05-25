@@ -142,6 +142,11 @@ in
     mpvpaper
     quickshell
     orgmHypr
+    # Google Calendar support: gcalcli is a Python application and may pull
+    # Python via Nix. python3Minimal below was pre-existing; the Go helper does
+    # not add or require extra Python packages.
+    gcalcli
+    libnotify
     ffmpeg
     python3Minimal
     hypridle
