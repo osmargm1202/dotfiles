@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestBuildCacheUsesMenuCategories(t *testing.T) {
@@ -86,6 +87,100 @@ func TestTogglePrintWritesCacheAndRequest(t *testing.T) {
 	if !strings.Contains(out.String(), "quickshell") || !strings.Contains(out.String(), "modules/keyhelper/shell.qml") {
 		t.Fatalf("stdout = %q, want quickshell command", out.String())
 	}
+}
+
+func TestTogglePrintQuotesConfigPathWithSpaces(t *testing.T) {
+	state := t.TempDir()
+	configHome := filepath.Join(t.TempDir(), "config with space")
+	t.Setenv("XDG_CONFIG_HOME", configHome)
+	var out, errOut strings.Builder
+
+	if err := Run([]string{"toggle", "--state-home", state, "--print"}, &out, &errOut); err != nil {
+		t.Fatalf("Run(toggle --print) error = %v", err)
+	}
+
+	wantPath := filepath.Join(configHome, "quickshell", "modules", "keyhelper", "shell.qml")
+	if got := out.String(); !strings.Contains(got, "modules/keyhelper/shell.qml") || !strings.Contains(got, "'"+wantPath+"'") {
+		t.Fatalf("stdout = %q, want quoted shell path %q", got, wantPath)
+	}
+}
+
+func TestToggleDoesNotLaunchQuickshellWhenKeyhelperAlreadyRunning(t *testing.T) {
+	state := t.TempDir()
+	bin := t.TempDir()
+	logPath := filepath.Join(t.TempDir(), "quickshell.log")
+	writeExecutable(t, filepath.Join(bin, "pgrep"), "#!/bin/sh\nexit 0\n")
+	writeExecutable(t, filepath.Join(bin, "quickshell"), "#!/bin/sh\necho launched >>\"$ORGM_TEST_LOG\"\n")
+	t.Setenv("PATH", bin)
+	t.Setenv("ORGM_TEST_LOG", logPath)
+	var out, errOut strings.Builder
+
+	if err := Run([]string{"toggle", "--state-home", state}, &out, &errOut); err != nil {
+		t.Fatalf("Run(toggle) error = %v", err)
+	}
+
+	requestPath := filepath.Join(state, "orgm-helper", "keyhelper-request.json")
+	if _, err := os.Stat(requestPath); err != nil {
+		t.Fatalf("expected request file %s: %v", requestPath, err)
+	}
+	if data, err := os.ReadFile(logPath); err == nil {
+		t.Fatalf("quickshell log = %q, want no launch", data)
+	} else if !os.IsNotExist(err) {
+		t.Fatalf("read quickshell log: %v", err)
+	}
+}
+
+func TestToggleLaunchesQuickshellWhenKeyhelperIsNotRunning(t *testing.T) {
+	state := t.TempDir()
+	bin := t.TempDir()
+	logPath := filepath.Join(t.TempDir(), "quickshell.log")
+	writeExecutable(t, filepath.Join(bin, "pgrep"), "#!/bin/sh\nexit 1\n")
+	writeExecutable(t, filepath.Join(bin, "quickshell"), "#!/bin/sh\necho launched:$* >>\"$ORGM_TEST_LOG\"\n")
+	t.Setenv("PATH", bin)
+	t.Setenv("ORGM_TEST_LOG", logPath)
+	var out, errOut strings.Builder
+
+	if err := Run([]string{"toggle", "--state-home", state}, &out, &errOut); err != nil {
+		t.Fatalf("Run(toggle) error = %v", err)
+	}
+
+	waitForFileContains(t, logPath, "launched:-c ")
+	if got := readFile(t, logPath); !strings.Contains(got, "modules/keyhelper/shell.qml") {
+		t.Fatalf("quickshell log = %q, want keyhelper shell path", got)
+	}
+}
+
+func writeExecutable(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o700); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+}
+
+func readFile(t *testing.T, path string) string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%q) error = %v", path, err)
+	}
+	return string(data)
+}
+
+func waitForFileContains(t *testing.T, path, want string) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		data, err := os.ReadFile(path)
+		if err == nil && strings.Contains(string(data), want) {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	data, _ := os.ReadFile(path)
+	t.Fatalf("file %q = %q, want substring %q", path, string(data), want)
 }
 
 func TestRunRejectsInvalidSubcommand(t *testing.T) {

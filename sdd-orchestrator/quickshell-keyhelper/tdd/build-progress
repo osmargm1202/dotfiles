@@ -1,18 +1,23 @@
 {
   "path": "sdd-orchestrator/quickshell-keyhelper/tdd/build-progress",
-  "group": "Task 4: Quickshell keyhelper renderer",
+  "group": "Task 4 review fixes: helper launch behavior",
   "status": "completed",
   "files_changed": [
-    "config/shared/.config/quickshell/modules/keyhelper/shell.qml",
+    "internal/helper/helper.go",
+    "internal/helper/helper_test.go",
     "sdd-orchestrator/quickshell-keyhelper/tdd/build-progress"
   ],
-  "tdd_applicability_reason": "QML renderer creation has no repository QML test runner in the approved plan; used plan-specified structural verification and captured the expected pre-create file absence before implementation.",
+  "tdd_applicability_reason": "N/A - code bug fixes covered by strict Go unit tests written before implementation.",
   "verification": [
-    "RED/precondition: bash -lc 'test -f config/shared/.config/quickshell/modules/keyhelper/shell.qml; echo exit:$?' returned exit:1 before creating the module",
-    "GREEN: bash -lc 'test -f config/shared/.config/quickshell/modules/keyhelper/shell.qml && rg -n \"HELPER_SCALE|orgm-keyhelper|keybindings.json\" config/shared/.config/quickshell/modules/keyhelper/shell.qml' passed and found all required terms"
+    "Safety net: go test ./internal/helper -count=1 passed before edits",
+    "RED: go test ./internal/helper -run 'TestTogglePrintQuotesConfigPathWithSpaces|TestToggleDoesNotLaunchQuickshellWhenKeyhelperAlreadyRunning' -count=1 failed because toggle --print emitted an unquoted path containing spaces",
+    "GREEN: go test ./internal/helper -run 'TestTogglePrintQuotesConfigPathWithSpaces|TestToggleDoesNotLaunchQuickshellWhenKeyhelperAlreadyRunning' -count=1 passed after shell quoting and process guard implementation",
+    "TRIANGULATE: go test ./internal/helper -run 'TestTogglePrintQuotesConfigPathWithSpaces|TestToggleDoesNotLaunchQuickshellWhenKeyhelperAlreadyRunning|TestToggleLaunchesQuickshellWhenKeyhelperIsNotRunning' -count=1 passed",
+    "Required/relevant: go test ./internal/helper ./cmd/orgm-hypr -run 'TestRunWithIOHelper|Test.*Helper' -count=1 passed (internal/helper reported no tests for that narrow regex)",
+    "Relevant package: go test ./internal/helper -count=1 passed"
   ],
   "risks": [
-    "No quickshell binary is available in this environment, so runtime QML loading was not executed.",
-    "Renderer behavior depends on the helper backend writing valid keybindings/request JSON at the planned paths."
+    "Runtime process detection depends on pgrep being available and matching quickshell .*keyhelper.",
+    "quickshell launch remains asynchronous via exec.Command(...).Start()."
   ]
 }

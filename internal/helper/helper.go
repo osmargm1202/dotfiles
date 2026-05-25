@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/cli"
@@ -107,6 +108,9 @@ func Toggle(stateHome string, printOnly bool, stdout io.Writer) error {
 		fmt.Fprintln(stdout, shellJoin(cmd))
 		return nil
 	}
+	if isKeyhelperRunning() {
+		return nil
+	}
 	if _, err := exec.LookPath("quickshell"); err != nil {
 		return fmt.Errorf("quickshell not found: %w", err)
 	}
@@ -156,13 +160,29 @@ func atomicWriteJSON(path string, payload any) error {
 	return os.Rename(name, path)
 }
 
+func isKeyhelperRunning() bool {
+	return exec.Command("pgrep", "-f", "quickshell .*keyhelper").Run() == nil
+}
+
 func shellJoin(args []string) string {
 	out := ""
 	for i, arg := range args {
 		if i > 0 {
 			out += " "
 		}
-		out += arg
+		out += shellQuote(arg)
 	}
 	return out
+}
+
+func shellQuote(arg string) string {
+	if arg == "" {
+		return "''"
+	}
+	for _, r := range arg {
+		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' || r == '-' || r == '.' || r == '/' || r == ':') {
+			return "'" + strings.ReplaceAll(arg, "'", "'\\''") + "'"
+		}
+	}
+	return arg
 }
