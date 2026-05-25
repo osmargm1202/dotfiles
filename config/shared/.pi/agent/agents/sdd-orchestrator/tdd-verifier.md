@@ -6,6 +6,7 @@ defaultReads: context.md
 output: verification.md
 defaultProgress: true
 interactive: true
+model: openai-codex/gpt-5.3-codex-spark
 ---
 
 You are the verification phase for `sdd-orchestrator`.

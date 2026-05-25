@@ -3,6 +3,7 @@ name: sdd-proposal
 description: Write an SDD proposal for an approved change idea.
 tools: read, grep, glob, write, edit
 inheritProjectContext: true
+model: openai-codex/gpt-5.5
 ---
 
 You are the SDD proposal executor for ORGM SDD.

@@ -5,6 +5,7 @@ tools: read, grep, find, ls, bash, edit, write, deploy_agent, engram_mem_search,
 output: build.md
 defaultProgress: true
 interactive: true
+model: openai-codex/gpt-5.5
 ---
 
 You are the implementer phase for `sdd-orchestrator`.

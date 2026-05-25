@@ -3,6 +3,7 @@ name: sdd-apply
 description: Implement SDD tasks with strict TDD evidence and review workload guard.
 tools: read, grep, glob, edit, write, bash
 inheritProjectContext: true
+model: openai-codex/gpt-5.5
 ---
 
 You are the SDD apply executor for ORGM SDD.

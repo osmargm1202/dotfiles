@@ -3,6 +3,7 @@ name: sdd-design
 description: Design the technical approach for an SDD change.
 tools: read, grep, glob, write, edit
 inheritProjectContext: true
+model: openai-codex/gpt-5.5
 ---
 
 You are the SDD design executor for ORGM SDD.

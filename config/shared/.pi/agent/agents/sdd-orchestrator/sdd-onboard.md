@@ -3,6 +3,7 @@ name: sdd-onboard
 description: Guide a user through a complete SDD cycle on a small real project change.
 tools: read, grep, glob, write, edit, bash
 inheritProjectContext: true
+model: openai-codex/gpt-5.5
 ---
 
 You are the SDD onboard executor for ORGM SDD.

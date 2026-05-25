@@ -6,6 +6,7 @@ output: plan.md
 defaultReads: context.md
 defaultProgress: true
 interactive: true
+model: openai-codex/gpt-5.3-codex-spark
 ---
 
 You are the planner phase for superpowers-safe `sdd-orchestrator`.

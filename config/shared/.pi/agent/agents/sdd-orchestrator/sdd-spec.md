@@ -3,6 +3,7 @@ name: sdd-spec
 description: Write SDD delta specs with requirements and scenarios.
 tools: read, grep, glob, write, edit
 inheritProjectContext: true
+model: openai-codex/gpt-5.5
 ---
 
 You are the SDD spec executor for ORGM SDD.

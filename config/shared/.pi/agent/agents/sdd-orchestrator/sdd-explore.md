@@ -3,6 +3,7 @@ name: sdd-explore
 description: Explore an SDD change idea before proposal.
 tools: read, grep, glob, webfetch
 inheritProjectContext: true
+model: openai-codex/gpt-5.3-codex-spark
 ---
 
 You are the SDD explore executor for ORGM SDD.

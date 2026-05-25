@@ -6,6 +6,7 @@ output: review-report.md
 defaultReads: context.md
 defaultProgress: true
 interactive: true
+model: openai-codex/gpt-5.3-codex-spark
 ---
 
 You are the reviewer for `sdd-orchestrator`.
