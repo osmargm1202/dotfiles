@@ -115,13 +115,30 @@ func TestSystemMenuUsesCanonicalOrgmHyprCommands(t *testing.T) {
 	}
 }
 
+func TestKeybindingCategoriesExposeMetadataAndEntries(t *testing.T) {
+	categories := KeybindingCategories()
+	if len(categories) < 6 {
+		t.Fatalf("KeybindingCategories len = %d, want at least 6", len(categories))
+	}
+	first := categories[0]
+	if first.ID != "launchers" || first.Title != "Launchers" || first.Icon == "" {
+		t.Fatalf("first category = %#v, want launchers metadata", first)
+	}
+	if len(first.Entries) == 0 {
+		t.Fatalf("launchers entries empty")
+	}
+	if first.Entries[0].Key != "Win+/" || first.Entries[0].Command != "orgm-hypr helper toggle" {
+		t.Fatalf("first launcher entry = %#v, want Win+/ orgm-hypr helper toggle", first.Entries[0])
+	}
+}
+
 func TestKeybindingEntriesFilterCategories(t *testing.T) {
 	launchers := KeybindingEntries("launchers")
 	if len(launchers) == 0 {
 		t.Fatalf("launchers entries empty")
 	}
-	if launchers[0].Key != "Win+/" || launchers[0].Command != "orgm-hypr menu keybindings" {
-		t.Fatalf("first launcher entry = %#v, want Win+/ orgm-hypr menu keybindings", launchers[0])
+	if launchers[0].Key != "Win+/" || launchers[0].Command != "orgm-hypr helper toggle" {
+		t.Fatalf("first launcher entry = %#v, want Win+/ orgm-hypr helper toggle", launchers[0])
 	}
 	media := KeybindingEntries("media")
 	if len(media) == 0 || media[0].Command != "orgm-hypr osd volume up/down" {

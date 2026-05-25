@@ -12,7 +12,7 @@ function M.setup(programs)
   end
 
   -- Help / launchers.
-  hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("orgm-hypr menu keybindings"))
+  hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("orgm-hypr helper toggle"))
   hl.bind(mainMod .. " + CTRL + slash", hl.dsp.exec_cmd("kitty --hold -e distrobox-enter arch -- tmuxls"))
   hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(programs.terminal))
   hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd("kitty -e distrobox-enter arch"))

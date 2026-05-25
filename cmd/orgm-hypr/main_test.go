@@ -37,6 +37,9 @@ func TestRunWithIOReportsUsageForMissingCommand(t *testing.T) {
 	err := runWithIO(nil, &stdout, &stderr)
 
 	assertUsageError(t, err, usage())
+	if got := usage(); !strings.Contains(got, "|helper|") {
+		t.Fatalf("usage() = %q, want helper command listed", got)
+	}
 	if got := stdout.String(); got != "" {
 		t.Fatalf("stdout = %q, want empty", got)
 	}
@@ -480,6 +483,34 @@ func TestRunWithIOCalendarReportsUsage(t *testing.T) {
 	err := runWithIO([]string{"calendar"}, &stdout, &stderr)
 
 	assertUsageError(t, err, "usage: orgm-hypr calendar [sync|daemon|status|toggle-ui|open-web|open-event|add]")
+}
+
+func TestRunWithIOHelperInitWritesCache(t *testing.T) {
+	stateHome := t.TempDir()
+	var stdout, stderr bytes.Buffer
+	err := runWithIO([]string{"helper", "init", "--state-home", stateHome}, &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("runWithIO(helper init) error = %v", err)
+	}
+	path := filepath.Join(stateHome, "orgm-helper", "keybindings.json")
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("expected cache %s: %v", path, err)
+	}
+	if !strings.Contains(stdout.String(), "keybindings.json") {
+		t.Fatalf("stdout = %q, want keybindings.json", stdout.String())
+	}
+}
+
+func TestRunWithIOHelperTogglePrintsQuickshellCommand(t *testing.T) {
+	stateHome := t.TempDir()
+	var stdout, stderr bytes.Buffer
+	err := runWithIO([]string{"helper", "toggle", "--state-home", stateHome, "--print"}, &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("runWithIO(helper toggle --print) error = %v", err)
+	}
+	if !strings.Contains(stdout.String(), "quickshell") || !strings.Contains(stdout.String(), "keyhelper") {
+		t.Fatalf("stdout = %q, want quickshell keyhelper command", stdout.String())
+	}
 }
 
 func TestRunWithIOWaybarDateUsesRequestedFormat(t *testing.T) {

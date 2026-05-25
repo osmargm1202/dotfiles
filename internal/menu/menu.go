@@ -94,21 +94,37 @@ func labelText(label string) string {
 	return strings.Join(parts[1:], " ")
 }
 
-func KeybindingEntries(category string) []KeybindingEntry {
-	data := map[string][]KeybindingEntry{
-		"launchers":  {{"Win+/", "Atajos Hyprland", "orgm-hypr menu keybindings"}, {"Win+Enter", "Terminal", "kitty"}, {"Win+Space", "Menú principal", "orgm-hypr launcher apps"}, {"Win+A", "Buscar / ChatGPT", "orgm-hypr smart-run run"}},
-		"tools":      {{"Win+M", "Buscar archivo", "orgm-hypr file open --launcher fuzzel"}, {"Win+Esc", "Cambiar ventana", "orgm-hypr windows switch --launcher fuzzel"}},
-		"windows":    {{"Win+Q", "Cerrar enfocada", "killactive"}, {"Win+Shift+Q", "Cerrar por lista", "orgm-hypr windows kill-menu"}},
-		"workspaces": {{"Win+1..0", "Ir workspace", "workspace 1..10"}},
-		"media":      {{"Vol+ / Vol-", "Volumen", "orgm-hypr osd volume up/down"}, {"Mute", "Silenciar audio", "orgm-hypr osd volume mute"}},
-		"system":     {{"Win+P", "Pantallas", "nwg-displays"}, {"Win+Shift+W", "Elegir wallpaper", "orgm-hypr wallpaper pick"}},
+type KeybindingCategory struct {
+	ID      string
+	Title   string
+	Icon    string
+	Entries []KeybindingEntry
+}
+
+func KeybindingCategories() []KeybindingCategory {
+	return []KeybindingCategory{
+		{ID: "launchers", Title: "Launchers", Icon: "󰀻", Entries: []KeybindingEntry{{"Win+/", "Atajos Hyprland", "orgm-hypr helper toggle"}, {"Win+Enter", "Terminal", "kitty"}, {"Win+Space", "Menú principal", "orgm-hypr launcher apps"}, {"Win+A", "Buscar / ChatGPT", "orgm-hypr smart-run run"}}},
+		{ID: "tools", Title: "Tools", Icon: "󰒓", Entries: []KeybindingEntry{{"Win+M", "Buscar archivo", "orgm-hypr file open --launcher fuzzel"}, {"Win+Esc", "Cambiar ventana", "orgm-hypr windows switch --launcher fuzzel"}, {"Win+C", "Calculadora", "orgm-hypr calc fuzzel"}, {"Win+D", "SSH host", "orgm-hypr ssh host --launcher fuzzel"}}},
+		{ID: "windows", Title: "Ventanas", Icon: "󰖲", Entries: []KeybindingEntry{{"Win+Q", "Cerrar enfocada", "killactive"}, {"Win+Shift+Q", "Cerrar por lista", "orgm-hypr windows kill-menu"}, {"Win+F", "Fullscreen falso", "fullscreen mode 1"}, {"Win+Shift+Space", "Flotar ventana", "toggle floating"}}},
+		{ID: "workspaces", Title: "Workspaces", Icon: "󰏗", Entries: []KeybindingEntry{{"Win+1..0", "Ir workspace", "workspace 1..10"}, {"Win+Shift+1..0", "Mover ventana a workspace", "movetoworkspace 1..10"}, {"Win+PageUp/PageDown", "Workspace anterior/siguiente", "workspace r±1"}}},
+		{ID: "media", Title: "Media", Icon: "󰝚", Entries: []KeybindingEntry{{"Vol+ / Vol-", "Volumen", "orgm-hypr osd volume up/down"}, {"Mute", "Silenciar audio", "orgm-hypr osd volume mute"}, {"Brightness+/-", "Brillo", "orgm-hypr osd brightness up/down"}}},
+		{ID: "system", Title: "Sistema", Icon: "󰒓", Entries: []KeybindingEntry{{"Win+P", "Pantallas", "nwg-displays"}, {"Win+Shift+W", "Elegir wallpaper", "orgm-hypr wallpaper pick"}, {"Win+Shift+C", "Calendario", "orgm-hypr calendar toggle-ui"}, {"Win+Alt+E", "Power menu", "wlogout"}}},
 	}
+}
+
+func KeybindingEntries(category string) []KeybindingEntry {
+	categories := KeybindingCategories()
 	if category == "all" || category == "" {
 		var out []KeybindingEntry
-		for _, key := range []string{"launchers", "tools", "windows", "workspaces", "media", "system"} {
-			out = append(out, data[key]...)
+		for _, cat := range categories {
+			out = append(out, cat.Entries...)
 		}
 		return out
 	}
-	return data[category]
+	for _, cat := range categories {
+		if cat.ID == category {
+			return cat.Entries
+		}
+	}
+	return nil
 }
