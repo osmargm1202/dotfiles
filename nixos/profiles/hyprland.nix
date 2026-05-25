@@ -232,8 +232,10 @@ in
     colloid-icon-theme
     libsForQt5.qtstyleplugin-kvantum
     libsForQt5.qt5ct
+    qt5.qtwayland
     kdePackages.qtstyleplugin-kvantum
     qt6Packages.qt6ct
+    qt6.qtwayland
     shared-mime-info
     dconf
     glib
