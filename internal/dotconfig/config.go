@@ -9,15 +9,16 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/osmarg/dotfiles/orgm-hypr/internal/dotmanifest"
 	"github.com/osmarg/dotfiles/orgm-hypr/internal/dotpaths"
 )
 
 type Config struct {
-	Settings  Settings            `json:"settings"`
-	Shared    PathList            `json:"shared"`
-	Hosts     map[string]PathList `json:"hosts"`
-	LocalOnly PathList            `json:"local_only"`
-	Diff      DiffSettings        `json:"diff"`
+	Settings  Settings                   `json:"settings"`
+	Shared    PathList                   `json:"shared"`
+	Hosts     map[string]PathList        `json:"hosts"`
+	LocalOnly dotmanifest.LocalOnlyRules `json:"local_only"`
+	Diff      DiffSettings               `json:"diff"`
 }
 
 type Settings struct {

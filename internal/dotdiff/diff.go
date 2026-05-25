@@ -110,7 +110,7 @@ func diffSourcePath(rt dotconfig.Runtime, base, rel string, opts Options) ([]Cha
 			return err
 		}
 		itemRel := filepath.ToSlash(filepath.Join(rel, relPart))
-		if dotmanifest.ContainsNested(rt.Config.LocalOnly.Paths, itemRel) {
+		if isLocalOnly(rt, itemRel, path) {
 			if opts.Verbose {
 				changes = append(changes, Change{Code: "L", Path: filepath.Join(rt.Destination, itemRel)})
 			}
@@ -133,7 +133,7 @@ func diffSourcePath(rt dotconfig.Runtime, base, rel string, opts Options) ([]Cha
 }
 
 func comparePath(rt dotconfig.Runtime, src, dst, rel string, opts Options) ([]Change, error) {
-	if dotmanifest.ContainsNested(rt.Config.LocalOnly.Paths, rel) {
+	if rt.Config.LocalOnly.Matches(rel, false) {
 		if opts.Verbose {
 			return []Change{{Code: "L", Path: filepath.Join(rt.Destination, rel)}}, nil
 		}
@@ -152,6 +152,14 @@ func comparePath(rt dotconfig.Runtime, src, dst, rel string, opts Options) ([]Ch
 		return []Change{{Code: "M", Path: filepath.Join(rt.Destination, rel)}}, nil
 	}
 	return nil, nil
+}
+
+func isLocalOnly(rt dotconfig.Runtime, rel, fullPath string) bool {
+	isSymlink := false
+	if info, err := os.Lstat(fullPath); err == nil {
+		isSymlink = info.Mode()&os.ModeSymlink != 0
+	}
+	return rt.Config.LocalOnly.Matches(rel, isSymlink)
 }
 
 func sourceExistsForManagedPath(rt dotconfig.Runtime, host, rel string) bool {

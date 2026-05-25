@@ -75,7 +75,7 @@ func syncOne(rt dotconfig.Runtime, base, rel string, opts Options) ([]Action, er
 	if err != nil {
 		return nil, err
 	}
-	if dotmanifest.ContainsNested(rt.Config.LocalOnly.Paths, rel) {
+	if rt.Config.LocalOnly.Matches(rel, false) {
 		return nil, nil
 	}
 	if !info.IsDir() {
@@ -97,13 +97,13 @@ func syncOne(rt dotconfig.Runtime, base, rel string, opts Options) ([]Action, er
 			return nil
 		}
 		itemRel := filepath.ToSlash(filepath.Join(rel, relPart))
-		if dotmanifest.ContainsNested(rt.Config.LocalOnly.Paths, itemRel) {
+		itemDst := filepath.Join(rt.Destination, itemRel)
+		if rt.Config.LocalOnly.Matches(itemRel, false) {
 			if d.IsDir() {
 				return filepath.SkipDir
 			}
 			return nil
 		}
-		itemDst := filepath.Join(rt.Destination, itemRel)
 		if d.IsDir() {
 			if opts.DryRun {
 				return nil
@@ -136,7 +136,7 @@ func syncOne(rt dotconfig.Runtime, base, rel string, opts Options) ([]Action, er
 				return err
 			}
 			itemRel := filepath.ToSlash(filepath.Join(rel, relPart))
-			if dotmanifest.ContainsNested(rt.Config.LocalOnly.Paths, itemRel) {
+			if isLocalOnly(rt, itemRel, path) {
 				return nil
 			}
 			if _, err := os.Lstat(filepath.Join(src, relPart)); err == nil {
@@ -153,6 +153,14 @@ func syncOne(rt dotconfig.Runtime, base, rel string, opts Options) ([]Action, er
 	}
 	sort.SliceStable(actions, func(i, j int) bool { return actions[i].Path < actions[j].Path })
 	return actions, nil
+}
+
+func isLocalOnly(rt dotconfig.Runtime, rel, fullPath string) bool {
+	isSymlink := false
+	if info, err := os.Lstat(fullPath); err == nil {
+		isSymlink = info.Mode()&os.ModeSymlink != 0
+	}
+	return rt.Config.LocalOnly.Matches(rel, isSymlink)
 }
 
 func copyPath(rt dotconfig.Runtime, src, dst, rel string, opts Options) ([]Action, error) {

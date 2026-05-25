@@ -129,6 +129,20 @@
       ".pi/agent/mcp.json.bak-20260420-151836",
       ".pi/agent/pi-crash.log",
       ".pi/agent/settings.json"
+    ],
+    "patterns": [
+      "**/.git",
+      "**/.git/**",
+      "**/.gitignore",
+      "**/.DS_Store",
+      "**/Icon?",
+      "**/icon-theme.cache",
+      "**/mimeinfo.cache",
+      "**/*~",
+      "**/*.bak"
+    ],
+    "types": [
+      "symlink"
     ]
   },
   "diff": {
