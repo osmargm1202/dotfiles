@@ -348,22 +348,18 @@ export default function (pi: ExtensionAPI) {
 		baseline = createSnapshot(await listSpecDocs(ctx.cwd));
 	});
 
-	const runSpecDis = async (ctx: ExtensionContext) => {
-		await ctx.waitForIdle();
-		await openSpecDis(ctx);
-	};
-
 	pi.registerCommand("spec-dis", {
 		description: "List local spec/design/task/doc files and open a reader",
 		handler: async (_args, ctx) => {
-			await runSpecDis(ctx);
+			await ctx.waitForIdle();
+			await openSpecDis(ctx);
 		},
 	});
 
 	pi.registerShortcut("alt+4", {
 		description: "Open latest spec document viewer",
 		handler: async (ctx) => {
-			await runSpecDis(ctx);
+			await openSpecDis(ctx);
 		},
 	});
 }
