@@ -120,11 +120,9 @@ async function walkMarkdown(cwd: string, dir: string, depth: number, out: string
 		return;
 	}
 	for (const entry of entries) {
-		if (entry.name.startsWith(".") && entry.name !== ".openspec") {
-			if (IGNORED_DIRS.has(entry.name)) continue;
-		}
 		const fullPath = join(dir, entry.name);
 		if (entry.isDirectory()) {
+			if (entry.name.startsWith(".") && entry.name !== ".openspec") continue;
 			if (IGNORED_DIRS.has(entry.name)) continue;
 			await walkMarkdown(cwd, fullPath, depth + 1, out);
 			continue;
