@@ -1,6 +1,6 @@
 # ORGM-specific shortcuts.
-alias dotd='orgm-dot diff --host orgm'
-alias dots='orgm-dot sync --host orgm'
+alias dotd='orgm-dot diff'
+alias dots='orgm-dot sync'
 
 # NixOS rebuild shortcuts.
 alias os='nh os switch /home/osmarg/Hobby/dotfiles/ --hostname orgm-hyprland'

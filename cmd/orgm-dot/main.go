@@ -29,40 +29,34 @@ func main() {
 	case "version":
 		fmt.Println("orgm-dot dev")
 	case "status":
-		if err := cmd.RequireHost(); err != nil {
-			fatal(err)
-		}
 		runtime, err := dotconfig.Load(cmd.Config)
 		if err != nil {
 			fatal(err)
 		}
-		for _, line := range runtime.StatusLines(cmd.Host) {
+		host := resolveHost(runtime, cmd.Host)
+		for _, line := range runtime.StatusLines(host) {
 			fmt.Println(line)
 		}
 	case "diff":
-		if err := cmd.RequireHost(); err != nil {
-			fatal(err)
-		}
 		runtime, err := dotconfig.Load(cmd.Config)
 		if err != nil {
 			fatal(err)
 		}
-		changes, err := dotdiff.Changes(runtime, dotdiff.Options{Host: cmd.Host, Porcelain: cmd.Porcelain, Verbose: cmd.Verbose})
+		host := resolveHost(runtime, cmd.Host)
+		changes, err := dotdiff.Changes(runtime, dotdiff.Options{Host: host, Porcelain: cmd.Porcelain, Verbose: cmd.Verbose})
 		if err != nil {
 			fatal(err)
 		}
-		for _, line := range dotdiff.Format(changes, cmd.Host, cmd.Porcelain) {
+		for _, line := range dotdiff.Format(changes, host, cmd.Porcelain) {
 			fmt.Println(line)
 		}
 	case "sync":
-		if err := cmd.RequireHost(); err != nil {
-			fatal(err)
-		}
 		runtime, err := dotconfig.Load(cmd.Config)
 		if err != nil {
 			fatal(err)
 		}
-		actions, err := dotsync.Run(runtime, dotsync.Options{Host: cmd.Host, DryRun: cmd.DryRun})
+		host := resolveHost(runtime, cmd.Host)
+		actions, err := dotsync.Run(runtime, dotsync.Options{Host: host, DryRun: cmd.DryRun})
 		if err != nil {
 			fatal(err)
 		}
@@ -98,13 +92,11 @@ func main() {
 		}
 		fmt.Println(line)
 	case "daemon":
-		if err := cmd.RequireHost(); err != nil {
-			fatal(err)
-		}
 		runtime, err := dotconfig.Load(cmd.Config)
 		if err != nil {
 			fatal(err)
 		}
+		host := resolveHost(runtime, cmd.Host)
 		interval := time.Duration(runtime.PollSeconds) * time.Second
 		if cmd.Interval != "" {
 			seconds, err := strconv.Atoi(cmd.Interval)
@@ -113,7 +105,7 @@ func main() {
 			}
 			interval = time.Duration(seconds) * time.Second
 		}
-		fatal(dotdaemon.Run(runtime, dotdaemon.Options{Host: cmd.Host, Interval: interval}))
+		fatal(dotdaemon.Run(runtime, dotdaemon.Options{Host: host, Interval: interval}))
 	case "install":
 		lines, err := dotinstall.Run(dotpathsHome(), "")
 		if err != nil {
@@ -126,6 +118,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "orgm-dot: unknown command: %s\n", cmd.Name)
 		os.Exit(2)
 	}
+}
+
+func resolveHost(runtime dotconfig.Runtime, explicit string) string {
+	host, err := runtime.ResolveHost(explicit, dotconfig.OSHostname)
+	if err != nil {
+		fatal(err)
+	}
+	return host
 }
 
 func fatal(err error) {
