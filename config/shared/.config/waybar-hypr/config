@@ -414,8 +414,9 @@
     "custom/keybindings_help": {
       "format": "?",
       "tooltip": true,
-      "tooltip-format": "Atajos Hyprland (Win+/)",
-      "on-click": "orgm-hypr menu keybindings"
+      "tooltip-format": "Atajos Hyprland (Win+/)\nClick: abrir helper\nClick derecho: actualizar lista",
+      "on-click": "orgm-hypr helper toggle",
+      "on-click-right": "orgm-hypr helper init"
     },
     "battery": {
       "states": {

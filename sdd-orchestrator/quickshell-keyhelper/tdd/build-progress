@@ -1,23 +1,20 @@
 {
   "path": "sdd-orchestrator/quickshell-keyhelper/tdd/build-progress",
-  "group": "Task 4 review fixes: helper launch behavior",
+  "group": "Task 5: Hyprland, Waybar, and host env integration",
   "status": "completed",
   "files_changed": [
-    "internal/helper/helper.go",
-    "internal/helper/helper_test.go",
+    "config/shared/.config/hypr/lua/keybindings.lua",
+    "config/shared/.config/waybar-hypr/config",
+    "config/hosts/orgm/.config/fish/host-orgm.fish",
     "sdd-orchestrator/quickshell-keyhelper/tdd/build-progress"
   ],
-  "tdd_applicability_reason": "N/A - code bug fixes covered by strict Go unit tests written before implementation.",
+  "tdd_applicability_reason": "Config-only integration task: changes are declarative Hyprland Lua binding, Waybar JSON module command strings, and fish environment export. No production logic or testable API was introduced; verification is command/reference based.",
   "verification": [
-    "Safety net: go test ./internal/helper -count=1 passed before edits",
-    "RED: go test ./internal/helper -run 'TestTogglePrintQuotesConfigPathWithSpaces|TestToggleDoesNotLaunchQuickshellWhenKeyhelperAlreadyRunning' -count=1 failed because toggle --print emitted an unquoted path containing spaces",
-    "GREEN: go test ./internal/helper -run 'TestTogglePrintQuotesConfigPathWithSpaces|TestToggleDoesNotLaunchQuickshellWhenKeyhelperAlreadyRunning' -count=1 passed after shell quoting and process guard implementation",
-    "TRIANGULATE: go test ./internal/helper -run 'TestTogglePrintQuotesConfigPathWithSpaces|TestToggleDoesNotLaunchQuickshellWhenKeyhelperAlreadyRunning|TestToggleLaunchesQuickshellWhenKeyhelperIsNotRunning' -count=1 passed",
-    "Required/relevant: go test ./internal/helper ./cmd/orgm-hypr -run 'TestRunWithIOHelper|Test.*Helper' -count=1 passed (internal/helper reported no tests for that narrow regex)",
-    "Relevant package: go test ./internal/helper -count=1 passed"
+    "Required: rg -n 'orgm-hypr helper toggle|orgm-hypr helper init|HELPER_SCALE' config/shared/.config/hypr/lua/keybindings.lua config/shared/.config/waybar-hypr/config config/hosts/orgm/.config/fish/host-orgm.fish passed",
+    "Self-review: git diff -- config/shared/.config/hypr/lua/keybindings.lua config/shared/.config/waybar-hypr/config config/hosts/orgm/.config/fish/host-orgm.fish confirmed only assigned integration changes"
   ],
   "risks": [
-    "Runtime process detection depends on pgrep being available and matching quickshell .*keyhelper.",
-    "quickshell launch remains asynchronous via exec.Command(...).Start()."
+    "Waybar JSON validity depends on preserving the existing JSONC-compatible configuration structure; edited block keeps surrounding comma placement unchanged.",
+    "HELPER_SCALE is exported for new fish sessions; already-running sessions need reload/restart to inherit it."
   ]
 }
