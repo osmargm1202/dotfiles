@@ -17,7 +17,6 @@ type SpecDoc = {
 
 type Snapshot = Map<string, number>;
 
-const EXTENSION_NAME = "spec-dis";
 const MAX_SCAN_DEPTH = 8;
 const MAX_SELECTOR_HEIGHT = 14;
 const SPEC_SELECTOR_WIDTH = "85%";
