@@ -340,11 +340,61 @@ async function openSpecDis(ctx: ExtensionContext, docs?: SpecDoc[], title = "Ope
 	await openDocViewer(ctx, selected);
 }
 
+function isSubagentToolResult(toolName: unknown): toolName is "deploy_agent" | "query_team" {
+	return toolName === "deploy_agent" || toolName === "query_team";
+}
+
+async function renderChangedDocs(
+	ctx: ExtensionContext,
+	baseline: Snapshot,
+	setBaseline: (snapshot: Snapshot) => void,
+	reason: string,
+): Promise<void> {
+	if (!ctx.hasUI) return;
+
+	const docs = await listSpecDocs(ctx.cwd);
+	const changed = changedSince(docs, baseline);
+	setBaseline(createSnapshot(docs));
+
+	if (changed.length === 0) return;
+
+	if (changed.length === 1) {
+		const doc = changed[0];
+		if (!doc) return;
+		ctx.ui.notify(`1 spec artifact changed (${reason}): ${doc.name}`, "info");
+		await openDocViewer(ctx, doc);
+		return;
+	}
+
+	ctx.ui.notify(`${changed.length} spec artifacts changed (${reason})`, "info");
+	await openSpecDis(ctx, changed, "Changed Spec / Design / Task Documents");
+}
+
 export default function (pi: ExtensionAPI) {
 	let baseline: Snapshot = new Map();
 
+	const setBaseline = (snapshot: Snapshot): void => {
+		baseline = snapshot;
+	};
+	const refreshBaseline = async (ctx: ExtensionContext): Promise<void> => {
+		setBaseline(createSnapshot(await listSpecDocs(ctx.cwd)));
+	};
+
 	pi.on("session_start", async (_event, ctx) => {
-		baseline = createSnapshot(await listSpecDocs(ctx.cwd));
+		await refreshBaseline(ctx);
+	});
+
+	pi.on("agent_start", async (_event, ctx) => {
+		await refreshBaseline(ctx);
+	});
+
+	pi.on("agent_end", async (_event, ctx) => {
+		await renderChangedDocs(ctx, baseline, setBaseline, "completed spec artifact");
+	});
+
+	pi.on("tool_result", async (event, ctx) => {
+		if (!isSubagentToolResult(event.toolName)) return;
+		await renderChangedDocs(ctx, baseline, setBaseline, "subagent spec artifact");
 	});
 
 	pi.registerCommand("spec-dis", {
