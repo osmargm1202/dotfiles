@@ -74,20 +74,24 @@ func Remove(rt dotconfig.Runtime, opts Options) (string, error) {
 func NormalizeTarget(rt dotconfig.Runtime, target string) (string, error) {
 	if strings.HasPrefix(target, "~/") {
 		target = filepath.Join(rt.Home, strings.TrimPrefix(target, "~/"))
-	}
-	if filepath.IsAbs(target) {
-		cleanDest := filepath.Clean(rt.Destination)
-		cleanTarget := filepath.Clean(target)
-		if cleanTarget == cleanDest {
-			return "", fmt.Errorf("target must be inside destination: %s", rt.Destination)
+	} else if !filepath.IsAbs(target) {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", fmt.Errorf("get working directory: %w", err)
 		}
-		rel, err := filepath.Rel(cleanDest, cleanTarget)
-		if err != nil || strings.HasPrefix(rel, "..") || filepath.IsAbs(rel) {
-			return "", fmt.Errorf("target must be inside destination: %s", rt.Destination)
-		}
-		return filepath.ToSlash(dotmanifest.Normalize(rel)), nil
+		target = filepath.Join(cwd, target)
 	}
-	return filepath.ToSlash(dotmanifest.Normalize(target)), nil
+
+	cleanDest := filepath.Clean(rt.Destination)
+	cleanTarget := filepath.Clean(target)
+	if cleanTarget == cleanDest {
+		return "", fmt.Errorf("target must be inside destination: %s", rt.Destination)
+	}
+	rel, err := filepath.Rel(cleanDest, cleanTarget)
+	if err != nil || strings.HasPrefix(rel, "..") || filepath.IsAbs(rel) {
+		return "", fmt.Errorf("target must be inside destination: %s", rt.Destination)
+	}
+	return filepath.ToSlash(dotmanifest.Normalize(rel)), nil
 }
 
 func sourceBase(rt dotconfig.Runtime, opts Options) string {

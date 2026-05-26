@@ -31,12 +31,23 @@ make_fixture() {
 	local name="$1"
 	local repo="$TMP_ROOT/$name/repo"
 	local home="$TMP_ROOT/$name/home"
-	mkdir -p "$repo/config/shared/.config/fish" "$repo/config/hosts/lenovo/.config/fish" "$home/.config/fish" "$repo/config/shared/.config/app" "$home/.config/app"
+	local default_host
+	default_host="$(hostname)"
+	mkdir -p "$repo/config/shared/.config/fish" "$repo/config/hosts/lenovo/.config/fish" "$repo/config/hosts/$default_host/.config/fish" "$home/.config/fish" "$repo/config/shared/.config/app" "$home/.config/app"
 	printf 'shared fish\n' >"$repo/config/shared/.config/fish/config.fish"
 	printf 'host age\n' >"$repo/config/hosts/lenovo/.config/fish/age-host.fish"
+	printf 'default host age\n' >"$repo/config/hosts/$default_host/.config/fish/age-host.fish"
 	printf 'tmux\n' >"$repo/config/shared/.tmux.conf"
 	printf 'same\n' >"$repo/config/shared/.config/app/same.txt"
 	printf 'same\n' >"$home/.config/app/same.txt"
+
+	local hosts_json
+	if [ "$default_host" = "lenovo" ]; then
+		hosts_json='"lenovo": { "paths": [".config/fish/age-host.fish"] }'
+	else
+		hosts_json='"lenovo": { "paths": [".config/fish/age-host.fish"] }, "'"$default_host"'": { "paths": [".config/fish/age-host.fish"] }'
+	fi
+
 	cat >"$repo/config/dotfiles.json" <<JSON
 {
   "settings": {
@@ -48,7 +59,7 @@ make_fixture() {
     "poll_seconds": 5
   },
   "shared": { "paths": [".config/fish", ".config/app", ".tmux.conf"] },
-  "hosts": { "lenovo": { "paths": [".config/fish/age-host.fish"] } },
+  "hosts": { $hosts_json },
   "local_only": { "paths": [".config/fish/fish_variables"] },
   "diff": { "scan_roots": [] }
 }
@@ -93,10 +104,17 @@ case "$status" in *"host src:    $repo/config/hosts/lenovo"*) ;; *)
 	;;
 esac
 
-if run_dot "$repo" "$home" status >"$TMP_ROOT/missing.out" 2>"$TMP_ROOT/missing.err"; then
-	fail "status without --host should fail"
-fi
-assert_file "$TMP_ROOT/missing.err" "--host is required" "missing host error"
+default_status="$(run_dot "$repo" "$home" status)"
+case "$default_status" in *"host:        $(hostname)"*) ;; *)
+	echo "$default_status" >&2
+	fail "status without --host should default to hostname"
+	;;
+esac
+case "$default_status" in *"host src:    $repo/config/hosts/$(hostname)"*) ;; *)
+	echo "$default_status" >&2
+	fail "status without --host should use hostname source"
+	;;
+esac
 
 fixture="$(make_fixture diff)"
 repo="${fixture%%$'\t'*}"
