@@ -20,7 +20,7 @@ function __orgm_command_separator --on-event fish_postexec --description 'Draw c
         set cols 80
     end
 
-    set -l unit "$glyph "
+    set -l unit "$glyph"
     set -l unit_width (string length -- $unit)
     set -l count (math "ceil($cols / $unit_width)")
     set -l line (string repeat -n $count -- $unit | string sub -l $cols)
