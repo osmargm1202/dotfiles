@@ -41,6 +41,8 @@ Legacy command flags like `--diff` and `--sync` may still work, but do not use t
 
 ## Scope notes
 
+- NixOS system configuration and Go system executables live in `/home/osmarg/Hobby/nixos`.
+- This dotfiles repo owns user configuration, icons, desktop files, and small scripts.
 - `config/shared` is for files shared by all hosts.
 - `config/hosts/orgm` and other host directories are for host-specific files.
 - `local_only.paths` in `config/dotfiles.json` protects local secrets/state from being synced.
