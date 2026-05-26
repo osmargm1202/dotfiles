@@ -2,19 +2,22 @@
 
 ## orgm-dot workflow
 
-Use `orgm-dot` to compare and apply managed dotfiles.
+Use the installed host `orgm-dot` to compare and apply managed dotfiles.
 
-Preferred commands use the fast subcommand form, without `--` on the command:
+Preferred commands use the fast subcommand form, without `--` on the command.
+Do not pass `--host` for normal `orgm` work: the current `orgm-dot` resolves the host from the environment/host context.
+When running from this distrobox/container, call the host binary through `distrobox-host-exec` because `orgm-dot` may not be installed in the container PATH.
 
 ```bash
-orgm-dot status --host orgm
-orgm-dot diff --host orgm
-orgm-dot sync --host orgm
-orgm-dot daemon --host orgm
-orgm-dot add ~/.config/example --host orgm
-orgm-dot add ~/.config/example --shared
-orgm-dot remove ~/.config/example --host orgm
+distrobox-host-exec orgm-dot status
+distrobox-host-exec orgm-dot diff
+distrobox-host-exec orgm-dot sync
+distrobox-host-exec orgm-dot daemon
+distrobox-host-exec orgm-dot add ~/.config/example --shared
+distrobox-host-exec orgm-dot remove ~/.config/example --shared
 ```
+
+Host-specific add/remove is only needed for non-shared paths. Prefer the current host-aware form documented by `orgm-dot help`; avoid stale examples with `--host orgm` unless explicitly testing older repo code.
 
 Legacy command flags like `--diff` and `--sync` may still work, but do not use them in new notes or examples.
 
@@ -25,13 +28,13 @@ Legacy command flags like `--diff` and `--sync` may still work, but do not use t
 3. Check what will change:
 
    ```bash
-   orgm-dot diff --host orgm
+   distrobox-host-exec orgm-dot diff
    ```
 
 4. Apply the configuration to the destination home:
 
    ```bash
-   orgm-dot sync --host orgm
+   distrobox-host-exec orgm-dot sync
    ```
 
 5. Verify the application or config that changed.
