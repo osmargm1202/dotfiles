@@ -49,8 +49,10 @@ set -gx PATH $HOME/.local/bin $PATH
 set -gx PATH $HOME/.cargo/bin $PATH
 set -gx PATH $HOME/go/bin $PATH
 
-# Node: usar pnpm por defecto; npx ejecuta pnpm dlx (ver functions/npx.fish)
-alias npm="pnpm"
+# Node: en el host usa pnpm por defecto; dentro de distrobox no carga el wrapper.
+if not set -q DISTROBOX_ENTER_PATH
+    alias npm="pnpm"
+end
 
 # Nix cleanup helpers.
 alias nixgc='sudo nix-collect-garbage -d'
