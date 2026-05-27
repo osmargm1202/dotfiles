@@ -1,0 +1,9 @@
+{
+  "allow": [
+    { "match": "Pi Question" },
+    { "match": "pi-question" },
+    { "match": "Dota 2" },
+    { "match": "dota2" },
+    { "match": "steam_app_570" }
+  ]
+}

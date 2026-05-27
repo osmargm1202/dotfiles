@@ -24,9 +24,9 @@ hl.config({
       height = 42,
       gradients = true,
       col = {
-        active = "rgba(001f24dd)",
+        active = "rgba(8aadf4ee)",
         inactive = "rgba(00161acc)",
-        locked_active = "rgba(002a30dd)",
+        locked_active = "rgba(f5a97fee)",
         locked_inactive = "rgba(00161acc)",
       },
     },

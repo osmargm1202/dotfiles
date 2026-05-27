@@ -1,6 +1,6 @@
 local programs = {
   terminal = "kitty",
-  fileManager = "sh -lc 'if command -v nautilus >/dev/null 2>&1; then nautilus; elif command -v xdg-open >/dev/null 2>&1; then xdg-open .; else kitty; fi'",
+  fileManager = "sh -lc 'if command -v nautilus >/dev/null 2>&1; then nautilus --new-window; elif command -v xdg-open >/dev/null 2>&1; then xdg-open .; else kitty; fi'",
   menu = "orgm-hypr launcher apps",
   control_center = "orgm-hypr menu main",
   smart_run = "orgm-hypr smart-run run",
