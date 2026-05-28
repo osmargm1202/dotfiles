@@ -10,10 +10,14 @@
 window.top_bar#waybar {
   background-color: transparent;
   border: none;
+  margin-left: 12px;
+  margin-right: 12px;
 }
 window.bottom_bar#waybar {
   background-color: transparent;
   border: none;
+  margin-left: 12px;
+  margin-right: 12px;
 }
 #custom-ws_1, #custom-ws_2, #custom-ws_3, #custom-ws_4, #custom-ws_5,
 #custom-ws_6, #custom-ws_7, #custom-ws_8, #custom-ws_9, #custom-ws_10 {
@@ -22,7 +26,7 @@ window.bottom_bar#waybar {
   font-weight: 700;
   padding: 0 6px;
   margin: 7px 1px;
-  border-radius: 5px;
+  border-radius: 12px;
 }
 #custom-ws_1.empty, #custom-ws_2.empty, #custom-ws_3.empty, #custom-ws_4.empty, #custom-ws_5.empty,
 #custom-ws_6.empty, #custom-ws_7.empty, #custom-ws_8.empty, #custom-ws_9.empty, #custom-ws_10.empty { color: @overlay0; }
@@ -30,7 +34,7 @@ window.bottom_bar#waybar {
 #custom-ws_6.active, #custom-ws_7.active, #custom-ws_8.active, #custom-ws_9.active, #custom-ws_10.active { color: @blue; }
 #mode, #submap {
   background: transparent;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 0 14px;
   margin-top: 7px;
   margin-bottom: 7px;
@@ -38,8 +42,8 @@ window.bottom_bar#waybar {
 window.top_bar .modules-right,
 window.bottom_bar .modules-left,
 window.bottom_bar .modules-right {
-  background: rgba(0, 0, 0, 0.50);
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.60);
+  border-radius: 12px;
   min-height: 40px;
   padding: 10px 10px;
 }
@@ -49,27 +53,27 @@ window.top_bar .modules-left {
 }
 #group-workspaces,
 #workspaces {
-  background: rgba(0, 0, 0, 0.50);
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.60);
+  border-radius: 12px;
   min-height: 40px;
   padding: 10px 10px;
 }
 #group-system,
 #system {
-  background: rgba(4, 18, 40, 0.50);
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.60);
+  border-radius: 12px;
   min-height: 40px;
   padding: 10px 10px;
 }
 window.top_bar .modules-center {
-  background: rgba(10, 24, 52, 0.50);
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.60);
+  border-radius: 12px;
   min-height: 40px;
   padding: 10px 10px;
 }
 window.bottom_bar .modules-center {
-  background: rgba(4, 18, 40, 0.50);
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.60);
+  border-radius: 12px;
   min-height: 40px;
   padding: 10px 10px;
 }
@@ -79,8 +83,8 @@ window.top_bar .modules-center {
   padding: 0 8px;
 }
 window.top_bar .modules-right { padding-left: 24px; padding-right: 24px; }
-window.bottom_bar .modules-left { border-radius: 8px; margin-left: 13px; }
-window.bottom_bar .modules-right { border-radius: 8px; margin-right: 13px; }
+window.bottom_bar .modules-left { border-radius: 12px; margin-left: 12px; }
+window.bottom_bar .modules-right { border-radius: 12px; margin-right: 12px; }
 #custom-day_month, #custom-date {
   color: @overlay2;
   padding: 0 14px;
@@ -88,7 +92,7 @@ window.bottom_bar .modules-right { border-radius: 8px; margin-right: 13px; }
 }
 #custom-time {
   background: transparent;
-  border-radius: 8px;
+  border-radius: 12px;
   color: @text;
   font-size: 34px;
   font-weight: 800;
@@ -160,7 +164,7 @@ window.bottom_bar .modules-right { border-radius: 8px; margin-right: 13px; }
 #custom-kbd_layout { color: @subtext0; font-weight: bold; }
 #idle_inhibitor, #custom-keybindings_help {
   background: transparent;
-  border-radius: 6px;
+  border-radius: 12px;
   padding: 0 12px;
   margin-top: 4px;
   margin-bottom: 4px;
@@ -171,9 +175,9 @@ window.bottom_bar .modules-right { border-radius: 8px; margin-right: 13px; }
 #battery.warning { color: @subtext0; }
 
 window.dock_bar#waybar {
-  background-color: rgba(0, 0, 0, 0.80);
+  background-color: rgba(0, 0, 0, 0.60);
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 #custom-dock_windows,
 #custom-dock_kitty,
@@ -216,6 +220,21 @@ window.dock_bar#waybar {
   font-size: 8px;
   letter-spacing: 1px;
 }
+#mode,
+#submap,
+window.top_bar .modules-right,
+window.bottom_bar .modules-left,
+window.bottom_bar .modules-right,
+#group-workspaces,
+#workspaces,
+#group-system,
+#system,
+window.top_bar .modules-center,
+window.bottom_bar .modules-center,
+window.dock_bar#waybar {
+  border: 1px solid rgba(138, 173, 244, 0.93);
+}
+
 #custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }
 #custom-dock_kitty { background-image: url("/home/osmarg/.local/share/icons/kitty.svg"); }
 #custom-dock_nautilus { background-image: url("/home/osmarg/.local/share/icons/nautilus.png"); }
