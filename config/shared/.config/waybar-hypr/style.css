@@ -10,14 +10,10 @@
 window.top_bar#waybar {
   background-color: transparent;
   border: none;
-  margin-left: 12px;
-  margin-right: 12px;
 }
 window.bottom_bar#waybar {
   background-color: transparent;
   border: none;
-  margin-left: 12px;
-  margin-right: 12px;
 }
 #custom-ws_1, #custom-ws_2, #custom-ws_3, #custom-ws_4, #custom-ws_5,
 #custom-ws_6, #custom-ws_7, #custom-ws_8, #custom-ws_9, #custom-ws_10 {
@@ -83,8 +79,8 @@ window.top_bar .modules-center {
   padding: 0 8px;
 }
 window.top_bar .modules-right { padding-left: 24px; padding-right: 24px; }
-window.bottom_bar .modules-left { border-radius: 12px; margin-left: 12px; }
-window.bottom_bar .modules-right { border-radius: 12px; margin-right: 12px; }
+window.bottom_bar .modules-left { border-radius: 12px; margin-left: 0; }
+window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #custom-day_month, #custom-date {
   color: @overlay2;
   padding: 0 14px;
@@ -232,7 +228,7 @@ window.bottom_bar .modules-right,
 window.top_bar .modules-center,
 window.bottom_bar .modules-center,
 window.dock_bar#waybar {
-  border: 1px solid rgba(138, 173, 244, 0.93);
+  border: 2px solid rgba(138, 173, 244, 0.93);
 }
 
 #custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }

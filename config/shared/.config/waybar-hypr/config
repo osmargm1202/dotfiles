@@ -7,8 +7,8 @@
     "height": 47,
     "spacing": 5,
     "margin-top": 10,
-    "margin-left": 14,
-    "margin-right": 24,
+    "margin-left": 12,
+    "margin-right": 12,
     "modules-left": [
       "group/workspaces",
       "group/system",
@@ -296,8 +296,8 @@
     "height": 52,
     "spacing": 5,
     "margin-bottom": 10,
-    "margin-left": 14,
-    "margin-right": 14,
+    "margin-left": 12,
+    "margin-right": 12,
     "modules-left": [
       "custom/orgm_logo",
       "custom/user",
