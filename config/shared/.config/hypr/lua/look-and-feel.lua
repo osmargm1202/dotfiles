@@ -64,6 +64,13 @@ hl.layer_rule({
   ignore_alpha = 0.10,
 })
 
+hl.layer_rule({
+  name = "blur-nwg-dock",
+  match = { namespace = "nwg-dock" },
+  blur = true,
+  ignore_alpha = 0.10,
+})
+
 hl.curve("easeOutQuint", { type = "bezier", points = { { 0.23, 1 }, { 0.32, 1 } } })
 hl.curve("almostLinear", { type = "bezier", points = { { 0.5, 0.5 }, { 0.75, 1 } } })
 hl.curve("quick", { type = "bezier", points = { { 0.15, 0 }, { 0.1, 1 } } })
