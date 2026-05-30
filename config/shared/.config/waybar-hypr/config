@@ -47,106 +47,106 @@
       "format": "",
       "tooltip": true,
       "tooltip-format": "Abrir menú ORGM-HYPR",
-      "on-click": "orgm-hypr menu main"
+      "on-click": "hypr-main-menu"
     },
     "custom/ws_1": {
-      "exec": "orgm-hypr waybar workspace status 1",
+      "exec": "hypr-workspace-button status 1",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "orgm-hypr waybar workspace click 1"
+      "on-click": "hypr-workspace-button click 1"
     },
     "custom/ws_2": {
-      "exec": "orgm-hypr waybar workspace status 2",
+      "exec": "hypr-workspace-button status 2",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "orgm-hypr waybar workspace click 2"
+      "on-click": "hypr-workspace-button click 2"
     },
     "custom/ws_3": {
-      "exec": "orgm-hypr waybar workspace status 3",
+      "exec": "hypr-workspace-button status 3",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "orgm-hypr waybar workspace click 3"
+      "on-click": "hypr-workspace-button click 3"
     },
     "custom/ws_4": {
-      "exec": "orgm-hypr waybar workspace status 4",
+      "exec": "hypr-workspace-button status 4",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "orgm-hypr waybar workspace click 4"
+      "on-click": "hypr-workspace-button click 4"
     },
     "custom/ws_5": {
-      "exec": "orgm-hypr waybar workspace status 5",
+      "exec": "hypr-workspace-button status 5",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "orgm-hypr waybar workspace click 5"
+      "on-click": "hypr-workspace-button click 5"
     },
     "custom/ws_6": {
-      "exec": "orgm-hypr waybar workspace status 6",
+      "exec": "hypr-workspace-button status 6",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "orgm-hypr waybar workspace click 6"
+      "on-click": "hypr-workspace-button click 6"
     },
     "custom/ws_7": {
-      "exec": "orgm-hypr waybar workspace status 7",
+      "exec": "hypr-workspace-button status 7",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "orgm-hypr waybar workspace click 7"
+      "on-click": "hypr-workspace-button click 7"
     },
     "custom/ws_8": {
-      "exec": "orgm-hypr waybar workspace status 8",
+      "exec": "hypr-workspace-button status 8",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "orgm-hypr waybar workspace click 8"
+      "on-click": "hypr-workspace-button click 8"
     },
     "custom/ws_9": {
-      "exec": "orgm-hypr waybar workspace status 9",
+      "exec": "hypr-workspace-button status 9",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "orgm-hypr waybar workspace click 9"
+      "on-click": "hypr-workspace-button click 9"
     },
     "custom/ws_10": {
-      "exec": "orgm-hypr waybar workspace status 10",
+      "exec": "hypr-workspace-button status 10",
       "return-type": "json",
       "interval": 1,
       "format": "{}",
       "tooltip": true,
-      "on-click": "orgm-hypr waybar workspace click 10"
+      "on-click": "hypr-workspace-button click 10"
     },
     "hyprland/submap": {
       "format": "<span color='#a6da95'>Mode:</span> {}",
       "tooltip": false
     },
     "custom/day_month": {
-      "exec": "orgm-hypr waybar date --format day-month-es",
+      "exec": "waybar-day-month-es",
       "interval": 60,
       "tooltip": false,
       "on-click": "orgm-hypr calendar toggle-ui"
     },
     "custom/time": {
-      "exec": "orgm-hypr waybar date --format time-ampm",
+      "exec": "waybar-time-ampm",
       "interval": 1,
       "tooltip": false,
       "on-click": "orgm-hypr calendar toggle-ui"
     },
     "custom/date": {
-      "exec": "orgm-hypr waybar date --format date-es",
+      "exec": "waybar-date-es",
       "interval": 60,
       "tooltip": false,
       "on-click": "orgm-hypr calendar toggle-ui"
@@ -192,7 +192,7 @@
       "on-click": "kitty -e btop"
     },
     "custom/swap": {
-      "exec": "orgm-hypr waybar swap-usage",
+      "exec": "waybar-swap-usage",
       "interval": 5,
       "tooltip": false,
       "on-click": "kitty -e btop"
@@ -286,7 +286,7 @@
     "custom/logout_menu": {
       "format": "󰐥",
       "tooltip": false,
-      "on-click": "orgm-hypr menu power"
+      "on-click": "hypr-power-menu"
     }
   },
   {
@@ -316,7 +316,7 @@
       "format": " ",
       "tooltip": true,
       "tooltip-format": "Abrir menú ORGM-HYPR",
-      "on-click": "orgm-hypr menu main"
+      "on-click": "hypr-main-menu"
     },
     "custom/user": {
       "format": "  osmarg",
@@ -370,7 +370,7 @@
       "on-click": "kitty -e btop"
     },
     "custom/swap": {
-      "exec": "orgm-hypr waybar swap-usage",
+      "exec": "waybar-swap-usage",
       "interval": 5,
       "tooltip": false,
       "on-click": "kitty -e btop"

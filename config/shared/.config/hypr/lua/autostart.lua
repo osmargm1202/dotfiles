@@ -1,7 +1,7 @@
 local exec_once = {
   "orgm-hypr session import-env",
   "systemctl --user start graphical-session.target",
-  "orgm-hypr waybar watch ~/.config/waybar-hypr",
+  "waybar-watch ~/.config/waybar-hypr",
   "swaync",
   "nm-applet --indicator",
   "blueman-applet",
@@ -16,7 +16,7 @@ local exec_once = {
   "wl-paste --type text --watch cliphist store",
   "wl-paste --type image --watch cliphist store",
   "hypridle",
-  "sh -lc 'orgm-hypr dock start 2>/tmp/hypr-nwg-dock.log'",
+  "sh -lc 'hypr-nwg-dock 2>/tmp/hypr-nwg-dock.log'",
 }
 
 hl.on("hyprland.start", function()
