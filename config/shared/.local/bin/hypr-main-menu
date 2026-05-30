@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec orgm-hypr menu main "$@"

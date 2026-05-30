@@ -66,7 +66,8 @@
       ".pi/agent/AGENTS.md",
       ".pi/agent/RTK.md",
       ".pi/agent/ask.jsonc",
-      ".tmux.conf"
+      ".tmux.conf",
+      ".local/bin"
     ]
   },
   "hosts": {

@@ -1,0 +1,2 @@
+#!/bin/sh
+exec orgm-hypr dock start "$@"
