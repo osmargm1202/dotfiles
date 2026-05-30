@@ -1,2 +1,15 @@
 #!/usr/bin/env bash
-exec orgm-hypr menu tools "$@"
+set -euo pipefail
+
+theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+choice="$(printf '%s\n' '󰆍 Terminal' '󰉋 Files' '󰍉 Search files' '󰃭 Calculator' '󰍹 Displays' '󰸉 Wallpaper next' '󰅖 Cancel' | rofi -dmenu -i -p 'Tools' -theme "$theme" || true)"
+
+case "$choice" in
+  *'Terminal') exec kitty ;;
+  *'Files') exec nautilus ;;
+  *'Search files') exec ~/.local/bin/fuzzel-open-file ;;
+  *'Calculator') exec gnome-calculator ;;
+  *'Displays') exec nwg-displays ;;
+  *'Wallpaper') exec ~/.local/bin/hypr-random-wallpaper next ;;
+  *) exit 0 ;;
+esac

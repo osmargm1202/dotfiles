@@ -1,2 +1,18 @@
 #!/usr/bin/env bash
-exec orgm-hypr menu performance "$@"
+set -euo pipefail
+
+theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+choices=()
+command -v btop >/dev/null 2>&1 && choices+=("󰨇 btop")
+command -v htop >/dev/null 2>&1 && choices+=("󰨇 htop")
+command -v dgop >/dev/null 2>&1 && choices+=("󰨇 dgop")
+command -v gnome-system-monitor >/dev/null 2>&1 && choices+=("󰍛 GNOME System Monitor")
+choices+=("󰅖 Cancel")
+choice="$(printf '%s\n' "${choices[@]}" | rofi -dmenu -i -p 'Performance' -theme "$theme" || true)"
+case "$choice" in
+  *'btop') exec kitty -e btop ;;
+  *'htop') exec kitty -e htop ;;
+  *'dgop') exec kitty -e dgop ;;
+  *'GNOME') exec gnome-system-monitor ;;
+  *) exit 0 ;;
+esac

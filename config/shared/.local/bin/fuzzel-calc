@@ -1,2 +1,15 @@
-#!/usr/bin/env sh
-exec orgm-hypr calc fuzzel "$@"
+#!/bin/sh
+set -eu
+
+expr=$(printf '' | fuzzel --dmenu --prompt "Calc> ")
+[ -n "${expr:-}" ] || exit 0
+
+if command -v qalc >/dev/null 2>&1; then
+  result=$(qalc -t "$expr" 2>/dev/null | tail -n 1)
+else
+  result=$(awk "BEGIN { print ($expr) }" 2>/dev/null || true)
+fi
+
+[ -n "${result:-}" ] || exit 1
+printf '%s' "$result" | wl-copy
+notify-send "Calc" "$expr = $result" 2>/dev/null || true

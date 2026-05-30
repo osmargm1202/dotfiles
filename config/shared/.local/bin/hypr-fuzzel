@@ -1,2 +1,40 @@
 #!/usr/bin/env bash
-exec orgm-hypr launcher apps "$@"
+set -euo pipefail
+
+# Optional per-host overrides. Keep shared config stable; tune host feel here.
+# Supported vars: HYPR_FUZZEL_WIDTH, HYPR_FUZZEL_LINES, HYPR_FUZZEL_FONT_SIZE,
+# HYPR_FUZZEL_LINE_HEIGHT, HYPR_FUZZEL_SCALE.
+env_file="${HYPR_FUZZEL_ENV:-$HOME/.config/fuzzel/fuzzel.env}"
+if [ -f "$env_file" ]; then
+  # shellcheck disable=SC1090
+  . "$env_file"
+fi
+
+monitor_json="$(hyprctl -j monitors 2>/dev/null || printf '[]')"
+read -r mon_w mon_h mon_scale <<EOF_MON
+$(printf '%s' "$monitor_json" | jq -r '
+  (map(select(.focused == true))[0] // .[0] // {})
+  | [(.width // 1920), (.height // 1080), (.scale // 1)]
+  | @tsv
+' 2>/dev/null || printf '1920\t1080\t1')
+EOF_MON
+
+scale="${HYPR_FUZZEL_SCALE:-$(awk -v h="$mon_h" -v s="$mon_scale" 'BEGIN {
+  if (s <= 0) s = 1;
+  v = (h / s) / 1080;
+  if (v < 1) v = 1;
+  if (v > 1.35) v = 1.35;
+  printf "%.2f", v;
+}')}"
+
+width="${HYPR_FUZZEL_WIDTH:-$(awk -v s="$scale" 'BEGIN { printf "%d", 34 * s }')}"
+lines="${HYPR_FUZZEL_LINES:-$(awk -v s="$scale" 'BEGIN { printf "%d", 10 * s }')}"
+font_size="${HYPR_FUZZEL_FONT_SIZE:-$(awk -v s="$scale" 'BEGIN { printf "%d", 12 * s }')}"
+line_height="${HYPR_FUZZEL_LINE_HEIGHT:-$(awk -v s="$scale" 'BEGIN { printf "%d", 22 * s }')}"
+
+exec fuzzel \
+  --font="JetBrainsMono Nerd Font:size=$font_size" \
+  --width="$width" \
+  --lines="$lines" \
+  --line-height="$line_height" \
+  "$@"

@@ -78,13 +78,17 @@ Inventory was generated in dotfiles worktree `/home/osmarg/Hobby/dotfiles/.workt
 | Calendar daemon | `orgm-calendar` Go | `/home/osmarg/Hobby/nixos/internal/calendar` | split after caller audit |
 | Dotfile manager | `orgm-dot` Go | `/home/osmarg/Hobby/nixos/cmd/orgm-dot` + `internal/dot*` | move source to dotfiles, keep NixOS package consumer |
 
+## Follow-up blocker fix
+
+Diff review found that restored helper names were present, but many bodies were still thin `orgm-hypr` wrappers. The blocker was fixed by checking out the real historical shell implementations from the per-helper commits listed in the review. `hypr-random-wallpaper` was intentionally not overwritten.
+
 ## Final audit
 
 Task 8 final audit is recorded in [`docs/orgm-helper-final-audit.md`](orgm-helper-final-audit.md).
 
 Summary:
 
-- Dotfiles active config is clean: no `orgm-hypr` refs remain in `config/shared` or `tests`.
+- Dotfiles active config and helper scripts are clean: no `orgm-hypr` refs remain in `config/shared` or `tests`.
 - Remaining dotfiles refs are documentation/history snapshots.
 - NixOS companion worktree still contains the deferred broad `orgm-hypr` package, compatibility internals, and tests until later package cleanup.
 - `orgm-dot sync` was not run because this is an unmerged feature worktree and `orgm-dot diff` showed unrelated removal-only entries for `~/.local/bin/engram`, `orgmai`, `orgmos`, and `orgmweb`.

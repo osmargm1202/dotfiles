@@ -1,2 +1,22 @@
-#!/usr/bin/env sh
-exec orgm-hypr file open-terminal --launcher fuzzel "$@"
+#!/bin/sh
+set -eu
+
+cd "$HOME"
+
+selection=$(
+  find . -type f \
+    -not -path '*/.*/*' \
+    -not -path './.*' \
+    -not -path './go/*' \
+    -not -path './paru/*' \
+    -not -path '*/node_modules/*' \
+    -not -path '*/target/*' \
+    -printf '%T@\t%P\n' 2>/dev/null \
+    | sort -rn \
+    | cut -f2- \
+    | fuzzel --dmenu --prompt "Term dir> " --width 88 --lines 18
+)
+
+[ -n "${selection:-}" ] || exit 0
+dir=$(dirname "$HOME/$selection")
+exec kitty --directory "$dir"

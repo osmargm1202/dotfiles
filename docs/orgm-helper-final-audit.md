@@ -2,6 +2,18 @@
 
 Date: 2026-05-30
 
+## Follow-up blocker fix
+
+Diff review found a blocker: restored helper names existed, but many helper bodies were still thin wrappers around broad `orgm-hypr` commands. This follow-up restored real shell implementations directly from historical per-file commits, leaving the intentionally rewritten `config/shared/.local/bin/hypr-random-wallpaper` untouched.
+
+Post-fix helper audit:
+
+```bash
+rg -n 'orgm-hypr' config/shared/.local/bin || true
+```
+
+Result: 0 matches in executable helper scripts.
+
 Worktrees audited:
 
 - Dotfiles: `/home/osmarg/Hobby/dotfiles/.worktrees/orgm-helper-restore`
@@ -74,6 +86,8 @@ distrobox-host-exec orgm-dot diff
 
 Outcomes:
 
+- `rg -n 'orgm-hypr' config/shared/.local/bin || true`: PASS, 0 matches after restoring real shell helpers.
+- `bash -n` over shell helpers in `config/shared/.local/bin`: PASS.
 - `bash tests/helpers/hypr-shell-helpers.bats.sh`: PASS (`hypr shell helper smoke tests passed`)
 - `bash tests/helpers/hypr-random-wallpaper.bats.sh`: PASS (`hypr random wallpaper smoke test passed`)
 - `go test ./...`: PASS
@@ -140,5 +154,5 @@ Deferred checklist:
 ## Final concerns
 
 - Live sync remains deferred for safety.
-- Dotfiles active config has no `orgm-hypr` refs.
+- Dotfiles active config and helper scripts have no `orgm-hypr` refs.
 - NixOS worktree still contains the deferred broad `orgm-hypr` package and compatibility internals; cleanup belongs to later NixOS package removal work.

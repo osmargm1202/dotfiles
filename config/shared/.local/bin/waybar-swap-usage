@@ -1,2 +1,15 @@
 #!/bin/sh
-exec orgm-hypr waybar swap-usage "$@"
+
+awk '
+  /^SwapTotal:/ { total=$2 }
+  /^SwapFree:/ { free=$2 }
+  END {
+    if (total <= 0) {
+      print "󰓡 SWAP 0%"
+    } else {
+      used = total - free
+      pct = int((used * 100 / total) + 0.5)
+      printf "󰓡 SWAP %d%%\n", pct
+    }
+  }
+' /proc/meminfo
