@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+bin_dir="${HYPR_BIN_DIR:-$HOME/.local/bin}"
+env_file="${HYPR_ROFI_ENV:-$HOME/.config/rofi/hypr-menu.env}"
+
+if [ -f "$env_file" ]; then
+  # shellcheck disable=SC1090
+  . "$env_file"
+fi
+
+scale="${HYPR_ROFI_SCALE:-1.00}"
+width="${HYPR_ROFI_WIDTH:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 600 * s }')}"
+lines="${HYPR_ROFI_LINES:-$(awk -v s="$scale" 'BEGIN { printf "%d", 13 * s }')}"
+font_size="${HYPR_ROFI_FONT_SIZE:-$(awk -v s="$scale" 'BEGIN { printf "%d", 12 * s }')}"
+icon_size="${HYPR_ROFI_ICON_SIZE:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 32 * s }')}"
+element_padding="${HYPR_ROFI_ELEMENT_PADDING:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 8 * s }')}"
+
+pick() {
+  rofi -dmenu -i -show-icons -p "$1" -theme "$theme" \
+    -theme-str "configuration { font: \"JetBrainsMono Nerd Font $font_size\"; } window { width: $width; } listview { lines: $lines; } element { padding: $element_padding; } element-icon { size: $icon_size; }"
+}
+
+choice="$(printf '%s\n' \
+  '󰀻 Apps' \
+  '󰒓 Tools' \
+  '󱐋 Performance' \
+  '󰖩 WiFi' \
+  '󰂯 Bluetooth' \
+  '󰍉 Search' \
+  '󰌌 Keybinds' \
+  '󰒓 System' \
+  '󰑓 Reload Dock' \
+  '󰐥 Power' \
+  '󰌌 Keyboard' \
+  '󰣆 Web App Maker' \
+  '󰅖 Quit' | pick 'Hyprland' || true)"
+
+case "$choice" in
+  *'Apps') exec rofi -show drun -theme "$theme" ;;
+  *'Tools') exec "$bin_dir/hypr-tools-menu" ;;
+  *'Performance') exec "$bin_dir/hypr-performance-menu" ;;
+  *'WiFi') exec "$bin_dir/hypr-wifi-menu" ;;
+  *'Bluetooth') exec "$bin_dir/hypr-bluetooth-menu" ;;
+  *'Search') exec "$bin_dir/hypr-smart-run" ;;
+  *'Keybinds') exec "$bin_dir/hypr-keybindings-help" ;;
+  *'System') exec "$bin_dir/hypr-system-menu" ;;
+  *'Reload Dock') exec "$bin_dir/hypr-nwg-dock" reload ;;
+  *'Power') exec "$bin_dir/hypr-power-menu" ;;
+  *'Keyboard') exec "$bin_dir/hypr-keyboard-menu" ;;
+  *'Web App Maker') exec "$bin_dir/hypr-webapp-maker" ;;
+  *'Quit'|'') exit 0 ;;
+esac

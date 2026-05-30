@@ -1,0 +1,29 @@
+#!/bin/sh
+set -eu
+
+hosts=""
+
+if [ -f "$HOME/.ssh/config" ]; then
+  hosts=$(
+    awk '
+      tolower($1) == "host" {
+        for (i = 2; i <= NF; i++) {
+          if ($i !~ /[*?]/) print $i
+        }
+      }
+    ' "$HOME/.ssh/config" 2>/dev/null
+  )
+fi
+
+known_hosts=$(
+  awk -F'[ ,]' '{print $1}' "$HOME/.ssh/known_hosts" 2>/dev/null \
+    | grep -v '^|' \
+    | grep -v '^$' \
+    | sed 's/^\[//; s/\].*$//' \
+    || true
+)
+
+hosts=$(printf '%s\n%s\n' "$hosts" "$known_hosts" | sort -u | sed '/^$/d')
+selection=$(printf '%s\n' "$hosts" | fuzzel --dmenu --prompt "SSH> " --width 56 --lines 14)
+[ -n "${selection:-}" ] || exit 0
+exec kitty -e ssh "$selection"
