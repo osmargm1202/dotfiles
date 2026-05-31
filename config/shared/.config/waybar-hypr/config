@@ -26,8 +26,6 @@
       "custom/theme_toggle",
       "custom/wallpaper",
       "custom/headset_reconnect",
-      "bluetooth",
-      "network",
       "custom/logout_menu"
     ],
     "group/workspaces": {
@@ -155,7 +153,7 @@
       "on-click": "orgm-calendar toggle-ui"
     },
     "custom/wallpaper": {
-      "format": "󰸉",
+      "format": "",
       "tooltip": true,
       "tooltip-format": "Elegir wallpaper",
       "on-click": "orgm-wallpaper pick"
@@ -211,6 +209,9 @@
       "modules": [
         "backlight",
         "pulseaudio",
+        "pulseaudio/slider",
+        "pulseaudio#microphone",
+        "pulseaudio/slider#microphone",
         "battery"
       ]
     },
@@ -223,8 +224,8 @@
       ]
     },
     "pulseaudio": {
-      "format": "{icon} {volume}%",
-      "format-muted": "󰝟 muted",
+      "format": "{icon}",
+      "format-muted": "󰝟",
       "format-icons": {
         "default": [
           "",
@@ -232,7 +233,28 @@
           ""
         ]
       },
-      "on-click": "pavucontrol"
+      "on-click": "pamixer -t",
+      "on-click-right": "pavucontrol",
+      "max-volume": 150
+    },
+    "pulseaudio/slider": {
+      "min": 0,
+      "max": 150,
+      "orientation": "horizontal"
+    },
+    "pulseaudio#microphone": {
+      "target": "source",
+      "format": "󰍬",
+      "format-muted": "󰍭",
+      "on-click": "pamixer --default-source -t",
+      "on-click-right": "pavucontrol",
+      "max-volume": 150
+    },
+    "pulseaudio/slider#microphone": {
+      "target": "source",
+      "min": 0,
+      "max": 150,
+      "orientation": "horizontal"
     },
     "battery": {
       "states": {

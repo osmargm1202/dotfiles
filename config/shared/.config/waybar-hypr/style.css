@@ -121,7 +121,7 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
   background: transparent;
 }
 #custom-wallpaper, #custom-headset_reconnect, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
-#custom-user, #window, #mpris, #backlight, #pulseaudio, #battery, #custom-kbd_layout,
+#custom-user, #window, #mpris, #backlight, #pulseaudio, #pulseaudio-slider, #battery, #custom-kbd_layout,
 #cpu, #memory, #temperature, #disk, #custom-swap {
   background: transparent;
 }
@@ -134,6 +134,7 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #custom-theme_toggle.dark { color: @yellow; }
 
 #custom-wallpaper {
+  color: @mauve;
   margin-left: 18px;
 }
 #custom-headset_reconnect {
@@ -149,8 +150,8 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 }
 #group-usage #cpu, #group-usage #memory, #group-usage #temperature, #group-usage #disk, #group-usage #custom-swap,
 #usage #cpu, #usage #memory, #usage #temperature, #usage #disk, #usage #custom-swap,
-#group-system #backlight, #group-system #pulseaudio, #group-system #battery,
-#system #backlight, #system #pulseaudio, #system #battery {
+#group-system #backlight, #group-system #pulseaudio, #group-system #pulseaudio-slider, #group-system #battery,
+#system #backlight, #system #pulseaudio, #system #pulseaudio-slider, #system #battery {
   background: transparent;
   padding: 0 5px;
   margin: 0;
@@ -163,8 +164,31 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #idle_inhibitor.activated { color: @blue; }
 #mpris { color: @text; }
 #backlight { color: @text; }
-#pulseaudio { color: @text; }
-#pulseaudio.muted { color: @overlay0; }
+#pulseaudio { color: @blue; font-size: 20px; }
+#pulseaudio.muted { color: @red; }
+#pulseaudio-slider {
+  min-width: 88px;
+  padding: 0 6px;
+}
+#pulseaudio-slider slider {
+  min-height: 0;
+  min-width: 0;
+  opacity: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+#pulseaudio-slider trough {
+  min-height: 8px;
+  min-width: 82px;
+  border-radius: 999px;
+  background: linear-gradient(to right, @surface0 0%, @surface0 65.8%, @panel_border 65.8%, @panel_border 67.5%, @surface0 67.5%, @surface0 100%);
+}
+#pulseaudio-slider highlight {
+  min-height: 8px;
+  border-radius: 999px;
+  background: @blue;
+}
 #battery { color: @text; }
 #keyboard-state label.capslock { color: @base; font-weight: bold; }
 #keyboard-state label.capslock.locked { color: @text; }

@@ -9,7 +9,7 @@ trap 'rm -rf "$TMP"' EXIT
 CALLS="$TMP/calls.log"
 export CALLS
 
-mkdir -p "$TMP/bin" "$TMP/config/orgm-theme/themes" "$TMP/state/hypr-wallpaper" "$TMP/state/orgm-theme/wallpapers" "$TMP/runtime"
+mkdir -p "$TMP/bin" "$TMP/config/orgm-theme/themes" "$TMP/state/hypr-wallpaper/monitors" "$TMP/state/orgm-theme/wallpapers/orgm-light.monitors" "$TMP/runtime"
 
 cat >"$TMP/bin/orgm-wallpaper" <<'SH'
 #!/usr/bin/env bash
@@ -112,6 +112,9 @@ EOF
 printf 'orgm-dark\n' >"$TMP/state/orgm-theme/current"
 printf 'mode=static\npath=/wallpapers/dark.png\n' >"$TMP/state/hypr-wallpaper/state"
 printf 'mode=static\npath=/wallpapers/light.png\n' >"$TMP/state/orgm-theme/wallpapers/orgm-light.state"
+printf 'mode=static\npath=/wallpapers/current-dp.png\n' >"$TMP/state/hypr-wallpaper/monitors/DP-3.state"
+printf 'mode=static\npath=/wallpapers/light-dp.png\n' >"$TMP/state/orgm-theme/wallpapers/orgm-light.monitors/DP-3.state"
+printf 'mode=static\npath=/wallpapers/light-hdmi.png\n' >"$TMP/state/orgm-theme/wallpapers/orgm-light.monitors/HDMI-A-1.state"
 
 HOME="$TMP/home" \
 XDG_CONFIG_HOME="$TMP/config" \
@@ -132,8 +135,26 @@ grep -q '^path=/wallpapers/dark.png$' "$TMP/state/orgm-theme/wallpapers/orgm-dar
   exit 1
 }
 
-grep -q '^orgm-wallpaper set-static /wallpapers/light.png$' "$CALLS" || {
-  echo "FAIL: incoming light wallpaper was not restored" >&2
+grep -q '^mode=static$' "$TMP/state/orgm-theme/wallpapers/orgm-dark.monitors/DP-3.state" || {
+  echo "FAIL: outgoing monitor wallpaper mode was not saved" >&2
+  find "$TMP/state/orgm-theme/wallpapers" -type f -maxdepth 2 -print -exec cat {} \; >&2 || true
+  exit 1
+}
+
+grep -q '^path=/wallpapers/current-dp.png$' "$TMP/state/orgm-theme/wallpapers/orgm-dark.monitors/DP-3.state" || {
+  echo "FAIL: outgoing monitor wallpaper path was not saved" >&2
+  find "$TMP/state/orgm-theme/wallpapers" -type f -maxdepth 2 -print -exec cat {} \; >&2 || true
+  exit 1
+}
+
+grep -q '^orgm-wallpaper set-static /wallpapers/light-dp.png --monitor DP-3$' "$CALLS" || {
+  echo "FAIL: incoming light DP monitor wallpaper was not restored" >&2
+  cat "$CALLS" >&2
+  exit 1
+}
+
+grep -q '^orgm-wallpaper set-static /wallpapers/light-hdmi.png --monitor HDMI-A-1$' "$CALLS" || {
+  echo "FAIL: incoming light HDMI monitor wallpaper was not restored" >&2
   cat "$CALLS" >&2
   exit 1
 }

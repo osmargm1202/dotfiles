@@ -164,12 +164,34 @@ func (m *Manager) WriteState(mode, path string) error {
 	if err := os.MkdirAll(m.StateDir, 0o755); err != nil {
 		return err
 	}
-	tmp := fmt.Sprintf("%s.%d", m.StateFile, os.Getpid())
 	content := fmt.Sprintf("mode=%s\npath=%s\n", mode, path)
+	tmp := fmt.Sprintf("%s.%d", m.StateFile, os.Getpid())
 	if err := os.WriteFile(tmp, []byte(content), 0o644); err != nil {
 		return err
 	}
-	return os.Rename(tmp, m.StateFile)
+	if err := os.Rename(tmp, m.StateFile); err != nil {
+		return err
+	}
+	return m.WriteCurrentThemeWallpaperState(content)
+}
+
+func (m *Manager) WriteCurrentThemeWallpaperState(content string) error {
+	if filepath.Clean(m.StateDir) != filepath.Join(filepath.Clean(m.StateHome), "hypr-wallpaper") {
+		return nil
+	}
+	theme := readTrim(filepath.Join(m.StateHome, "orgm-theme", "current"))
+	if theme == "" {
+		return nil
+	}
+	statePath := filepath.Join(m.StateHome, "orgm-theme", "wallpapers", theme+".state")
+	if err := os.MkdirAll(filepath.Dir(statePath), 0o755); err != nil {
+		return err
+	}
+	tmp := fmt.Sprintf("%s.%d", statePath, os.Getpid())
+	if err := os.WriteFile(tmp, []byte(content), 0o644); err != nil {
+		return err
+	}
+	return os.Rename(tmp, statePath)
 }
 
 type MonitorState struct {
@@ -206,8 +228,30 @@ func (m *Manager) WriteMonitorState(output, mode, path string) error {
 	if err := os.MkdirAll(filepath.Dir(statePath), 0o755); err != nil {
 		return err
 	}
-	tmp := fmt.Sprintf("%s.%d", statePath, os.Getpid())
 	content := fmt.Sprintf("mode=%s\npath=%s\n", mode, path)
+	tmp := fmt.Sprintf("%s.%d", statePath, os.Getpid())
+	if err := os.WriteFile(tmp, []byte(content), 0o644); err != nil {
+		return err
+	}
+	if err := os.Rename(tmp, statePath); err != nil {
+		return err
+	}
+	return m.WriteCurrentThemeMonitorWallpaperState(output, content)
+}
+
+func (m *Manager) WriteCurrentThemeMonitorWallpaperState(output, content string) error {
+	if filepath.Clean(m.StateDir) != filepath.Join(filepath.Clean(m.StateHome), "hypr-wallpaper") {
+		return nil
+	}
+	theme := readTrim(filepath.Join(m.StateHome, "orgm-theme", "current"))
+	if theme == "" {
+		return nil
+	}
+	statePath := filepath.Join(m.StateHome, "orgm-theme", "wallpapers", theme+".monitors", sanitizeOutputName(output)+".state")
+	if err := os.MkdirAll(filepath.Dir(statePath), 0o755); err != nil {
+		return err
+	}
+	tmp := fmt.Sprintf("%s.%d", statePath, os.Getpid())
 	if err := os.WriteFile(tmp, []byte(content), 0o644); err != nil {
 		return err
 	}

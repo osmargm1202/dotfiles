@@ -26,7 +26,7 @@
     "focus-app-on-action": {
       "exec": "hypr-focus-notification-app",
       "app-name": ".*",
-      "run-on": "receive"
+      "run-on": "action"
     }
   },
   "widgets": [

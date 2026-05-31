@@ -54,6 +54,83 @@ func TestWriteHyprpaperConfigIncludesMonitorSpecificWallpapers(t *testing.T) {
 	}
 }
 
+func TestWriteMonitorStateMirrorsCurrentThemeMonitorWallpaper(t *testing.T) {
+	tmp := t.TempDir()
+	m := NewManager(io.Discard, io.Discard)
+	m.StateHome = filepath.Join(tmp, "state")
+	m.StateDir = filepath.Join(m.StateHome, "hypr-wallpaper")
+	currentTheme := filepath.Join(m.StateHome, "orgm-theme", "current")
+	if err := os.MkdirAll(filepath.Dir(currentTheme), 0o755); err != nil {
+		t.Fatalf("mkdir theme state: %v", err)
+	}
+	if err := os.WriteFile(currentTheme, []byte("orgm-light\n"), 0o644); err != nil {
+		t.Fatalf("write current theme: %v", err)
+	}
+	wallpaper := filepath.Join(tmp, "monitor.png")
+
+	if err := m.WriteMonitorState("DP-3", "static", wallpaper); err != nil {
+		t.Fatalf("WriteMonitorState: %v", err)
+	}
+
+	themeState := filepath.Join(m.StateHome, "orgm-theme", "wallpapers", "orgm-light.monitors", "DP-3.state")
+	got := readTrim(themeState)
+	want := "mode=static\npath=" + wallpaper
+	if got != want {
+		t.Fatalf("theme monitor wallpaper state = %q, want %q", got, want)
+	}
+}
+
+func TestWriteStateDoesNotMirrorWhenStateDirIsOverridden(t *testing.T) {
+	tmp := t.TempDir()
+	m := NewManager(io.Discard, io.Discard)
+	m.StateHome = filepath.Join(tmp, "real-state")
+	m.StateDir = filepath.Join(tmp, "custom", "hypr-wallpaper")
+	m.StateFile = filepath.Join(m.StateDir, "state")
+	currentTheme := filepath.Join(m.StateHome, "orgm-theme", "current")
+	if err := os.MkdirAll(filepath.Dir(currentTheme), 0o755); err != nil {
+		t.Fatalf("mkdir theme state: %v", err)
+	}
+	if err := os.WriteFile(currentTheme, []byte("orgm-light\n"), 0o644); err != nil {
+		t.Fatalf("write current theme: %v", err)
+	}
+
+	if err := m.WriteState("video", filepath.Join(tmp, "live.mp4")); err != nil {
+		t.Fatalf("WriteState: %v", err)
+	}
+
+	themeState := filepath.Join(m.StateHome, "orgm-theme", "wallpapers", "orgm-light.state")
+	if got := readTrim(themeState); got != "" {
+		t.Fatalf("theme wallpaper state = %q, want no mirror for overridden StateDir", got)
+	}
+}
+
+func TestWriteStateMirrorsCurrentThemeWallpaper(t *testing.T) {
+	tmp := t.TempDir()
+	m := NewManager(io.Discard, io.Discard)
+	m.StateHome = filepath.Join(tmp, "state")
+	m.StateDir = filepath.Join(m.StateHome, "hypr-wallpaper")
+	m.StateFile = filepath.Join(m.StateDir, "state")
+	currentTheme := filepath.Join(m.StateHome, "orgm-theme", "current")
+	if err := os.MkdirAll(filepath.Dir(currentTheme), 0o755); err != nil {
+		t.Fatalf("mkdir theme state: %v", err)
+	}
+	if err := os.WriteFile(currentTheme, []byte("orgm-light\n"), 0o644); err != nil {
+		t.Fatalf("write current theme: %v", err)
+	}
+	wallpaper := filepath.Join(tmp, "wall.png")
+
+	if err := m.WriteState("static", wallpaper); err != nil {
+		t.Fatalf("WriteState: %v", err)
+	}
+
+	themeState := filepath.Join(m.StateHome, "orgm-theme", "wallpapers", "orgm-light.state")
+	got := readTrim(themeState)
+	want := "mode=static\npath=" + wallpaper
+	if got != want {
+		t.Fatalf("theme wallpaper state = %q, want %q", got, want)
+	}
+}
+
 func TestSetStaticForMonitorUpdatesGlobalCurrentMode(t *testing.T) {
 	tmp := t.TempDir()
 	m := NewManager(io.Discard, io.Discard)

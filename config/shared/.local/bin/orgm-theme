@@ -35,6 +35,24 @@ hex_to_rgb() {
   printf '%d, %d, %d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}"
 }
 
+css_color() {
+  local h="${1#\#}"
+  case "${#h}" in
+    6) printf '#%s' "$h" ;;
+    8)
+      local red green blue alpha alpha_dec alpha_trimmed
+      red=$((16#${h:0:2}))
+      green=$((16#${h:2:2}))
+      blue=$((16#${h:4:2}))
+      alpha=$((16#${h:6:2}))
+      alpha_dec=$(awk -v a="$alpha" 'BEGIN { printf "%.3f", a / 255 }')
+      alpha_trimmed=$(printf '%s' "$alpha_dec" | sed -e 's/0*$//' -e 's/\.$//')
+      printf 'rgba(%d, %d, %d, %s)' "$red" "$green" "$blue" "$alpha_trimmed"
+      ;;
+    *) printf '#%s' "$h" ;;
+  esac
+}
+
 state_value_from_file() {
   local file="$1"
   local key="$2"
@@ -50,7 +68,8 @@ state_value_from_file() {
 save_current_wallpaper_for_theme() {
   local theme="$1"
   local wallpaper_state="$state_home/hypr-wallpaper/state"
-  local mode path out tmp
+  local monitor_state_dir="$state_home/hypr-wallpaper/monitors"
+  local mode path out tmp monitor_out
   [ -n "$theme" ] || return 0
   mode="$(state_value_from_file "$wallpaper_state" mode)"
   path="$(state_value_from_file "$wallpaper_state" path)"
@@ -60,12 +79,20 @@ save_current_wallpaper_for_theme() {
   tmp="$out.$$"
   printf 'mode=%s\npath=%s\n' "${mode:-static}" "$path" >"$tmp"
   mv "$tmp" "$out"
+
+  monitor_out="$state_dir/wallpapers/$theme.monitors"
+  rm -rf "$monitor_out"
+  if [ -d "$monitor_state_dir" ] && find "$monitor_state_dir" -maxdepth 1 -type f -name '*.state' | grep -q .; then
+    mkdir -p "$monitor_out"
+    cp "$monitor_state_dir"/*.state "$monitor_out"/ 2>/dev/null || true
+  fi
 }
 
 restore_wallpaper_for_theme() {
   local theme="$1"
   local saved="$state_dir/wallpapers/$theme.state"
-  local mode path
+  local monitor_saved_dir="$state_dir/wallpapers/$theme.monitors"
+  local mode path file output restored
   [ -n "$theme" ] || return 0
   [ -r "$saved" ] || return 0
   command -v orgm-wallpaper >/dev/null 2>&1 || return 0
@@ -73,9 +100,22 @@ restore_wallpaper_for_theme() {
   path="$(state_value_from_file "$saved" path)"
   [ -n "$path" ] || return 0
   case "$mode" in
-    video*) orgm-wallpaper set-video "$path" >/dev/null 2>&1 || true ;;
-    *) orgm-wallpaper set-static "$path" >/dev/null 2>&1 || true ;;
+    video*) orgm-wallpaper set-video "$path" >/dev/null 2>&1 || true; return 0 ;;
   esac
+
+  restored=0
+  if [ -d "$monitor_saved_dir" ]; then
+    for file in "$monitor_saved_dir"/*.state; do
+      [ -r "$file" ] || continue
+      output="$(basename "$file" .state)"
+      path="$(state_value_from_file "$file" path)"
+      [ -n "$output" ] && [ -n "$path" ] || continue
+      orgm-wallpaper set-static "$path" --monitor "$output" >/dev/null 2>&1 || true
+      restored=1
+    done
+  fi
+  [ "$restored" -eq 1 ] && return 0
+  orgm-wallpaper set-static "$path" >/dev/null 2>&1 || true
 }
 
 write_current_env() {
@@ -170,7 +210,9 @@ EOF
 }
 
 write_waybar_palette() {
-  local dir
+  local dir panel_bg_css panel_border_css
+  panel_bg_css="$(css_color "$PANEL_BG")"
+  panel_border_css="$(css_color "${BLUE}ff")"
   for dir in "$config_home/waybar" "$config_home/waybar-hypr"; do
     mkdir -p "$dir"
     cat >"$dir/orgm-current.css" <<EOF
@@ -201,8 +243,8 @@ write_waybar_palette() {
 @define-color pink      #$PINK;
 @define-color flamingo  #$ROSEWATER;
 @define-color rosewater #$ROSEWATER;
-@define-color panel_bg #$PANEL_BG;
-@define-color panel_border #${BLUE}ff;
+@define-color panel_bg $panel_bg_css;
+@define-color panel_border $panel_border_css;
 EOF
   done
 }

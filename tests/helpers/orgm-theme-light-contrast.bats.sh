@@ -44,8 +44,13 @@ assert_contains "$WAYBAR" '@define-color text     #111827;'
 assert_contains "$WAYBAR" '@define-color subtext0 #1f2937;'
 assert_contains "$WAYBAR" '@define-color overlay0 #374151;'
 assert_contains "$WAYBAR" '@define-color blue      #0057d9;'
-assert_contains "$WAYBAR" '@define-color panel_bg #ffffffff;'
-assert_contains "$WAYBAR" '@define-color panel_border #0057d9ff;'
+assert_contains "$WAYBAR" '@define-color panel_bg rgba(255, 255, 255, 1);'
+assert_contains "$WAYBAR" '@define-color panel_border rgba(0, 87, 217, 1);'
+if grep -Eq '@define-color [^;]+#[0-9a-fA-F]{8};' "$WAYBAR"; then
+  echo "FAIL: Waybar generated colors must avoid 8-digit hex syntax" >&2
+  cat "$WAYBAR" >&2
+  exit 1
+fi
 assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color base #ffffffff;'
 assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color surface #e5e7ebff;'
 assert_contains "$GTK" '@define-color window_fg_color #111827;'

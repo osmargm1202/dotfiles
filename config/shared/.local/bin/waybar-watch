@@ -35,6 +35,14 @@ fi
 trap 'rm -f "$pid_file"; rm -rf "$lock_dir"' INT TERM EXIT
 
 printf '%s\n' "$$" >"$pid_file"
+
+# If an older race left another watcher for this profile alive, stop it now.
+# Keep this after pid_file ownership so the surviving process is explicit.
+for pid in $(pgrep -f "(^|/| )waybar-watch ${config_dir}$" 2>/dev/null || true); do
+  [ "$pid" = "$$" ] && continue
+  kill_pid "$pid"
+done
+
 waybar_pid=""
 
 cleanup() {

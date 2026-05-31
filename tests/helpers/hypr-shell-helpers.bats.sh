@@ -28,6 +28,7 @@ for helper in \
   hypr-random-wallpaper \
   hypr-app-launcher \
   hypr-bluetooth-reconnect \
+  hypr-focus-notification-app \
   hypr-main-menu \
   hypr-power-menu \
   waybar-date-es \

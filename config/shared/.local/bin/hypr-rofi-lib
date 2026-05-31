@@ -31,6 +31,7 @@ hypr_rofi_theme_str() {
   cat <<EOF
 configuration {
   font: "JetBrainsMono Nerd Font ${HYPR_ROFI_FONT_SIZE}";
+  hover-select: true;
   me-select-entry: "";
   me-accept-entry: "MousePrimary";
 }
