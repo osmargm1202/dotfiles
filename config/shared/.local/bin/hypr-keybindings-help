@@ -1,31 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
-env_file="${HYPR_ROFI_ENV:-$HOME/.config/rofi/hypr-menu.env}"
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
 
-if [ -f "$env_file" ]; then
-  # shellcheck disable=SC1090
-  . "$env_file"
-fi
-
-scale="${HYPR_ROFI_SCALE:-1.00}"
-width="${HYPR_KEYBINDINGS_WIDTH:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 760 * s }')}"
-lines="${HYPR_KEYBINDINGS_LINES:-$(awk -v s="$scale" 'BEGIN { printf "%d", 14 * s }')}"
-font_size="${HYPR_ROFI_FONT_SIZE:-$(awk -v s="$scale" 'BEGIN { printf "%d", 12 * s }')}"
-element_padding="${HYPR_ROFI_ELEMENT_PADDING:-$(awk -v s="$scale" 'BEGIN { printf "%dpx", 8 * s }')}"
-
-need_rofi() {
-  if ! command -v rofi >/dev/null 2>&1; then
-    notify-send "Hyprland keybindings" "rofi no está instalado." 2>/dev/null || true
-    exit 1
-  fi
-}
+width="${HYPR_KEYBINDINGS_WIDTH:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%dpx", 760 * s }')}"
+lines="${HYPR_KEYBINDINGS_LINES:-$(awk -v s="$HYPR_ROFI_SCALE" 'BEGIN { printf "%d", 14 * s }')}"
 
 pick() {
   local prompt="$1"
-  rofi -dmenu -i -markup-rows -p "$prompt" -theme "$theme" \
-    -theme-str "configuration { font: \"JetBrainsMono Nerd Font $font_size\"; } window { width: $width; } listview { lines: $lines; } element { padding: $element_padding; }"
+  hypr_rofi_markup_dmenu "$prompt" "$lines" "$width"
 }
 
 categories() {
@@ -83,14 +68,14 @@ entries() {
       entry 'Win+Shift+P' 'Pi prompt' 'pi prompt'
       ;;
     tools)
-      entry 'Win+M' 'Buscar archivo' 'fuzzel-open-file'
-      entry 'Win+Ctrl+M' 'Buscar carpeta' 'fuzzel-open-file-dir'
-      entry 'Win+Shift+M' 'Terminal en carpeta' 'fuzzel-open-file-terminal'
-      entry 'Win+Esc' 'Cambiar ventana' 'fuzzel-hypr-window'
-      entry 'Win+Shift+T' 'tmux Arch' 'fuzzel-tmux-arch'
-      entry 'Win+C' 'Calculadora' 'fuzzel-calc'
-      entry 'Win+D' 'SSH host' 'fuzzel-ssh-host'
-      entry 'Win+V' 'Clipboard' 'cliphist + fuzzel'
+      entry 'Win+M' 'Buscar archivo' 'hypr-rofi-open-file'
+      entry 'Win+Ctrl+M' 'Buscar carpeta' 'hypr-rofi-open-file-dir'
+      entry 'Win+Shift+M' 'Terminal en carpeta' 'hypr-rofi-open-file-terminal'
+      entry 'Win+Esc' 'Cambiar ventana' 'hypr-rofi-window'
+      entry 'Win+Shift+T' 'tmux Arch' 'hypr-rofi-tmux-arch'
+      entry 'Win+C' 'Calculadora' 'hypr-rofi-calc'
+      entry 'Win+D' 'SSH host' 'hypr-rofi-ssh-host'
+      entry 'Win+V' 'Clipboard' 'cliphist + rofi'
       entry 'Print' 'Screenshot área' 'grim/slurp/swappy'
       entry 'Ctrl+Print' 'Screenshot pantalla' 'grim/swappy'
       entry 'Win+Print' 'Grabar pantalla MP4' 'record_screen_mp4'
@@ -176,7 +161,7 @@ if [ "${1:-}" = "--list" ]; then
   exit 0
 fi
 
-need_rofi
+hypr_rofi_need
 
 while true; do
   category_choice="$(categories | pick 'Atajos Hyprland' || true)"

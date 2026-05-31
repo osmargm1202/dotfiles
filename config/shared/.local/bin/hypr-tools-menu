@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
-choice="$(printf '%s\n' '󰆍 Terminal' '󰉋 Files' '󰍉 Search files' '󰃭 Calculator' '󰍹 Displays' '󰸉 Wallpaper next' '󰅖 Cancel' | rofi -dmenu -i -p 'Tools' -theme "$theme" || true)"
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+choice="$(printf '%s\n' '󰆍 Terminal' '󰉋 Files' '󰍉 Search files' '󰃭 Calculator' '󰍹 Displays' '󰸉 Wallpaper next' '󰅖 Cancel' | hypr_rofi_dmenu 'Tools' || true)"
 
 case "$choice" in
   *'Terminal') exec kitty ;;
   *'Files') exec nautilus ;;
-  *'Search files') exec ~/.local/bin/fuzzel-open-file ;;
-  *'Calculator') exec gnome-calculator ;;
+  *'Search files') exec ~/.local/bin/hypr-rofi-open-file ;;
+  *'Calculator') exec ~/.local/bin/hypr-rofi-calc ;;
   *'Displays') exec nwg-displays ;;
   *'Wallpaper') exec ~/.local/bin/hypr-random-wallpaper next ;;
   *) exit 0 ;;

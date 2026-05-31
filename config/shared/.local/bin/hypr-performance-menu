@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-theme="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
 choices=()
 command -v btop >/dev/null 2>&1 && choices+=("󰨇 btop")
 command -v htop >/dev/null 2>&1 && choices+=("󰨇 htop")
 command -v dgop >/dev/null 2>&1 && choices+=("󰨇 dgop")
 command -v gnome-system-monitor >/dev/null 2>&1 && choices+=("󰍛 GNOME System Monitor")
 choices+=("󰅖 Cancel")
-choice="$(printf '%s\n' "${choices[@]}" | rofi -dmenu -i -p 'Performance' -theme "$theme" || true)"
+choice="$(printf '%s\n' "${choices[@]}" | hypr_rofi_dmenu 'Performance' || true)"
 case "$choice" in
   *'btop') exec kitty -e btop ;;
   *'htop') exec kitty -e htop ;;
