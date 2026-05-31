@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-exec orgm-hypr pi prompt --launcher walker "$@"
+exec hypr-pi-prompt --launcher walker "$@"

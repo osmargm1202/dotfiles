@@ -2,6 +2,7 @@
 [
   {
     "name": "top_bar",
+    "output": "DP-3",
     "layer": "top",
     "position": "top",
     "height": 47,
@@ -137,25 +138,25 @@
       "exec": "waybar-day-month-es",
       "interval": 60,
       "tooltip": false,
-      "on-click": "orgm-hypr calendar toggle-ui"
+      "on-click": "orgm-calendar toggle-ui"
     },
     "custom/time": {
       "exec": "waybar-time-ampm",
       "interval": 1,
       "tooltip": false,
-      "on-click": "orgm-hypr calendar toggle-ui"
+      "on-click": "orgm-calendar toggle-ui"
     },
     "custom/date": {
       "exec": "waybar-date-es",
       "interval": 60,
       "tooltip": false,
-      "on-click": "orgm-hypr calendar toggle-ui"
+      "on-click": "orgm-calendar toggle-ui"
     },
     "custom/wallpaper": {
       "format": "󰸉",
       "tooltip": true,
       "tooltip-format": "Elegir wallpaper",
-      "on-click": "orgm-hypr wallpaper pick"
+      "on-click": "orgm-wallpaper pick"
     },
     "bluetooth": {
       "format": "󰂯",
@@ -291,6 +292,7 @@
   },
   {
     "name": "bottom_bar",
+    "output": "DP-3",
     "layer": "top",
     "position": "bottom",
     "height": 52,
@@ -415,8 +417,8 @@
       "format": "?",
       "tooltip": true,
       "tooltip-format": "Atajos Hyprland (Win+/)\nClick: abrir helper\nClick derecho: actualizar lista",
-      "on-click": "orgm-hypr helper toggle",
-      "on-click-right": "orgm-hypr helper init"
+      "on-click": "hypr-keyhelper toggle",
+      "on-click-right": "hypr-keyhelper init"
     },
     "battery": {
       "states": {

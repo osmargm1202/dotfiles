@@ -10,7 +10,7 @@ ShellRoot {
   property string requestPath: Quickshell.env("HYPR_WALLPAPER_REQUEST") || (stateHome + "/hypr-wallpaper/wallpaper-picker-request.json")
   property string dataPath: Quickshell.env("HYPR_WALLPAPER_DATA") || (stateHome + "/hypr-wallpaper/wallpaper-picker.json")
   property bool panelVisible: (Quickshell.env("HYPR_WALLPAPER_SHOW") || "") === "1"
-  property var data: ({ mode: "combined", initialMode: "static", script: "orgm-hypr", scriptArgs: ["wallpaper"], tabs: ({ static: { title: "Normal wallpapers", applyCommand: "set-static", randomCommand: "random-static", current: "", items: [] }, video: { title: "Live wallpapers", applyCommand: "set-video", randomCommand: "random-video", current: "", items: [] } }) })
+  property var data: ({ mode: "combined", initialMode: "static", script: "orgm-wallpaper", scriptArgs: [], monitors: [], tabs: ({ static: { title: "Normal wallpapers", applyCommand: "set-static", randomCommand: "random-static", current: "", items: [] }, video: { title: "Live wallpapers", applyCommand: "set-video", randomCommand: "random-video", current: "", items: [] } }) })
   property string activeMode: "static"
   property int imageReloadNonce: 0
   property int pageSize: 16
@@ -19,6 +19,8 @@ ShellRoot {
   property int selectedInPage: 0
   property bool pendingShowPanel: false
   property var activeTab: root.tabForMode(root.activeMode)
+  property var monitors: root.data.monitors || []
+  property string selectedMonitor: monitors.length > 0 ? monitors[0].name : ""
   property var activeItems: activeTab.items || []
   property int pageCount: Math.max(1, Math.ceil(activeItems.length / pageSize))
   property var pageItems: activeItems.slice(currentPage * pageSize, currentPage * pageSize + pageSize)
@@ -92,11 +94,13 @@ ShellRoot {
         parsed.initialMode = mode
         parsed.tabs = ({})
         parsed.tabs[mode] = { title: parsed.title || (mode === "video" ? "Live wallpapers" : "Normal wallpapers"), applyCommand: parsed.applyCommand || (mode === "video" ? "set-video" : "set-static"), randomCommand: mode === "video" ? "random-video" : "random-static", current: parsed.current || "", items: parsed.items || [] }
-        parsed.script = parsed.script || "orgm-hypr"
-        parsed.scriptArgs = parsed.scriptArgs || ["wallpaper"]
+        parsed.script = parsed.script || "orgm-wallpaper"
+        parsed.scriptArgs = parsed.scriptArgs || []
       }
       root.data = parsed
       root.activeMode = parsed.initialMode === "video" ? "video" : "static"
+      root.monitors = parsed.monitors || []
+      root.selectedMonitor = root.monitors.length > 0 ? root.monitors[0].name : ""
       root.resetSelectionForActiveTab()
       if (showPanel)
         root.showPanel()
@@ -116,8 +120,8 @@ ShellRoot {
   }
 
   function commandWithScriptArgs(args) {
-    const script = root.data.script || "orgm-hypr"
-    const scriptArgs = root.data.scriptArgs || (script === "orgm-hypr" ? ["wallpaper"] : [])
+    const script = root.data.script || "orgm-wallpaper"
+    const scriptArgs = root.data.scriptArgs || []
     return [script].concat(scriptArgs).concat(args)
   }
 
@@ -253,13 +257,19 @@ ShellRoot {
         const item = root.selectedItem()
         if (!item || !item.path)
           return
-        applyProc.command = root.commandWithScriptArgs([root.activeTab.applyCommand || (root.activeMode === "video" ? "set-video" : "set-static"), item.path])
+        const args = [root.activeTab.applyCommand || (root.activeMode === "video" ? "set-video" : "set-static"), item.path]
+        if (root.activeMode === "static" && root.selectedMonitor.length > 0)
+          args.push("--monitor", root.selectedMonitor)
+        applyProc.command = root.commandWithScriptArgs(args)
         applyProc.startDetached()
         root.hidePanel()
       }
 
       function applyRandom() {
-        applyProc.command = root.commandWithScriptArgs([root.activeTab.randomCommand || (root.activeMode === "video" ? "random-video" : "random-static")])
+        const args = [root.activeTab.randomCommand || (root.activeMode === "video" ? "random-video" : "random-static")]
+        if (root.activeMode === "static" && root.selectedMonitor.length > 0)
+          args.push("--monitor", root.selectedMonitor)
+        applyProc.command = root.commandWithScriptArgs(args)
         applyProc.startDetached()
         root.hidePanel()
       }
@@ -311,7 +321,21 @@ ShellRoot {
             MouseArea { anchors.fill: parent; onClicked: root.setActiveMode("video") }
           }
 
-          Item { width: parent.width - 190 - 100 - 100 - pager.width - helper.width - 88; height: 1 }
+          Repeater {
+            model: root.monitors
+            Rectangle {
+              required property var modelData
+              width: 92
+              height: 32
+              radius: 9
+              color: root.selectedMonitor === modelData.name ? "#33494d64" : "#22363a4f"
+              border.color: root.selectedMonitor === modelData.name ? "#a6da95" : "#494d64"
+              Text { anchors.centerIn: parent; text: modelData.name; color: root.selectedMonitor === modelData.name ? "#a6da95" : "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.bold: true }
+              MouseArea { anchors.fill: parent; onClicked: root.selectedMonitor = modelData.name }
+            }
+          }
+
+          Item { width: Math.max(0, parent.width - 190 - 100 - 100 - (root.monitors.length * 104) - pager.width - helper.width - 88); height: 1 }
 
           Text {
             id: pager

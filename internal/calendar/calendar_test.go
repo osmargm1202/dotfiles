@@ -9,6 +9,22 @@ import (
 	"testing"
 )
 
+func TestGcalcliCommandPutsTSVAfterAgenda(t *testing.T) {
+	root := t.TempDir()
+	writeExecutable(t, filepath.Join(root, "gcalcli"), "#!/bin/sh\nexit 0\n")
+	t.Setenv("PATH", root)
+	t.Setenv("ORGM_CALENDAR_GCALCLI_CMD", "")
+
+	cmd, ok := gcalcliCommand()
+	if !ok {
+		t.Fatal("gcalcliCommand ok=false, want true")
+	}
+	joined := strings.Join(cmd, " ")
+	if !strings.Contains(joined, "agenda --tsv") {
+		t.Fatalf("gcalcli command = %q, want agenda before --tsv", joined)
+	}
+}
+
 func TestRunSyncParsesDefaultGcalcliTSVAndWritesCache(t *testing.T) {
 	root := t.TempDir()
 	writeExecutable(t, filepath.Join(root, "bin", "gcal-fixture"), "#!/bin/sh\nprintf '%s\n' '2026-05-24T10:00:00Z\t2026-05-24T11:00:00Z\tProject review\tPersonal\thttps://event.example/review' '2026-05-25\t2026-05-26\tAll day task\tWork\t'\n")

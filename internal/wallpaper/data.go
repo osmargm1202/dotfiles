@@ -19,6 +19,12 @@ type PickerItem struct {
 	Thumb string `json:"thumb"`
 }
 
+// PickerMonitor is one Hyprland output target consumed by Quickshell.
+type PickerMonitor struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
+
 // PickerData is the JSON schema consumed by the resident Quickshell picker.
 type PickerData struct {
 	Mode         string       `json:"mode"`
@@ -45,6 +51,7 @@ type CombinedPickerData struct {
 	InitialMode string               `json:"initialMode"`
 	Script      string               `json:"script"`
 	ScriptArgs  []string             `json:"scriptArgs,omitempty"`
+	Monitors    []PickerMonitor      `json:"monitors,omitempty"`
 	Tabs        map[string]PickerTab `json:"tabs"`
 }
 
@@ -57,6 +64,7 @@ type CombinedDataOptions struct {
 	CurrentPath  string
 	Script       string
 	ScriptArgs   []string
+	Monitors     []PickerMonitor
 }
 
 // DataOptions configures Quickshell picker JSON generation.
@@ -230,6 +238,7 @@ func BuildCombinedPickerData(opts CombinedDataOptions, manifest io.Reader) (Comb
 		InitialMode: initialMode,
 		Script:      opts.Script,
 		ScriptArgs:  opts.ScriptArgs,
+		Monitors:    opts.Monitors,
 		Tabs: map[string]PickerTab{
 			"static": {
 				Title:         titleForMode("static"),

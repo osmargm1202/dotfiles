@@ -50,7 +50,7 @@ ShellRoot {
   Process { id: actionProc }
 
   function runAction(args) {
-    actionProc.command = ["orgm-hypr", "calendar"].concat(args)
+    actionProc.command = ["orgm-calendar"].concat(args)
     actionProc.startDetached()
   }
 

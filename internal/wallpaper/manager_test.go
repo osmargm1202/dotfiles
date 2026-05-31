@@ -5,8 +5,54 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
+
+func TestWriteMonitorStateUsesSanitizedOutputName(t *testing.T) {
+	tmp := t.TempDir()
+	m := NewManager(io.Discard, io.Discard)
+	m.StateDir = filepath.Join(tmp, "state")
+	wallpaper := filepath.Join(tmp, "wall.png")
+	if err := os.WriteFile(wallpaper, []byte("x"), 0o600); err != nil {
+		t.Fatalf("write wallpaper: %v", err)
+	}
+
+	if err := m.WriteMonitorState("HDMI-A-1", "static", wallpaper); err != nil {
+		t.Fatalf("WriteMonitorState: %v", err)
+	}
+
+	got := readTrim(filepath.Join(m.StateDir, "monitors", "HDMI-A-1.state"))
+	want := "mode=static\npath=" + wallpaper
+	if got != want {
+		t.Fatalf("state = %q, want %q", got, want)
+	}
+}
+
+func TestWriteHyprpaperConfigIncludesMonitorSpecificWallpapers(t *testing.T) {
+	tmp := t.TempDir()
+	m := NewManager(io.Discard, io.Discard)
+	m.HyprpaperConf = filepath.Join(tmp, "hyprpaper.conf")
+	wallA := filepath.Join(tmp, "a.png")
+	wallB := filepath.Join(tmp, "b.png")
+	for _, path := range []string{wallA, wallB} {
+		if err := os.WriteFile(path, []byte("x"), 0o600); err != nil {
+			t.Fatalf("write %s: %v", path, err)
+		}
+	}
+	states := []MonitorState{{Output: "DP-3", Mode: "static", Path: wallA}, {Output: "HDMI-A-1", Mode: "static", Path: wallB}}
+
+	if err := m.writeHyprpaperMonitorConfig(states); err != nil {
+		t.Fatalf("writeHyprpaperMonitorConfig: %v", err)
+	}
+
+	content := readTrim(m.HyprpaperConf)
+	for _, want := range []string{"monitor = DP-3", "path = " + wallA, "monitor = HDMI-A-1", "path = " + wallB} {
+		if !strings.Contains(content, want) {
+			t.Fatalf("hyprpaper.conf missing %q:\n%s", want, content)
+		}
+	}
+}
 
 func TestGenerateCombinedQuickshellDataUsesCurrentModeForInitialTab(t *testing.T) {
 	tmp := t.TempDir()

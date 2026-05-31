@@ -207,7 +207,7 @@ func gcalcliCommand() ([]string, bool) {
 	if err != nil {
 		return nil, false
 	}
-	return []string{p, "--nocolor", "--tsv", "agenda", "--details", "calendar", "--details", "url"}, true
+	return []string{p, "--nocolor", "agenda", "--tsv", "--details", "calendar", "--details", "url"}, true
 }
 func commandString(cmd []string) string { return strings.Join(cmd, " ") }
 func runGcalcli() (string, []string, error) {

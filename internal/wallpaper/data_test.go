@@ -129,6 +129,25 @@ func TestBuildPickerDataRejectsInvalidMode(t *testing.T) {
 	}
 }
 
+func TestBuildCombinedPickerDataIncludesMonitors(t *testing.T) {
+	manifest := strings.NewReader("static\t/home/test/Pictures/Wallpapers/a.png\n")
+
+	data, err := BuildCombinedPickerData(CombinedDataOptions{
+		ManifestPath: "manifest.tsv",
+		JSONPath:     "picker.json",
+		Monitors:     []PickerMonitor{{Name: "DP-3", Description: "main"}, {Name: "HDMI-A-1", Description: "side"}},
+	}, manifest)
+	if err != nil {
+		t.Fatalf("BuildCombinedPickerData failed: %v", err)
+	}
+	if len(data.Monitors) != 2 {
+		t.Fatalf("monitor count = %d, want 2", len(data.Monitors))
+	}
+	if data.Monitors[0].Name != "DP-3" || data.Monitors[1].Name != "HDMI-A-1" {
+		t.Fatalf("monitors = %#v", data.Monitors)
+	}
+}
+
 func TestBuildCombinedPickerDataIncludesNormalAndLiveTabs(t *testing.T) {
 	manifest := strings.NewReader(strings.Join([]string{
 		"static\t/home/test/Pictures/Wallpapers/a.png",

@@ -8,7 +8,7 @@ local programs = {
   power_menu = "hypr-power-menu",
   display_settings = "nwg-displays",
   distrobox = "kitty -e distrobox-enter arch --",
-  piPrompt = "orgm-hypr pi prompt --launcher fuzzel",
+  piPrompt = "hypr-pi-prompt --launcher fuzzel",
 }
 
 return programs

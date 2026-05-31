@@ -172,6 +172,94 @@ func (m *Manager) WriteState(mode, path string) error {
 	return os.Rename(tmp, m.StateFile)
 }
 
+type MonitorState struct {
+	Output string
+	Mode   string
+	Path   string
+}
+
+func sanitizeOutputName(output string) string {
+	var b strings.Builder
+	for _, r := range output {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' || r == '.' {
+			b.WriteRune(r)
+		} else {
+			b.WriteByte('_')
+		}
+	}
+	name := b.String()
+	if name == "" {
+		return "default"
+	}
+	return name
+}
+
+func (m *Manager) monitorStatePath(output string) string {
+	return filepath.Join(m.StateDir, "monitors", sanitizeOutputName(output)+".state")
+}
+
+func (m *Manager) WriteMonitorState(output, mode, path string) error {
+	if output == "" {
+		return fmt.Errorf("monitor output is required")
+	}
+	statePath := m.monitorStatePath(output)
+	if err := os.MkdirAll(filepath.Dir(statePath), 0o755); err != nil {
+		return err
+	}
+	tmp := fmt.Sprintf("%s.%d", statePath, os.Getpid())
+	content := fmt.Sprintf("mode=%s\npath=%s\n", mode, path)
+	if err := os.WriteFile(tmp, []byte(content), 0o644); err != nil {
+		return err
+	}
+	return os.Rename(tmp, statePath)
+}
+
+func (m *Manager) ReadMonitorStates() ([]MonitorState, error) {
+	dir := filepath.Join(m.StateDir, "monitors")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	var states []MonitorState
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".state") {
+			continue
+		}
+		path := filepath.Join(dir, entry.Name())
+		mode, wallpaper := stateValues(path)
+		if mode == "" || wallpaper == "" || !fileExists(wallpaper) {
+			continue
+		}
+		output := strings.TrimSuffix(entry.Name(), ".state")
+		states = append(states, MonitorState{Output: output, Mode: mode, Path: wallpaper})
+	}
+	sort.Slice(states, func(i, j int) bool { return states[i].Output < states[j].Output })
+	return states, nil
+}
+
+func stateValues(path string) (string, string) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", ""
+	}
+	defer file.Close()
+	var mode, wallpaper string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "mode=") {
+			mode = strings.TrimPrefix(line, "mode=")
+		}
+		if strings.HasPrefix(line, "path=") {
+			wallpaper = strings.TrimPrefix(line, "path=")
+		}
+	}
+	return mode, wallpaper
+}
+
 func (m *Manager) Status() error {
 	_, err := fmt.Fprintf(m.Stdout, "mode=%s\npath=%s\n", m.CurrentMode(), m.StateValue("path"))
 	return err
@@ -268,8 +356,26 @@ func randomChoice(items []string) string {
 }
 
 func (m *Manager) writeHyprpaperConfig(wallpaper string) error {
+	if err := os.MkdirAll(filepath.Dir(m.HyprpaperConf), 0o755); err != nil {
+		return err
+	}
 	content := fmt.Sprintf("ipc = false\nsplash = false\nwallpaper {\n    monitor = *\n    fit_mode = cover\n    path = %s\n}\n", wallpaper)
 	return os.WriteFile(m.HyprpaperConf, []byte(content), 0o644)
+}
+
+func (m *Manager) writeHyprpaperMonitorConfig(states []MonitorState) error {
+	if err := os.MkdirAll(filepath.Dir(m.HyprpaperConf), 0o755); err != nil {
+		return err
+	}
+	var b strings.Builder
+	b.WriteString("ipc = false\nsplash = false\n")
+	for _, state := range states {
+		if state.Output == "" || state.Path == "" {
+			continue
+		}
+		fmt.Fprintf(&b, "wallpaper {\n    monitor = %s\n    fit_mode = cover\n    path = %s\n}\n", state.Output, state.Path)
+	}
+	return os.WriteFile(m.HyprpaperConf, []byte(b.String()), 0o644)
 }
 
 func (m *Manager) restartHyprpaper() error {
@@ -454,6 +560,58 @@ func (m *Manager) SetRandomStatic() error {
 	return m.SetStatic(wallpaper, "static-random")
 }
 
+func (m *Manager) SetStaticForMonitor(path, output, mode string) error {
+	if err := m.ensureDirs(); err != nil {
+		return err
+	}
+	if !fileExists(path) {
+		return fmt.Errorf("Wallpaper not found: %s", path)
+	}
+	m.StopMPVPaper()
+	if err := m.WriteMonitorState(output, mode, path); err != nil {
+		return err
+	}
+	states, err := m.ReadMonitorStates()
+	if err != nil {
+		return err
+	}
+	if err := m.writeHyprpaperMonitorConfig(states); err != nil {
+		return err
+	}
+	if err := m.restartHyprpaper(); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(m.CurrentFile), 0o755); err == nil {
+		_ = os.WriteFile(m.CurrentFile, []byte(path+"\n"), 0o644)
+	}
+	_ = os.Remove(m.LockWallpaper)
+	_ = os.Symlink(path, m.LockWallpaper)
+	return nil
+}
+
+func (m *Manager) SetRandomStaticForMonitor(output string) error {
+	wallpaper, err := m.pickStatic()
+	if err != nil {
+		return err
+	}
+	if wallpaper == "" {
+		wallpaper = m.Fallback
+	}
+	return m.SetStaticForMonitor(wallpaper, output, "static-random")
+}
+
+func (m *Manager) StatusForMonitor(output string) error {
+	if output == "" {
+		return fmt.Errorf("monitor output is required")
+	}
+	mode, path := stateValues(m.monitorStatePath(output))
+	if mode == "" {
+		mode = "missing"
+	}
+	_, err := fmt.Fprintf(m.Stdout, "monitor=%s\nmode=%s\npath=%s\n", output, mode, path)
+	return err
+}
+
 func (m *Manager) StopOldDaemon() {
 	if out, err := exec.Command("pgrep", "-f", "^/bin/sh "+m.Home+"/.local/bin/hypr-random-wallpaper").Output(); err == nil {
 		for _, pid := range strings.Fields(string(out)) {
@@ -598,6 +756,30 @@ func (m *Manager) GenerateQuickshellData(mode, jsonPath string) error {
 	return os.Rename(tmpJSON, jsonPath)
 }
 
+func (m *Manager) DetectMonitors() []PickerMonitor {
+	out, err := exec.Command("hyprctl", "-j", "monitors").Output()
+	if err != nil && commandExists("distrobox-host-exec") {
+		out, err = exec.Command("distrobox-host-exec", "hyprctl", "-j", "monitors").Output()
+	}
+	if err != nil {
+		return nil
+	}
+	var raw []struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+	if err := json.Unmarshal(out, &raw); err != nil {
+		return nil
+	}
+	monitors := make([]PickerMonitor, 0, len(raw))
+	for _, item := range raw {
+		if item.Name != "" {
+			monitors = append(monitors, PickerMonitor{Name: item.Name, Description: item.Description})
+		}
+	}
+	return monitors
+}
+
 func (m *Manager) GenerateCombinedQuickshellData(jsonPath string) error {
 	if err := m.ensureDirs(); err != nil {
 		return err
@@ -641,6 +823,7 @@ func (m *Manager) GenerateCombinedQuickshellData(jsonPath string) error {
 		CurrentMode:  currentMode,
 		CurrentPath:  currentPath,
 		Script:       "orgm-wallpaper",
+		Monitors:     m.DetectMonitors(),
 	}); err != nil {
 		return err
 	}
