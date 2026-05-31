@@ -251,17 +251,22 @@ ShellRoot {
 
       Timer { id: closeTimer; interval: 130; repeat: false; onTriggered: root.panelVisible = false }
 
-      Row {
+      Column {
         anchors.fill: parent
         anchors.margins: 28
-        spacing: 22
+        spacing: 14
 
-        Column {
-          width: 552
-          height: parent.height
-          spacing: 14
+        Row {
+          width: parent.width
+          height: parent.height - footer.height - parent.spacing
+          spacing: 22
 
-          Row {
+          Column {
+            width: 552
+            height: parent.height
+            spacing: 14
+
+            Row {
             width: parent.width
             height: 42
             spacing: 10
@@ -379,13 +384,25 @@ ShellRoot {
             }
           }
 
-          Rectangle {
-            width: parent.width
-            height: 34
-            radius: 9
-            color: "#1e363a4f"
-            border.color: "#494d64"
-            Text { anchors.centerIn: parent; text: "Esc close · Arrows select · Enter open · PgUp/PgDn month"; color: "#6e738d"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 11 }
+          }
+        }
+
+        Rectangle {
+          id: footer
+          width: parent.width
+          height: 34
+          radius: 9
+          color: "#1e363a4f"
+          border.color: "#494d64"
+          Text {
+            anchors.centerIn: parent
+            width: parent.width - 28
+            text: "Esc close · Arrows select · Enter open · PgUp/PgDn month"
+            color: "#6e738d"
+            font.family: "JetBrainsMono Nerd Font"
+            font.pixelSize: 11
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
           }
         }
       }
