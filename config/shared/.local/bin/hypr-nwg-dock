@@ -29,4 +29,4 @@ exec nwg-dock-hyprland \
   -mb "${HYPR_NWG_DOCK_MARGIN_BOTTOM:-0}" \
   -lp "${HYPR_NWG_DOCK_LAUNCHER_POSITION:-start}" \
   -ico "${HYPR_NWG_DOCK_LAUNCHER_ICON:-$HOME/.local/share/icons/nixos.svg}" \
-  -c "${HYPR_NWG_DOCK_LAUNCHER_COMMAND:-$HOME/.local/bin/hypr-main-menu}"
+  -c "${HYPR_NWG_DOCK_LAUNCHER_COMMAND:-$HOME/.local/bin/hypr-app-launcher}"

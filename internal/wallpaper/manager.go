@@ -586,7 +586,7 @@ func (m *Manager) SetStaticForMonitor(path, output, mode string) error {
 	}
 	_ = os.Remove(m.LockWallpaper)
 	_ = os.Symlink(path, m.LockWallpaper)
-	return nil
+	return m.WriteState(mode, path)
 }
 
 func (m *Manager) SetRandomStaticForMonitor(output string) error {

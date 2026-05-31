@@ -54,6 +54,36 @@ func TestWriteHyprpaperConfigIncludesMonitorSpecificWallpapers(t *testing.T) {
 	}
 }
 
+func TestSetStaticForMonitorUpdatesGlobalCurrentMode(t *testing.T) {
+	tmp := t.TempDir()
+	m := NewManager(io.Discard, io.Discard)
+	m.StateDir = filepath.Join(tmp, "state", "hypr-wallpaper")
+	m.StateFile = filepath.Join(m.StateDir, "state")
+	m.CurrentFile = filepath.Join(tmp, "runtime", "hypr-random-wallpaper.current")
+	m.LockWallpaper = filepath.Join(tmp, "runtime", "hypr-current-wallpaper")
+	m.HyprpaperConf = filepath.Join(tmp, "runtime", "hyprpaper.conf")
+	m.HyprpaperBin = "true"
+	m.KillBin = "true"
+	wallpaper := filepath.Join(tmp, "wall.png")
+	if err := os.WriteFile(wallpaper, []byte("x"), 0o600); err != nil {
+		t.Fatalf("write wallpaper: %v", err)
+	}
+	if err := m.WriteState("video", filepath.Join(tmp, "live.mp4")); err != nil {
+		t.Fatalf("WriteState: %v", err)
+	}
+
+	if err := m.SetStaticForMonitor(wallpaper, "DP-3", "static"); err != nil {
+		t.Fatalf("SetStaticForMonitor: %v", err)
+	}
+
+	if got := m.CurrentMode(); got != "static" {
+		t.Fatalf("CurrentMode = %q, want static", got)
+	}
+	if got := m.StateValue("path"); got != wallpaper {
+		t.Fatalf("global path = %q, want %q", got, wallpaper)
+	}
+}
+
 func TestGenerateCombinedQuickshellDataUsesCurrentModeForInitialTab(t *testing.T) {
 	tmp := t.TempDir()
 	staticDir := filepath.Join(tmp, "Pictures", "Wallpapers")

@@ -1,45 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
-lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
-# shellcheck disable=SC1090
-. "$lib"
 
 notify() {
-  notify-send "Bluetooth reconnect" "$1" 2>/dev/null || true
+  notify-send "USB headset reconnect" "$1" 2>/dev/null || true
 }
 
-if ! command -v bluetoothctl >/dev/null 2>&1; then
-  notify "bluetoothctl no está instalado."
-  exit 1
-fi
+cmd="${HYPR_HEADSET_RECONNECT_CMD:-unbindheadset}"
 
-list="$(bluetoothctl devices 2>/dev/null || true)"
-if [ -z "$list" ]; then
-  notify "No hay dispositivos Bluetooth conocidos."
+if command -v kitty >/dev/null 2>&1; then
+  kitty --title "USB headset reconnect" -e fish -lc "$cmd" &
+  notify "Reconexión USB iniciada. Autoriza sudo si lo pide."
   exit 0
 fi
 
-tmp="$(mktemp)"
-trap 'rm -f "$tmp"' EXIT
-printf '%s\n' "$list" | awk '/^Device / { mac=$2; $1=""; $2=""; sub(/^  */, ""); print mac "\t" $0 }' > "$tmp"
-
-selection="$(awk -F'\t' '{ print $2 "  " $1 }' "$tmp" | hypr_rofi_dmenu 'Reconnect BT' "${HYPR_ROFI_BT_LINES:-12}" || true)"
-[ -n "${selection:-}" ] || exit 0
-mac="$(printf '%s\n' "$selection" | awk '{ print $NF }')"
-[ -n "$mac" ] || exit 1
-
-if command -v fish >/dev/null 2>&1 && fish -lc 'type -q unbindheadset' >/dev/null 2>&1; then
-  if fish -lc "unbindheadset '$mac'"; then
-    notify "Reconectado con unbindheadset: $mac"
-    exit 0
-  fi
+if command -v fish >/dev/null 2>&1; then
+  fish -lc "$cmd"
+  notify "Reconexión USB completada."
+  exit 0
 fi
 
-bluetoothctl disconnect "$mac" >/tmp/hypr-bt-reconnect.log 2>&1 || true
-sleep 2
-if bluetoothctl connect "$mac" >>/tmp/hypr-bt-reconnect.log 2>&1; then
-  notify "Reconectado: $mac"
-else
-  notify "Falló reconexión: $mac"
-  exit 1
-fi
+notify "fish no está instalado; no puedo ejecutar unbindheadset."
+exit 1

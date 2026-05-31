@@ -163,7 +163,7 @@
     "custom/headset_reconnect": {
       "format": "󰋋",
       "tooltip": true,
-      "tooltip-format": "Reconnect Bluetooth device",
+      "tooltip-format": "Reconectar headset USB",
       "on-click": "hypr-bluetooth-reconnect"
     },
     "bluetooth": {

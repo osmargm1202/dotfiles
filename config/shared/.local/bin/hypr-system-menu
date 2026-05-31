@@ -7,11 +7,14 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 
 repo="${DOTFILES_REPO:-$HOME/Hobby/dotfiles}"
 host="${HYPR_HOST:-$(hostname)}"
-choice="$(printf '%s\n' '󰑓 Reload Hyprland' '󰑓 Restart Waybar' '󰑓 Reload Dock' '󰆍 User logs' '󰁯 orgm-dot status' '󰕚 orgm-dot diff' '󰑓 orgm-dot sync' '󰉋 Open dotfiles' '󰅖 Cancel' | hypr_rofi_dmenu 'System' || true)"
+choice="$(printf '%s\n' '󰑓 Restart all' '󰑓 Reload Hyprland' '󰑓 Restart Waybar' '󰑓 Reload Dock' '󰔎 Theme light' '󰔎 Theme dark' '󰆍 User logs' '󰁯 orgm-dot status' '󰕚 orgm-dot diff' '󰑓 orgm-dot sync' '󰉋 Open dotfiles' '󰅖 Cancel' | hypr_rofi_dmenu 'System' || true)"
 case "$choice" in
+  *'Restart all') exec sh -lc 'hyprctl reload >/dev/null 2>&1 || true; (waybar-watch ~/.config/waybar-hypr >/dev/null 2>&1 &); ~/.local/bin/hypr-nwg-dock reload >/dev/null 2>&1 || true' ;;
   *'Reload Hyprland') exec hyprctl reload ;;
   *'Restart Waybar') exec waybar-watch ~/.config/waybar-hypr ;;
   *'Reload Dock') exec ~/.local/bin/hypr-nwg-dock reload ;;
+  *'Theme light') exec orgm-theme apply orgm-light ;;
+  *'Theme dark') exec orgm-theme apply orgm-dark ;;
   *'User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
   *'orgm-dot status') exec kitty --class dot-status -e sh -lc "cd '$repo' && distrobox-host-exec orgm-dot status; read -r -p 'press enter...'" ;;
   *'orgm-dot diff') exec kitty --class dot-diff -e sh -lc "cd '$repo' && distrobox-host-exec orgm-dot diff; read -r -p 'press enter...'" ;;

@@ -28,8 +28,17 @@ hypr_rofi_need() {
 hypr_rofi_theme_str() {
   local lines="${1:-$HYPR_ROFI_LINES}"
   local width="${2:-$HYPR_ROFI_WIDTH}"
-  printf 'configuration { font: "JetBrainsMono Nerd Font %s"; } window { width: %s; } listview { lines: %s; } element { padding: %s; } element-icon { size: %s; }' \
-    "$HYPR_ROFI_FONT_SIZE" "$width" "$lines" "$HYPR_ROFI_ELEMENT_PADDING" "$HYPR_ROFI_ICON_SIZE"
+  cat <<EOF
+configuration {
+  font: "JetBrainsMono Nerd Font ${HYPR_ROFI_FONT_SIZE}";
+  me-select-entry: "";
+  me-accept-entry: "MousePrimary";
+}
+window { width: ${width}; }
+listview { lines: ${lines}; }
+element { padding: ${HYPR_ROFI_ELEMENT_PADDING}; cursor: pointer; }
+element-icon { size: ${HYPR_ROFI_ICON_SIZE}; }
+EOF
 }
 
 hypr_rofi_dmenu() {

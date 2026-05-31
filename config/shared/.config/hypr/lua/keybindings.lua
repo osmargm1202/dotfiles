@@ -25,7 +25,7 @@ function M.setup(programs)
   hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd(program("piPrompt", "kitty --hold -e pi")))
 
   -- Launchers and control center.
-  hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(program("menu", "hypr-main-menu")))
+  hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(program("app_launcher", "hypr-app-launcher")))
   hl.bind(mainMod .. " + ALT + Space", hl.dsp.exec_cmd(program("control_center", "hypr-main-menu")))
   hl.bind(mainMod .. " + CTRL + R", hl.dsp.layout("togglesplit"))
   hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("hypr-rofi-open-file"))

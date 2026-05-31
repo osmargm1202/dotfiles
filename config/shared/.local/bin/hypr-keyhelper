@@ -18,7 +18,8 @@ write_cache() {
     {"id":"launchers","title":"Launchers","icon":"󰀻","entries":[
       {"key":"Win+/","description":"Atajos Hyprland","command":"hypr-keyhelper toggle"},
       {"key":"Win+Enter","description":"Terminal","command":"kitty"},
-      {"key":"Win+Space","description":"Menú principal","command":"hypr-main-menu"},
+      {"key":"Win+Space","description":"Apps con rofi","command":"hypr-app-launcher"},
+      {"key":"Win+Alt+Space","description":"Menú principal","command":"hypr-main-menu"},
       {"key":"Win+A","description":"Buscar / smart run","command":"hypr-smart-run"},
       {"key":"Win+E","description":"Explorador de archivos","command":"nautilus"}
     ]},

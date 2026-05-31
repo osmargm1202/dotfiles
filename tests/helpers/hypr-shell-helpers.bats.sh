@@ -26,6 +26,8 @@ for helper in \
   volume-osd \
   mic-volume-osd \
   hypr-random-wallpaper \
+  hypr-app-launcher \
+  hypr-bluetooth-reconnect \
   hypr-main-menu \
   hypr-power-menu \
   waybar-date-es \
