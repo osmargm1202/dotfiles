@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
+
+hosts=""
+if [ -f "$HOME/.ssh/config" ]; then
+  hosts="$(awk 'tolower($1) == "host" { for (i = 2; i <= NF; i++) if ($i !~ /[*?]/) print $i }' "$HOME/.ssh/config" 2>/dev/null || true)"
+fi
+known_hosts="$(awk -F'[ ,]' '{print $1}' "$HOME/.ssh/known_hosts" 2>/dev/null | grep -v '^|' | grep -v '^$' | sed 's/^\[//; s/\].*$//' || true)"
+hosts="$(printf '%s\n%s\n' "$hosts" "$known_hosts" | sort -u | sed '/^$/d')"
+selection="$(printf '%s\n' "$hosts" | hypr_rofi_dmenu 'SSH' "${HYPR_ROFI_SSH_LINES:-14}" "${HYPR_ROFI_SSH_WIDTH:-$HYPR_ROFI_WIDTH}" || true)"
+[ -n "${selection:-}" ] || exit 0
+exec kitty -e ssh "$selection"

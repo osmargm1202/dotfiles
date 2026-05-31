@@ -1,11 +1,11 @@
-#!/bin/sh
-set -eu
+#!/usr/bin/env bash
+set -euo pipefail
 
-launcher="fuzzel"
+launcher="rofi"
 input=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --launcher) launcher="${2:-fuzzel}"; shift 2 ;;
+    --launcher) launcher="${2:-rofi}"; shift 2 ;;
     --input) input="${2:-}"; shift 2 ;;
     *) shift ;;
   esac
@@ -13,9 +13,21 @@ done
 
 if [ -z "$input" ]; then
   case "$launcher" in
-    rofi) input="$(printf '' | rofi -dmenu -p 'Pedir instrucción a Pi' || true)" ;;
-    walker) input="$(printf '' | walker --dmenu --placeholder 'Pedir instrucción a Pi' || true)" ;;
-    *) input="$(printf '' | fuzzel --dmenu --prompt 'Pedir instrucción a Pi> ' || true)" ;;
+    rofi)
+      lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+      # shellcheck disable=SC1090
+      . "$lib"
+      input="$(printf '' | hypr_rofi_dmenu 'Pedir instrucción a Pi' 3 || true)"
+      ;;
+    walker)
+      input="$(printf '' | walker --dmenu --placeholder 'Pedir instrucción a Pi' || true)"
+      ;;
+    *)
+      lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+      # shellcheck disable=SC1090
+      . "$lib"
+      input="$(printf '' | hypr_rofi_dmenu 'Pedir instrucción a Pi' 3 || true)"
+      ;;
   esac
 fi
 

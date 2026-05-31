@@ -18,15 +18,15 @@ write_cache() {
     {"id":"launchers","title":"Launchers","icon":"󰀻","entries":[
       {"key":"Win+/","description":"Atajos Hyprland","command":"hypr-keyhelper toggle"},
       {"key":"Win+Enter","description":"Terminal","command":"kitty"},
-      {"key":"Win+Space","description":"Menú principal","command":"hypr-fuzzel"},
+      {"key":"Win+Space","description":"Menú principal","command":"hypr-main-menu"},
       {"key":"Win+A","description":"Buscar / smart run","command":"hypr-smart-run"},
       {"key":"Win+E","description":"Explorador de archivos","command":"nautilus"}
     ]},
     {"id":"tools","title":"Tools","icon":"󰒓","entries":[
-      {"key":"Win+M","description":"Buscar archivo","command":"fuzzel-open-file"},
-      {"key":"Win+Esc","description":"Cambiar ventana","command":"fuzzel-hypr-window"},
-      {"key":"Win+C","description":"Calculadora","command":"fuzzel-calc"},
-      {"key":"Win+D","description":"SSH host","command":"fuzzel-ssh-host"}
+      {"key":"Win+M","description":"Buscar archivo","command":"hypr-rofi-open-file"},
+      {"key":"Win+Esc","description":"Cambiar ventana","command":"hypr-rofi-window"},
+      {"key":"Win+C","description":"Calculadora","command":"hypr-rofi-calc"},
+      {"key":"Win+D","description":"SSH host","command":"hypr-rofi-ssh-host"}
     ]},
     {"id":"system","title":"Sistema","icon":"󰒓","entries":[
       {"key":"Win+P","description":"Pantallas","command":"nwg-displays"},
