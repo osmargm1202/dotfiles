@@ -302,6 +302,23 @@ func TestRunFiltersSharedPathsByDesktopProfile(t *testing.T) {
 	assertNotExists(t, filepath.Join(rt.Destination, ".local", "bin", "hypr-main-menu"))
 }
 
+func TestRunFiltersDesktopSpecificFilesInsideAllowedDirectory(t *testing.T) {
+	t.Setenv("ORGM_DOT_DESKTOP", "gnome")
+	rt := testRuntime(t)
+	rt.Config.Shared.Paths = []string{".config/rofi"}
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "rofi", "config.rasi"), "common")
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "rofi", "hypr-menu.env"), "hypr")
+
+	actions, err := Run(rt, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertHasAction(t, actions, "A", filepath.Join(rt.Destination, ".config", "rofi", "config.rasi"))
+	assertNoAction(t, actions, filepath.Join(rt.Destination, ".config", "rofi", "hypr-menu.env"))
+	assertNotExists(t, filepath.Join(rt.Destination, ".config", "rofi", "hypr-menu.env"))
+}
+
 func TestRunFiltersHostPathsByDesktopProfile(t *testing.T) {
 	t.Setenv("ORGM_DOT_DESKTOP", "gnome")
 	rt := testRuntime(t)

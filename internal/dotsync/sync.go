@@ -175,7 +175,7 @@ func Run(rt dotconfig.Runtime, opts Options) ([]Action, error) {
 		if !shouldSyncPath(profile, rel) {
 			continue
 		}
-		as, err := syncOne(rt, rt.SourceShared, rel, opts)
+		as, err := syncOne(rt, rt.SourceShared, rel, profile, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -185,7 +185,7 @@ func Run(rt dotconfig.Runtime, opts Options) ([]Action, error) {
 		if !shouldSyncPath(profile, rel) {
 			continue
 		}
-		as, err := syncOne(rt, rt.HostSource(opts.Host), rel, opts)
+		as, err := syncOne(rt, rt.HostSource(opts.Host), rel, profile, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +202,7 @@ func Format(actions []Action) []string {
 	return lines
 }
 
-func syncOne(rt dotconfig.Runtime, base, rel string, opts Options) ([]Action, error) {
+func syncOne(rt dotconfig.Runtime, base, rel string, profile DesktopProfile, opts Options) ([]Action, error) {
 	rel = dotmanifest.Normalize(rel)
 	src := filepath.Join(base, rel)
 	dst := filepath.Join(rt.Destination, rel)
@@ -213,7 +213,7 @@ func syncOne(rt dotconfig.Runtime, base, rel string, opts Options) ([]Action, er
 	if err != nil {
 		return nil, err
 	}
-	if rt.Config.LocalOnly.Matches(rel, false) {
+	if rt.Config.LocalOnly.Matches(rel, false) || !shouldSyncPath(profile, rel) {
 		return nil, nil
 	}
 	if !info.IsDir() {
@@ -236,7 +236,7 @@ func syncOne(rt dotconfig.Runtime, base, rel string, opts Options) ([]Action, er
 		}
 		itemRel := filepath.ToSlash(filepath.Join(rel, relPart))
 		itemDst := filepath.Join(rt.Destination, itemRel)
-		if rt.Config.LocalOnly.Matches(itemRel, false) {
+		if rt.Config.LocalOnly.Matches(itemRel, false) || !shouldSyncPath(profile, itemRel) {
 			if d.IsDir() {
 				return filepath.SkipDir
 			}
@@ -274,7 +274,7 @@ func syncOne(rt dotconfig.Runtime, base, rel string, opts Options) ([]Action, er
 				return err
 			}
 			itemRel := filepath.ToSlash(filepath.Join(rel, relPart))
-			if isLocalOnly(rt, itemRel, path) {
+			if isLocalOnly(rt, itemRel, path) || !shouldSyncPath(profile, itemRel) {
 				return nil
 			}
 			if _, err := os.Lstat(filepath.Join(src, relPart)); err == nil {
