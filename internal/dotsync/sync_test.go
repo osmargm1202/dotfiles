@@ -94,6 +94,7 @@ func testRuntime(t *testing.T) dotconfig.Runtime {
 	repo := filepath.Join(root, "repo")
 	home := filepath.Join(root, "home")
 	shared := filepath.Join(repo, "config", "shared")
+	hosts := filepath.Join(repo, "config", "hosts")
 	state := filepath.Join(root, "state")
 	if err := os.MkdirAll(shared, 0o755); err != nil {
 		t.Fatal(err)
@@ -105,6 +106,7 @@ func testRuntime(t *testing.T) dotconfig.Runtime {
 		Repo:         repo,
 		Destination:  home,
 		SourceShared: shared,
+		SourceHosts:  hosts,
 		StateDir:     state,
 		Config: dotconfig.Config{
 			Shared: dotconfig.PathList{Paths: []string{".config/app"}},
@@ -282,6 +284,36 @@ func TestRunFiltersSharedPathsByDesktopProfile(t *testing.T) {
 	assertNotExists(t, filepath.Join(rt.Destination, ".config", "hypr"))
 	assertNotExists(t, filepath.Join(rt.Destination, ".config", "hypr", "hyprland.conf"))
 	assertNotExists(t, filepath.Join(rt.Destination, ".local", "bin", "hypr-main-menu"))
+}
+
+func TestRunFiltersHostPathsByDesktopProfile(t *testing.T) {
+	t.Setenv("ORGM_DOT_DESKTOP", "gnome")
+	rt := testRuntime(t)
+	rt.Config.Shared.Paths = nil
+	rt.Config.Hosts = map[string]dotconfig.PathList{
+		"orgm": {Paths: []string{".config/fish/host-orgm.fish", ".config/rofi/hypr-menu.env"}},
+	}
+	writeFile(t, filepath.Join(rt.HostSource("orgm"), ".config", "fish", "host-orgm.fish"), "fish")
+	writeFile(t, filepath.Join(rt.HostSource("orgm"), ".config", "rofi", "hypr-menu.env"), "hypr")
+
+	actions, err := Run(rt, Options{Host: "orgm"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertHasAction(t, actions, "A", filepath.Join(rt.Destination, ".config", "fish", "host-orgm.fish"))
+	assertNoAction(t, actions, filepath.Join(rt.Destination, ".config", "rofi", "hypr-menu.env"))
+	assertNotExists(t, filepath.Join(rt.Destination, ".config", "rofi", "hypr-menu.env"))
+}
+
+func TestRunReturnsInvalidDesktopOverrideError(t *testing.T) {
+	t.Setenv("ORGM_DOT_DESKTOP", "plasma")
+	rt := testRuntime(t)
+
+	_, err := Run(rt, Options{})
+	if err == nil {
+		t.Fatal("expected invalid desktop override error")
+	}
 }
 
 func mapLookup(values map[string]string) func(string) string {
