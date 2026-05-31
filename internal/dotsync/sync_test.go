@@ -224,6 +224,22 @@ func TestShouldSyncPathForGNOMEBlocksCompositorPaths(t *testing.T) {
 	}
 }
 
+func TestShouldSyncPathForHyprlandAllowsHyprlandAndBlocksOtherDesktopHelpers(t *testing.T) {
+	allowed := []string{".config/hypr", ".config/hypr/hyprland.conf", ".config/swaync", ".local/bin/hypr-main-menu"}
+	for _, rel := range allowed {
+		if !shouldSyncPath(DesktopHyprland, rel) {
+			t.Fatalf("hyprland should allow %s", rel)
+		}
+	}
+
+	blocked := []string{".config/labwc", ".config/sway", ".config/swaylock", ".local/bin/labwc-kill-windows", ".local/bin/sway-app-dock"}
+	for _, rel := range blocked {
+		if shouldSyncPath(DesktopHyprland, rel) {
+			t.Fatalf("hyprland should block %s", rel)
+		}
+	}
+}
+
 func TestShouldSyncPathForLabwcAllowsLabwcAndBlocksHyprland(t *testing.T) {
 	allowed := []string{".config/labwc", ".config/labwc/rc.xml", ".local/bin/labwc-kill-windows"}
 	for _, rel := range allowed {

@@ -91,7 +91,9 @@ func shouldSyncPath(profile DesktopProfile, rel string) bool {
 		return !isHyprlandPath(rel) && !isSwayPath(rel)
 	case DesktopSway:
 		return !isHyprlandPath(rel)
-	case DesktopHyprland, DesktopAll, "":
+	case DesktopHyprland:
+		return !isLabwcPath(rel) && !isSwayOnlyPath(rel)
+	case DesktopAll, "":
 		return true
 	default:
 		return true
@@ -124,9 +126,12 @@ func isLabwcPath(rel string) bool {
 }
 
 func isSwayPath(rel string) bool {
+	return isSwayOnlyPath(rel) || hasPathPrefix(rel, ".config/swaync")
+}
+
+func isSwayOnlyPath(rel string) bool {
 	return hasPathPrefix(rel, ".config/sway") ||
 		hasPathPrefix(rel, ".config/swaylock") ||
-		hasPathPrefix(rel, ".config/swaync") ||
 		hasBasePrefix(rel, "sway-")
 }
 
