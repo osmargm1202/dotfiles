@@ -10,6 +10,7 @@ import (
 
 	"github.com/osmargm1202/nixos/internal/dotconfig"
 	"github.com/osmargm1202/nixos/internal/dotmanifest"
+	"github.com/osmargm1202/nixos/internal/dotsync"
 )
 
 type Change struct {
@@ -24,16 +25,27 @@ type Options struct {
 }
 
 func Changes(rt dotconfig.Runtime, opts Options) ([]Change, error) {
+	profile, err := dotsync.CurrentDesktopProfile()
+	if err != nil {
+		return nil, err
+	}
+
 	var changes []Change
 	for _, rel := range rt.Config.Shared.Paths {
-		cs, err := diffSourcePath(rt, rt.SourceShared, rel, opts)
+		if !dotsync.ShouldSyncPath(profile, rel) {
+			continue
+		}
+		cs, err := diffSourcePath(rt, rt.SourceShared, rel, profile, opts)
 		if err != nil {
 			return nil, err
 		}
 		changes = append(changes, cs...)
 	}
 	for _, rel := range rt.HostPaths(opts.Host) {
-		cs, err := diffSourcePath(rt, rt.HostSource(opts.Host), rel, opts)
+		if !dotsync.ShouldSyncPath(profile, rel) {
+			continue
+		}
+		cs, err := diffSourcePath(rt, rt.HostSource(opts.Host), rel, profile, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -57,7 +69,7 @@ func Format(changes []Change, host string, porcelain bool) []string {
 	return lines
 }
 
-func diffSourcePath(rt dotconfig.Runtime, base, rel string, opts Options) ([]Change, error) {
+func diffSourcePath(rt dotconfig.Runtime, base, rel string, profile dotsync.DesktopProfile, opts Options) ([]Change, error) {
 	rel = dotmanifest.Normalize(rel)
 	src := filepath.Join(base, rel)
 	dst := filepath.Join(rt.Destination, rel)
@@ -68,8 +80,11 @@ func diffSourcePath(rt dotconfig.Runtime, base, rel string, opts Options) ([]Cha
 	if err != nil {
 		return nil, err
 	}
+	if !dotsync.ShouldSyncPath(profile, rel) {
+		return nil, nil
+	}
 	if !info.IsDir() {
-		return comparePath(rt, src, dst, rel, opts)
+		return comparePath(rt, src, dst, rel, profile, opts)
 	}
 
 	var changes []Change
@@ -85,7 +100,10 @@ func diffSourcePath(rt dotconfig.Runtime, base, rel string, opts Options) ([]Cha
 			return err
 		}
 		itemRel := filepath.ToSlash(filepath.Join(rel, relPart))
-		cs, err := comparePath(rt, path, filepath.Join(rt.Destination, itemRel), itemRel, opts)
+		if !dotsync.ShouldSyncPath(profile, itemRel) {
+			return nil
+		}
+		cs, err := comparePath(rt, path, filepath.Join(rt.Destination, itemRel), itemRel, profile, opts)
 		if err != nil {
 			return err
 		}
@@ -110,7 +128,7 @@ func diffSourcePath(rt dotconfig.Runtime, base, rel string, opts Options) ([]Cha
 			return err
 		}
 		itemRel := filepath.ToSlash(filepath.Join(rel, relPart))
-		if isLocalOnly(rt, itemRel, path) {
+		if isLocalOnly(rt, itemRel, path) || !dotsync.ShouldSyncPath(profile, itemRel) {
 			if opts.Verbose {
 				changes = append(changes, Change{Code: "L", Path: filepath.Join(rt.Destination, itemRel)})
 			}
@@ -132,7 +150,10 @@ func diffSourcePath(rt dotconfig.Runtime, base, rel string, opts Options) ([]Cha
 	return changes, nil
 }
 
-func comparePath(rt dotconfig.Runtime, src, dst, rel string, opts Options) ([]Change, error) {
+func comparePath(rt dotconfig.Runtime, src, dst, rel string, profile dotsync.DesktopProfile, opts Options) ([]Change, error) {
+	if !dotsync.ShouldSyncPath(profile, rel) {
+		return nil, nil
+	}
 	if rt.Config.LocalOnly.Matches(rel, false) {
 		if opts.Verbose {
 			return []Change{{Code: "L", Path: filepath.Join(rt.Destination, rel)}}, nil
