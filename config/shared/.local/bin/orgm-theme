@@ -390,8 +390,9 @@ reload_live() {
   command -v swaync-client >/dev/null 2>&1 && swaync-client -rs >/dev/null 2>&1 || true
   command -v hypr-nwg-dock >/dev/null 2>&1 && (hypr-nwg-dock reload >/dev/null 2>&1 &) || true
   if command -v waybar-watch >/dev/null 2>&1; then
-    pkill waybar 2>/dev/null || true
-    (waybar-watch "$config_home/waybar-hypr" >/dev/null 2>&1 &)
+    if ! pgrep -f "^[^ ]+sh .*waybar-watch $config_home/waybar-hypr$" >/dev/null 2>&1; then
+      (waybar-watch "$config_home/waybar-hypr" >/dev/null 2>&1 &)
+    fi
   fi
 }
 

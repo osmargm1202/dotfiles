@@ -9,17 +9,30 @@ profile="$(basename "$config_dir")"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/waybar"
 log="$state_dir/${profile}.log"
 pid_file="$state_dir/${profile}.watch.pid"
+lock_dir="$state_dir/${profile}.watch.lock"
 mkdir -p "$state_dir"
 
-# One watcher only per profile. Avoid pgrep matching parent shell command lines.
-if [ -r "$pid_file" ]; then
-  old="$(cat "$pid_file" 2>/dev/null || true)"
+kill_pid() {
+  old="$1"
   if [ -n "${old:-}" ] && [ "$old" != "$$" ] && kill -0 "$old" 2>/dev/null; then
     kill "$old" 2>/dev/null || true
     sleep 0.2
     kill -KILL "$old" 2>/dev/null || true
   fi
+}
+
+# One watcher only per profile. Lock prevents orgm-theme + existing watcher races.
+if ! mkdir "$lock_dir" 2>/dev/null; then
+  old="$(cat "$pid_file" 2>/dev/null || true)"
+  if [ -n "${old:-}" ] && kill -0 "$old" 2>/dev/null; then
+    kill_pid "$old"
+  fi
+  rm -rf "$lock_dir"
+  mkdir "$lock_dir" 2>/dev/null || exit 0
 fi
+
+# From this point onward, always remove the lock on normal termination.
+trap 'rm -f "$pid_file"; rm -rf "$lock_dir"' INT TERM EXIT
 
 printf '%s\n' "$$" >"$pid_file"
 waybar_pid=""
@@ -27,6 +40,7 @@ waybar_pid=""
 cleanup() {
   [ -n "${waybar_pid:-}" ] && kill "$waybar_pid" 2>/dev/null || true
   rm -f "$pid_file"
+  rm -rf "$lock_dir"
 }
 trap cleanup INT TERM EXIT
 
