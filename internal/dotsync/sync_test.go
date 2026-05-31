@@ -144,3 +144,148 @@ func assertNoAction(t *testing.T, actions []Action, path string) {
 		}
 	}
 }
+
+func assertNotExists(t *testing.T, path string) {
+	t.Helper()
+	if _, err := os.Lstat(path); err == nil {
+		t.Fatalf("%s should not exist", path)
+	} else if !os.IsNotExist(err) {
+		t.Fatalf("checking %s: %v", path, err)
+	}
+}
+
+func TestDesktopProfileFromEnvUsesOverride(t *testing.T) {
+	lookup := mapLookup(map[string]string{"ORGM_DOT_DESKTOP": "sway"})
+
+	profile, err := desktopProfileFromEnv(lookup)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if profile != DesktopSway {
+		t.Fatalf("profile = %q, want %q", profile, DesktopSway)
+	}
+}
+
+func TestDesktopProfileFromEnvRejectsInvalidOverride(t *testing.T) {
+	lookup := mapLookup(map[string]string{"ORGM_DOT_DESKTOP": "plasma"})
+
+	_, err := desktopProfileFromEnv(lookup)
+	if err == nil {
+		t.Fatal("expected invalid ORGM_DOT_DESKTOP error")
+	}
+}
+
+func TestDesktopProfileFromEnvDetectsHyprland(t *testing.T) {
+	lookup := mapLookup(map[string]string{"XDG_CURRENT_DESKTOP": "Hyprland"})
+
+	profile, err := desktopProfileFromEnv(lookup)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if profile != DesktopHyprland {
+		t.Fatalf("profile = %q, want %q", profile, DesktopHyprland)
+	}
+}
+
+func TestShouldSyncPathForGNOMEBlocksCompositorPaths(t *testing.T) {
+	blocked := []string{
+		".config/hypr",
+		".config/hypr/lua/autostart.lua",
+		".config/labwc",
+		".config/sway",
+		".config/waybar-hypr/config.jsonc",
+		".config/nwg-dock-hyprland/style.css",
+		".local/bin/hypr-main-menu",
+		".local/bin/sway-app-dock",
+		".local/bin/labwc-kill-windows",
+		".local/bin/waybar-watch",
+		".local/bin/volume-osd",
+	}
+	for _, rel := range blocked {
+		if shouldSyncPath(DesktopGNOME, rel) {
+			t.Fatalf("GNOME should block %s", rel)
+		}
+	}
+
+	allowed := []string{
+		".config/fish",
+		".config/kitty",
+		".local/bin/windows-rdp",
+		".pi/agent/AGENTS.md",
+	}
+	for _, rel := range allowed {
+		if !shouldSyncPath(DesktopGNOME, rel) {
+			t.Fatalf("GNOME should allow %s", rel)
+		}
+	}
+}
+
+func TestShouldSyncPathForLabwcAllowsLabwcAndBlocksHyprland(t *testing.T) {
+	allowed := []string{".config/labwc", ".config/labwc/rc.xml", ".local/bin/labwc-kill-windows"}
+	for _, rel := range allowed {
+		if !shouldSyncPath(DesktopLabwc, rel) {
+			t.Fatalf("labwc should allow %s", rel)
+		}
+	}
+
+	blocked := []string{".config/hypr", ".config/orgm-hypr", ".config/waybar-hypr", ".local/bin/hypr-main-menu"}
+	for _, rel := range blocked {
+		if shouldSyncPath(DesktopLabwc, rel) {
+			t.Fatalf("labwc should block %s", rel)
+		}
+	}
+}
+
+func TestShouldSyncPathForSwayAllowsSwayAndLabwcButBlocksHyprland(t *testing.T) {
+	allowed := []string{".config/sway", ".config/sway/config", ".local/bin/sway-app-dock", ".local/bin/labwc-kill-windows"}
+	for _, rel := range allowed {
+		if !shouldSyncPath(DesktopSway, rel) {
+			t.Fatalf("sway should allow %s", rel)
+		}
+	}
+
+	blocked := []string{".config/hypr", ".config/orgm-hypr", ".config/waybar-hypr", ".local/bin/hypr-main-menu"}
+	for _, rel := range blocked {
+		if shouldSyncPath(DesktopSway, rel) {
+			t.Fatalf("sway should block %s", rel)
+		}
+	}
+}
+
+func TestShouldSyncPathForUnknownKeepsCurrentBehavior(t *testing.T) {
+	paths := []string{".config/hypr", ".config/labwc", ".config/sway", ".local/bin/hypr-main-menu"}
+	for _, rel := range paths {
+		if !shouldSyncPath(DesktopAll, rel) {
+			t.Fatalf("all should allow %s", rel)
+		}
+	}
+}
+
+func TestRunFiltersSharedPathsByDesktopProfile(t *testing.T) {
+	t.Setenv("ORGM_DOT_DESKTOP", "gnome")
+	rt := testRuntime(t)
+	rt.Config.Shared.Paths = []string{".config/fish", ".config/hypr", ".local/bin/hypr-main-menu"}
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "fish", "config.fish"), "fish")
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "hypr", "hyprland.conf"), "hypr")
+	writeFile(t, filepath.Join(rt.SourceShared, ".local", "bin", "hypr-main-menu"), "hypr")
+
+	actions, err := Run(rt, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertHasAction(t, actions, "A", filepath.Join(rt.Destination, ".config", "fish", "config.fish"))
+	assertNoAction(t, actions, filepath.Join(rt.Destination, ".config", "hypr", "hyprland.conf"))
+	assertNoAction(t, actions, filepath.Join(rt.Destination, ".local", "bin", "hypr-main-menu"))
+	assertNotExists(t, filepath.Join(rt.Destination, ".config", "hypr"))
+	assertNotExists(t, filepath.Join(rt.Destination, ".config", "hypr", "hyprland.conf"))
+	assertNotExists(t, filepath.Join(rt.Destination, ".local", "bin", "hypr-main-menu"))
+}
+
+func mapLookup(values map[string]string) func(string) string {
+	return func(key string) string {
+		return values[key]
+	}
+}
