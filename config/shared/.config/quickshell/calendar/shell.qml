@@ -281,12 +281,10 @@ ShellRoot {
             Rectangle { width: 86; height: 30; radius: 8; color: "#22363a4f"; border.color: "#a6da95"; Text { anchors.centerIn: parent; text: "Sync"; color: "#a6da95"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true } MouseArea { anchors.fill: parent; onClicked: root.runAction(["sync"]) } }
           }
 
-          Text { text: "Month Grid"; visible: false }
-
           Grid {
             width: parent.width
             columns: 7
-            spacing: 7
+            spacing: 5
             Repeater {
               model: root.weekdays
               delegate: Text { required property string modelData; width: 72; height: 22; text: modelData; color: "#6e738d"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; horizontalAlignment: Text.AlignHCenter }
@@ -296,7 +294,7 @@ ShellRoot {
               delegate: Rectangle {
                 required property var modelData
                 width: 72
-                height: 66
+                height: 60
                 radius: 12
                 color: modelData.selected ? "#33494d64" : (dayMouse.containsMouse ? "#22363a4f" : "transparent")
                 border.color: modelData.selected ? "#8aadf4" : (modelData.today ? "#a6da95" : "#33494d64")
