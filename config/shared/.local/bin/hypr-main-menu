@@ -39,7 +39,8 @@ choice="$(printf '%s\n' \
   '󰅖 Quit' | pick 'Hyprland' || true)"
 
 case "$choice" in
-  *'Apps') exec rofi -show drun -theme "$theme" ;;
+  *'Apps') exec rofi -show drun -theme "$theme" \
+    -theme-str "configuration { font: \"JetBrainsMono Nerd Font $font_size\"; } window { width: $width; } listview { lines: $lines; } element { padding: $element_padding; } element-icon { size: $icon_size; }" ;;
   *'Tools') exec "$bin_dir/hypr-tools-menu" ;;
   *'Performance') exec "$bin_dir/hypr-performance-menu" ;;
   *'WiFi') exec "$bin_dir/hypr-wifi-menu" ;;
