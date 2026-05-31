@@ -23,6 +23,7 @@
     "modules-right": [
       "privacy",
       "tray",
+      "custom/theme_toggle",
       "custom/wallpaper",
       "bluetooth",
       "network",
@@ -288,6 +289,14 @@
       "format": "󰐥",
       "tooltip": false,
       "on-click": "hypr-power-menu"
+    },
+    "custom/theme_toggle": {
+      "exec": "waybar-theme-toggle status",
+      "return-type": "json",
+      "interval": 5,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "waybar-theme-toggle toggle"
     }
   },
   {

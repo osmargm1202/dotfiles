@@ -112,7 +112,8 @@
       ".local/bin/waybar-watch",
       ".config/orgm-theme",
       ".local/bin/orgm-theme",
-      ".local/bin/hypr-theme-chooser"
+      ".local/bin/hypr-theme-chooser",
+      ".local/bin/waybar-theme-toggle"
     ]
   },
   "hosts": {

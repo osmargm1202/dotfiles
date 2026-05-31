@@ -125,10 +125,18 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #cpu, #memory, #temperature, #disk, #custom-swap {
   background: transparent;
 }
+
+#custom-theme_toggle {
+  color: @yellow;
+  padding: 0 10px;
+}
+#custom-theme_toggle.light { color: @peach; }
+#custom-theme_toggle.dark { color: @yellow; }
+
 #custom-wallpaper {
   margin-left: 18px;
 }
-#custom-wallpaper, #bluetooth, #network, #custom-logout_menu {
+#custom-theme_toggle, #custom-wallpaper, #bluetooth, #network, #custom-logout_menu {
   padding: 0 10px;
 }
 #custom-logout_menu {
