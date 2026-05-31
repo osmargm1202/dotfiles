@@ -377,6 +377,15 @@ EOF
 
 apply_gsettings() {
   command -v gsettings >/dev/null 2>&1 || return 0
+
+  # In this distrobox/host bridge, gsettings may not see NixOS schemas unless
+  # GSETTINGS_SCHEMA_DIR is explicit. Without this, GTK4/libadwaita apps like
+  # Nautilus keep the old dark/light preference even though settings.ini changed.
+  if [ -z "${GSETTINGS_SCHEMA_DIR:-}" ]; then
+    schema_dir="$(find /run/current-system/sw /nix/store -path '*/gsettings-desktop-schemas-*/glib-2.0/schemas' -type d 2>/dev/null | head -n 1 || true)"
+    [ -n "${schema_dir:-}" ] && export GSETTINGS_SCHEMA_DIR="$schema_dir"
+  fi
+
   gsettings set org.gnome.desktop.interface color-scheme "$COLOR_SCHEME" 2>/dev/null || true
   gsettings set org.gnome.desktop.interface gtk-theme "$GTK_THEME" 2>/dev/null || true
   gsettings set org.gnome.desktop.interface icon-theme "$ICON_THEME" 2>/dev/null || true
