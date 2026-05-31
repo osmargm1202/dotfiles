@@ -1,6 +1,6 @@
 local exec_once = {
   "hypr-session-import-env",
-  "systemctl --user start graphical-session.target",
+  "systemctl --user start sunshine.service",
   "waybar-watch ~/.config/waybar-hypr",
   "swaync",
   "nm-applet --indicator",
