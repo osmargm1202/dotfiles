@@ -384,6 +384,27 @@ apply_gsettings() {
   gsettings set org.gnome.desktop.interface cursor-size "$CURSOR_SIZE" 2>/dev/null || true
 }
 
+write_pi_settings() {
+  local settings="$HOME/.pi/agent/settings.json"
+  local pi_theme="${PI_THEME:-$THEME_NAME}"
+  [ -f "$settings" ] || return 0
+  if command -v python3 >/dev/null 2>&1; then
+    PI_THEME_NAME="$pi_theme" PI_SETTINGS_FILE="$settings" python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+settings = Path(os.environ["PI_SETTINGS_FILE"])
+theme = os.environ["PI_THEME_NAME"]
+data = json.loads(settings.read_text())
+data["theme"] = theme
+settings.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+PY
+  else
+    printf 'orgm-theme: python3 not found; skipping Pi settings theme update\n' >&2
+  fi
+}
+
 reload_live() {
   command -v hyprctl >/dev/null 2>&1 && hyprctl reload >/dev/null 2>&1 || true
   pkill -SIGUSR1 kitty 2>/dev/null || true
@@ -410,6 +431,7 @@ apply_theme() {
   write_gtk_qt
   write_hypr_scheme
   apply_gsettings
+  write_pi_settings
   reload_live
   echo "Applied $THEME_NAME"
 }
@@ -426,7 +448,7 @@ case "$cmd" in
   status)
     theme="$(cat "$current_file" 2>/dev/null || echo orgm-dark)"
     need_theme "$theme"
-    printf 'Theme: %s\nGTK: %s\nIcons: %s\nCursor: %s %s\nColor scheme: %s\n' "$THEME_NAME" "$GTK_THEME" "$ICON_THEME" "$CURSOR_THEME" "$CURSOR_SIZE" "$COLOR_SCHEME"
+    printf 'Theme: %s\nGTK: %s\nIcons: %s\nCursor: %s %s\nColor scheme: %s\nPi theme: %s\n' "$THEME_NAME" "$GTK_THEME" "$ICON_THEME" "$CURSOR_THEME" "$CURSOR_SIZE" "$COLOR_SCHEME" "${PI_THEME:-$THEME_NAME}"
     ;;
   -h|--help|help|'') usage ;;
   *) echo "orgm-theme: unknown command: $cmd" >&2; usage; exit 2 ;;

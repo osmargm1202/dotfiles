@@ -113,7 +113,8 @@
       ".config/orgm-theme",
       ".local/bin/orgm-theme",
       ".local/bin/hypr-theme-chooser",
-      ".local/bin/waybar-theme-toggle"
+      ".local/bin/waybar-theme-toggle",
+      ".pi/agent/themes/orgm-light.json"
     ]
   },
   "hosts": {
