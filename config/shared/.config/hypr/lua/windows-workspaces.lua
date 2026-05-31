@@ -2,6 +2,9 @@
 
 local opacity_rules = {
   { class = ".*", opacity = "0.96 override 0.96 override 1.0 override" },
+  -- Nautilus/Files uses an opaque GTK4/libadwaita surface; make it visibly translucent
+  -- so Hyprland blur is noticeable behind the window.
+  { class = "^(org.gnome.Nautilus)$", opacity = "0.88 override 0.88 override 1.0 override" },
   { class = "^(kitty)$", opacity = "0.85 override 0.85 override 1.0 override" },
   { class = "^(app.zen_browser.zen)$", opacity = "0.90 override 0.90 override 1.0 override" },
   { class = "^(zen-browser)$", opacity = "0.90 override 0.90 override 1.0 override" },
