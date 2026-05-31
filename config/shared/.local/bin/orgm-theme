@@ -418,6 +418,10 @@ reload_live() {
   command -v hyprctl >/dev/null 2>&1 && hyprctl reload >/dev/null 2>&1 || true
   pkill -SIGUSR1 kitty 2>/dev/null || true
   command -v swaync-client >/dev/null 2>&1 && swaync-client -rs >/dev/null 2>&1 || true
+  # GTK4/libadwaita apps and portal file pickers can cache appearance. Restart
+  # lightweight user services/apps so Nautilus/filepicker follow dark/light now.
+  command -v nautilus >/dev/null 2>&1 && nautilus -q >/dev/null 2>&1 || pkill -f '(^|/)nautilus( |$)' 2>/dev/null || true
+  command -v systemctl >/dev/null 2>&1 && systemctl --user try-restart xdg-desktop-portal.service xdg-desktop-portal-gtk.service xdg-desktop-portal-hyprland.service >/dev/null 2>&1 || true
   command -v hypr-nwg-dock >/dev/null 2>&1 && (hypr-nwg-dock reload >/dev/null 2>&1 &) || true
   if command -v waybar-watch >/dev/null 2>&1; then
     if ! pgrep -f "^[^ ]+sh .*waybar-watch $config_home/waybar-hypr$" >/dev/null 2>&1; then
