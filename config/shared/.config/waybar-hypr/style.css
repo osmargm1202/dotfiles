@@ -1,4 +1,4 @@
-@import "macchiato.css";
+@import "orgm-current.css";
 
 * {
   border: none;
@@ -38,7 +38,7 @@ window.bottom_bar#waybar {
 window.top_bar .modules-right,
 window.bottom_bar .modules-left,
 window.bottom_bar .modules-right {
-  background: rgba(0, 0, 0, 0.60);
+  background: alpha(@base, 0.60);
   border-radius: 12px;
   min-height: 40px;
   padding: 10px 10px;
@@ -49,26 +49,26 @@ window.top_bar .modules-left {
 }
 #group-workspaces,
 #workspaces {
-  background: rgba(0, 0, 0, 0.60);
+  background: alpha(@base, 0.60);
   border-radius: 12px;
   min-height: 40px;
   padding: 10px 10px;
 }
 #group-system,
 #system {
-  background: rgba(0, 0, 0, 0.60);
+  background: alpha(@base, 0.60);
   border-radius: 12px;
   min-height: 40px;
   padding: 10px 10px;
 }
 window.top_bar .modules-center {
-  background: rgba(0, 0, 0, 0.60);
+  background: alpha(@base, 0.60);
   border-radius: 12px;
   min-height: 40px;
   padding: 10px 10px;
 }
 window.bottom_bar .modules-center {
-  background: rgba(0, 0, 0, 0.60);
+  background: alpha(@base, 0.60);
   border-radius: 12px;
   min-height: 40px;
   padding: 10px 10px;
@@ -171,7 +171,7 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #battery.warning { color: @subtext0; }
 
 window.dock_bar#waybar {
-  background-color: rgba(0, 0, 0, 0.60);
+  background-color: alpha(@base, 0.60);
   border: none;
   border-radius: 12px;
 }
@@ -228,7 +228,7 @@ window.bottom_bar .modules-right,
 window.top_bar .modules-center,
 window.bottom_bar .modules-center,
 window.dock_bar#waybar {
-  border: 2px solid rgba(138, 173, 244, 0.93);
+  border: 2px solid alpha(@blue, 0.93);
 }
 
 #custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }

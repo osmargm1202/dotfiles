@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+theme_file="${HYPR_ROFI_THEME:-$HOME/.config/rofi/hypr-menu.rasi}"
+current="$(orgm-theme current 2>/dev/null || echo orgm-dark)"
+choice="$(printf '%s\n' \
+  "󰔎 Toggle ($current)" \
+  '󰖔 orgm-dark' \
+  '󰖨 orgm-light' \
+  '󰒓 Status' \
+  '󰅖 Cancel' \
+  | rofi -dmenu -i -p 'Theme' -theme "$theme_file" || true)"
+
+case "$choice" in
+  *Toggle*) exec orgm-theme toggle ;;
+  *orgm-dark*) exec orgm-theme apply orgm-dark ;;
+  *orgm-light*) exec orgm-theme apply orgm-light ;;
+  *Status*) orgm-theme status | rofi -dmenu -p 'Theme status' -theme "$theme_file" >/dev/null || true ;;
+  *) exit 0 ;;
+esac

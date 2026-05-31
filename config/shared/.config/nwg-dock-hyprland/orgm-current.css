@@ -1,0 +1,5 @@
+/* Default dark overrides. orgm-theme regenerates this in ~/.config/nwg-dock-hyprland/orgm-current.css. */
+window {
+  background: rgba(36, 39, 58, 0.72);
+  border: 2px solid rgba(138, 173, 244, 0.93);
+}

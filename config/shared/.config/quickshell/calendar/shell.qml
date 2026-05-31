@@ -7,6 +7,31 @@ ShellRoot {
   id: root
 
   property string home: Quickshell.env("HOME") || ""
+
+  property string configHome: Quickshell.env("XDG_CONFIG_HOME") || (home + "/.config")
+  property string themePath: configHome + "/quickshell/theme/theme.json"
+  property var theme: ({ overlay: "#e611111b", border: "#33494d64", text: "#cad3f5", subtext: "#a5adcb", muted: "#6e738d", accent: "#8aadf4", success: "#a6da95", warning: "#eed49f", error: "#ed8796", pink: "#f5bde6", button: "#22363a4f", buttonStrong: "#33494d64", buttonSoft: "#1e363a4f", eventCard: "#2b363a4f", hover: "#55363a4f", outline: "#494d64", onAccent: "#11111b", disabled: "#363a4f" })
+
+  FileView {
+    id: themeFile
+    path: root.themePath
+    blockLoading: true
+    watchChanges: true
+    onFileChanged: themeReloadTimer.restart()
+  }
+
+  Timer { id: themeReloadTimer; interval: 60; repeat: false; onTriggered: root.loadTheme() }
+
+  function loadTheme() {
+    try {
+      themeFile.reload()
+      const text = themeFile.text()
+      if (text && text.length > 0)
+        root.theme = Object.assign({}, root.theme, JSON.parse(text))
+    } catch (error) {
+      console.log("theme load failed: " + error)
+    }
+  }
   property string cacheHome: Quickshell.env("XDG_CACHE_HOME") || (home + "/.cache")
   property string stateHome: Quickshell.env("XDG_STATE_HOME") || (home + "/.local/state")
   property string cachePath: Quickshell.env("ORGM_CALENDAR_CACHE") || (cacheHome + "/orgm-calendar/events.json")
@@ -42,6 +67,7 @@ ShellRoot {
   Timer { id: requestReloadTimer; interval: 40; repeat: false; onTriggered: root.loadRequest() }
 
   Component.onCompleted: {
+    root.loadTheme()
     root.loadCache()
     if (root.panelVisible)
       root.showPanel()
@@ -187,10 +213,10 @@ ShellRoot {
   function statusColor() {
     const state = (root.cache.status || ({})).state || "ok"
     if (root.cacheError.length > 0 || state.indexOf("error") >= 0)
-      return "#ed8796"
+      return root.theme.error
     if ((root.cache.status || ({})).stale)
-      return "#eed49f"
-    return "#a6da95"
+      return root.theme.warning
+    return root.theme.success
   }
 
   function openSelected() {
@@ -238,8 +264,8 @@ ShellRoot {
       width: 920
       height: 640
       radius: 22
-      color: "#e611111b"
-      border.color: "#33494d64"
+      color: root.theme.overlay
+      border.color: root.theme.buttonStrong
       border.width: 1
       anchors.centerIn: parent
       opacity: 0
@@ -273,12 +299,12 @@ ShellRoot {
             height: 42
             spacing: 10
 
-            Text { text: "Calendar"; color: "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 24; font.bold: true; width: 150; elide: Text.ElideRight }
-            Text { text: root.monthTitle(); color: "#8aadf4"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 18; font.bold: true; width: 200; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: "Calendar"; color: root.theme.text; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 24; font.bold: true; width: 150; elide: Text.ElideRight }
+            Text { text: root.monthTitle(); color: root.theme.accent; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 18; font.bold: true; width: 200; anchors.verticalCenter: parent.verticalCenter }
 
-            Rectangle { width: 34; height: 30; radius: 8; color: "#22363a4f"; border.color: "#494d64"; Text { anchors.centerIn: parent; text: "‹"; color: "#cad3f5"; font.pixelSize: 20 } MouseArea { anchors.fill: parent; onClicked: root.changeMonth(-1) } }
-            Rectangle { width: 34; height: 30; radius: 8; color: "#22363a4f"; border.color: "#494d64"; Text { anchors.centerIn: parent; text: "›"; color: "#cad3f5"; font.pixelSize: 20 } MouseArea { anchors.fill: parent; onClicked: root.changeMonth(1) } }
-            Rectangle { width: 86; height: 30; radius: 8; color: "#22363a4f"; border.color: "#a6da95"; Text { anchors.centerIn: parent; text: "Sync"; color: "#a6da95"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true } MouseArea { anchors.fill: parent; onClicked: root.runAction(["sync"]) } }
+            Rectangle { width: 34; height: 30; radius: 8; color: root.theme.button; border.color: root.theme.outline; Text { anchors.centerIn: parent; text: "‹"; color: root.theme.text; font.pixelSize: 20 } MouseArea { anchors.fill: parent; onClicked: root.changeMonth(-1) } }
+            Rectangle { width: 34; height: 30; radius: 8; color: root.theme.button; border.color: root.theme.outline; Text { anchors.centerIn: parent; text: "›"; color: root.theme.text; font.pixelSize: 20 } MouseArea { anchors.fill: parent; onClicked: root.changeMonth(1) } }
+            Rectangle { width: 86; height: 30; radius: 8; color: root.theme.button; border.color: root.theme.success; Text { anchors.centerIn: parent; text: "Sync"; color: root.theme.success; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true } MouseArea { anchors.fill: parent; onClicked: root.runAction(["sync"]) } }
           }
 
           Grid {
@@ -287,7 +313,7 @@ ShellRoot {
             spacing: 5
             Repeater {
               model: root.weekdays
-              delegate: Text { required property string modelData; width: 72; height: 22; text: modelData; color: "#6e738d"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; horizontalAlignment: Text.AlignHCenter }
+              delegate: Text { required property string modelData; width: 72; height: 22; text: modelData; color: root.theme.muted; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; horizontalAlignment: Text.AlignHCenter }
             }
             Repeater {
               model: root.monthCells
@@ -296,16 +322,16 @@ ShellRoot {
                 width: 72
                 height: 60
                 radius: 12
-                color: modelData.selected ? "#33494d64" : (dayMouse.containsMouse ? "#22363a4f" : "transparent")
-                border.color: modelData.selected ? "#8aadf4" : (modelData.today ? "#a6da95" : "#33494d64")
+                color: modelData.selected ? root.theme.buttonStrong : (dayMouse.containsMouse ? root.theme.button : "transparent")
+                border.color: modelData.selected ? root.theme.accent : (modelData.today ? root.theme.success : root.theme.buttonStrong)
                 border.width: modelData.selected || modelData.today ? 2 : 1
                 opacity: modelData.currentMonth ? 1 : 0.42
 
                 Behavior on color { ColorAnimation { duration: 120 } }
 
-                Text { anchors.top: parent.top; anchors.left: parent.left; anchors.margins: 9; text: modelData.day; color: modelData.today ? "#a6da95" : "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 14; font.bold: modelData.selected || modelData.today }
-                Rectangle { width: modelData.eventCount > 9 ? 30 : 22; height: 18; radius: 9; visible: modelData.eventCount > 0; color: "#8aadf4"; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 7; Text { anchors.centerIn: parent; text: modelData.eventCount; color: "#11111b"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 11; font.bold: true } }
-                Row { visible: modelData.eventCount > 0; anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 9; spacing: 3; Repeater { model: Math.min(3, modelData.eventCount); delegate: Rectangle { width: 5; height: 5; radius: 3; color: "#f5bde6" } } }
+                Text { anchors.top: parent.top; anchors.left: parent.left; anchors.margins: 9; text: modelData.day; color: modelData.today ? root.theme.success : root.theme.text; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 14; font.bold: modelData.selected || modelData.today }
+                Rectangle { width: modelData.eventCount > 9 ? 30 : 22; height: 18; radius: 9; visible: modelData.eventCount > 0; color: root.theme.accent; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 7; Text { anchors.centerIn: parent; text: modelData.eventCount; color: root.theme.onAccent; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 11; font.bold: true } }
+                Row { visible: modelData.eventCount > 0; anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 9; spacing: 3; Repeater { model: Math.min(3, modelData.eventCount); delegate: Rectangle { width: 5; height: 5; radius: 3; color: root.theme.pink } } }
                 MouseArea { id: dayMouse; anchors.fill: parent; hoverEnabled: true; onClicked: root.selectDate(modelData.date) }
               }
             }
@@ -315,7 +341,7 @@ ShellRoot {
             width: parent.width
             height: 42
             radius: 11
-            color: "#1e363a4f"
+            color: root.theme.buttonSoft
             border.color: root.statusColor()
             Text { anchors.fill: parent; anchors.margins: 10; text: root.statusText(); color: root.statusColor(); font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter }
           }
@@ -326,24 +352,24 @@ ShellRoot {
           height: parent.height
           spacing: 12
 
-          Text { text: "Agenda"; color: "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 22; font.bold: true }
-          Text { text: root.selectedDate + "  •  Win+Shift+C toggles"; color: "#8aadf4"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13 }
+          Text { text: "Agenda"; color: root.theme.text; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 22; font.bold: true }
+          Text { text: root.selectedDate + "  •  Win+Shift+C toggles"; color: root.theme.accent; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13 }
 
           Row {
             width: parent.width
             height: 31
             spacing: 8
-            Rectangle { width: 78; height: 30; radius: 8; color: "#22363a4f"; border.color: "#a6da95"; Text { anchors.centerIn: parent; text: "Add"; color: "#a6da95"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.bold: true } MouseArea { anchors.fill: parent; onClicked: root.runAction(["add", root.selectedDate]) } }
-            Rectangle { width: 94; height: 30; radius: 8; color: "#22363a4f"; border.color: "#8aadf4"; Text { anchors.centerIn: parent; text: "Open day"; color: "#8aadf4"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.bold: true } MouseArea { anchors.fill: parent; onClicked: root.runAction(["open-web", root.selectedDate]) } }
-            Rectangle { width: 96; height: 30; radius: 8; color: "#22363a4f"; border.color: "#f5bde6"; Text { anchors.centerIn: parent; text: "Open event"; color: "#f5bde6"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.bold: true } MouseArea { anchors.fill: parent; onClicked: root.openSelected() } }
+            Rectangle { width: 78; height: 30; radius: 8; color: root.theme.button; border.color: root.theme.success; Text { anchors.centerIn: parent; text: "Add"; color: root.theme.success; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.bold: true } MouseArea { anchors.fill: parent; onClicked: root.runAction(["add", root.selectedDate]) } }
+            Rectangle { width: 94; height: 30; radius: 8; color: root.theme.button; border.color: root.theme.accent; Text { anchors.centerIn: parent; text: "Open day"; color: root.theme.accent; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.bold: true } MouseArea { anchors.fill: parent; onClicked: root.runAction(["open-web", root.selectedDate]) } }
+            Rectangle { width: 96; height: 30; radius: 8; color: root.theme.button; border.color: root.theme.pink; Text { anchors.centerIn: parent; text: "Open event"; color: root.theme.pink; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.bold: true } MouseArea { anchors.fill: parent; onClicked: root.openSelected() } }
           }
 
           Rectangle {
             width: parent.width
             height: 414
             radius: 16
-            color: "#22363a4f"
-            border.color: "#33494d64"
+            color: root.theme.button
+            border.color: root.theme.buttonStrong
             clip: true
 
             Text {
@@ -351,7 +377,7 @@ ShellRoot {
               visible: root.selectedEvents.length === 0
               width: parent.width - 40
               text: root.cacheError === "Cache is empty" ? "No hay eventos cargados. Pulsa Sync." : (root.cacheError.length > 0 ? "No se pudo leer el caché. Pulsa Sync o revisa status." : "No events for this day. Breathe.")
-              color: "#6e738d"
+              color: root.theme.muted
               font.family: "JetBrainsMono Nerd Font"
               font.pixelSize: 15
               horizontalAlignment: Text.AlignHCenter
@@ -369,15 +395,15 @@ ShellRoot {
                 width: ListView.view.width
                 height: Math.max(70, titleText.paintedHeight + metaText.paintedHeight + 32)
                 radius: 12
-                color: "#2b363a4f"
-                border.color: modelData.htmlLink && modelData.htmlLink.length > 0 ? "#8aadf4" : "#494d64"
+                color: root.theme.eventCard
+                border.color: modelData.htmlLink && modelData.htmlLink.length > 0 ? root.theme.accent : root.theme.outline
 
                 Column {
                   anchors.fill: parent
                   anchors.margins: 12
                   spacing: 5
-                  Text { id: titleText; text: modelData.title || "Untitled event"; color: "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 14; font.bold: true; width: parent.width; wrapMode: Text.WordWrap }
-                  Text { id: metaText; text: (modelData.allDay ? "All day" : ((modelData.start || "").slice(11, 16) + "–" + (modelData.end || "").slice(11, 16))) + (modelData.calendarName ? "  •  " + modelData.calendarName : ""); color: "#a5adcb"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; width: parent.width; elide: Text.ElideRight }
+                  Text { id: titleText; text: modelData.title || "Untitled event"; color: root.theme.text; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 14; font.bold: true; width: parent.width; wrapMode: Text.WordWrap }
+                  Text { id: metaText; text: (modelData.allDay ? "All day" : ((modelData.start || "").slice(11, 16) + "–" + (modelData.end || "").slice(11, 16))) + (modelData.calendarName ? "  •  " + modelData.calendarName : ""); color: root.theme.subtext; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; width: parent.width; elide: Text.ElideRight }
                 }
                 MouseArea { anchors.fill: parent; hoverEnabled: true; onClicked: root.runAction(["open-event", modelData.id || modelData.stableKey]) }
               }
@@ -392,13 +418,13 @@ ShellRoot {
           width: parent.width
           height: 34
           radius: 9
-          color: "#1e363a4f"
-          border.color: "#494d64"
+          color: root.theme.buttonSoft
+          border.color: root.theme.outline
           Text {
             anchors.centerIn: parent
             width: parent.width - 28
             text: "Esc close · Arrows select · Enter open · PgUp/PgDn month"
-            color: "#6e738d"
+            color: root.theme.muted
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 11
             horizontalAlignment: Text.AlignHCenter

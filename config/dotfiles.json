@@ -109,7 +109,10 @@
       ".local/bin/waybar-day-month-es",
       ".local/bin/waybar-swap-usage",
       ".local/bin/waybar-time-ampm",
-      ".local/bin/waybar-watch"
+      ".local/bin/waybar-watch",
+      ".config/orgm-theme",
+      ".local/bin/orgm-theme",
+      ".local/bin/hypr-theme-chooser"
     ]
   },
   "hosts": {
@@ -186,7 +189,21 @@
       ".config/kitty/orgm-hypr-theme.conf",
       ".config/waybar-hypr/orgm-hypr-theme.css",
       ".config/nwg-dock-hyprland/orgm-hypr-theme.css",
-      ".config/helix/themes/orgm-hypr.toml"
+      ".config/helix/themes/orgm-hypr.toml",
+      ".config/fuzzel/fuzzel.ini",
+      ".config/kitty/current-theme.conf",
+      ".config/rofi/orgm-current.rasi",
+      ".config/waybar/orgm-current.css",
+      ".config/waybar-hypr/orgm-current.css",
+      ".config/nwg-dock-hyprland/orgm-current.css",
+      ".config/swaync/orgm-current.css",
+      ".config/qt5ct/colors/orgm-current.colors",
+      ".config/qt6ct/colors/orgm-current.colors",
+      ".config/hypr/scheme/current.conf",
+      ".local/state/orgm-theme/current",
+      ".local/state/orgm-theme/current.env",
+      ".config/quickshell/theme/theme.json",
+      ".local/share/icons/default/index.theme"
     ],
     "patterns": [
       "**/.git",

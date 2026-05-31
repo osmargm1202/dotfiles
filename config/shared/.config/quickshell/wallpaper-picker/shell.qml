@@ -6,6 +6,32 @@ import QtQuick
 ShellRoot {
   id: root
 
+  property string home: Quickshell.env("HOME") || ""
+
+  property string configHome: Quickshell.env("XDG_CONFIG_HOME") || (home + "/.config")
+  property string themePath: configHome + "/quickshell/theme/theme.json"
+  property var theme: ({ overlay: "#e611111b", border: "#33494d64", text: "#cad3f5", subtext: "#a5adcb", muted: "#6e738d", accent: "#8aadf4", success: "#a6da95", warning: "#eed49f", error: "#ed8796", pink: "#f5bde6", button: "#22363a4f", buttonStrong: "#33494d64", buttonSoft: "#1e363a4f", eventCard: "#2b363a4f", hover: "#55363a4f", outline: "#494d64", onAccent: "#11111b", disabled: "#363a4f" })
+
+  FileView {
+    id: themeFile
+    path: root.themePath
+    blockLoading: true
+    watchChanges: true
+    onFileChanged: themeReloadTimer.restart()
+  }
+
+  Timer { id: themeReloadTimer; interval: 60; repeat: false; onTriggered: root.loadTheme() }
+
+  function loadTheme() {
+    try {
+      themeFile.reload()
+      const text = themeFile.text()
+      if (text && text.length > 0)
+        root.theme = Object.assign({}, root.theme, JSON.parse(text))
+    } catch (error) {
+      console.log("theme load failed: " + error)
+    }
+  }
   property string stateHome: Quickshell.env("XDG_STATE_HOME") || ((Quickshell.env("HOME") || "") + "/.local/state")
   property string requestPath: Quickshell.env("HYPR_WALLPAPER_REQUEST") || (stateHome + "/hypr-wallpaper/wallpaper-picker-request.json")
   property string dataPath: Quickshell.env("HYPR_WALLPAPER_DATA") || (stateHome + "/hypr-wallpaper/wallpaper-picker.json")
@@ -58,6 +84,7 @@ ShellRoot {
   }
 
   Component.onCompleted: {
+    root.loadTheme()
     if (root.panelVisible)
       root.loadRequest(true)
   }
@@ -240,8 +267,8 @@ ShellRoot {
       width: 1180
       height: 720
       radius: 20
-      color: "#dd000000"
-      border.color: "#33494d64"
+      color: root.theme.overlay
+      border.color: root.theme.buttonStrong
       border.width: 1
       anchors.centerIn: parent
       opacity: 0
@@ -293,7 +320,7 @@ ShellRoot {
 
           Text {
             text: "Wallpapers"
-            color: "#cad3f5"
+            color: root.theme.text
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 22
             font.bold: true
@@ -305,9 +332,9 @@ ShellRoot {
             width: 100
             height: 32
             radius: 9
-            color: root.activeMode === "static" ? "#33494d64" : "#22363a4f"
-            border.color: root.activeMode === "static" ? "#8aadf4" : "#494d64"
-            Text { anchors.centerIn: parent; text: "NORMAL"; color: root.activeMode === "static" ? "#8aadf4" : "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
+            color: root.activeMode === "static" ? root.theme.buttonStrong : root.theme.button
+            border.color: root.activeMode === "static" ? root.theme.accent : root.theme.outline
+            Text { anchors.centerIn: parent; text: "NORMAL"; color: root.activeMode === "static" ? root.theme.accent : root.theme.text; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
             MouseArea { anchors.fill: parent; onClicked: root.setActiveMode("static") }
           }
 
@@ -315,9 +342,9 @@ ShellRoot {
             width: 100
             height: 32
             radius: 9
-            color: root.activeMode === "video" ? "#33494d64" : "#22363a4f"
-            border.color: root.activeMode === "video" ? "#8aadf4" : "#494d64"
-            Text { anchors.centerIn: parent; text: "LIVE"; color: root.activeMode === "video" ? "#8aadf4" : "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
+            color: root.activeMode === "video" ? root.theme.buttonStrong : root.theme.button
+            border.color: root.activeMode === "video" ? root.theme.accent : root.theme.outline
+            Text { anchors.centerIn: parent; text: "LIVE"; color: root.activeMode === "video" ? root.theme.accent : root.theme.text; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
             MouseArea { anchors.fill: parent; onClicked: root.setActiveMode("video") }
           }
 
@@ -328,9 +355,9 @@ ShellRoot {
               width: 92
               height: 32
               radius: 9
-              color: root.selectedMonitor === modelData.name ? "#33494d64" : "#22363a4f"
-              border.color: root.selectedMonitor === modelData.name ? "#a6da95" : "#494d64"
-              Text { anchors.centerIn: parent; text: modelData.name; color: root.selectedMonitor === modelData.name ? "#a6da95" : "#cad3f5"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.bold: true }
+              color: root.selectedMonitor === modelData.name ? root.theme.buttonStrong : root.theme.button
+              border.color: root.selectedMonitor === modelData.name ? root.theme.success : root.theme.outline
+              Text { anchors.centerIn: parent; text: modelData.name; color: root.selectedMonitor === modelData.name ? root.theme.success : root.theme.text; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.bold: true }
               MouseArea { anchors.fill: parent; onClicked: root.selectedMonitor = modelData.name }
             }
           }
@@ -340,7 +367,7 @@ ShellRoot {
           Text {
             id: pager
             text: (root.currentPage + 1) + " / " + root.pageCount
-            color: "#8aadf4"
+            color: root.theme.accent
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 14
             anchors.verticalCenter: parent.verticalCenter
@@ -349,7 +376,7 @@ ShellRoot {
           Text {
             id: helper
             text: "Arrows select  PgUp/PgDn page  Enter apply  Esc close"
-            color: "#6e738d"
+            color: root.theme.muted
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 13
             anchors.verticalCenter: parent.verticalCenter
@@ -372,7 +399,7 @@ ShellRoot {
             anchors.centerIn: parent
             visible: root.activeItems.length === 0
             text: root.activeMode === "video" ? "No live wallpapers found" : "No normal wallpapers found"
-            color: "#6e738d"
+            color: root.theme.muted
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 18
           }
@@ -390,8 +417,8 @@ ShellRoot {
               anchors.fill: parent
               anchors.margins: 5
               radius: 12
-              color: mouse.containsMouse || index === root.selectedInPage ? "#55363a4f" : "transparent"
-              border.color: index === root.selectedInPage ? "#8aadf4" : "#33494d64"
+              color: mouse.containsMouse || index === root.selectedInPage ? root.theme.hover : "transparent"
+              border.color: index === root.selectedInPage ? root.theme.accent : root.theme.buttonStrong
               border.width: index === root.selectedInPage ? 2 : 1
 
               Behavior on color { ColorAnimation { duration: 120 } }
@@ -428,9 +455,9 @@ ShellRoot {
             width: 74
             height: 28
             radius: 7
-            color: root.currentPage > 0 ? "#22363a4f" : "transparent"
-            border.color: root.currentPage > 0 ? "#8aadf4" : "#494d64"
-            Text { anchors.centerIn: parent; text: "← Prev"; color: root.currentPage > 0 ? "#8aadf4" : "#494d64"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13 }
+            color: root.currentPage > 0 ? root.theme.button : "transparent"
+            border.color: root.currentPage > 0 ? root.theme.accent : root.theme.outline
+            Text { anchors.centerIn: parent; text: "← Prev"; color: root.currentPage > 0 ? root.theme.accent : root.theme.outline; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13 }
             MouseArea { anchors.fill: parent; onClicked: root.changePage(-1) }
           }
 
@@ -438,9 +465,9 @@ ShellRoot {
             width: 74
             height: 28
             radius: 7
-            color: root.currentPage < root.pageCount - 1 ? "#22363a4f" : "transparent"
-            border.color: root.currentPage < root.pageCount - 1 ? "#8aadf4" : "#494d64"
-            Text { anchors.centerIn: parent; text: "Next →"; color: root.currentPage < root.pageCount - 1 ? "#8aadf4" : "#494d64"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13 }
+            color: root.currentPage < root.pageCount - 1 ? root.theme.button : "transparent"
+            border.color: root.currentPage < root.pageCount - 1 ? root.theme.accent : root.theme.outline
+            Text { anchors.centerIn: parent; text: "Next →"; color: root.currentPage < root.pageCount - 1 ? root.theme.accent : root.theme.outline; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13 }
             MouseArea { anchors.fill: parent; onClicked: root.changePage(1) }
           }
 
@@ -450,9 +477,9 @@ ShellRoot {
             width: 130
             height: 28
             radius: 7
-            color: "#22363a4f"
-            border.color: "#a6da95"
-            Text { anchors.centerIn: parent; text: "󰒟 Random"; color: "#a6da95"; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
+            color: root.theme.button
+            border.color: root.theme.success
+            Text { anchors.centerIn: parent; text: "󰒟 Random"; color: root.theme.success; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 13; font.bold: true }
             MouseArea { anchors.fill: parent; onClicked: overlay.applyRandom() }
           }
         }

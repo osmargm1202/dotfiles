@@ -1,0 +1,10 @@
+/* Default ORGM dark palette. orgm-theme regenerates this in ~/.config/swaync/orgm-current.css. */
+@define-color base rgba(36, 39, 58, 0.78);
+@define-color mantle rgba(30, 32, 48, 0.88);
+@define-color surface rgba(73, 77, 100, 0.78);
+@define-color surface_hover rgba(73, 77, 100, 0.88);
+@define-color text #cad3f5;
+@define-color subtext #a5adcb;
+@define-color accent #8bd5ca;
+@define-color mauve #c6a0f6;
+@define-color red #ed8796;

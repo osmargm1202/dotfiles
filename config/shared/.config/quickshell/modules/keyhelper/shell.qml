@@ -7,6 +7,31 @@ ShellRoot {
   id: root
 
   property string home: Quickshell.env("HOME") || ""
+
+  property string configHome: Quickshell.env("XDG_CONFIG_HOME") || (home + "/.config")
+  property string themePath: configHome + "/quickshell/theme/theme.json"
+  property var theme: ({ overlay: "#e611111b", border: "#33494d64", text: "#cad3f5", subtext: "#a5adcb", muted: "#6e738d", accent: "#8aadf4", success: "#a6da95", warning: "#eed49f", error: "#ed8796", pink: "#f5bde6", button: "#22363a4f", buttonStrong: "#33494d64", buttonSoft: "#1e363a4f", eventCard: "#2b363a4f", hover: "#55363a4f", outline: "#494d64", onAccent: "#11111b", disabled: "#363a4f" })
+
+  FileView {
+    id: themeFile
+    path: root.themePath
+    blockLoading: true
+    watchChanges: true
+    onFileChanged: themeReloadTimer.restart()
+  }
+
+  Timer { id: themeReloadTimer; interval: 60; repeat: false; onTriggered: root.loadTheme() }
+
+  function loadTheme() {
+    try {
+      themeFile.reload()
+      const text = themeFile.text()
+      if (text && text.length > 0)
+        root.theme = Object.assign({}, root.theme, JSON.parse(text))
+    } catch (error) {
+      console.log("theme load failed: " + error)
+    }
+  }
   property string stateHome: Quickshell.env("XDG_STATE_HOME") || (home + "/.local/state")
   property string cachePath: Quickshell.env("ORGM_HELPER_CACHE") || (stateHome + "/orgm-helper/keybindings.json")
   property string requestPath: Quickshell.env("ORGM_HELPER_REQUEST") || (stateHome + "/orgm-helper/keyhelper-request.json")
@@ -38,6 +63,7 @@ ShellRoot {
   Timer { id: closeTimer; interval: 130; repeat: false; onTriggered: root.panelVisible = false }
 
   Component.onCompleted: {
+    root.loadTheme()
     root.loadCache()
     if (root.panelVisible)
       root.showPanel()
@@ -152,8 +178,8 @@ ShellRoot {
       width: root.unit(980)
       height: root.unit(620)
       radius: root.unit(22)
-      color: "#e611111b"
-      border.color: "#33494d64"
+      color: root.theme.overlay
+      border.color: root.theme.buttonStrong
       border.width: 1
       anchors.centerIn: parent
       opacity: 0
@@ -182,7 +208,7 @@ ShellRoot {
 
           Text {
             text: "Atajos Hyprland"
-            color: "#cad3f5"
+            color: root.theme.text
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: root.unit(24)
             font.bold: true
@@ -195,7 +221,7 @@ ShellRoot {
           Text {
             id: helper
             text: "Win+/ · Esc cierra"
-            color: "#a6adc8"
+            color: root.theme.subtext
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: root.unit(13)
             anchors.verticalCenter: parent.verticalCenter
@@ -205,7 +231,7 @@ ShellRoot {
         Text {
           visible: root.errorText.length > 0
           text: root.errorText
-          color: "#ed8796"
+          color: root.theme.error
           font.family: "JetBrainsMono Nerd Font"
           font.pixelSize: root.unit(15)
           wrapMode: Text.WordWrap
@@ -222,8 +248,8 @@ ShellRoot {
             width: root.unit(210)
             height: parent.height
             radius: root.unit(14)
-            color: "#181825"
-            border.color: "#313244"
+            color: root.theme.onAccent
+            border.color: root.theme.outline
 
             Column {
               anchors.fill: parent
@@ -237,7 +263,7 @@ ShellRoot {
                   width: parent.width
                   height: root.unit(42)
                   radius: root.unit(10)
-                  color: modelData.id === root.activeCategory ? "#313244" : "transparent"
+                  color: modelData.id === root.activeCategory ? root.theme.outline : "transparent"
 
                   Text {
                     anchors.fill: parent
@@ -245,7 +271,7 @@ ShellRoot {
                     anchors.rightMargin: root.unit(12)
                     verticalAlignment: Text.AlignVCenter
                     text: (modelData.icon || "") + "  " + modelData.title
-                    color: "#cad3f5"
+                    color: root.theme.text
                     font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: root.unit(14)
                     elide: Text.ElideRight
@@ -264,7 +290,7 @@ ShellRoot {
 
             Text {
               text: root.activeCategoryTitle()
-              color: "#8aadf4"
+              color: root.theme.accent
               font.family: "JetBrainsMono Nerd Font"
               font.pixelSize: root.unit(18)
               font.bold: true
@@ -279,15 +305,15 @@ ShellRoot {
                 width: parent.width
                 height: root.unit(54)
                 radius: root.unit(12)
-                color: "#181825"
-                border.color: "#313244"
+                color: root.theme.onAccent
+                border.color: root.theme.outline
 
                 Text {
                   x: root.unit(16)
                   width: parent.width - shortcut.width - root.unit(48)
                   anchors.verticalCenter: parent.verticalCenter
                   text: modelData.description
-                  color: "#cad3f5"
+                  color: root.theme.text
                   font.family: "JetBrainsMono Nerd Font"
                   font.pixelSize: root.unit(15)
                   elide: Text.ElideRight
@@ -299,7 +325,7 @@ ShellRoot {
                   anchors.rightMargin: root.unit(16)
                   anchors.verticalCenter: parent.verticalCenter
                   text: modelData.key
-                  color: "#89b4fa"
+                  color: root.theme.accent
                   font.family: "JetBrainsMono Nerd Font"
                   font.pixelSize: root.unit(14)
                   font.bold: true

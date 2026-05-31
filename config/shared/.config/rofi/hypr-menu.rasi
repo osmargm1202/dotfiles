@@ -1,3 +1,5 @@
+@import "orgm-current.rasi"
+
 // Hyprland rofi menu theme: dark translucent surface with orgm-hypr-like accent border.
 
 configuration {
@@ -9,12 +11,6 @@ configuration {
 }
 
 * {
-    bg-col: rgba(0, 0, 0, 0.86);
-    surface-col: rgba(53, 52, 56, 0.86);
-    border-col: #c2c1ff;
-    selected-col: rgba(53, 52, 56, 0.86);
-    fg-col: #e5e1e7;
-    fg-col2: #c2c1ff;
     width: 600px;
 }
 
@@ -43,7 +39,7 @@ inputbar {
 prompt {
     background-color: @border-col;
     padding: 10px;
-    text-color: #000000;
+    text-color: @prompt-fg;
     border-radius: 10px;
     margin: 5px 0px 0px 5px;
 }

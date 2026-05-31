@@ -1,4 +1,4 @@
-@import "macchiato.css";
+@import "orgm-current.css";
 
 * {
   border: none;
@@ -9,7 +9,7 @@
 
 window.top_bar#waybar,
 window.bottom_bar#waybar {
-  background-color: rgba(0, 0, 0, 0.60);
+  background-color: alpha(@base, 0.60);
   border: none;
   border-radius: 12px;
 }
@@ -132,7 +132,7 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #battery.warning { color: @subtext0; }
 
 window.dock_bar#waybar {
-  background-color: rgba(0, 0, 0, 0.60);
+  background-color: alpha(@base, 0.60);
   border: none;
   border-radius: 12px;
 }
@@ -190,7 +190,7 @@ window.bottom_bar .modules-right,
 #group-system,
 #system,
 window.dock_bar#waybar {
-  border: 2px solid rgba(138, 173, 244, 0.93);
+  border: 2px solid alpha(@blue, 0.93);
 }
 
 #custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }
