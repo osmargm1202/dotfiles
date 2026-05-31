@@ -82,6 +82,14 @@ func currentDesktopProfile() (DesktopProfile, error) {
 	return desktopProfileFromEnv(os.Getenv)
 }
 
+func CurrentDesktopProfile() (DesktopProfile, error) {
+	return currentDesktopProfile()
+}
+
+func ShouldSyncPath(profile DesktopProfile, rel string) bool {
+	return shouldSyncPath(profile, rel)
+}
+
 func shouldSyncPath(profile DesktopProfile, rel string) bool {
 	rel = dotmanifest.Normalize(rel)
 	switch profile {

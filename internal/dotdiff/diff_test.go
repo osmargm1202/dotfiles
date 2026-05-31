@@ -46,6 +46,24 @@ func TestChangesReportsManagedSourceSymlinksEvenWhenDestinationSymlinksAreLocalO
 	assertHasChange(t, changes, "A", filepath.Join(rt.Destination, ".config", "app", "managed-link"))
 }
 
+func TestChangesFiltersDesktopSpecificPathsByProfile(t *testing.T) {
+	t.Setenv("ORGM_DOT_DESKTOP", "gnome")
+	rt := testRuntime(t)
+	rt.Config.Shared.Paths = []string{".config/rofi", ".config/hypr"}
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "rofi", "config.rasi"), "common")
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "rofi", "hypr-menu.env"), "hypr")
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "hypr", "hyprland.conf"), "hypr")
+
+	changes, err := Changes(rt, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertHasChange(t, changes, "A", filepath.Join(rt.Destination, ".config", "rofi", "config.rasi"))
+	assertNoChange(t, changes, filepath.Join(rt.Destination, ".config", "rofi", "hypr-menu.env"))
+	assertNoChange(t, changes, filepath.Join(rt.Destination, ".config", "hypr", "hyprland.conf"))
+}
+
 func TestChangesTreatsConfiguredTypesAndPatternsAsLocalOnly(t *testing.T) {
 	rt := testRuntime(t)
 	writeFile(t, filepath.Join(rt.SourceShared, ".config", "app", "config.json"), "repo")
