@@ -1,5 +1,20 @@
-/* Default dark overrides. orgm-theme regenerates this in ~/.config/nwg-dock-hyprland/orgm-current.css. */
+/* Default overrides. orgm-theme regenerates this in ~/.config/nwg-dock-hyprland/orgm-current.css. */
 window {
-  background: rgba(36, 39, 58, 0.72);
-  border: 2px solid rgba(138, 173, 244, 0.93);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+#box {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+button,
+button:hover,
+button:focus,
+button:checked,
+button.active {
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
