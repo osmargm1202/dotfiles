@@ -1,23 +1,75 @@
 #!/bin/sh
 set -eu
 
-PATH="/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$HOME/.nix-profile/bin:$PATH"
+PATH="$HOME/.local/bin:/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$HOME/.nix-profile/bin:$PATH"
 export PATH
 
 config_dir="${1:-${WAYBAR_CONFIG_DIR:-$HOME/.config/waybar}}"
 profile="$(basename "$config_dir")"
-log="${XDG_STATE_HOME:-$HOME/.local/state}/waybar/${profile}.log"
-mkdir -p "$(dirname "$log")"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/waybar"
+log="$state_dir/${profile}.log"
+pid_file="$state_dir/${profile}.watch.pid"
+mkdir -p "$state_dir"
 
-# One watcher only per config dir.
-for old in $(pgrep -f "^/bin/sh ${HOME}/.local/bin/waybar-watch ${config_dir}" 2>/dev/null || true); do
-  if [ "$old" != "$$" ]; then
+# One watcher only per profile. Avoid pgrep matching parent shell command lines.
+if [ -r "$pid_file" ]; then
+  old="$(cat "$pid_file" 2>/dev/null || true)"
+  if [ -n "${old:-}" ] && [ "$old" != "$$" ] && kill -0 "$old" 2>/dev/null; then
+    kill "$old" 2>/dev/null || true
+    sleep 0.2
     kill -KILL "$old" 2>/dev/null || true
   fi
-done
+fi
+
+printf '%s\n' "$$" >"$pid_file"
+waybar_pid=""
+
+cleanup() {
+  [ -n "${waybar_pid:-}" ] && kill "$waybar_pid" 2>/dev/null || true
+  rm -f "$pid_file"
+}
+trap cleanup INT TERM EXIT
+
+signature() {
+  find "$config_dir" -maxdepth 1 -type f \( -name 'config' -o -name '*.css' \) \
+    -exec stat -c '%n:%Y:%s' {} \; 2>/dev/null | sort | cksum | awk '{print $1 ":" $2}'
+}
+
+stop_waybar() {
+  if [ -n "${waybar_pid:-}" ] && kill -0 "$waybar_pid" 2>/dev/null; then
+    kill "$waybar_pid" 2>/dev/null || true
+    sleep 0.2
+    kill -KILL "$waybar_pid" 2>/dev/null || true
+    wait "$waybar_pid" 2>/dev/null || true
+  fi
+  waybar_pid=""
+}
+
+start_waybar() {
+  waybar -c "${config_dir}/config" -s "${config_dir}/style.css" >>"$log" 2>&1 &
+  waybar_pid="$!"
+}
+
+# Replace any orphan Waybar from older watcher versions before taking ownership.
+pkill -KILL -f '(^|/)waybar($| )|[.]waybar-wrapped' 2>/dev/null || true
+current_sig="$(signature)"
+start_waybar
 
 while true; do
-  pkill -KILL -f '(^|/)waybar($| )|[.]waybar-wrapped' 2>/dev/null || true
-  waybar -c "${config_dir}/config" -s "${config_dir}/style.css" >>"$log" 2>&1 || true
-  sleep 2
+  sleep 1
+
+  if ! kill -0 "$waybar_pid" 2>/dev/null; then
+    wait "$waybar_pid" 2>/dev/null || true
+    current_sig="$(signature)"
+    start_waybar
+    continue
+  fi
+
+  next_sig="$(signature)"
+  if [ "$next_sig" != "$current_sig" ]; then
+    printf '%s waybar config changed; restarting\n' "$(date -Is)" >>"$log"
+    stop_waybar
+    current_sig="$next_sig"
+    start_waybar
+  fi
 done
