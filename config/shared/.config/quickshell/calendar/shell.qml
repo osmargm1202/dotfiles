@@ -170,8 +170,10 @@ ShellRoot {
   }
 
   function statusText() {
+    if (root.cacheError === "Cache is empty")
+      return "Sin caché · Sync"
     if (root.cacheError.length > 0)
-      return root.cacheError
+      return "Error de caché · Sync"
     const status = root.cache.status || ({})
     if (status.message && status.message.length > 0)
       return status.message
@@ -350,7 +352,7 @@ ShellRoot {
               anchors.centerIn: parent
               visible: root.selectedEvents.length === 0
               width: parent.width - 40
-              text: root.cacheError.length > 0 ? "Cache could not be read. Sync or check status." : "No events for this day. Breathe."
+              text: root.cacheError === "Cache is empty" ? "No hay eventos cargados. Pulsa Sync." : (root.cacheError.length > 0 ? "No se pudo leer el caché. Pulsa Sync o revisa status." : "No events for this day. Breathe.")
               color: "#6e738d"
               font.family: "JetBrainsMono Nerd Font"
               font.pixelSize: 15
