@@ -25,6 +25,7 @@
       "tray",
       "custom/theme_toggle",
       "custom/wallpaper",
+      "custom/headset_reconnect",
       "bluetooth",
       "network",
       "custom/logout_menu"
@@ -158,6 +159,12 @@
       "tooltip": true,
       "tooltip-format": "Elegir wallpaper",
       "on-click": "orgm-wallpaper pick"
+    },
+    "custom/headset_reconnect": {
+      "format": "󰋋",
+      "tooltip": true,
+      "tooltip-format": "Reconnect Bluetooth device",
+      "on-click": "hypr-bluetooth-reconnect"
     },
     "bluetooth": {
       "format": "󰂯",

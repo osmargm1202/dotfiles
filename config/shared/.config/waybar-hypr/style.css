@@ -116,11 +116,11 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
   padding: 0;
   margin: 0 2px 0 0;
 }
-#group-usage, #usage, #group-system, #system, #cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #bluetooth, #network, #privacy, #tray { color: @subtext0; }
+#group-usage, #usage, #group-system, #system, #cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-headset_reconnect, #bluetooth, #network, #privacy, #tray { color: @subtext0; }
 #group-usage, #usage {
   background: transparent;
 }
-#custom-wallpaper, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#custom-wallpaper, #custom-headset_reconnect, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
 #custom-user, #window, #mpris, #backlight, #pulseaudio, #battery, #custom-kbd_layout,
 #cpu, #memory, #temperature, #disk, #custom-swap {
   background: transparent;
@@ -136,7 +136,10 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #custom-wallpaper {
   margin-left: 18px;
 }
-#custom-theme_toggle, #custom-wallpaper, #bluetooth, #network, #custom-logout_menu {
+#custom-headset_reconnect {
+  color: @blue;
+}
+#custom-theme_toggle, #custom-wallpaper, #custom-headset_reconnect, #bluetooth, #network, #custom-logout_menu {
   padding: 0 10px;
 }
 #custom-logout_menu {
