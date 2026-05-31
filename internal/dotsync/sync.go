@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"syscall"
 
 	"github.com/osmargm1202/nixos/internal/dotconfig"
@@ -21,6 +22,127 @@ type Options struct {
 type Action struct {
 	Code string
 	Path string
+}
+
+type DesktopProfile string
+
+const (
+	DesktopAll      DesktopProfile = "all"
+	DesktopHyprland DesktopProfile = "hyprland"
+	DesktopGNOME    DesktopProfile = "gnome"
+	DesktopLabwc    DesktopProfile = "labwc"
+	DesktopSway     DesktopProfile = "sway"
+)
+
+type envLookup func(string) string
+
+func desktopProfileFromEnv(lookup envLookup) (DesktopProfile, error) {
+	if override := strings.TrimSpace(strings.ToLower(lookup("ORGM_DOT_DESKTOP"))); override != "" {
+		switch override {
+		case string(DesktopAll):
+			return DesktopAll, nil
+		case string(DesktopHyprland):
+			return DesktopHyprland, nil
+		case string(DesktopGNOME):
+			return DesktopGNOME, nil
+		case string(DesktopLabwc):
+			return DesktopLabwc, nil
+		case string(DesktopSway):
+			return DesktopSway, nil
+		default:
+			return "", fmt.Errorf("invalid ORGM_DOT_DESKTOP %q: expected hyprland, gnome, labwc, sway, or all", override)
+		}
+	}
+
+	if strings.TrimSpace(lookup("HYPRLAND_INSTANCE_SIGNATURE")) != "" {
+		return DesktopHyprland, nil
+	}
+
+	joined := strings.ToLower(strings.Join([]string{
+		lookup("XDG_CURRENT_DESKTOP"),
+		lookup("DESKTOP_SESSION"),
+		lookup("XDG_SESSION_DESKTOP"),
+	}, ":"))
+
+	switch {
+	case strings.Contains(joined, "hyprland"):
+		return DesktopHyprland, nil
+	case strings.Contains(joined, "gnome"):
+		return DesktopGNOME, nil
+	case strings.Contains(joined, "labwc"):
+		return DesktopLabwc, nil
+	case strings.Contains(joined, "sway"):
+		return DesktopSway, nil
+	default:
+		return DesktopAll, nil
+	}
+}
+
+func currentDesktopProfile() (DesktopProfile, error) {
+	return desktopProfileFromEnv(os.Getenv)
+}
+
+func shouldSyncPath(profile DesktopProfile, rel string) bool {
+	rel = dotmanifest.Normalize(rel)
+	switch profile {
+	case DesktopGNOME:
+		return !isAnyDesktopSpecificPath(rel)
+	case DesktopLabwc:
+		return !isHyprlandPath(rel) && !isSwayPath(rel)
+	case DesktopSway:
+		return !isHyprlandPath(rel)
+	case DesktopHyprland, DesktopAll, "":
+		return true
+	default:
+		return true
+	}
+}
+
+func isAnyDesktopSpecificPath(rel string) bool {
+	return isHyprlandPath(rel) || isLabwcPath(rel) || isSwayPath(rel) || hasPathPrefix(rel, ".config/waybar") || isDesktopHelper(rel)
+}
+
+func isHyprlandPath(rel string) bool {
+	return hasPathPrefix(rel, ".config/hypr") ||
+		hasPathPrefix(rel, ".config/orgm-hypr") ||
+		hasPathPrefix(rel, ".config/waybar-hypr") ||
+		hasPathPrefix(rel, ".config/nwg-dock-hyprland") ||
+		hasBasePrefix(rel, "hypr-") ||
+		rel == ".local/bin/fuzzel-hypr-window" ||
+		rel == ".local/bin/brightness-osd" ||
+		rel == ".local/bin/mic-volume-osd" ||
+		rel == ".local/bin/volume-osd" ||
+		rel == ".local/bin/waybar-date-es" ||
+		rel == ".local/bin/waybar-day-month-es" ||
+		rel == ".local/bin/waybar-swap-usage" ||
+		rel == ".local/bin/waybar-time-ampm" ||
+		rel == ".local/bin/waybar-watch"
+}
+
+func isLabwcPath(rel string) bool {
+	return hasPathPrefix(rel, ".config/labwc") || hasBasePrefix(rel, "labwc-")
+}
+
+func isSwayPath(rel string) bool {
+	return hasPathPrefix(rel, ".config/sway") ||
+		hasPathPrefix(rel, ".config/swaylock") ||
+		hasPathPrefix(rel, ".config/swaync") ||
+		hasBasePrefix(rel, "sway-")
+}
+
+func isDesktopHelper(rel string) bool {
+	return hasBasePrefix(rel, "hypr-") || hasBasePrefix(rel, "labwc-") || hasBasePrefix(rel, "sway-") ||
+		rel == ".local/bin/fuzzel-hypr-window" ||
+		strings.HasPrefix(filepath.Base(rel), "waybar-") ||
+		strings.HasSuffix(filepath.Base(rel), "-osd")
+}
+
+func hasPathPrefix(rel, prefix string) bool {
+	return rel == prefix || strings.HasPrefix(rel, prefix+"/")
+}
+
+func hasBasePrefix(rel, prefix string) bool {
+	return strings.HasPrefix(filepath.Base(rel), prefix)
 }
 
 func Run(rt dotconfig.Runtime, opts Options) ([]Action, error) {
@@ -38,8 +160,16 @@ func Run(rt dotconfig.Runtime, opts Options) ([]Action, error) {
 	}
 	defer syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN)
 
+	profile, err := currentDesktopProfile()
+	if err != nil {
+		return nil, err
+	}
+
 	var actions []Action
 	for _, rel := range rt.Config.Shared.Paths {
+		if !shouldSyncPath(profile, rel) {
+			continue
+		}
 		as, err := syncOne(rt, rt.SourceShared, rel, opts)
 		if err != nil {
 			return nil, err
@@ -47,6 +177,9 @@ func Run(rt dotconfig.Runtime, opts Options) ([]Action, error) {
 		actions = append(actions, as...)
 	}
 	for _, rel := range rt.HostPaths(opts.Host) {
+		if !shouldSyncPath(profile, rel) {
+			continue
+		}
 		as, err := syncOne(rt, rt.HostSource(opts.Host), rel, opts)
 		if err != nil {
 			return nil, err
