@@ -35,6 +35,7 @@ ShellRoot {
   property string stateHome: Quickshell.env("XDG_STATE_HOME") || ((Quickshell.env("HOME") || "") + "/.local/state")
   property string requestPath: Quickshell.env("HYPR_WALLPAPER_REQUEST") || (stateHome + "/hypr-wallpaper/wallpaper-picker-request.json")
   property string dataPath: Quickshell.env("HYPR_WALLPAPER_DATA") || (stateHome + "/hypr-wallpaper/wallpaper-picker.json")
+  property string lastModePath: stateHome + "/hypr-wallpaper/wallpaper-picker-last-mode"
   property bool panelVisible: (Quickshell.env("HYPR_WALLPAPER_SHOW") || "") === "1"
   property var data: ({ mode: "combined", initialMode: "static", script: "orgm-wallpaper", scriptArgs: [], monitors: [], tabs: ({ static: { title: "Normal wallpapers", applyCommand: "set-static", randomCommand: "random-static", current: "", items: [] }, video: { title: "Live wallpapers", applyCommand: "set-video", randomCommand: "random-video", current: "", items: [] } }) })
   property string activeMode: "static"
@@ -62,6 +63,12 @@ ShellRoot {
   FileView {
     id: dataFile
     path: root.dataPath
+    blockLoading: true
+  }
+
+  FileView {
+    id: lastModeFile
+    path: root.lastModePath
     blockLoading: true
   }
 
@@ -125,7 +132,8 @@ ShellRoot {
         parsed.scriptArgs = parsed.scriptArgs || []
       }
       root.data = parsed
-      root.activeMode = parsed.initialMode === "video" ? "video" : "static"
+      const remembered = root.rememberedMode()
+      root.activeMode = remembered || (parsed.initialMode === "video" ? "video" : "static")
       root.monitors = parsed.monitors || []
       root.selectedMonitor = root.monitors.length > 0 ? root.monitors[0].name : ""
       root.resetSelectionForActiveTab()
@@ -138,6 +146,7 @@ ShellRoot {
   }
 
   Process { id: applyProc }
+  Process { id: rememberModeProc }
 
   Process {
     id: warmPageProc
@@ -150,6 +159,24 @@ ShellRoot {
     const script = root.data.script || "orgm-wallpaper"
     const scriptArgs = root.data.scriptArgs || []
     return [script].concat(scriptArgs).concat(args)
+  }
+
+  function rememberedMode() {
+    try {
+      lastModeFile.reload()
+      const value = (lastModeFile.text() || "").trim()
+      if (value === "video" || value === "static")
+        return value
+    } catch (error) {
+      console.log("wallpaper picker failed to read remembered mode: " + error)
+    }
+    return ""
+  }
+
+  function rememberActiveMode(mode) {
+    const value = mode === "video" ? "video" : "static"
+    rememberModeProc.command = ["sh", "-c", "mkdir -p \"$(dirname \"$1\")\" && printf '%s\\n' \"$2\" >\"$1\"", "sh", root.lastModePath, value]
+    rememberModeProc.running = true
   }
 
   function tabForMode(mode) {
@@ -173,6 +200,7 @@ ShellRoot {
     if (nextMode === root.activeMode)
       return
     root.activeMode = nextMode
+    root.rememberActiveMode(nextMode)
     root.resetSelectionForActiveTab()
     root.warmCurrentPage()
   }

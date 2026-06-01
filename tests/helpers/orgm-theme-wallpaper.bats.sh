@@ -17,7 +17,17 @@ echo "orgm-wallpaper $*" >>"$CALLS"
 SH
 chmod +x "$TMP/bin/orgm-wallpaper"
 
-for bin in hyprctl kitty swaync-client nautilus systemctl waybar-watch gsettings; do
+cat >"$TMP/bin/hyprctl" <<'SH'
+#!/usr/bin/env bash
+echo "hyprctl $*" >>"$CALLS"
+if [ "${1:-}" = reload ]; then
+  echo "orgm-wallpaper random video (reload side effect)" >>"$CALLS"
+fi
+exit 0
+SH
+chmod +x "$TMP/bin/hyprctl"
+
+for bin in kitty swaync-client nautilus systemctl waybar-watch gsettings; do
   cat >"$TMP/bin/$bin" <<'SH'
 #!/usr/bin/env bash
 exit 0
@@ -158,5 +168,12 @@ grep -q '^orgm-wallpaper set-static /wallpapers/light-hdmi.png --monitor HDMI-A-
   cat "$CALLS" >&2
   exit 1
 }
+
+last_wallpaper_call="$(grep '^orgm-wallpaper ' "$CALLS" | tail -n 1)"
+if [ "$last_wallpaper_call" != 'orgm-wallpaper set-static /wallpapers/light-hdmi.png --monitor HDMI-A-1' ]; then
+  echo "FAIL: incoming theme wallpaper must be restored after live reload" >&2
+  cat "$CALLS" >&2
+  exit 1
+fi
 
 echo "orgm-theme wallpaper memory smoke test passed"

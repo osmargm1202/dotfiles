@@ -675,8 +675,8 @@ apply_theme() {
   write_hypr_scheme
   apply_gsettings
   write_pi_settings
-  restore_wallpaper_for_theme "$THEME_NAME"
   reload_live
+  restore_wallpaper_for_theme "$THEME_NAME"
   echo "Applied $THEME_NAME"
 }
 
