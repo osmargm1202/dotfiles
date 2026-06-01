@@ -88,6 +88,50 @@ func TestRunPreservesConfiguredLocalOnlyTypesAndPatterns(t *testing.T) {
 	}
 }
 
+func TestRunSeedsMissingLocalDefaultWithoutOverwritingExistingLocalFile(t *testing.T) {
+	rt := testRuntime(t)
+	rt.Config.Shared.Paths = []string{".config/rofi"}
+	rt.Config.LocalOnly.Paths = []string{".config/rofi/orgm-current.rasi"}
+	rt.Config.LocalDefaults.Paths = []string{".config/rofi/orgm-current.rasi"}
+	defaultPath := filepath.Join(rt.SourceShared, ".config", "rofi", "orgm-current.rasi")
+	dstPath := filepath.Join(rt.Destination, ".config", "rofi", "orgm-current.rasi")
+	writeFile(t, defaultPath, "repo default")
+
+	actions, err := Run(rt, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertHasAction(t, actions, "A", dstPath)
+	content, err := os.ReadFile(dstPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(content) != "repo default" {
+		t.Fatalf("seeded content = %q, want repo default", string(content))
+	}
+
+	actions, err = Run(rt, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertNoAction(t, actions, dstPath)
+
+	writeFile(t, dstPath, "local theme")
+	actions, err = Run(rt, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertNoAction(t, actions, dstPath)
+	content, err = os.ReadFile(dstPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(content) != "local theme" {
+		t.Fatalf("local content = %q, want local theme", string(content))
+	}
+}
+
 func testRuntime(t *testing.T) dotconfig.Runtime {
 	t.Helper()
 	root := t.TempDir()

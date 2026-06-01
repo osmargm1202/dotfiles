@@ -220,6 +220,17 @@
       "symlink"
     ]
   },
+  "local_defaults": {
+    "paths": [
+      ".config/rofi/orgm-current.rasi",
+      ".config/waybar/orgm-current.css",
+      ".config/waybar-hypr/orgm-current.css",
+      ".config/nwg-dock-hyprland/orgm-current.css",
+      ".config/swaync/orgm-current.css",
+      ".config/hypr/scheme/current.conf",
+      ".config/quickshell/theme/theme.json"
+    ]
+  },
   "diff": {
     "scan_roots": []
   }

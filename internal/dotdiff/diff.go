@@ -51,6 +51,13 @@ func Changes(rt dotconfig.Runtime, opts Options) ([]Change, error) {
 		}
 		changes = append(changes, cs...)
 	}
+	for _, rel := range rt.Config.LocalDefaults.Paths {
+		cs, err := diffLocalDefault(rt, rel, profile)
+		if err != nil {
+			return nil, err
+		}
+		changes = append(changes, cs...)
+	}
 	return changes, nil
 }
 
@@ -148,6 +155,25 @@ func diffSourcePath(rt dotconfig.Runtime, base, rel string, profile dotsync.Desk
 
 	sort.SliceStable(changes, func(i, j int) bool { return changes[i].Path < changes[j].Path })
 	return changes, nil
+}
+
+func diffLocalDefault(rt dotconfig.Runtime, rel string, profile dotsync.DesktopProfile) ([]Change, error) {
+	rel = dotmanifest.Normalize(rel)
+	if !dotsync.ShouldSyncPath(profile, rel) {
+		return nil, nil
+	}
+	if _, err := os.Lstat(filepath.Join(rt.SourceShared, rel)); os.IsNotExist(err) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	dst := filepath.Join(rt.Destination, rel)
+	if _, err := os.Lstat(dst); os.IsNotExist(err) {
+		return []Change{{Code: "A", Path: dst}}, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 func comparePath(rt dotconfig.Runtime, src, dst, rel string, profile dotsync.DesktopProfile, opts Options) ([]Change, error) {

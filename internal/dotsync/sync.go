@@ -199,6 +199,13 @@ func Run(rt dotconfig.Runtime, opts Options) ([]Action, error) {
 		}
 		actions = append(actions, as...)
 	}
+	for _, rel := range rt.Config.LocalDefaults.Paths {
+		as, err := syncLocalDefault(rt, rel, profile, opts)
+		if err != nil {
+			return nil, err
+		}
+		actions = append(actions, as...)
+	}
 	return actions, nil
 }
 
@@ -307,6 +314,33 @@ func isLocalOnly(rt dotconfig.Runtime, rel, fullPath string) bool {
 		isSymlink = info.Mode()&os.ModeSymlink != 0
 	}
 	return rt.Config.LocalOnly.Matches(rel, isSymlink)
+}
+
+func syncLocalDefault(rt dotconfig.Runtime, rel string, profile DesktopProfile, opts Options) ([]Action, error) {
+	rel = dotmanifest.Normalize(rel)
+	if !shouldSyncPath(profile, rel) {
+		return nil, nil
+	}
+	src := filepath.Join(rt.SourceShared, rel)
+	if _, err := os.Lstat(src); os.IsNotExist(err) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	dst := filepath.Join(rt.Destination, rel)
+	if _, err := os.Lstat(dst); err == nil {
+		return nil, nil
+	} else if !os.IsNotExist(err) {
+		return nil, err
+	}
+	action := Action{Code: "A", Path: dst}
+	if opts.DryRun {
+		return []Action{action}, nil
+	}
+	if err := copyFileOrSymlink(src, dst); err != nil {
+		return nil, err
+	}
+	return []Action{action}, nil
 }
 
 func copyPath(rt dotconfig.Runtime, src, dst, rel string, opts Options) ([]Action, error) {

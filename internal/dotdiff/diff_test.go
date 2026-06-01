@@ -85,6 +85,28 @@ func TestChangesTreatsConfiguredTypesAndPatternsAsLocalOnly(t *testing.T) {
 	assertNoChange(t, changes, filepath.Join(rt.Destination, ".config", "app", "system-link"))
 }
 
+func TestChangesReportsMissingLocalDefaultButIgnoresExistingLocalFile(t *testing.T) {
+	rt := testRuntime(t)
+	rt.Config.Shared.Paths = []string{".config/rofi"}
+	rt.Config.LocalOnly.Paths = []string{".config/rofi/orgm-current.rasi"}
+	rt.Config.LocalDefaults.Paths = []string{".config/rofi/orgm-current.rasi"}
+	dstPath := filepath.Join(rt.Destination, ".config", "rofi", "orgm-current.rasi")
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "rofi", "orgm-current.rasi"), "repo default")
+
+	changes, err := Changes(rt, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertHasChange(t, changes, "A", dstPath)
+
+	writeFile(t, dstPath, "local theme")
+	changes, err = Changes(rt, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertNoChange(t, changes, dstPath)
+}
+
 func testRuntime(t *testing.T) dotconfig.Runtime {
 	t.Helper()
 	root := t.TempDir()

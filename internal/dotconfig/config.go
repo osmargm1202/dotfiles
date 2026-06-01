@@ -14,11 +14,12 @@ import (
 )
 
 type Config struct {
-	Settings  Settings                   `json:"settings"`
-	Shared    PathList                   `json:"shared"`
-	Hosts     map[string]PathList        `json:"hosts"`
-	LocalOnly dotmanifest.LocalOnlyRules `json:"local_only"`
-	Diff      DiffSettings               `json:"diff"`
+	Settings      Settings                   `json:"settings"`
+	Shared        PathList                   `json:"shared"`
+	Hosts         map[string]PathList        `json:"hosts"`
+	LocalOnly     dotmanifest.LocalOnlyRules `json:"local_only"`
+	LocalDefaults PathList                   `json:"local_defaults"`
+	Diff          DiffSettings               `json:"diff"`
 }
 
 type Settings struct {
