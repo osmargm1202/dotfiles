@@ -327,7 +327,7 @@ gtk-application-prefer-dark-theme=$([ "$COLOR_SCHEME" = prefer-dark ] && echo tr
 gtk-icon-theme-name=$ICON_THEME
 gtk-cursor-theme-name=$CURSOR_THEME
 gtk-cursor-theme-size=$CURSOR_SIZE
-gtk-font-name=JetBrains Mono 11
+gtk-font-name=${UI_FONT:-Inter 11}
 gtk-xft-antialias=1
 gtk-xft-hinting=1
 gtk-xft-hintstyle=hintslight
@@ -482,7 +482,7 @@ style=$QT_STYLE
 
 [Fonts]
 fixed="JetBrains Mono,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
-general="JetBrains Mono,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
+general="${QT_UI_FONT:-Inter},11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
 EOF
     cat >"$config_home/$qt/colors/orgm-current.colors" <<EOF
 [General]
@@ -608,6 +608,9 @@ apply_gsettings() {
   gsettings set org.gnome.desktop.interface icon-theme "$ICON_THEME" 2>/dev/null || true
   gsettings set org.gnome.desktop.interface cursor-theme "$CURSOR_THEME" 2>/dev/null || true
   gsettings set org.gnome.desktop.interface cursor-size "$CURSOR_SIZE" 2>/dev/null || true
+  gsettings set org.gnome.desktop.interface font-name "${UI_FONT:-Inter 11}" 2>/dev/null || true
+  gsettings set org.gnome.desktop.interface document-font-name "${UI_FONT:-Inter 11}" 2>/dev/null || true
+  gsettings set org.gnome.desktop.interface monospace-font-name "${MONO_FONT:-JetBrains Mono 11}" 2>/dev/null || true
 }
 
 write_pi_settings() {
