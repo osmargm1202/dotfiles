@@ -654,6 +654,7 @@ func (m *Manager) SetStaticForMonitor(path, output, mode string) error {
 	if !fileExists(path) {
 		return fmt.Errorf("Wallpaper not found: %s", path)
 	}
+	m.stopMPVPaperPIDFile(m.MPVPaperPIDFile)
 	m.StopMPVPaperForMonitor(output)
 	if err := m.WriteMonitorState(output, mode, path); err != nil {
 		return err
@@ -748,6 +749,7 @@ func (m *Manager) SetVideoForMonitor(path, output string) error {
 	if !fileExists(path) {
 		return fmt.Errorf("Video wallpaper not found: %s", path)
 	}
+	m.stopMPVPaperPIDFile(m.MPVPaperPIDFile)
 	if err := m.WriteMonitorState(output, "video", path); err != nil {
 		return err
 	}

@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestWriteMonitorStateUsesSanitizedOutputName(t *testing.T) {
@@ -128,6 +131,62 @@ func TestWriteStateMirrorsCurrentThemeWallpaper(t *testing.T) {
 	want := "mode=static\npath=" + wallpaper
 	if got != want {
 		t.Fatalf("theme wallpaper state = %q, want %q", got, want)
+	}
+}
+
+func TestSetVideoForMonitorStopsGlobalVideoWallpaper(t *testing.T) {
+	tmp := t.TempDir()
+	bin := filepath.Join(tmp, "bin")
+	mpvpaper := filepath.Join(bin, "mpvpaper")
+	if err := os.MkdirAll(bin, 0o755); err != nil {
+		t.Fatalf("mkdir bin: %v", err)
+	}
+	if err := os.WriteFile(mpvpaper, []byte("#!/usr/bin/env bash\nexec -a mpvpaper sleep 30\n"), 0o755); err != nil {
+		t.Fatalf("write mpvpaper: %v", err)
+	}
+	global := exec.Command(mpvpaper, "-o", "no-audio", "*", filepath.Join(tmp, "old.mp4"))
+	if err := global.Start(); err != nil {
+		t.Fatalf("start global mpvpaper: %v", err)
+	}
+	done := make(chan error, 1)
+	go func() { done <- global.Wait() }()
+	t.Cleanup(func() { _ = global.Process.Kill() })
+
+	m := NewManager(io.Discard, io.Discard)
+	m.StateDir = filepath.Join(tmp, "state", "hypr-wallpaper")
+	m.StateFile = filepath.Join(m.StateDir, "state")
+	m.CurrentFile = filepath.Join(tmp, "runtime", "hypr-random-wallpaper.current")
+	m.LockWallpaper = filepath.Join(tmp, "runtime", "hypr-current-wallpaper")
+	m.RuntimeDir = filepath.Join(tmp, "runtime")
+	m.MPVPaperPIDFile = filepath.Join(m.RuntimeDir, "hypr-random-wallpaper.mpvpaper.pid")
+	m.MPVPaperBin = mpvpaper
+	m.KillBin = "kill"
+	if err := os.MkdirAll(m.RuntimeDir, 0o755); err != nil {
+		t.Fatalf("mkdir runtime: %v", err)
+	}
+	if err := os.WriteFile(m.MPVPaperPIDFile, []byte(strconv.Itoa(global.Process.Pid)+"\n"), 0o644); err != nil {
+		t.Fatalf("write global pid: %v", err)
+	}
+	video := filepath.Join(tmp, "live.mp4")
+	if err := os.WriteFile(video, []byte("video"), 0o600); err != nil {
+		t.Fatalf("write video: %v", err)
+	}
+
+	if err := m.SetVideoForMonitor(video, "DP-3"); err != nil {
+		t.Fatalf("SetVideoForMonitor: %v", err)
+	}
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatalf("global mpvpaper pid %d still alive", global.Process.Pid)
+	}
+	if got := readTrim(m.MPVPaperPIDFile); got != "" {
+		t.Fatalf("global pid file = %q, want removed", got)
+	}
+	monitorPID := readTrim(m.monitorMPVPaperPIDFile("DP-3"))
+	if monitorPID == "" {
+		t.Fatalf("monitor mpvpaper pid was not written")
 	}
 }
 
