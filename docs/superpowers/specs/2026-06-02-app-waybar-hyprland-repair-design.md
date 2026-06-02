@@ -51,13 +51,15 @@ Fix broken native/Flatpak launchers, make USB handling safe and visible in Wayba
 - `hypr-usb-menu` responsibilities:
   - list USB devices from `/sys/bus/usb/devices`, `lsusb`, and block-device data from `lsblk`;
   - classify storage/removable media as protected;
-  - show Rofi rows with clear labels: headset/audio, HID, storage, unknown;
+  - show Rofi rows with clear labels: saved nickname when present, device type, vendor/product, and bus id;
+  - allow right-click/secondary flow from Waybar to save or edit a nickname for a selected USB device so future reconnect prompts identify it clearly;
+  - store nicknames in a small user config file keyed by stable USB identity (`vendor:product:serial` when available, otherwise bus id fallback);
   - for storage devices: mount/open folder with `udisksctl`/`xdg-open`/Nautilus, not USB unbind;
   - for non-storage devices: offer unbind, wait `HYPR_USB_REBIND_DELAY` seconds (`2` default), then bind;
   - notify success/failure and log command output under `~/.local/state/orgm-hypr/usb-menu.log`.
 - Keep `unbindheadset.fish` only as compatibility wrapper that calls the new helper or remove it if no active callers remain.
 - Add Waybar custom modules:
-  - `custom/usb_devices`: JSON status script; shows icon only when USB/removable devices are present; left-click opens `hypr-usb-menu`; right-click opens non-storage reconnect flow.
+  - `custom/usb_devices`: JSON status script; shows icon only when USB/removable devices are present; left-click opens `hypr-usb-menu`; right-click opens nickname/edit + non-storage reconnect flow.
   - `custom/nixclean`: static broom/recycle icon; click opens `kitty --class nixclean -e fish -lc 'nixclean; read -P "enter..."'`.
 - Preserve current Fish `nixclean` user change and avoid overwriting it while editing.
 
@@ -90,6 +92,7 @@ Fix broken native/Flatpak launchers, make USB handling safe and visible in Wayba
 - Missing `udiskie`: storage menu can still use `udisksctl mount`; status warns via tooltip.
 - Missing `lsusb`: USB menu falls back to `/sys` + `lsblk` and warns in log.
 - Storage device selected for reconnect: menu refuses unbind/bind and offers open/mount instead.
+- Nickname file missing or malformed: ignore bad rows, keep menu usable, and rewrite only after a new nickname is saved.
 - Hyprland preset invalid/missing: fall back to current `fade` preset.
 - Rofi cancel: exit quietly with status 0.
 
@@ -108,6 +111,7 @@ Fix broken native/Flatpak launchers, make USB handling safe and visible in Wayba
   - `distrobox-host-exec orgm-dot sync` after approval.
   - Waybar reload via `waybar-watch ~/.config/waybar-hypr`.
   - Click USB button with a flash drive connected: storage must mount/open, not unbind.
+  - Right-click USB button: user can save/edit a nickname, then selected non-storage USB reconnect shows that nickname on later prompts.
   - Click non-storage USB reconnect: selected device unbinds, waits, rebinds.
   - Click nixclean button: terminal opens and runs Fish `nixclean`.
   - Select each Hyprland transition preset and confirm `hyprctl reload` succeeds.
@@ -124,5 +128,6 @@ Fix broken native/Flatpak launchers, make USB handling safe and visible in Wayba
 - [ ] Flatpak set reflects what should be managed declaratively on NixOS.
 - [ ] No launcher points to missing command, missing Flatpak, or generation-specific `/nix/store` path.
 - [ ] USB storage cannot be disconnected with USB unbind/bind flow.
+- [ ] USB nicknames persist and appear in future Waybar/Rofi reconnect labels.
 - [ ] Waybar buttons are discoverable and safe.
 - [ ] Hyprland transition preference is host-specific and menu-selectable.
