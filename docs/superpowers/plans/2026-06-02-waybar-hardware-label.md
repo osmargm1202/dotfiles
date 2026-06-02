@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a bottom-right Waybar hardware button that opens a detailed Fastfetch hardware report in Kitty.
+**Goal:** Add a top-right blue Waybar hardware button that opens a detailed Fastfetch hardware report in Kitty and leaves an interactive shell available.
 
-**Architecture:** Waybar stays simple and only launches Fastfetch. A dedicated Fastfetch config owns the detailed hardware/system view. The hardware button lives in its own Waybar group before `group/usage`, so it can move later without touching CPU/memory modules. The launched terminal keeps the normal Kitty class/styling and uses a unique title for Hyprland floating rules.
+**Architecture:** Waybar stays simple and only launches Fastfetch. A dedicated Fastfetch config owns the detailed hardware/system view. The hardware button is a standalone top-right module, separate from the bottom CPU/memory usage group. The launched terminal keeps the normal Kitty class/styling and uses a unique title for Hyprland floating rules.
 
 **Tech Stack:** Waybar custom module JSON, Fastfetch JSONC config, Kitty, POSIX `sh`, `orgm-dot`.
 
@@ -15,7 +15,7 @@
 - Create: `config/shared/.config/fastfetch/hardware.jsonc`
   - Dedicated detailed hardware Fastfetch view.
 - Modify: `config/shared/.config/waybar-hypr/config`
-  - Add `group/hardware` and `custom/hardware_fetch` before `group/usage`.
+  - Add standalone `custom/hardware_fetch` to `top_bar.modules-right` and remove it from the bottom CPU/memory area.
 - Modify: `config/shared/.config/hypr/lua/windows-workspaces.lua`
   - Float, size, and center Kitty windows titled `hardware-fastfetch`.
 - Modify: `docs/superpowers/specs/2026-06-02-waybar-hardware-label-design.md`
@@ -67,27 +67,27 @@ text = Path('config/shared/.config/waybar-hypr/config').read_text()
 clean = '\n'.join(line for line in text.splitlines() if not line.lstrip().startswith('//'))
 config = json.loads(clean)
 bottom = next(bar for bar in config if bar.get('name') == 'bottom_bar')
-assert bottom['modules-right'][0] == 'group/hardware'
-assert bottom['group/hardware']['modules'] == ['custom/hardware_fetch']
-assert bottom['custom/hardware_fetch']['format'] == '󰌢'
-assert 'kitty --title hardware-fastfetch' in bottom['custom/hardware_fetch']['on-click']
-assert 'fastfetch --config ~/.config/fastfetch/hardware.jsonc' in bottom['custom/hardware_fetch']['on-click']
+top = next(bar for bar in config if bar.get('name') == 'top_bar')
+assert 'custom/hardware_fetch' in top['modules-right']
+assert top['custom/hardware_fetch']['format'] == '󰌢'
+assert 'kitty --title hardware-fastfetch' in top['custom/hardware_fetch']['on-click']
+assert 'exec fish -i' in top['custom/hardware_fetch']['on-click']
 print('hardware button ok')
 PY
 ```
 
-Expected before editing: assertion failure because `group/hardware` is not configured yet.
+Expected before editing: assertion failure because `custom/hardware_fetch` is not in the top bar yet.
 
-- [ ] **Step 2: Add `group/hardware` before `group/usage`**
+- [ ] **Step 2: Add `custom/hardware_fetch` to the top-right controls**
 
-Change `bottom_bar.modules-right` so `group/hardware` is first, before `group/usage`.
+Change `top_bar.modules-right` so `custom/hardware_fetch` appears near the other top-right control buttons, and remove hardware module refs from `bottom_bar.modules-right`.
 
-- [ ] **Step 3: Add `custom/hardware_fetch` button and `group/hardware` definition**
+- [ ] **Step 3: Add `custom/hardware_fetch` button definition**
 
 Add a button with icon `󰌢`, tooltip `Hardware / Fastfetch`, and click command:
 
 ```sh
-kitty --title hardware-fastfetch -e sh -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; printf "\nEnter para cerrar..."; read -r _'
+kitty --title hardware-fastfetch -e fish -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; echo; exec fish -i'
 ```
 
 - [ ] **Step 4: Verify config assertion passes**
@@ -157,13 +157,9 @@ Expected: command exits with status 0.
 
 - [ ] **Step 6: Manual UI check**
 
-Expected bottom-right order:
+Expected top-right controls include the blue `󰌢` hardware button, separate from the bottom CPU/memory usage group.
 
-```text
-󰌢 | CPU | memory | temperature | disk | swap | keyboard | ?
-```
-
-Click `󰌢`. Expected: Kitty opens detailed Fastfetch and waits for Enter.
+Click `󰌢`. Expected: Kitty opens detailed Fastfetch, then leaves an interactive Fish shell ready for more commands.
 
 ## Commit Plan
 

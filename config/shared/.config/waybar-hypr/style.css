@@ -120,7 +120,7 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #group-usage, #usage {
   background: transparent;
 }
-#custom-wallpaper, #custom-headset_reconnect, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#custom-wallpaper, #custom-headset_reconnect, #custom-hardware_fetch, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
 #custom-user, #window, #mpris, #backlight, #pulseaudio, #pulseaudio-slider, #battery, #custom-kbd_layout,
 #cpu, #memory, #temperature, #disk, #custom-swap {
   background: transparent;
@@ -142,7 +142,8 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 }
 #custom-usb_devices { color: @sky; font-size: 20px; }
 #custom-nixclean { color: @green; font-size: 20px; }
-#custom-theme_toggle, #custom-wallpaper, #custom-headset_reconnect, #bluetooth, #network, #custom-logout_menu {
+#custom-hardware_fetch { color: @blue; font-size: 20px; }
+#custom-theme_toggle, #custom-wallpaper, #custom-headset_reconnect, #custom-hardware_fetch, #bluetooth, #network, #custom-logout_menu {
   padding: 0 10px;
 }
 #custom-logout_menu {

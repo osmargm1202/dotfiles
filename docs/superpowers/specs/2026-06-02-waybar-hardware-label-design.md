@@ -6,8 +6,8 @@ Add a simple Waybar button that opens a detailed Fastfetch hardware view in Kitt
 
 1. Keep Waybar clean: show only one hardware/info button.
 2. Put the button in an independent group so it can move later.
-3. Place it initially bottom-right before the existing CPU/memory usage group.
-4. On click, open Kitty and run Fastfetch with a dedicated detailed hardware config.
+3. Place it in the top-right Waybar controls as an independent blue button.
+4. On click, open Kitty, run Fastfetch with a dedicated detailed hardware config, then leave an interactive Fish shell open for follow-up commands.
 5. Keep the existing normal Fastfetch config unchanged.
 6. Avoid custom hardware parsing scripts, menus, or special detector logic in Waybar.
 
@@ -24,26 +24,20 @@ The existing `.config/fastfetch` directory is already tracked in `config/dotfile
 
 ## Waybar Integration
 
-Add a standalone group to `bottom_bar.modules-right`, before `group/usage`:
+Add a standalone button to `top_bar.modules-right`, away from the CPU/memory usage group:
 
 ```json
 "modules-right": [
-  "group/hardware",
-  "group/usage",
-  "custom/kbd_layout",
-  "custom/keybindings_help"
+  "privacy",
+  "tray",
+  "custom/theme_toggle",
+  "custom/wallpaper",
+  "custom/usb_devices",
+  "custom/nixclean",
+  "custom/hardware_fetch",
+  "custom/headset_reconnect",
+  "custom/logout_menu"
 ]
-```
-
-Define the group:
-
-```json
-"group/hardware": {
-  "orientation": "horizontal",
-  "modules": [
-    "custom/hardware_fetch"
-  ]
-}
 ```
 
 Define the button:
@@ -53,7 +47,7 @@ Define the button:
   "format": "󰌢",
   "tooltip": true,
   "tooltip-format": "Hardware / Fastfetch",
-  "on-click": "kitty --title hardware-fastfetch -e sh -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; printf \"\\nEnter para cerrar...\"; read -r _'"
+  "on-click": "kitty --title hardware-fastfetch -e fish -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; echo; exec fish -i'"
 }
 ```
 
@@ -72,8 +66,8 @@ The config should not force an ORGM image logo. It should let Fastfetch choose t
 
 ## Behavior
 
-- Waybar shows one compact hardware icon.
-- Click opens a normal Kitty terminal titled `hardware-fastfetch`, keeps normal Kitty styling/opactity, and waits with `Enter para cerrar...` after Fastfetch exits.
+- Waybar shows one compact blue hardware icon in the top-right controls.
+- Click opens a normal Kitty terminal titled `hardware-fastfetch`, keeps normal Kitty styling/opacity, runs Fastfetch, then drops into an interactive Fish shell for more commands.
 - Hyprland floats and centers that terminal by matching its title, not by changing Kitty class.
 - Hardware details come from Fastfetch modules, including laptops with integrated/dedicated GPUs where Fastfetch detects both.
 - No custom menu or separate detector script is required.
