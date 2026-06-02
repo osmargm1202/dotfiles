@@ -27,6 +27,7 @@
       "custom/usb_devices",
       "custom/nixclean",
       "custom/hardware_fetch",
+      "custom/pi_status",
       "custom/headset_reconnect",
       "custom/logout_menu"
     ],
@@ -186,6 +187,14 @@
       "tooltip": true,
       "tooltip-format": "Hardware / Fastfetch",
       "on-click": "kitty --title hardware-fastfetch -e fish -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; echo; exec fish -i'"
+    },
+    "custom/pi_status": {
+      "exec": "waybar-pi-status",
+      "return-type": "json",
+      "interval": 900,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "kitty --title pi-update -e distrobox-enter arch -- fish -lc 'pi update; waybar-pi-status refresh >/dev/null 2>&1; echo; exec fish -i'"
     },
     "bluetooth": {
       "format": "󰂯",
