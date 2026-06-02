@@ -1,4 +1,3 @@
-// Adapted from XNM1/linux-nixos-hyprland-config-dotfiles for Sway.
 [
   {
     "name": "top_bar",
@@ -25,6 +24,8 @@
       "tray",
       "custom/theme_toggle",
       "custom/wallpaper",
+      "custom/usb_devices",
+      "custom/nixclean",
       "custom/headset_reconnect",
       "custom/logout_menu"
     ],
@@ -157,6 +158,21 @@
       "tooltip": true,
       "tooltip-format": "Elegir wallpaper",
       "on-click": "orgm-wallpaper pick"
+    },
+    "custom/usb_devices": {
+      "exec": "hypr-usb-menu status",
+      "return-type": "json",
+      "interval": 5,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "hypr-usb-menu open",
+      "on-click-right": "hypr-usb-menu nickname"
+    },
+    "custom/nixclean": {
+      "format": "󰃢",
+      "tooltip": true,
+      "tooltip-format": "Limpiar Nix, journal, papelera, Flatpak unused",
+      "on-click": "kitty --class nixclean -e fish -lc 'nixclean; read -P \"enter...\"'"
     },
     "custom/headset_reconnect": {
       "format": "󰋋",

@@ -140,6 +140,8 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #custom-headset_reconnect {
   color: @blue;
 }
+#custom-usb_devices { color: @sky; font-size: 20px; }
+#custom-nixclean { color: @green; font-size: 20px; }
 #custom-theme_toggle, #custom-wallpaper, #custom-headset_reconnect, #bluetooth, #network, #custom-logout_menu {
   padding: 0 10px;
 }
