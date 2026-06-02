@@ -83,12 +83,12 @@
 
     "group/system": {
       "orientation": "horizontal",
-      "modules": ["backlight", "pulseaudio", "pulseaudio/slider", "pulseaudio#microphone", "pulseaudio/slider#microphone", "battery"]
+      "modules": ["backlight", "battery", "pulseaudio", "pulseaudio/slider", "pulseaudio#microphone", "pulseaudio/slider#microphone"]
     },
     "backlight": { "format": "{icon} {percent}%", "format-icons": ["󰃞", "󰃟", "󰃠"] },
     "pulseaudio": { "format": "{icon}", "format-muted": "󰝟", "format-icons": { "default": ["", "", ""] }, "on-click": "pamixer -t", "on-click-right": "pavucontrol", "max-volume": 150 },
     "pulseaudio/slider": { "min": 0, "max": 150, "orientation": "horizontal" },
-    "pulseaudio#microphone": { "target": "source", "format": "󰍬", "format-muted": "󰍭", "on-click": "pamixer --default-source -t", "on-click-right": "pavucontrol", "max-volume": 150 },
+    "pulseaudio#microphone": { "target": "source", "format": "{format_source}", "format-source": "󰍬", "format-source-muted": "󰍭", "on-click": "pamixer --default-source -t", "on-click-right": "pavucontrol", "max-volume": 150 },
     "pulseaudio/slider#microphone": { "target": "source", "min": 0, "max": 150, "orientation": "horizontal" },
     "battery": {
       "states": { "warning": 30, "critical": 15 },

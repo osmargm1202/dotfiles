@@ -239,11 +239,11 @@
       "orientation": "horizontal",
       "modules": [
         "backlight",
+        "battery",
         "pulseaudio",
         "pulseaudio/slider",
         "pulseaudio#microphone",
-        "pulseaudio/slider#microphone",
-        "battery"
+        "pulseaudio/slider#microphone"
       ]
     },
     "backlight": {
@@ -275,8 +275,9 @@
     },
     "pulseaudio#microphone": {
       "target": "source",
-      "format": "󰍬",
-      "format-muted": "󰍭",
+      "format": "{format_source}",
+      "format-source": "󰍬",
+      "format-source-muted": "󰍭",
       "on-click": "pamixer --default-source -t",
       "on-click-right": "pavucontrol",
       "max-volume": 150

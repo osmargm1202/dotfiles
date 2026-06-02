@@ -171,7 +171,8 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #mpris { color: @text; }
 #backlight { color: @text; }
 #pulseaudio { color: @blue; font-size: 20px; }
-#pulseaudio.muted { color: @red; }
+#pulseaudio:not(.microphone).muted { color: @red; }
+#pulseaudio.microphone.source-muted { color: @red; }
 #pulseaudio-slider {
   min-width: 88px;
   padding: 0 6px;
@@ -194,6 +195,10 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
   min-height: 8px;
   border-radius: 999px;
   background: @blue;
+}
+#pulseaudio-slider.microphone.muted highlight,
+#pulseaudio-slider.microphone.source-muted highlight {
+  background: @red;
 }
 #battery { color: @text; }
 #keyboard-state label.capslock { color: @base; font-weight: bold; }
