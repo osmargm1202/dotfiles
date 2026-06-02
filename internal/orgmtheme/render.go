@@ -247,7 +247,7 @@ gtk-application-prefer-dark-theme=%s
 gtk-icon-theme-name=%s
 gtk-cursor-theme-name=%s
 gtk-cursor-theme-size=%s
-gtk-font-name=JetBrains Mono 11
+gtk-font-name=Inter 11
 gtk-xft-antialias=1
 gtk-xft-hinting=1
 gtk-xft-hintstyle=hintslight
@@ -339,7 +339,7 @@ style=%s
 
 [Fonts]
 fixed="JetBrains Mono,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
-general="JetBrains Mono,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
+general="Inter,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
 `, filepath.Join(configHome, qt, "colors", "orgm-current.colors"), t.IconTheme, t.QTStyle)
 	colors := fmt.Sprintf(`[General]
 ColorScheme=ORGM Current

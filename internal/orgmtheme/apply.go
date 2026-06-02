@@ -88,6 +88,7 @@ func Apply(options ApplyOptions) (ApplyResult, error) {
 
 	commands := make([]Command, 0)
 	if !options.NoReload {
+		commands = append(commands, gsettingsCommands(theme)...)
 		commands = append(commands, liveReloadCommands()...)
 	}
 	commands = append(commands, restoreWallpaperCommands(paths.stateHome, theme.Name)...)
@@ -242,6 +243,19 @@ func monitorWallpaperCommands(dir string) []Command {
 		commands = append(commands, Command{Name: "orgm-wallpaper", Args: []string{"set-static", path, "--monitor", output}})
 	}
 	return commands
+}
+
+func gsettingsCommands(theme Theme) []Command {
+	return []Command{
+		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "color-scheme", theme.ColorScheme}},
+		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "gtk-theme", theme.GTKTheme}},
+		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "icon-theme", theme.IconTheme}},
+		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "cursor-theme", theme.CursorTheme}},
+		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "cursor-size", theme.CursorSize}},
+		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "font-name", "Inter 11"}},
+		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "document-font-name", "Inter 11"}},
+		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "monospace-font-name", "JetBrains Mono 11"}},
+	}
 }
 
 func liveReloadCommands() []Command {
