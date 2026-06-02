@@ -67,6 +67,10 @@ end
 function nixclean
     nixg 2
     nixgc
+    sudo nix store optimise
+    flatpak uninstall --unused
+    trash-empty 30
+    sudo journalctl --vacuum-time=7d
 end
 
 # Prompt más vistoso (starship opcional)
