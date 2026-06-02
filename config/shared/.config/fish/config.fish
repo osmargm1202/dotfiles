@@ -1,20 +1,4 @@
-function fish_greeting
-    set RED '\033[38;5;196m'
-    set ORANGE '\033[38;5;202m'
-    set YELLOW '\033[38;5;226m'
-    set GREEN '\033[38;5;082m'
-    set TEAL '\033[1;36m'
-    set BLUE '\033[38;2;0;119;182m'
-    set PURPLE '\033[38;5;093m'
-    set PINK '\033[38;5;163m'
-    set RESET '\033[0m'
-
-    printf "\n"
-    printf "%bO %bR %bG %bM   %bN %bi %bx %bO %bS%b\n" \
-        $BLUE $BLUE $BLUE $BLUE \
-        $RED $ORANGE $YELLOW $GREEN $TEAL \
-        $RESET
-end
+set -g fish_greeting
 
 # if not set -q TMUX
 #     if type -q fastfetch
@@ -55,22 +39,36 @@ if not set -q DISTROBOX_ENTER_PATH
 end
 
 # Nix cleanup helpers.
-alias nixgc='sudo nix-collect-garbage -d'
+# En NixOS, sudo con setuid vive en /run/wrappers/bin/sudo. Algunas apps
+# gráficas pueden heredar un PATH donde gana /run/current-system/sw/bin/sudo,
+# que no tiene setuid y falla. Para tareas Nix usamos el wrapper explícito.
+function _orgm_sudo
+    if test -x /run/wrappers/bin/sudo
+        command /run/wrappers/bin/sudo $argv
+    else if command -q sudo
+        command sudo $argv
+    else
+        echo "sudo not found" >&2
+        return 127
+    end
+end
+
+alias nixgc='_orgm_sudo nix-collect-garbage -d'
 function nixg
     set -l keep 2
     if test (count $argv) -gt 0
         set keep $argv[1]
     end
-    sudo nix-env --profile /nix/var/nix/profiles/system --delete-generations +$keep
+    _orgm_sudo nix-env --profile /nix/var/nix/profiles/system --delete-generations +$keep
 end
 
 function nixclean
     nixg 2
     nixgc
-    sudo nix store optimise
-    flatpak uninstall --unused
-    trash-empty 30
-    sudo journalctl --vacuum-time=7d
+    _orgm_sudo nix store optimise
+    flatpak uninstall --unused --assumeyes --noninteractive
+    trash-empty 30 -f
+    _orgm_sudo journalctl --vacuum-time=7d
 end
 
 # Prompt más vistoso (starship opcional)

@@ -153,6 +153,23 @@ usb_rows() {
   usb_devices_tsv | awk -F '\t' '{ printf "%s  %s  %s\n", $1, $2, $3 }'
 }
 
+is_headset_like() {
+  local text="${1,,}"
+  [[ "$text" =~ (headset|headphone|surround|audio|sound|speaker|microphone|hs55) ]]
+}
+
+headset_tsv() {
+  usb_devices_tsv | while IFS=$'\t' read -r label bus key combined; do
+    if is_headset_like "$label $combined"; then
+      printf '%s\t%s\t%s\t%s\n' "$label" "$bus" "$key" "$combined"
+    fi
+  done
+}
+
+headset_rows() {
+  headset_tsv | awk -F '\t' '{ printf "%s  %s  %s\n", $1, $2, $3 }'
+}
+
 status_cmd() {
   local storage_count usb_count total text tooltip rows
   storage_count="$(storage_tsv | awk 'END { print NR + 0 }')"
@@ -221,6 +238,31 @@ reconnect_cmd() {
   reconnect_bus "$bus" "$print_only"
 }
 
+reconnect_headset_cmd() {
+  local print_only=0 rows choice bus label count
+  if [ "${1:-}" = "--print" ]; then
+    print_only=1
+    shift || true
+  fi
+  rows="$(headset_rows)"
+  [ -n "$rows" ] || { notify-send "USB headset" "No encontré headset USB conectado" 2>/dev/null || true; return 0; }
+  count="$(printf '%s\n' "$rows" | awk 'END { print NR + 0 }')"
+  if [ "$count" -eq 1 ]; then
+    choice="$rows"
+  else
+    choice="$(printf '%s\n' "$rows" | rofi_menu "Reconnect headset" 10 || true)"
+  fi
+  [ -n "$choice" ] || return 0
+  bus="$(selected_bus_from_row "$choice" || true)"
+  label="$(awk -v bus="$bus" '{ out=""; for (i=1; i<=NF; i++) { if ($i == bus) break; out = out (out == "" ? "" : " ") $i } print out; exit }' <<<"$choice")"
+  reconnect_bus "$bus" "$print_only"
+  if [ "$print_only" -eq 1 ]; then
+    printf 'device %s\n' "$label"
+  else
+    notify-send "USB headset" "✅ Reconectado: $label" 2>/dev/null || true
+  fi
+}
+
 nickname_cmd() {
   local print_only=0 choice bus key name
   if [ "${1:-}" = "--print" ]; then
@@ -241,7 +283,7 @@ nickname_cmd() {
 
 usage() {
   cat <<'EOF'
-usage: hypr-usb-menu status|open|reconnect [--print]|nickname [--print]
+usage: hypr-usb-menu status|open|reconnect [--print]|reconnect-headset [--print]|nickname [--print]
 EOF
 }
 
@@ -249,6 +291,7 @@ case "${1:-status}" in
   status) status_cmd ;;
   open) open_cmd ;;
   reconnect) shift; reconnect_cmd "$@" ;;
+  reconnect-headset) shift; reconnect_headset_cmd "$@" ;;
   nickname) shift; nickname_cmd "$@" ;;
   -h|--help|help) usage ;;
   *) usage >&2; exit 2 ;;
