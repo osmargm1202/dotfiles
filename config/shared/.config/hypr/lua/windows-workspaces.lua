@@ -1,15 +1,33 @@
 -- Hyprland 0.55 Lua window rules.
 
+local function current_theme_name()
+  local state_home = os.getenv("XDG_STATE_HOME") or ((os.getenv("HOME") or "") .. "/.local/state")
+  local file = io.open(state_home .. "/orgm-theme/current", "r")
+  if not file then
+    return "orgm-dark"
+  end
+  local theme = file:read("*l") or "orgm-dark"
+  file:close()
+  return theme
+end
+
+local light_mode = current_theme_name() == "orgm-light"
+local opaque = "1.0 override 1.0 override 1.0 override"
+local base_opacity = light_mode and opaque or "0.96 override 0.96 override 1.0 override"
+local file_opacity = light_mode and opaque or "0.88 override 0.88 override 1.0 override"
+local terminal_opacity = light_mode and opaque or "0.85 override 0.85 override 1.0 override"
+local browser_opacity = light_mode and opaque or "0.90 override 0.90 override 1.0 override"
+
 local opacity_rules = {
-  { class = ".*", opacity = "0.96 override 0.96 override 1.0 override" },
-  -- Nautilus/Files uses an opaque GTK4/libadwaita surface; make it visibly translucent
-  -- so Hyprland blur is noticeable behind the window.
-  { class = "^(org.gnome.Nautilus)$", opacity = "0.88 override 0.88 override 1.0 override" },
-  { class = "^(kitty)$", opacity = "0.85 override 0.85 override 1.0 override" },
-  { class = "^(app.zen_browser.zen)$", opacity = "0.90 override 0.90 override 1.0 override" },
-  { class = "^(zen-browser)$", opacity = "0.90 override 0.90 override 1.0 override" },
-  { class = "^(chromium)$", opacity = "0.90 override 0.90 override 1.0 override" },
-  { class = "^(Chromium)$", opacity = "0.90 override 0.90 override 1.0 override" },
+  { class = ".*", opacity = base_opacity },
+  -- Dark mode uses translucent windows so Hyprland blur is noticeable behind them.
+  -- Light mode is fully opaque to preserve contrast and avoid washed-out terminals.
+  { class = "^(org.gnome.Nautilus)$", opacity = file_opacity },
+  { class = "^(kitty)$", opacity = terminal_opacity },
+  { class = "^(app.zen_browser.zen)$", opacity = browser_opacity },
+  { class = "^(zen-browser)$", opacity = browser_opacity },
+  { class = "^(chromium)$", opacity = browser_opacity },
+  { class = "^(Chromium)$", opacity = browser_opacity },
 }
 
 for _, rule in ipairs(opacity_rules) do

@@ -27,6 +27,7 @@ PATH="$TMP/bin:$PATH" \
 
 WAYBAR="$TMP/config/waybar-hypr/orgm-current.css"
 GTK="$TMP/config/gtk-4.0/gtk.css"
+KITTY="$TMP/config/kitty/current-theme.conf"
 
 assert_contains() {
   local file="$1"
@@ -55,6 +56,30 @@ assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color base #fffff
 assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color surface #e5e7ebff;'
 assert_contains "$GTK" '@define-color window_fg_color #111827;'
 assert_contains "$GTK" '@define-color accent_color #0057d9;'
+assert_contains "$KITTY" 'background_opacity 1.0'
+
+HYPR_RULES=$(ROOT="$ROOT" XDG_STATE_HOME="$TMP/state" HOME="$TMP/home" lua - <<'LUA'
+hl = {}
+function hl.window_rule(rule)
+  if rule.match and rule.match.class and rule.opacity then
+    print(rule.match.class .. "=" .. rule.opacity)
+  end
+end
+dofile(os.getenv("ROOT") .. "/config/shared/.config/hypr/lua/windows-workspaces.lua")
+LUA
+)
+if ! grep -Fqx '^(kitty)$=1.0 override 1.0 override 1.0 override' <<<"$HYPR_RULES"; then
+  echo "FAIL: light mode should make kitty fully opaque at Hyprland level" >&2
+  echo "--- hypr rules ---" >&2
+  printf '%s\n' "$HYPR_RULES" >&2
+  exit 1
+fi
+if ! grep -Fqx '.*=1.0 override 1.0 override 1.0 override' <<<"$HYPR_RULES"; then
+  echo "FAIL: light mode should make global Hyprland opacity fully opaque" >&2
+  echo "--- hypr rules ---" >&2
+  printf '%s\n' "$HYPR_RULES" >&2
+  exit 1
+fi
 
 for style in "$ROOT/config/shared/.config/waybar/style.css" "$ROOT/config/shared/.config/waybar-hypr/style.css"; do
   grep -Eq '^#group-usage, .*\{ color: @text; \}$' "$style" || {
