@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 
 	"github.com/osmargm1202/nixos/internal/cli"
 	"github.com/osmargm1202/nixos/internal/wallpaper"
@@ -141,6 +142,19 @@ func runWithIO(args []string, stdout, stderr io.Writer) error {
 			return cli.UsageError("usage: orgm-wallpaper set-video PATH")
 		}
 		return m.SetVideo(args[1])
+	case "warm-page":
+		if len(args) != 4 {
+			return cli.UsageError("usage: orgm-wallpaper warm-page [static|video] PAGE PAGE_SIZE")
+		}
+		page, err := strconv.Atoi(args[2])
+		if err != nil {
+			return cli.UsageError("invalid PAGE: %s", args[2])
+		}
+		pageSize, err := strconv.Atoi(args[3])
+		if err != nil {
+			return cli.UsageError("invalid PAGE_SIZE: %s", args[3])
+		}
+		return m.WarmPage(args[1], page, pageSize)
 	case "pick":
 		return m.MenuPick()
 	case "picker-daemon":
@@ -162,5 +176,5 @@ func (f *csvFlag) Set(value string) error {
 }
 
 func usage() string {
-	return "usage: orgm-wallpaper [data|status|clean-thumbs|restore|set-static|set-video|random|random-static|pick|picker-daemon|daemon]"
+	return "usage: orgm-wallpaper [data|status|clean-thumbs|restore|set-static|set-video|random|random-static|warm-page|pick|picker-daemon|daemon]"
 }

@@ -66,6 +66,46 @@ func TestStatusAcceptsMonitorFlag(t *testing.T) {
 	}
 }
 
+func TestWarmPageGeneratesVideoThumbnail(t *testing.T) {
+	root := t.TempDir()
+	bin := filepath.Join(root, "bin")
+	writeExecutable(t, filepath.Join(bin, "ffmpeg"), "#!/bin/sh\nfor last do :; done\nmkdir -p \"$(dirname \"$last\")\"\nprintf x >\"$last\"\n")
+
+	videoDir := filepath.Join(root, "Videos", "wallpapers")
+	video := filepath.Join(videoDir, "new-video.mp4")
+	if err := os.MkdirAll(videoDir, 0o755); err != nil {
+		t.Fatalf("mkdir video dir: %v", err)
+	}
+	if err := os.WriteFile(video, []byte("video"), 0o600); err != nil {
+		t.Fatalf("write video: %v", err)
+	}
+
+	stateDir := filepath.Join(root, "state", "hypr-wallpaper")
+	if err := os.MkdirAll(stateDir, 0o755); err != nil {
+		t.Fatalf("mkdir state dir: %v", err)
+	}
+	manifest := filepath.Join(stateDir, "wallpaper-picker.tsv")
+	if err := os.WriteFile(manifest, []byte("video\t"+video+"\n"), 0o644); err != nil {
+		t.Fatalf("write manifest: %v", err)
+	}
+
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("HOME", root)
+	t.Setenv("XDG_STATE_HOME", filepath.Join(root, "state"))
+	t.Setenv("XDG_RUNTIME_DIR", filepath.Join(root, "runtime"))
+	t.Setenv("HYPR_VIDEO_WALLPAPER_DIR", videoDir)
+
+	var stdout, stderr bytes.Buffer
+	if err := runWithIO([]string{"warm-page", "video", "0", "16"}, &stdout, &stderr); err != nil {
+		t.Fatalf("runWithIO warm-page error = %v stderr=%s", err, stderr.String())
+	}
+
+	thumb := filepath.Join(videoDir, ".thumb", "new-video.mp4.jpg")
+	if info, err := os.Stat(thumb); err != nil || info.Size() == 0 {
+		t.Fatalf("thumb %s missing or empty: info=%v err=%v", thumb, info, err)
+	}
+}
+
 func writeExecutable(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
