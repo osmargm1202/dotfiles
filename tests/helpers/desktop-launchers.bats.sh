@@ -3,7 +3,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
-if rg -n 'Exec=/nix/store/.*/distrobox|Exec=orgmos menu|Exec=orgm prop|Exec=/usr/bin/opencode-desktop' "$ROOT/config/hosts"; then
+if rg --hidden -n 'Exec=/nix/store/.*/distrobox|Exec=orgmos menu|Exec=orgm prop|Exec=/usr/bin/opencode-desktop|flatpak run com\.valvesoftware\.Steam' "$ROOT/config/hosts"; then
   fail "found stale desktop launcher Exec"
 fi
 
