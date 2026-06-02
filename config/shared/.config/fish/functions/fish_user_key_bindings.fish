@@ -25,4 +25,11 @@ function fish_user_key_bindings
     bind \e/ list-op -M insert
 
     bind \ea aichat_fish -M insert
+
+    if functions -q runerr_bind
+        bind \r runerr_bind -M insert
+        bind \n runerr_bind -M insert
+        bind -M default \r runerr_bind
+        bind -M default \n runerr_bind
+    end
 end

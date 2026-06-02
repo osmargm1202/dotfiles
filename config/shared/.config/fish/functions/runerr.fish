@@ -11,8 +11,10 @@ function runerr --description 'Ejecuta comando y guarda salida solo si falla'
     set -l err_file "$cache_dir/fish_last_error.log"
     mkdir -p $cache_dir
 
+    set -l cmd (string join ' ' $argv)
+
     # Ejecuta el comando y mantiene salida viva en terminal.
-    eval $argv 2>&1 | tee $err_file
+    eval "$cmd" 2>&1 | tee $err_file
     set -l cmd_status $pipestatus[1]
 
     if test $cmd_status -ne 0
