@@ -157,6 +157,9 @@ func saveCurrentWallpaperForTheme(stateHome, themeName string) error {
 	if strings.TrimSpace(themeName) == "" {
 		return nil
 	}
+	if err := validateThemeName(themeName); err != nil {
+		return nil
+	}
 	wallpaperState := filepath.Join(stateHome, "hypr-wallpaper", "state")
 	values := readStateFile(wallpaperState)
 	path := values["path"]

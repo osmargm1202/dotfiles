@@ -46,6 +46,32 @@ func TestApplyWritesStateRenderedFilesAndSavesOutgoingWallpaper(t *testing.T) {
 	}
 }
 
+func TestApplySkipsInvalidPersistedPreviousThemeName(t *testing.T) {
+	root := t.TempDir()
+	paths := newApplyTestPaths(t, root)
+	writeTestTheme(t, paths.themesDir, "orgm-light")
+	writeFile(t, filepath.Join(paths.stateHome, "orgm-theme", "current"), "../evil\n")
+	writeFile(t, filepath.Join(paths.stateHome, "hypr-wallpaper", "state"), "mode=static\npath=/wallpapers/dark.png\n")
+	writeFile(t, filepath.Join(paths.stateHome, "hypr-wallpaper", "monitors", "DP-1.state"), "mode=static\npath=/wallpapers/dark-dp1.png\n")
+
+	_, err := Apply(ApplyOptions{
+		ThemeName: "orgm-light",
+		NoReload:  true,
+		Env:       Env{ConfigHome: paths.configHome, DataHome: paths.dataHome},
+		StateHome: paths.stateHome,
+		ThemesDir: paths.themesDir,
+		Home:      paths.home,
+		Runner:    &recordingRunner{},
+	})
+	if err != nil {
+		t.Fatalf("Apply error = %v, want invalid previous theme skipped", err)
+	}
+	outside := filepath.Join(paths.stateHome, "orgm-theme", "evil.state")
+	if _, err := os.Stat(outside); !os.IsNotExist(err) {
+		t.Fatalf("outside state stat error = %v, want not exist", err)
+	}
+}
+
 func TestApplyRestoresIncomingMonitorWallpapersAfterWrites(t *testing.T) {
 	root := t.TempDir()
 	paths := newApplyTestPaths(t, root)
