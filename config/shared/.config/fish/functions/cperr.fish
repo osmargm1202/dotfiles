@@ -14,15 +14,11 @@ function cperr --description 'Copia al portapapeles la salida del último error'
         return 1
     end
 
-    if command -q wl-copy
-        cat "$__fish_last_error_file" | wl-copy
-    else if command -q xclip
-        cat "$__fish_last_error_file" | xclip -selection clipboard
-    else
-        echo "Instala wl-copy o xclip para copiar al portapapeles."
-        return 1
+    if cat "$__fish_last_error_file" | clipboard_copy
+        echo "Último error copiado al portapapeles."
+        return 0
     end
 
-    echo "Último error copiado al portapapeles."
-    return 0
+    echo "No se pudo copiar al portapapeles. Instalá wl-copy/xclip en host/guest o revisá entorno."
+    return 1
 end
