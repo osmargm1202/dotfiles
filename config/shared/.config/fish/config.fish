@@ -120,6 +120,10 @@ if type -q curl
     alias ipinfo="curl -s ipinfo.io"
 end
 
+if type -q ssh
+    alias ssh='env TERM=xterm-256color ssh'
+end
+
 # set TERM xterm-256color
 
 if type -q nano
