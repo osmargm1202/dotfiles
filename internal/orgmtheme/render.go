@@ -21,11 +21,11 @@ type PlannedWrite struct {
 
 // BuildWrites renders active desktop theme files without writing them.
 func BuildWrites(env Env, theme Theme) ([]PlannedWrite, error) {
-	if env.ConfigHome == "" {
-		return nil, fmt.Errorf("ConfigHome is required")
+	if env.ConfigHome == "" || !filepath.IsAbs(env.ConfigHome) {
+		return nil, fmt.Errorf("ConfigHome must be an absolute path")
 	}
-	if env.DataHome == "" {
-		return nil, fmt.Errorf("DataHome is required")
+	if env.DataHome == "" || !filepath.IsAbs(env.DataHome) {
+		return nil, fmt.Errorf("DataHome must be an absolute path")
 	}
 
 	gtkSettings := renderGTKSettings(theme)

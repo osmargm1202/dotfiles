@@ -1,6 +1,6 @@
 {
   "path": "sdd-orchestrator/orgm-themes-go/tdd/build-progress",
-  "group": "Task 2: Render active files exactly enough for current tests",
+  "group": "Task 2 code quality fix: absolute BuildWrites roots",
   "status": "completed",
   "files_changed": [
     "internal/orgmtheme/render.go",
@@ -9,14 +9,12 @@
   ],
   "tdd_applicability_reason": null,
   "verification": [
-    "Strict TDD support module lookup attempted at .pi/agent/assets/support/strict-tdd.md, .pi/assets/support/strict-tdd.md, and ~/.pi/agent/assets/support/strict-tdd.md; no file existed in this workspace/environment",
-    "RED: go test ./internal/orgmtheme -run 'TestRender' -count=1 failed because Env, BuildWrites, and PlannedWrite were undefined",
-    "GREEN: go test ./internal/orgmtheme -run 'TestRender' -count=1 passed after adding render tests and renderers",
-    "FINAL: go test ./internal/orgmtheme ./cmd/orgm-themes -count=1 passed",
-    "FORMAT CHECK: gofmt -d internal/orgmtheme/render.go internal/orgmtheme/render_test.go produced no diff"
+    "Strict TDD support module lookup attempted at .pi/agent/assets/support/strict-tdd.md, .pi/assets/support/strict-tdd.md, and ~/.pi/agent/assets/support/strict-tdd.md; no file existed in this workspace/environment. Repo source copy read from config/shared/.pi/agent/assets/support/strict-tdd.md for workflow guidance.",
+    "Safety net: go test ./internal/orgmtheme ./cmd/orgm-themes -count=1 passed before edits",
+    "RED: go test ./internal/orgmtheme -run 'TestBuildWritesRejectsRelativeRoots' -count=1 failed because BuildWrites accepted relative ConfigHome",
+    "GREEN: go test ./internal/orgmtheme -run 'TestBuildWritesRejectsRelativeRoots' -count=1 passed after requiring absolute ConfigHome/DataHome",
+    "FORMAT CHECK: gofmt -d internal/orgmtheme/render.go internal/orgmtheme/render_test.go produced no diff",
+    "FINAL: go test ./internal/orgmtheme ./cmd/orgm-themes -count=1 passed"
   ],
-  "risks": [
-    "BuildWrites covers Bash helper active render file paths, excluding state/current writes, Pi settings, gsettings, reload, and wallpaper behavior reserved for later apply tasks",
-    "Render tests assert required orgm-light fixture outputs and active path list; they are not full snapshots of every rendered byte"
-  ]
+  "risks": []
 }

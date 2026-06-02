@@ -32,6 +32,21 @@ func TestRenderOrgmLightFixtureActiveFiles(t *testing.T) {
 	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"accent": "#0057d9"`)
 }
 
+func TestBuildWritesRejectsRelativeRoots(t *testing.T) {
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-light")
+	if err != nil {
+		t.Fatalf("LoadTheme orgm-light fixture error = %v", err)
+	}
+	abs := t.TempDir()
+
+	if _, err := BuildWrites(Env{ConfigHome: "relative", DataHome: abs}, theme); err == nil {
+		t.Fatal("BuildWrites succeeded with relative ConfigHome, want error")
+	}
+	if _, err := BuildWrites(Env{ConfigHome: abs, DataHome: "relative"}, theme); err == nil {
+		t.Fatal("BuildWrites succeeded with relative DataHome, want error")
+	}
+}
+
 func TestRenderActivePathsMatchBashHelper(t *testing.T) {
 	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-light")
 	if err != nil {
