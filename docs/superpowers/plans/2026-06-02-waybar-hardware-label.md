@@ -38,7 +38,7 @@ Expected: command exits with status 0 before implementation. If the file already
 
 - [ ] **Step 2: Create detailed Fastfetch config**
 
-Create `config/shared/.config/fastfetch/hardware.jsonc` with hardware, system, display, storage, and session sections. Use existing ORGM logo.
+Create `config/shared/.config/fastfetch/hardware.jsonc` with hardware, system, display, storage, and session sections. Do not force the ORGM image logo; let Fastfetch use the system logo automatically.
 
 - [ ] **Step 3: Validate Fastfetch config**
 

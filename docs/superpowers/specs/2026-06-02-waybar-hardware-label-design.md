@@ -68,7 +68,7 @@ Recommended sections:
 - Display and storage: Display, Disk, PhysicalDisk, Memory, Swap.
 - Session: Uptime, Locale, Battery when present, colors.
 
-The config should use existing ORGM logo styling so it feels consistent with current Fastfetch.
+The config should not force an ORGM image logo. It should let Fastfetch choose the system logo automatically, so the host shows the NixOS/System logo.
 
 ## Behavior
 
