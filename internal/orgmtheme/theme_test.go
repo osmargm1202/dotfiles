@@ -4,12 +4,19 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
 func writeTestTheme(t *testing.T, dir, name string) {
 	t.Helper()
-	content := `THEME_NAME=` + name + `
+	if err := os.WriteFile(filepath.Join(dir, name+".env"), []byte(validThemeEnv(name)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func validThemeEnv(name string) string {
+	return `THEME_NAME=` + name + `
 COLOR_SCHEME=prefer-light
 GTK_THEME=Adwaita
 ICON_THEME=Adwaita
@@ -50,9 +57,6 @@ QS_EVENT=ffffffff
 QS_HOVER=93c5fdff
 ON_ACCENT=ffffff
 `
-	if err := os.WriteFile(filepath.Join(dir, name+".env"), []byte(content), 0o644); err != nil {
-		t.Fatal(err)
-	}
 }
 
 func TestLoadThemeEnv(t *testing.T) {
@@ -75,6 +79,32 @@ func TestLoadThemeMissingRequiredKey(t *testing.T) {
 	_, err := LoadTheme(dir, "bad")
 	if err == nil {
 		t.Fatal("LoadTheme succeeded, want required key error")
+	}
+}
+
+func TestLoadThemeRejectsInvalidNamesBeforeReading(t *testing.T) {
+	root := t.TempDir()
+	themesDir := filepath.Join(root, "themes")
+	if err := os.MkdirAll(themesDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeTestTheme(t, root, "evil")
+	if err := os.MkdirAll(filepath.Join(themesDir, "nested"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeTestTheme(t, filepath.Join(themesDir, "nested"), "evil")
+	if err := os.WriteFile(filepath.Join(themesDir, ".env"), []byte(validThemeEnv("empty-name")), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, name := range []string{"", "../evil", "nested/evil", filepath.Join(root, "evil")} {
+		_, err := LoadTheme(themesDir, name)
+		if err == nil {
+			t.Fatalf("LoadTheme(%q) succeeded, want invalid name error", name)
+		}
+		if !strings.Contains(err.Error(), "invalid theme name") {
+			t.Fatalf("LoadTheme(%q) error = %v, want invalid theme name", name, err)
+		}
 	}
 }
 

@@ -1,26 +1,20 @@
 {
   "path": "sdd-orchestrator/orgm-themes-go/tdd/build-progress",
-  "group": "Task 1: Theme loader and CLI skeleton",
+  "group": "Task 1 code quality issue: LoadTheme theme name validation",
   "status": "completed",
   "files_changed": [
     "internal/orgmtheme/theme.go",
     "internal/orgmtheme/theme_test.go",
-    "cmd/orgm-themes/main.go",
-    "cmd/orgm-themes/main_test.go",
     "sdd-orchestrator/orgm-themes-go/tdd/build-progress"
   ],
   "tdd_applicability_reason": null,
   "verification": [
     "Strict TDD support module lookup attempted at .pi/agent/assets/support/strict-tdd.md, .pi/assets/support/strict-tdd.md, and ~/.pi/agent/assets/support/strict-tdd.md; no file existed in this workspace/environment",
-    "RED loader: go test ./internal/orgmtheme -run 'TestLoadTheme|TestListThemes' -count=1 failed with undefined LoadTheme/ListThemes",
-    "GREEN loader: go test ./internal/orgmtheme -run 'TestLoadTheme|TestListThemes' -count=1 passed",
-    "RED CLI: go test ./cmd/orgm-themes -run 'TestList|TestCurrent|TestStatus|TestMissing' -count=1 failed with undefined runWithIO",
-    "FINAL: gofmt -d internal/orgmtheme/theme.go internal/orgmtheme/theme_test.go cmd/orgm-themes/main.go cmd/orgm-themes/main_test.go produced no output",
+    "RED: go test ./internal/orgmtheme -run 'TestLoadThemeRejectsInvalidNamesBeforeReading|TestLoadThemeEnv' -count=1 failed because LoadTheme(\"\") succeeded, proving invalid names were not rejected before reading",
+    "GREEN: go test ./internal/orgmtheme -run 'TestLoadThemeRejectsInvalidNamesBeforeReading|TestLoadThemeEnv' -count=1 passed after adding theme name validation",
     "FINAL: go test ./internal/orgmtheme ./cmd/orgm-themes -count=1 passed"
   ],
   "risks": [
-    "apply and toggle intentionally return clear not-implemented usage errors until Task 3",
-    "requirements/explore/build-progress files for change orgm-themes-go were absent before work; progress file was created for this task",
-    "shared strict TDD support module was unavailable at all required lookup paths"
+    "Validation is intentionally minimal: empty names, absolute paths, path traversal forms, and OS filepath separators are rejected; orgm-light remains accepted by existing loader test"
   ]
 }

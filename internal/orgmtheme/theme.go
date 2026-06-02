@@ -98,6 +98,9 @@ var requiredThemeKeys = []string{
 
 // LoadTheme reads themesDir/name.env and validates required keys.
 func LoadTheme(themesDir, name string) (Theme, error) {
+	if err := validateThemeName(name); err != nil {
+		return Theme{}, err
+	}
 	values, err := readThemeEnv(filepath.Join(themesDir, name+".env"))
 	if err != nil {
 		return Theme{}, err
@@ -166,6 +169,22 @@ func ListThemes(themesDir string) ([]string, error) {
 	}
 	sort.Strings(themes)
 	return themes, nil
+}
+
+func validateThemeName(name string) error {
+	if name == "" {
+		return fmt.Errorf("invalid theme name %q: name is empty", name)
+	}
+	if filepath.IsAbs(name) {
+		return fmt.Errorf("invalid theme name %q: absolute paths are not allowed", name)
+	}
+	if name == "." || name == ".." || filepath.Clean(name) != name {
+		return fmt.Errorf("invalid theme name %q: path traversal is not allowed", name)
+	}
+	if strings.ContainsRune(name, filepath.Separator) {
+		return fmt.Errorf("invalid theme name %q: path separators are not allowed", name)
+	}
+	return nil
 }
 
 func readThemeEnv(path string) (map[string]string, error) {
