@@ -405,4 +405,3 @@ git commit -m "feat: add orgm-themes go helper"
 ```
 
 Commit NixOS packaging separately in `/home/osmarg/Hobby/nixos`.
-

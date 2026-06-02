@@ -95,4 +95,3 @@ Add Nix package `orgm-themes` in `/home/osmarg/Hobby/nixos`, based on existing `
 - `go test ./...`
 - `bash tests/helpers/orgm-theme-light-contrast.bats.sh`
 - `bash tests/helpers/orgm-theme-wallpaper.bats.sh`
-
