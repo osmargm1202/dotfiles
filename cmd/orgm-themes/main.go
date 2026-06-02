@@ -52,12 +52,27 @@ func runWithIO(args []string, stdout, stderr io.Writer, env map[string]string) e
 		fmt.Fprintf(stdout, "Theme: %s\nGTK: %s\nIcons: %s\nCursor: %s %s\nColor scheme: %s\nPi theme: %s\n", theme.Name, theme.GTKTheme, theme.IconTheme, theme.CursorTheme, theme.CursorSize, theme.ColorScheme, theme.PITheme)
 		return nil
 	case "apply":
-		if len(args) != 2 {
-			return cli.UsageError("usage: orgm-themes apply THEME")
+		options, err := applyOptionsFromArgs(args[1:], paths)
+		if err != nil {
+			return err
 		}
-		return cli.UsageError("orgm-themes apply is not implemented yet")
+		result, err := orgmtheme.Apply(options)
+		if err != nil {
+			return err
+		}
+		printApplied(stdout, result)
+		return nil
 	case "toggle":
-		return cli.UsageError("orgm-themes toggle is not implemented yet")
+		name := "orgm-light"
+		if currentTheme(paths.currentFile) == "orgm-light" {
+			name = "orgm-dark"
+		}
+		result, err := orgmtheme.Apply(applyOptions(paths, name, false, false, false))
+		if err != nil {
+			return err
+		}
+		printApplied(stdout, result)
+		return nil
 	case "-h", "--help", "help":
 		fmt.Fprintln(stdout, usage())
 		return nil
@@ -67,6 +82,10 @@ func runWithIO(args []string, stdout, stderr io.Writer, env map[string]string) e
 }
 
 type themePaths struct {
+	home        string
+	configHome  string
+	dataHome    string
+	stateHome   string
 	themesDir   string
 	currentFile string
 }
@@ -81,11 +100,19 @@ func pathsFromEnv(env map[string]string) themePaths {
 	if stateHome == "" {
 		stateHome = filepath.Join(home, ".local", "state")
 	}
+	dataHome := env["XDG_DATA_HOME"]
+	if dataHome == "" {
+		dataHome = filepath.Join(home, ".local", "share")
+	}
 	themesDir := env["ORGM_THEMES_DIR"]
 	if themesDir == "" {
 		themesDir = filepath.Join(configHome, "orgm-theme", "themes")
 	}
 	return themePaths{
+		home:        home,
+		configHome:  configHome,
+		dataHome:    dataHome,
+		stateHome:   stateHome,
 		themesDir:   themesDir,
 		currentFile: filepath.Join(stateHome, "orgm-theme", "current"),
 	}
@@ -101,6 +128,46 @@ func currentTheme(path string) string {
 		return "orgm-dark"
 	}
 	return name
+}
+
+func applyOptionsFromArgs(args []string, paths themePaths) (orgmtheme.ApplyOptions, error) {
+	if len(args) < 1 {
+		return orgmtheme.ApplyOptions{}, cli.UsageError("usage: orgm-themes apply THEME [--no-reload]")
+	}
+	themeName := args[0]
+	noReload := false
+	dryRun := false
+	printReload := false
+	for _, arg := range args[1:] {
+		switch arg {
+		case "--no-reload":
+			noReload = true
+		case "--dry-run":
+			dryRun = true
+		case "--print-reload":
+			printReload = true
+		default:
+			return orgmtheme.ApplyOptions{}, cli.UsageError("unexpected apply argument: %s", arg)
+		}
+	}
+	return applyOptions(paths, themeName, noReload, dryRun, printReload), nil
+}
+
+func applyOptions(paths themePaths, themeName string, noReload, dryRun, printReload bool) orgmtheme.ApplyOptions {
+	return orgmtheme.ApplyOptions{
+		ThemeName:   themeName,
+		NoReload:    noReload,
+		DryRun:      dryRun,
+		PrintReload: printReload,
+		Env:         orgmtheme.Env{ConfigHome: paths.configHome, DataHome: paths.dataHome},
+		StateHome:   paths.stateHome,
+		ThemesDir:   paths.themesDir,
+		Home:        paths.home,
+	}
+}
+
+func printApplied(stdout io.Writer, result orgmtheme.ApplyResult) {
+	fmt.Fprintf(stdout, "Applied %s\n", result.ThemeName)
 }
 
 func osEnvMap() map[string]string {
@@ -121,6 +188,7 @@ commands:
   list              list available themes
   current           print current theme
   status            show current theme and key toolkit settings
-  apply THEME       apply theme (not implemented yet)
-  toggle            toggle orgm-dark/orgm-light (not implemented yet)`
+  apply THEME [--no-reload]
+                    apply theme
+  toggle            toggle orgm-dark/orgm-light`
 }
