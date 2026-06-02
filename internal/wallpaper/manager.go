@@ -457,7 +457,31 @@ func hasCommandOrPath(path string) bool {
 }
 
 func (m *Manager) StopMPVPaper() {
-	if b, err := os.ReadFile(m.MPVPaperPIDFile); err == nil {
+	m.stopMPVPaperPIDFile(m.MPVPaperPIDFile)
+	entries, err := os.ReadDir(m.RuntimeDir)
+	if err == nil {
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasPrefix(entry.Name(), "hypr-random-wallpaper.mpvpaper.") || !strings.HasSuffix(entry.Name(), ".pid") {
+				continue
+			}
+			m.stopMPVPaperPIDFile(filepath.Join(m.RuntimeDir, entry.Name()))
+		}
+	}
+	m.runIgnore("pkill", "-f", mpvpaperWallpaperPattern)
+	if commandExists("distrobox-host-exec") {
+		m.runIgnore("distrobox-host-exec", "sh", "-lc", "pkill -f "+shellQuote(mpvpaperWallpaperPattern)+" >/dev/null 2>&1 || true")
+	}
+}
+
+func (m *Manager) StopMPVPaperForMonitor(output string) {
+	if output == "" {
+		return
+	}
+	m.stopMPVPaperPIDFile(m.monitorMPVPaperPIDFile(output))
+}
+
+func (m *Manager) stopMPVPaperPIDFile(pidFile string) {
+	if b, err := os.ReadFile(pidFile); err == nil {
 		pid := strings.TrimSpace(string(b))
 		if isNumeric(pid) {
 			out, _ := exec.Command("ps", "-p", pid, "-o", "command=").Output()
@@ -467,12 +491,12 @@ func (m *Manager) StopMPVPaper() {
 				m.runIgnore(m.KillBin, "-KILL", pid)
 			}
 		}
-		_ = os.Remove(m.MPVPaperPIDFile)
+		_ = os.Remove(pidFile)
 	}
-	m.runIgnore("pkill", "-f", mpvpaperWallpaperPattern)
-	if commandExists("distrobox-host-exec") {
-		m.runIgnore("distrobox-host-exec", "sh", "-lc", "pkill -f "+shellQuote(mpvpaperWallpaperPattern)+" >/dev/null 2>&1 || true")
-	}
+}
+
+func (m *Manager) monitorMPVPaperPIDFile(output string) string {
+	return filepath.Join(m.RuntimeDir, "hypr-random-wallpaper.mpvpaper."+sanitizeOutputName(output)+".pid")
 }
 
 func isNumeric(s string) bool {
@@ -500,6 +524,18 @@ func (m *Manager) useNvidiaOffload() (bool, error) {
 
 func (m *Manager) StartMPVPaper(video string) error {
 	m.StopMPVPaper()
+	return m.startMPVPaperForTarget(video, "*", m.MPVPaperPIDFile, true)
+}
+
+func (m *Manager) StartMPVPaperForMonitor(video, output string) error {
+	if output == "" {
+		return fmt.Errorf("monitor output is required")
+	}
+	m.StopMPVPaperForMonitor(output)
+	return m.startMPVPaperForTarget(video, output, m.monitorMPVPaperPIDFile(output), false)
+}
+
+func (m *Manager) startMPVPaperForTarget(video, output, pidFile string, stopAll bool) error {
 	if hasCommandOrPath(m.MPVPaperBin) {
 		useOffload, err := m.useNvidiaOffload()
 		if err != nil {
@@ -511,22 +547,29 @@ func (m *Manager) StartMPVPaper(video string) error {
 			args = append(args, m.MPVPaperBin)
 			bin = "nvidia-offload"
 		}
-		args = append(args, "-o", m.MPVOptions, "*", video)
+		args = append(args, "-o", m.MPVOptions, output, video)
 		cmd := m.cmd(bin, args...)
 		cmd.Stdout, cmd.Stderr = logFile("/tmp/mpvpaper.log")
 		if err := cmd.Start(); err != nil {
 			return err
 		}
-		_ = os.WriteFile(m.MPVPaperPIDFile, []byte(strconv.Itoa(cmd.Process.Pid)+"\n"), 0o644)
+		_ = os.MkdirAll(filepath.Dir(pidFile), 0o755)
+		_ = os.WriteFile(pidFile, []byte(strconv.Itoa(cmd.Process.Pid)+"\n"), 0o644)
 	} else if commandExists("distrobox-host-exec") {
 		opts := shellQuote(m.MPVOptions)
 		videoQ := shellQuote(video)
+		outputQ := shellQuote(output)
+		pidQ := shellQuote(pidFile)
+		prefix := ""
+		if stopAll {
+			prefix = fmt.Sprintf("pkill -f %s >/dev/null 2>&1 || true; ", shellQuote(mpvpaperWallpaperPattern))
+		}
 		script := ""
 		switch m.MPVGPU {
 		case "nvidia", "auto":
-			script = fmt.Sprintf("pkill -f %s >/dev/null 2>&1 || true; ( if command -v nvidia-offload >/dev/null 2>&1; then exec nvidia-offload mpvpaper -o %s '*' %s; else exec mpvpaper -o %s '*' %s; fi ) >/tmp/mpvpaper.log 2>&1 &", shellQuote(mpvpaperWallpaperPattern), opts, videoQ, opts, videoQ)
+			script = fmt.Sprintf("%s( if command -v nvidia-offload >/dev/null 2>&1; then nvidia-offload mpvpaper -o %s %s %s; else mpvpaper -o %s %s %s; fi ) >/tmp/mpvpaper.log 2>&1 & echo $! >%s", prefix, opts, outputQ, videoQ, opts, outputQ, videoQ, pidQ)
 		default:
-			script = fmt.Sprintf("pkill -f %s >/dev/null 2>&1 || true; mpvpaper -o %s '*' %s >/tmp/mpvpaper.log 2>&1 &", shellQuote(mpvpaperWallpaperPattern), opts, videoQ)
+			script = fmt.Sprintf("%smpvpaper -o %s %s %s >/tmp/mpvpaper.log 2>&1 & echo $! >%s", prefix, opts, outputQ, videoQ, pidQ)
 		}
 		m.runIgnore("distrobox-host-exec", "sh", "-lc", script)
 	} else {
@@ -611,7 +654,7 @@ func (m *Manager) SetStaticForMonitor(path, output, mode string) error {
 	if !fileExists(path) {
 		return fmt.Errorf("Wallpaper not found: %s", path)
 	}
-	m.StopMPVPaper()
+	m.StopMPVPaperForMonitor(output)
 	if err := m.WriteMonitorState(output, mode, path); err != nil {
 		return err
 	}
@@ -694,6 +737,27 @@ func (m *Manager) SetVideo(path string) error {
 	return m.WriteState("video", path)
 }
 
+func (m *Manager) SetVideoForMonitor(path, output string) error {
+	if err := m.ensureDirs(); err != nil {
+		return err
+	}
+	m.StopOldDaemon()
+	if output == "" {
+		return fmt.Errorf("monitor output is required")
+	}
+	if !fileExists(path) {
+		return fmt.Errorf("Video wallpaper not found: %s", path)
+	}
+	if err := m.WriteMonitorState(output, "video", path); err != nil {
+		return err
+	}
+	if err := m.StartMPVPaperForMonitor(path, output); err != nil {
+		return err
+	}
+	m.ensureLockWallpaper()
+	return m.WriteState("video", path)
+}
+
 func (m *Manager) SetRandomVideo() error {
 	video, err := m.pickVideo()
 	if err != nil {
@@ -703,6 +767,17 @@ func (m *Manager) SetRandomVideo() error {
 		return fmt.Errorf("No video wallpapers found in %s", m.VideoDir)
 	}
 	return m.SetVideo(video)
+}
+
+func (m *Manager) SetRandomVideoForMonitor(output string) error {
+	video, err := m.pickVideo()
+	if err != nil {
+		return err
+	}
+	if video == "" {
+		return fmt.Errorf("No video wallpapers found in %s", m.VideoDir)
+	}
+	return m.SetVideoForMonitor(video, output)
 }
 
 func (m *Manager) Restore() error {

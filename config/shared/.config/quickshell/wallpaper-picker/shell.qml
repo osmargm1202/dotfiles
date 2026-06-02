@@ -313,7 +313,7 @@ ShellRoot {
         if (!item || !item.path)
           return
         const args = [root.activeTab.applyCommand || (root.activeMode === "video" ? "set-video" : "set-static"), item.path]
-        if (root.activeMode === "static" && root.selectedMonitor.length > 0)
+        if (root.selectedMonitor.length > 0)
           args.push("--monitor", root.selectedMonitor)
         applyProc.command = root.commandWithScriptArgs(args)
         applyProc.startDetached()
@@ -322,7 +322,7 @@ ShellRoot {
 
       function applyRandom() {
         const args = [root.activeTab.randomCommand || (root.activeMode === "video" ? "random-video" : "random-static")]
-        if (root.activeMode === "static" && root.selectedMonitor.length > 0)
+        if (root.selectedMonitor.length > 0)
           args.push("--monitor", root.selectedMonitor)
         applyProc.command = root.commandWithScriptArgs(args)
         applyProc.startDetached()

@@ -110,6 +110,20 @@ func runWithIO(args []string, stdout, stderr io.Writer) error {
 			return m.SetRandomStaticForMonitor(*monitor)
 		}
 		return m.SetRandomStatic()
+	case "random-video":
+		flags := flag.NewFlagSet("orgm-wallpaper random-video", flag.ContinueOnError)
+		flags.SetOutput(stderr)
+		monitor := flags.String("monitor", "", "Hyprland output name")
+		if err := flags.Parse(args[1:]); err != nil {
+			return cli.UsageError(err.Error())
+		}
+		if flags.NArg() != 0 {
+			return cli.UsageError("unexpected argument: %s", flags.Arg(0))
+		}
+		if *monitor != "" {
+			return m.SetRandomVideoForMonitor(*monitor)
+		}
+		return m.SetRandomVideo()
 	case "random":
 		if len(args) < 2 {
 			return cli.UsageError("usage: orgm-wallpaper random [static|video] [--monitor OUTPUT]")
@@ -131,17 +145,30 @@ func runWithIO(args []string, stdout, stderr io.Writer) error {
 			return m.SetRandomStatic()
 		case "video", "live":
 			if *monitor != "" {
-				return cli.UsageError("video wallpapers do not support --monitor yet")
+				return m.SetRandomVideoForMonitor(*monitor)
 			}
 			return m.SetRandomVideo()
 		default:
 			return cli.UsageError("usage: orgm-wallpaper random [static|video] [--monitor OUTPUT]")
 		}
 	case "set-video":
-		if len(args) != 2 {
-			return cli.UsageError("usage: orgm-wallpaper set-video PATH")
+		if len(args) < 2 {
+			return cli.UsageError("usage: orgm-wallpaper set-video PATH [--monitor OUTPUT]")
 		}
-		return m.SetVideo(args[1])
+		path := args[1]
+		flags := flag.NewFlagSet("orgm-wallpaper set-video", flag.ContinueOnError)
+		flags.SetOutput(stderr)
+		monitor := flags.String("monitor", "", "Hyprland output name")
+		if err := flags.Parse(args[2:]); err != nil {
+			return cli.UsageError(err.Error())
+		}
+		if flags.NArg() != 0 {
+			return cli.UsageError("unexpected argument: %s", flags.Arg(0))
+		}
+		if *monitor != "" {
+			return m.SetVideoForMonitor(path, *monitor)
+		}
+		return m.SetVideo(path)
 	case "warm-page":
 		if len(args) != 4 {
 			return cli.UsageError("usage: orgm-wallpaper warm-page [static|video] PAGE PAGE_SIZE")
@@ -176,5 +203,5 @@ func (f *csvFlag) Set(value string) error {
 }
 
 func usage() string {
-	return "usage: orgm-wallpaper [data|status|clean-thumbs|restore|set-static|set-video|random|random-static|warm-page|pick|picker-daemon|daemon]"
+	return "usage: orgm-wallpaper [data|status|clean-thumbs|restore|set-static|set-video|random|random-static|random-video|warm-page|pick|picker-daemon|daemon]"
 }

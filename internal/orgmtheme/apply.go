@@ -240,7 +240,11 @@ func monitorWallpaperCommands(dir string) []Command {
 			continue
 		}
 		output := strings.TrimSuffix(entry.Name(), ".state")
-		commands = append(commands, Command{Name: "orgm-wallpaper", Args: []string{"set-static", path, "--monitor", output}})
+		command := "set-static"
+		if strings.HasPrefix(values["mode"], "video") {
+			command = "set-video"
+		}
+		commands = append(commands, Command{Name: "orgm-wallpaper", Args: []string{command, path, "--monitor", output}})
 	}
 	return commands
 }

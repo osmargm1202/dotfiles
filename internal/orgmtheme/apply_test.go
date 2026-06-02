@@ -104,6 +104,36 @@ func TestApplyRestoresIncomingMonitorWallpapersAfterWrites(t *testing.T) {
 	}
 }
 
+func TestApplyRestoresIncomingVideoMonitorWallpapers(t *testing.T) {
+	root := t.TempDir()
+	paths := newApplyTestPaths(t, root)
+	writeTestTheme(t, paths.themesDir, "orgm-light")
+	writeFile(t, filepath.Join(paths.stateHome, "orgm-theme", "wallpapers", "orgm-light.state"), "mode=static\npath=/wallpapers/light-fallback.png\n")
+	writeFile(t, filepath.Join(paths.stateHome, "orgm-theme", "wallpapers", "orgm-light.monitors", "DP-1.state"), "mode=video\npath=/wallpapers/live-dp1.mp4\n")
+	writeFile(t, filepath.Join(paths.stateHome, "orgm-theme", "wallpapers", "orgm-light.monitors", "HDMI-A-1.state"), "mode=static\npath=/wallpapers/light-hdmi.png\n")
+
+	runner := &recordingRunner{}
+	_, err := Apply(ApplyOptions{
+		ThemeName: "orgm-light",
+		NoReload:  true,
+		Env:       Env{ConfigHome: paths.configHome, DataHome: paths.dataHome},
+		StateHome: paths.stateHome,
+		ThemesDir: paths.themesDir,
+		Home:      paths.home,
+		Runner:    runner,
+	})
+	if err != nil {
+		t.Fatalf("Apply error = %v", err)
+	}
+	want := []Command{
+		{Name: "orgm-wallpaper", Args: []string{"set-video", "/wallpapers/live-dp1.mp4", "--monitor", "DP-1"}},
+		{Name: "orgm-wallpaper", Args: []string{"set-static", "/wallpapers/light-hdmi.png", "--monitor", "HDMI-A-1"}},
+	}
+	if !reflect.DeepEqual(runner.commands, want) {
+		t.Fatalf("runner commands = %#v, want %#v", runner.commands, want)
+	}
+}
+
 func TestApplyRestoresIncomingVideoAndSingleStaticWallpaper(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
