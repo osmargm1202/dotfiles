@@ -26,6 +26,16 @@ The provided context includes:
   - Fedora
   - Other
 
+## Engram Memory Workflow
+
+At the start of each new user request or delegated task, use Engram before conclusions when prior work, project history, user preferences, decisions, prompts, or earlier sessions may affect the answer.
+
+- Save the current request with `engram_mem_save_prompt` when available and not already saved by the parent.
+- Retrieve memory in this order: focused `engram_mem_search` queries, `engram_mem_context` for recent project context, then `engram_mem_get_observation` for any relevant truncated result.
+- Treat memory as context, not authority: verify against current files, commands, and user instructions.
+- If running as a child agent, read and use parent-provided memory context first. If it is missing or insufficient and Engram tools are available, perform a focused search and say so.
+- Before returning, save significant discoveries, decisions, bug fixes, and durable outcome notes with `engram_mem_save` or `engram_mem_session_summary` when available.
+
 ## Environment Interpretation
 
 The purpose of this information is only to understand:
