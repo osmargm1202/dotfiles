@@ -62,7 +62,6 @@ var requiredThemeKeys = []string{
 	"CURSOR_SIZE",
 	"QT_STYLE",
 	"PI_THEME",
-	"KITTY_BACKGROUND_OPACITY",
 	"BASE",
 	"MANTLE",
 	"CRUST",
