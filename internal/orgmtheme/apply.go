@@ -97,9 +97,7 @@ func Apply(options ApplyOptions) (ApplyResult, error) {
 			runner = osCommandRunner{}
 		}
 		for _, command := range commands {
-			if err := runner.RunCommand(command); err != nil {
-				return ApplyResult{}, err
-			}
+			_ = runner.RunCommand(command)
 		}
 	}
 

@@ -1,6 +1,7 @@
 package orgmtheme
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -121,6 +122,28 @@ func TestApplyRestoresIncomingVideoAndSingleStaticWallpaper(t *testing.T) {
 	}
 }
 
+func TestApplyTreatsLiveReloadCommandErrorsAsBestEffort(t *testing.T) {
+	root := t.TempDir()
+	paths := newApplyTestPaths(t, root)
+	writeTestTheme(t, paths.themesDir, "orgm-light")
+
+	runner := &recordingRunner{returnError: errors.New("reload target unavailable")}
+	result, err := Apply(ApplyOptions{
+		ThemeName: "orgm-light",
+		Env:       Env{ConfigHome: paths.configHome, DataHome: paths.dataHome},
+		StateHome: paths.stateHome,
+		ThemesDir: paths.themesDir,
+		Home:      paths.home,
+		Runner:    runner,
+	})
+	if err != nil {
+		t.Fatalf("Apply error = %v, want best-effort command errors ignored", err)
+	}
+	if len(result.Commands) == 0 || len(runner.commands) == 0 {
+		t.Fatalf("commands result=%#v runner=%#v, want live reload commands attempted", result.Commands, runner.commands)
+	}
+}
+
 func TestApplyUpdatesExistingPiSettingsJSONOnly(t *testing.T) {
 	root := t.TempDir()
 	paths := newApplyTestPaths(t, root)
@@ -185,9 +208,10 @@ func newApplyTestPaths(t *testing.T, root string) applyTestPaths {
 }
 
 type recordingRunner struct {
-	t        *testing.T
-	commands []Command
-	onRun    func(*testing.T, Command)
+	t           *testing.T
+	commands    []Command
+	onRun       func(*testing.T, Command)
+	returnError error
 }
 
 func (r *recordingRunner) RunCommand(command Command) error {
@@ -195,7 +219,7 @@ func (r *recordingRunner) RunCommand(command Command) error {
 	if r.onRun != nil {
 		r.onRun(r.t, command)
 	}
-	return nil
+	return r.returnError
 }
 
 func writeFile(t *testing.T, path, content string) {
