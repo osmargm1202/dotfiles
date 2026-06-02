@@ -1,20 +1,22 @@
 {
   "path": "sdd-orchestrator/orgm-themes-go/tdd/build-progress",
-  "group": "Task 1 code quality issue: LoadTheme theme name validation",
+  "group": "Task 2: Render active files exactly enough for current tests",
   "status": "completed",
   "files_changed": [
-    "internal/orgmtheme/theme.go",
-    "internal/orgmtheme/theme_test.go",
+    "internal/orgmtheme/render.go",
+    "internal/orgmtheme/render_test.go",
     "sdd-orchestrator/orgm-themes-go/tdd/build-progress"
   ],
   "tdd_applicability_reason": null,
   "verification": [
     "Strict TDD support module lookup attempted at .pi/agent/assets/support/strict-tdd.md, .pi/assets/support/strict-tdd.md, and ~/.pi/agent/assets/support/strict-tdd.md; no file existed in this workspace/environment",
-    "RED: go test ./internal/orgmtheme -run 'TestLoadThemeRejectsInvalidNamesBeforeReading|TestLoadThemeEnv' -count=1 failed because LoadTheme(\"\") succeeded, proving invalid names were not rejected before reading",
-    "GREEN: go test ./internal/orgmtheme -run 'TestLoadThemeRejectsInvalidNamesBeforeReading|TestLoadThemeEnv' -count=1 passed after adding theme name validation",
-    "FINAL: go test ./internal/orgmtheme ./cmd/orgm-themes -count=1 passed"
+    "RED: go test ./internal/orgmtheme -run 'TestRender' -count=1 failed because Env, BuildWrites, and PlannedWrite were undefined",
+    "GREEN: go test ./internal/orgmtheme -run 'TestRender' -count=1 passed after adding render tests and renderers",
+    "FINAL: go test ./internal/orgmtheme ./cmd/orgm-themes -count=1 passed",
+    "FORMAT CHECK: gofmt -d internal/orgmtheme/render.go internal/orgmtheme/render_test.go produced no diff"
   ],
   "risks": [
-    "Validation is intentionally minimal: empty names, absolute paths, path traversal forms, and OS filepath separators are rejected; orgm-light remains accepted by existing loader test"
+    "BuildWrites covers Bash helper active render file paths, excluding state/current writes, Pi settings, gsettings, reload, and wallpaper behavior reserved for later apply tasks",
+    "Render tests assert required orgm-light fixture outputs and active path list; they are not full snapshots of every rendered byte"
   ]
 }
