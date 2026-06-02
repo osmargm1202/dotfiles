@@ -52,6 +52,10 @@ for _, rule in ipairs(utilities) do
   hl.window_rule({ match = { class = rule.class }, center = true })
 end
 
+hl.window_rule({ match = { title = "^hardware-fastfetch$" }, float = true })
+hl.window_rule({ match = { title = "^hardware-fastfetch$" }, size = "920 720" })
+hl.window_rule({ match = { title = "^hardware-fastfetch$" }, center = true })
+
 hl.window_rule({ match = { modal = true }, float = true })
 
 -- Discord starts normally; no forced scratchpad.

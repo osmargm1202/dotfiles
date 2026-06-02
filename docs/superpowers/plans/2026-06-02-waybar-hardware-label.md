@@ -4,7 +4,7 @@
 
 **Goal:** Add a bottom-right Waybar hardware button that opens a detailed Fastfetch hardware report in Kitty.
 
-**Architecture:** Waybar stays simple and only launches Fastfetch. A dedicated Fastfetch config owns the detailed hardware/system view. The hardware button lives in its own Waybar group before `group/usage`, so it can move later without touching CPU/memory modules.
+**Architecture:** Waybar stays simple and only launches Fastfetch. A dedicated Fastfetch config owns the detailed hardware/system view. The hardware button lives in its own Waybar group before `group/usage`, so it can move later without touching CPU/memory modules. The launched terminal keeps the normal Kitty class/styling and uses a unique title for Hyprland floating rules.
 
 **Tech Stack:** Waybar custom module JSON, Fastfetch JSONC config, Kitty, POSIX `sh`, `orgm-dot`.
 
@@ -16,6 +16,8 @@
   - Dedicated detailed hardware Fastfetch view.
 - Modify: `config/shared/.config/waybar-hypr/config`
   - Add `group/hardware` and `custom/hardware_fetch` before `group/usage`.
+- Modify: `config/shared/.config/hypr/lua/windows-workspaces.lua`
+  - Float, size, and center Kitty windows titled `hardware-fastfetch`.
 - Modify: `docs/superpowers/specs/2026-06-02-waybar-hardware-label-design.md`
   - Replace old direct-label design with the approved Fastfetch button design.
 
@@ -68,6 +70,7 @@ bottom = next(bar for bar in config if bar.get('name') == 'bottom_bar')
 assert bottom['modules-right'][0] == 'group/hardware'
 assert bottom['group/hardware']['modules'] == ['custom/hardware_fetch']
 assert bottom['custom/hardware_fetch']['format'] == '󰌢'
+assert 'kitty --title hardware-fastfetch' in bottom['custom/hardware_fetch']['on-click']
 assert 'fastfetch --config ~/.config/fastfetch/hardware.jsonc' in bottom['custom/hardware_fetch']['on-click']
 print('hardware button ok')
 PY
@@ -84,7 +87,7 @@ Change `bottom_bar.modules-right` so `group/hardware` is first, before `group/us
 Add a button with icon `󰌢`, tooltip `Hardware / Fastfetch`, and click command:
 
 ```sh
-kitty --class hardware-fastfetch -e sh -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; printf "\nEnter para cerrar..."; read -r _'
+kitty --title hardware-fastfetch -e sh -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; printf "\nEnter para cerrar..."; read -r _'
 ```
 
 - [ ] **Step 4: Verify config assertion passes**
@@ -170,6 +173,6 @@ Use two focused commits, avoiding unrelated `config/shared/.pi/agent/AGENTS.md` 
 git add docs/superpowers/specs/2026-06-02-waybar-hardware-label-design.md docs/superpowers/plans/2026-06-02-waybar-hardware-label.md
 git commit -m "docs: revise waybar hardware fastfetch design"
 
-git add config/shared/.config/fastfetch/hardware.jsonc config/shared/.config/waybar-hypr/config
+git add config/shared/.config/fastfetch/hardware.jsonc config/shared/.config/waybar-hypr/config config/shared/.config/hypr/lua/windows-workspaces.lua
 git commit -m "feat(waybar): add hardware fastfetch button"
 ```

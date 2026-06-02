@@ -367,7 +367,7 @@
       "format": "󰌢",
       "tooltip": true,
       "tooltip-format": "Hardware / Fastfetch",
-      "on-click": "kitty --class hardware-fastfetch -e sh -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; printf \"\\nEnter para cerrar...\"; read -r _'"
+      "on-click": "kitty --title hardware-fastfetch -e sh -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; printf \"\\nEnter para cerrar...\"; read -r _'"
     },
     "hyprland/window": {
       "format": "{}",

@@ -53,7 +53,7 @@ Define the button:
   "format": "󰌢",
   "tooltip": true,
   "tooltip-format": "Hardware / Fastfetch",
-  "on-click": "kitty --class hardware-fastfetch -e sh -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; printf \"\\nEnter para cerrar...\"; read -r _'"
+  "on-click": "kitty --title hardware-fastfetch -e sh -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; printf \"\\nEnter para cerrar...\"; read -r _'"
 }
 ```
 
@@ -73,7 +73,8 @@ The config should use existing ORGM logo styling so it feels consistent with cur
 ## Behavior
 
 - Waybar shows one compact hardware icon.
-- Click opens a terminal and keeps it open with `Enter para cerrar...` after Fastfetch exits.
+- Click opens a normal Kitty terminal titled `hardware-fastfetch`, keeps normal Kitty styling/opactity, and waits with `Enter para cerrar...` after Fastfetch exits.
+- Hyprland floats and centers that terminal by matching its title, not by changing Kitty class.
 - Hardware details come from Fastfetch modules, including laptops with integrated/dedicated GPUs where Fastfetch detects both.
 - No custom menu or separate detector script is required.
 
