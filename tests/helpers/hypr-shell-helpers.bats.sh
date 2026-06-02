@@ -41,4 +41,7 @@ for helper in \
   assert_syntax "$helper"
 done
 
+rg -q "! -name 'orgm-current.css'" "$BIN/waybar-watch" || \
+  fail "waybar-watch should not restart Waybar for generated orgm-current.css theme updates"
+
 echo "hypr shell helper smoke tests passed"
