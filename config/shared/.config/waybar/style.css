@@ -108,6 +108,8 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #network.disconnected, #battery.critical, #temperature.critical { color: @red; }
 #privacy-item.screenshare, #privacy-item.audio-in { color: @red; }
 #custom-logout_menu { color: @red; font-size: 23px; }
+#custom-usb_devices { color: @sky; font-size: 20px; }
+#custom-nixclean { color: @green; font-size: 20px; }
 #custom-user { color: @text; font-weight: bold; }
 #window { color: @text; }
 #idle_inhibitor.activated { color: @blue; }

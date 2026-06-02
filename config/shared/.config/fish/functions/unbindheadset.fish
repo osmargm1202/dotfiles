@@ -1,10 +1,9 @@
 function unbindheadset
-    set -l sudo_cmd sudo
-    if test -x /run/wrappers/bin/sudo
-        set sudo_cmd /run/wrappers/bin/sudo
+    if type -q hypr-usb-menu
+        hypr-usb-menu reconnect $argv
+        return $status
     end
 
-    printf '1-11.1\n' | $sudo_cmd tee /sys/bus/usb/drivers/usb/unbind > /dev/null
-    sleep 2
-    printf '1-11.1\n' | $sudo_cmd tee /sys/bus/usb/drivers/usb/bind > /dev/null
+    echo "hypr-usb-menu no está instalado" >&2
+    return 1
 end
