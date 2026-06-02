@@ -75,6 +75,34 @@ notify_user() {
   fi
 }
 
+current_hypr_workspace() {
+  if ! command -v hyprctl &>/dev/null || ! command -v jq &>/dev/null; then
+    return 0
+  fi
+
+  hyprctl -j activeworkspace 2>/dev/null | jq -r '(.id // empty) as $id | if ($id | type) == "number" and $id > 0 then ($id | tostring) else (.name // empty) end' 2>/dev/null || true
+}
+
+move_next_rdp_window_to_workspace() {
+  local workspace="$1"
+  [[ -n "$workspace" ]] || return 0
+  if ! command -v hyprctl &>/dev/null || ! command -v jq &>/dev/null; then
+    return 0
+  fi
+
+  (
+    local address=""
+    for _ in $(seq 1 80); do
+      address="$(hyprctl -j clients 2>/dev/null | jq -r '.[] | select((.class // "") == "windows-rdp" or (.initialClass // "") == "windows-rdp") | .address' 2>/dev/null | head -n 1)"
+      if [[ -n "$address" && "$address" != "null" ]]; then
+        hyprctl dispatch movetoworkspacesilent "$workspace,address:$address" >/dev/null 2>&1 || true
+        return 0
+      fi
+      sleep 0.1
+    done
+  ) &
+}
+
 wait_rdp() {
   echo "Waiting for RDP on $RDP_HOST:$RDP_PORT..."
   for i in $(seq 1 60); do
@@ -120,6 +148,7 @@ rdp_command() {
 
 rdp_connect() {
   local started_container="${1:-0}"
+  local target_workspace="${2:-}"
   local attempt=1
   local max_retries=1
   local rc=1
@@ -135,6 +164,8 @@ rdp_connect() {
     if [[ "$started_container" == "1" ]]; then
       echo "RDP connection attempt $attempt/$max_retries..."
     fi
+
+    move_next_rdp_window_to_workspace "$target_workspace"
 
     "${RDP_CMD[@]}" /v:"$RDP_HOST":"$RDP_PORT" \
       /u:"$RDP_USER" \
@@ -195,6 +226,9 @@ do_stop() {
 
 do_connect() {
   local started_container=0
+  local target_workspace=""
+
+  target_workspace="$(current_hypr_workspace)"
 
   if ! nc -z "$RDP_HOST" "$RDP_PORT" 2>/dev/null; then
     started_container=1
@@ -206,7 +240,7 @@ do_connect() {
     fi
   fi
 
-  rdp_connect "$started_container"
+  rdp_connect "$started_container" "$target_workspace"
 }
 
 do_run() {
