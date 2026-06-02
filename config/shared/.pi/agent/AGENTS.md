@@ -36,6 +36,20 @@ At the start of each new user request or delegated task, use Engram before concl
 - If running as a child agent, read and use parent-provided memory context first. If it is missing or insufficient and Engram tools are available, perform a focused search and say so.
 - Before returning, save significant discoveries, decisions, bug fixes, and durable outcome notes with `engram_mem_save` or `engram_mem_session_summary` when available.
 
+## Development Workflow Defaults
+
+For coding changes, prefer isolated, reviewable work by default.
+
+- If a change is not simple, use `using-git-worktrees` without asking first. Create or verify an isolated worktree before implementation, unless already inside an isolated worktree or the environment blocks it.
+- If the work starts from a spec, design, PRD, issue with acceptance criteria, or written implementation plan, always use an isolated worktree without asking.
+- If a spec/design exists but no implementation plan exists, write the plan first, then execute it.
+- For implementations with a spec/design/plan and independent tasks, use `subagent-driven-development` without asking. Dispatch fresh subagents for implementation and review according to that skill.
+- Do not ask “should I use a worktree?” or “should I use subagent-driven development?” in these cases; the user's standing preference is yes.
+- Simple changes may be done in place. Treat as simple only if it is a small, low-risk edit such as typo/doc text, minor config tweak, or a single obvious fix with no broad behavior change.
+- Treat as non-simple when it touches multiple files, changes behavior, needs tests, affects user/system configuration, changes dependencies, involves refactors, migrations, UI/API behavior, or has a design/spec.
+- Default integration path: finish work in the isolated branch/worktree, verify, review, then prepare merge back to `master` unless the repository uses a different primary branch.
+- If worktree creation is impossible, blocked, destructive, or conflicts with explicit user instructions, explain briefly and continue with the safest available path.
+
 ## Environment Interpretation
 
 The purpose of this information is only to understand:
