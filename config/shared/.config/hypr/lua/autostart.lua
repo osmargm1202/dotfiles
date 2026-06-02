@@ -7,8 +7,6 @@ local exec_once = {
   "blueman-applet",
   "gnome-keyring-daemon --start --components=secrets,pkcs11,ssh",
   "hyprpolkitagent",
-  "orgm-wallpaper restore",
-  "orgm-wallpaper picker-daemon",
   "sh -lc 'mkdir -p ${XDG_STATE_HOME:-$HOME/.local/state}/orgm-calendar && orgm-calendar daemon >>${XDG_STATE_HOME:-$HOME/.local/state}/orgm-calendar/helper.log 2>&1'",
   "sh -lc 'mkdir -p ${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts && hypr-battery-alerts daemon >>${XDG_STATE_HOME:-$HOME/.local/state}/hypr-battery-alerts/helper.log 2>&1'",
   "nextcloud --background",
