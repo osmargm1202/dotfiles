@@ -1,96 +1,30 @@
-# Waybar Hardware Label Design
+# Waybar Hardware Fastfetch Button Design
 
-Add a movable Waybar hardware block that shows machine model or motherboard, CPU, and GPU summary near the bottom-right system usage area.
+Add a simple Waybar button that opens a detailed Fastfetch hardware view in Kitty. This replaces the earlier idea of printing model/CPU/GPU directly inside Waybar.
 
 ## Goals
 
-1. Show a short hardware identity label in Waybar.
-2. Prefer a real laptop/desktop model when available.
-3. Fall back to motherboard name when product model is generic or not useful.
-4. Show CPU and all detected GPUs, including hybrid Intel/NVIDIA laptop graphics.
-5. Keep the block independent so it can move to another Waybar position later.
-6. Open `fastfetch` in Kitty on click.
+1. Keep Waybar clean: show only one hardware/info button.
+2. Put the button in an independent group so it can move later.
+3. Place it initially bottom-right before the existing CPU/memory usage group.
+4. On click, open Kitty and run Fastfetch with a dedicated detailed hardware config.
+5. Keep the existing normal Fastfetch config unchanged.
+6. Avoid custom hardware parsing scripts, menus, or special detector logic in Waybar.
 
-## Recommended Approach
+## Approach
 
-Use a shared shell helper script and a dedicated Waybar custom module group.
+Use Waybar only as a launcher. Fastfetch already knows how to show host, board, CPU, GPU, memory, disks, OS, kernel, session, WM, display, and packages. A dedicated config can be detailed without forcing a long label into the panel.
 
 Files:
 
-- `config/shared/.local/bin/waybar-hardware-label`
 - `config/shared/.config/waybar-hypr/config`
-- `config/dotfiles.json`
+- `config/shared/.config/fastfetch/hardware.jsonc`
 
-The helper runs from Waybar, reads host hardware data, formats one short line, and prints JSON for Waybar. The Waybar config adds `group/hardware` to `bottom_bar.modules-right` before `group/usage`.
-
-## Display Format
-
-Main text:
-
-```text
-<model-or-board> - <cpu-short> - <gpu-short[/gpu-short...]>
-```
-
-Examples:
-
-```text
-ThinkPad E14 - i5-1235U - Iris Xe/RTX 3050
-PRO B660M-A WIFI DDR4 - i5-12400F - RTX 3060
-MSI B450 - Ryzen 5 5600X - RTX 3060
-```
-
-Tooltip should include fuller raw names when useful, for example:
-
-```text
-Modelo: ThinkPad E14 Gen 4
-CPU: 12th Gen Intel(R) Core(TM) i5-1235U
-GPU: Intel Iris Xe Graphics / NVIDIA GeForce RTX 3050 Laptop GPU
-Click: fastfetch
-```
-
-## Detection Rules
-
-### Model / motherboard
-
-1. Read DMI from `/sys/class/dmi/id`.
-2. Ignore generic values such as `System Product Name`, `To Be Filled By O.E.M.`, `Default string`, `None`, empty values, and bare board codes when a better board name exists.
-3. On laptops, prefer useful `product_name`.
-4. On desktops, prefer useful `board_name` when `product_name` is generic or code-like.
-5. Final fallback is `product_name`, then `board_name`, then hostname.
-
-### CPU
-
-Read the first CPU model from `/proc/cpuinfo`, then shorten common vendor noise:
-
-- `12th Gen Intel(R) Core(TM) i5-12400F` → `i5-12400F`
-- `AMD Ryzen 5 5600X 6-Core Processor` → `Ryzen 5 5600X`
-
-Keep raw CPU name in tooltip.
-
-### GPU
-
-Detect GPUs from available host tools and kernel data:
-
-1. Prefer `nvidia-smi --query-gpu=name --format=csv,noheader` for NVIDIA names when present.
-2. Use `/sys/class/drm/card*/device/uevent` and vendor IDs to detect Intel/AMD/NVIDIA GPUs even when `lspci` is unavailable.
-3. Use `lspci` if present to get better names for non-NVIDIA GPUs.
-4. Deduplicate names.
-5. Join multiple GPUs with `/`.
-
-If detailed names are unavailable, use vendor fallback names such as `Intel GPU`, `AMD GPU`, or `NVIDIA GPU`.
+The existing `.config/fastfetch` directory is already tracked in `config/dotfiles.json`, so no manifest path is needed for the new config file.
 
 ## Waybar Integration
 
-Add an independent group:
-
-```json
-"group/hardware": {
-  "orientation": "horizontal",
-  "modules": ["custom/hardware_label"]
-}
-```
-
-Add the group before `group/usage` in `bottom_bar.modules-right`:
+Add a standalone group to `bottom_bar.modules-right`, before `group/usage`:
 
 ```json
 "modules-right": [
@@ -101,48 +35,60 @@ Add the group before `group/usage` in `bottom_bar.modules-right`:
 ]
 ```
 
-Add the custom module:
+Define the group:
 
 ```json
-"custom/hardware_label": {
-  "exec": "waybar-hardware-label",
-  "return-type": "json",
-  "interval": 3600,
-  "format": "{}",
-  "tooltip": true,
-  "on-click": "kitty -e fastfetch"
+"group/hardware": {
+  "orientation": "horizontal",
+  "modules": [
+    "custom/hardware_fetch"
+  ]
 }
 ```
 
-A one-hour interval is enough because hardware identity does not change during a session. Manual Waybar reload updates it after config/script changes.
+Define the button:
 
-## Error Handling
-
-The helper must never break Waybar. If any hardware source is missing, it should still return valid JSON with the best available fallback.
-
-Fallback examples:
-
-```text
-orgm - i5-12400F - RTX 3060
-orgm - CPU - GPU
+```json
+"custom/hardware_fetch": {
+  "format": "󰌢",
+  "tooltip": true,
+  "tooltip-format": "Hardware / Fastfetch",
+  "on-click": "kitty --class hardware-fastfetch -e sh -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; printf \"\\nEnter para cerrar...\"; read -r _'"
+}
 ```
 
-If JSON escaping is needed, use Python or careful shell escaping so model names with quotes do not break Waybar.
+## Fastfetch Hardware Config
+
+Create `config/shared/.config/fastfetch/hardware.jsonc` as a second config. It should be more complete than the daily Fastfetch view.
+
+Recommended sections:
+
+- Hardware: Host, Board, Chassis, BIOS, CPU, CPU cache, GPU, physical memory.
+- System: OS, Kernel, Init, Packages, Shell, WM, DE, Terminal.
+- Display and storage: Display, Disk, PhysicalDisk, Memory, Swap.
+- Session: Uptime, Locale, Battery when present, colors.
+
+The config should use existing ORGM logo styling so it feels consistent with current Fastfetch.
+
+## Behavior
+
+- Waybar shows one compact hardware icon.
+- Click opens a terminal and keeps it open with `Enter para cerrar...` after Fastfetch exits.
+- Hardware details come from Fastfetch modules, including laptops with integrated/dedicated GPUs where Fastfetch detects both.
+- No custom menu or separate detector script is required.
 
 ## Testing
 
-Manual checks:
-
-1. Run `waybar-hardware-label` and verify valid JSON.
-2. Verify it shows current `orgm` host as motherboard + CPU + GPU.
-3. Validate Waybar config still parses.
-4. Sync dotfiles with `distrobox-host-exec orgm-dot diff` then `distrobox-host-exec orgm-dot sync`.
-5. Reload Waybar and confirm the new group appears bottom-right before CPU.
-6. Click the label and confirm Kitty opens `fastfetch`.
+1. Validate Waybar config structure with Python after stripping `//` comments.
+2. Run `fastfetch --config config/shared/.config/fastfetch/hardware.jsonc` in the repo/container to catch syntax errors.
+3. Run host Fastfetch through `distrobox-host-exec` after sync.
+4. Use `distrobox-host-exec orgm-dot diff` and `sync`.
+5. Reload Waybar.
+6. Click button and confirm Kitty opens detailed Fastfetch and waits for Enter.
 
 ## Out of Scope
 
-- Live GPU usage metrics.
-- Per-host hand-written labels unless later needed.
-- Replacing existing CPU, memory, temperature, disk, or swap modules.
-- Styling redesign beyond reusing current Waybar group/module style.
+- Showing model/CPU/GPU text directly in Waybar.
+- Custom parsing of DMI, CPU, or GPU names.
+- Menus or rofi/quick-shell UI for hardware details.
+- Changing the default `config/shared/.config/fastfetch/config.jsonc` view.
