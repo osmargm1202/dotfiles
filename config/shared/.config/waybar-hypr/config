@@ -1,7 +1,6 @@
 [
   {
     "name": "top_bar",
-    "output": "DP-3",
     "layer": "top",
     "position": "top",
     "height": 47,
@@ -362,7 +361,6 @@
   },
   {
     "name": "bottom_bar",
-    "output": "DP-3",
     "layer": "top",
     "position": "bottom",
     "height": 52,

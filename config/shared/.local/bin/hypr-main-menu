@@ -15,6 +15,7 @@ choice="$(printf '%s\n' \
   '󰂯 Bluetooth' \
   '󰍉 Search' \
   '󰌌 Keybinds' \
+  '󰍹 Displays' \
   '󰔎 Theme' \
   '󰹹 Transitions' \
   '󰒓 System' \
@@ -31,6 +32,7 @@ case "$choice" in
   *'Bluetooth') exec "$bin_dir/hypr-bluetooth-menu" ;;
   *'Search') exec "$bin_dir/hypr-smart-run" ;;
   *'Keybinds') exec "$bin_dir/hypr-keybindings-help" ;;
+  *'Displays') exec "$bin_dir/hypr-display-targets" menu ;;
   *'Theme') exec "$bin_dir/hypr-theme-chooser" ;;
   *'Transitions') exec "$bin_dir/hypr-transition-menu" ;;
   *'System') exec "$bin_dir/hypr-system-menu" ;;

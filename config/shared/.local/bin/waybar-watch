@@ -44,6 +44,7 @@ for pid in $(pgrep -f "(^|/| )waybar-watch ${config_dir}$" 2>/dev/null || true);
 done
 
 waybar_pid=""
+generated_config="${config_dir}/config"
 
 cleanup() {
   [ -n "${waybar_pid:-}" ] && kill "$waybar_pid" 2>/dev/null || true
@@ -68,7 +69,11 @@ stop_waybar() {
 }
 
 start_waybar() {
-  waybar -c "${config_dir}/config" -s "${config_dir}/style.css" >>"$log" 2>&1 &
+  generated_config="${config_dir}/config"
+  if command -v hypr-display-targets >/dev/null 2>&1; then
+    generated_config="$(hypr-display-targets waybar-config "$config_dir" 2>>"$log" || printf '%s/config\n' "$config_dir")"
+  fi
+  waybar -c "$generated_config" -s "${config_dir}/style.css" >>"$log" 2>&1 &
   waybar_pid="$!"
 }
 

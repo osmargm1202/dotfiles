@@ -18,7 +18,19 @@ if pgrep -f '^nwg-dock-hyprland( |$)' >/dev/null 2>&1; then
   exit 0
 fi
 
+dock_output_args=()
+if command -v hypr-display-targets >/dev/null 2>&1; then
+  dock_env="$(hypr-display-targets dock-env 2>/dev/null || true)"
+  if [ -n "${dock_env:-}" ]; then
+    read -r dock_flag dock_output <<<"$dock_env"
+    if [ "$dock_flag" = "-o" ] && [ -n "${dock_output:-}" ]; then
+      dock_output_args=(-o "$dock_output")
+    fi
+  fi
+fi
+
 exec nwg-dock-hyprland \
+  "${dock_output_args[@]}" \
   -r \
   -p right \
   -a center \
