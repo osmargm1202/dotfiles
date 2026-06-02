@@ -348,6 +348,7 @@
       "mpris"
     ],
     "modules-right": [
+      "group/hardware",
       "group/usage",
       "custom/kbd_layout",
       "custom/keybindings_help"
@@ -361,6 +362,12 @@
     "custom/user": {
       "format": "  osmarg",
       "tooltip": false
+    },
+    "custom/hardware_fetch": {
+      "format": "󰌢",
+      "tooltip": true,
+      "tooltip-format": "Hardware / Fastfetch",
+      "on-click": "kitty --class hardware-fastfetch -e sh -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; printf \"\\nEnter para cerrar...\"; read -r _'"
     },
     "hyprland/window": {
       "format": "{}",
@@ -414,6 +421,12 @@
       "interval": 5,
       "tooltip": false,
       "on-click": "kitty -e btop"
+    },
+    "group/hardware": {
+      "orientation": "horizontal",
+      "modules": [
+        "custom/hardware_fetch"
+      ]
     },
     "group/usage": {
       "orientation": "horizontal",
