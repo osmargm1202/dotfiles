@@ -31,13 +31,19 @@ func TestResolveHostDefaultsToHostname(t *testing.T) {
 	}
 }
 
-func TestResolveHostRejectsUnknownHostname(t *testing.T) {
+func TestResolveHostAllowsUnknownHostnameForSharedOnlySync(t *testing.T) {
 	rt := Runtime{Config: Config{Hosts: map[string]PathList{
 		"lenovo": {Paths: []string{".config/fish"}},
 	}}}
 
-	_, err := rt.ResolveHost("", func() (string, error) { return "container", nil })
-	if err == nil {
-		t.Fatal("expected unknown hostname error")
+	host, err := rt.ResolveHost("", func() (string, error) { return "container", nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if host != "container" {
+		t.Fatalf("host = %q, want container", host)
+	}
+	if paths := rt.HostPaths(host); len(paths) != 0 {
+		t.Fatalf("unknown host paths = %#v, want none", paths)
 	}
 }

@@ -27,8 +27,5 @@ func (r Runtime) ResolveHost(explicit string, hostname HostnameFunc) (string, er
 	if host == "" {
 		return "", fmt.Errorf("host is empty; use --host HOST")
 	}
-	if _, ok := r.Config.Hosts[host]; !ok {
-		return "", fmt.Errorf("host %q not found in config; use --host HOST", host)
-	}
 	return host, nil
 }
