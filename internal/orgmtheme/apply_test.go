@@ -178,6 +178,29 @@ func TestApplyRestoresIncomingVideoAndSingleStaticWallpaper(t *testing.T) {
 	}
 }
 
+func TestApplyReloadQuitsNautilusSoGTK4AppsPickUpTheme(t *testing.T) {
+	root := t.TempDir()
+	paths := newApplyTestPaths(t, root)
+	writeTestTheme(t, paths.themesDir, "orgm-light")
+
+	runner := &recordingRunner{}
+	_, err := Apply(ApplyOptions{
+		ThemeName: "orgm-light",
+		Env:       Env{ConfigHome: paths.configHome, DataHome: paths.dataHome},
+		StateHome: paths.stateHome,
+		ThemesDir: paths.themesDir,
+		Home:      paths.home,
+		Runner:    runner,
+	})
+	if err != nil {
+		t.Fatalf("Apply error = %v", err)
+	}
+	want := Command{Name: "nautilus", Args: []string{"-q"}}
+	if !containsCommand(runner.commands, want) {
+		t.Fatalf("runner commands = %#v, want %#v", runner.commands, want)
+	}
+}
+
 func TestApplyTreatsLiveReloadCommandErrorsAsBestEffort(t *testing.T) {
 	root := t.TempDir()
 	paths := newApplyTestPaths(t, root)
@@ -276,6 +299,15 @@ func (r *recordingRunner) RunCommand(command Command) error {
 		r.onRun(r.t, command)
 	}
 	return r.returnError
+}
+
+func containsCommand(commands []Command, want Command) bool {
+	for _, command := range commands {
+		if reflect.DeepEqual(command, want) {
+			return true
+		}
+	}
+	return false
 }
 
 func writeFile(t *testing.T, path, content string) {

@@ -267,6 +267,7 @@ func liveReloadCommands() []Command {
 		{Name: "hyprctl", Args: []string{"reload"}},
 		{Name: "pkill", Args: []string{"-SIGUSR1", "kitty"}},
 		{Name: "swaync-client", Args: []string{"-rs"}},
+		{Name: "nautilus", Args: []string{"-q"}},
 	}
 }
 
