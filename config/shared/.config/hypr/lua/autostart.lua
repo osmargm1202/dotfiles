@@ -1,7 +1,7 @@
 local exec_once = {
   "hypr-session-import-env",
   "systemctl --user start sunshine.service",
-  "sh -lc '$HOME/.local/bin/hypr-display-targets ensure && $HOME/.local/bin/waybar-watch ~/.config/waybar-hypr'",
+  -- "sh -lc '$HOME/.local/bin/hypr-display-targets ensure && $HOME/.local/bin/waybar-watch ~/.config/waybar-hypr'",
   "swaync",
   "nm-applet --indicator",
   "blueman-applet",
