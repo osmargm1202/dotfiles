@@ -190,6 +190,47 @@ func TestSetVideoForMonitorStopsGlobalVideoWallpaper(t *testing.T) {
 	}
 }
 
+func TestSetVideoForMonitorStopsUntrackedGlobalVideoWallpaper(t *testing.T) {
+	tmp := t.TempDir()
+	video := filepath.Join(tmp, "live.mp4")
+	oldVideo := filepath.Join(tmp, "old.mp4")
+	for _, path := range []string{video, oldVideo} {
+		if err := os.WriteFile(path, []byte("video"), 0o600); err != nil {
+			t.Fatalf("write %s: %v", path, err)
+		}
+	}
+	global := exec.Command("bash", "-c", "exec -a \"mpvpaper -o no-audio loop hwdec=auto * "+oldVideo+"\" sleep 30")
+	if err := global.Start(); err != nil {
+		t.Fatalf("start global mpvpaper: %v", err)
+	}
+	done := make(chan error, 1)
+	go func() { done <- global.Wait() }()
+	t.Cleanup(func() { _ = global.Process.Kill() })
+
+	m := NewManager(io.Discard, io.Discard)
+	m.StateDir = filepath.Join(tmp, "state", "hypr-wallpaper")
+	m.StateFile = filepath.Join(m.StateDir, "state")
+	m.CurrentFile = filepath.Join(tmp, "runtime", "hypr-random-wallpaper.current")
+	m.LockWallpaper = filepath.Join(tmp, "runtime", "hypr-current-wallpaper")
+	m.RuntimeDir = filepath.Join(tmp, "runtime")
+	m.MPVPaperPIDFile = filepath.Join(m.RuntimeDir, "hypr-random-wallpaper.mpvpaper.pid")
+	m.MPVPaperBin = "true"
+	m.KillBin = "kill"
+	if err := os.MkdirAll(m.RuntimeDir, 0o755); err != nil {
+		t.Fatalf("mkdir runtime: %v", err)
+	}
+
+	if err := m.SetVideoForMonitor(video, "DP-3"); err != nil {
+		t.Fatalf("SetVideoForMonitor: %v", err)
+	}
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatalf("untracked global mpvpaper pid %d still alive", global.Process.Pid)
+	}
+}
+
 func TestSetStaticForMonitorUpdatesGlobalCurrentMode(t *testing.T) {
 	tmp := t.TempDir()
 	m := NewManager(io.Discard, io.Discard)

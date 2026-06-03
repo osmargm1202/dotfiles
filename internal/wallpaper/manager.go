@@ -16,6 +16,7 @@ import (
 )
 
 const mpvpaperWallpaperPattern = `^([^ ]+/)?(nvidia-offload )?([^ ]+/)?mpvpaper .*wallpapers`
+const mpvpaperGlobalWallpaperPattern = `(^|/| )mpvpaper .*\* .*`
 
 // Manager preserves the historical hypr-random-wallpaper state paths and side effects.
 type Manager struct {
@@ -480,6 +481,14 @@ func (m *Manager) StopMPVPaperForMonitor(output string) {
 	m.stopMPVPaperPIDFile(m.monitorMPVPaperPIDFile(output))
 }
 
+func (m *Manager) StopGlobalMPVPaper() {
+	m.stopMPVPaperPIDFile(m.MPVPaperPIDFile)
+	m.runIgnore("pkill", "-f", mpvpaperGlobalWallpaperPattern)
+	if commandExists("distrobox-host-exec") {
+		m.runIgnore("distrobox-host-exec", "sh", "-lc", "pkill -f "+shellQuote(mpvpaperGlobalWallpaperPattern)+" >/dev/null 2>&1 || true")
+	}
+}
+
 func (m *Manager) stopMPVPaperPIDFile(pidFile string) {
 	if b, err := os.ReadFile(pidFile); err == nil {
 		pid := strings.TrimSpace(string(b))
@@ -654,7 +663,7 @@ func (m *Manager) SetStaticForMonitor(path, output, mode string) error {
 	if !fileExists(path) {
 		return fmt.Errorf("Wallpaper not found: %s", path)
 	}
-	m.stopMPVPaperPIDFile(m.MPVPaperPIDFile)
+	m.StopGlobalMPVPaper()
 	m.StopMPVPaperForMonitor(output)
 	if err := m.WriteMonitorState(output, mode, path); err != nil {
 		return err
@@ -749,7 +758,7 @@ func (m *Manager) SetVideoForMonitor(path, output string) error {
 	if !fileExists(path) {
 		return fmt.Errorf("Video wallpaper not found: %s", path)
 	}
-	m.stopMPVPaperPIDFile(m.MPVPaperPIDFile)
+	m.StopGlobalMPVPaper()
 	if err := m.WriteMonitorState(output, "video", path); err != nil {
 		return err
 	}
