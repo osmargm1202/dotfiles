@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -479,6 +480,15 @@ func (m *Manager) StopMPVPaperForMonitor(output string) {
 		return
 	}
 	m.stopMPVPaperPIDFile(m.monitorMPVPaperPIDFile(output))
+	pattern := mpvpaperTargetPattern(output)
+	m.runIgnore("pkill", "-f", pattern)
+	if commandExists("distrobox-host-exec") {
+		m.runIgnore("distrobox-host-exec", "sh", "-lc", "pkill -f "+shellQuote(pattern)+" >/dev/null 2>&1 || true")
+	}
+}
+
+func mpvpaperTargetPattern(output string) string {
+	return `(^|/| )mpvpaper .*` + regexp.QuoteMeta(output) + ` .*`
 }
 
 func (m *Manager) StopGlobalMPVPaper() {
