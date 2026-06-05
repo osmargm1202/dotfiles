@@ -1,6 +1,7 @@
 package orgmtheme
 
 import (
+	"encoding/json"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -30,6 +31,38 @@ func TestRenderOrgmLightFixtureActiveFiles(t *testing.T) {
 	assertRenderedContains(t, byPath, "/home/test/.config/kitty/current-theme.conf", "background_opacity 1.0")
 	assertRenderedContains(t, byPath, "/home/test/.config/hypr/scheme/current.conf", "$background = ffffff")
 	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"accent": "#0057d9"`)
+}
+
+func TestRenderQuickshellUsesOpaqueDarkOverlay(t *testing.T) {
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-dark")
+	if err != nil {
+		t.Fatalf("LoadTheme orgm-dark fixture error = %v", err)
+	}
+	env := Env{ConfigHome: "/home/test/.config", DataHome: "/home/test/.local/share"}
+
+	writes, err := BuildWrites(env, theme)
+	if err != nil {
+		t.Fatalf("BuildWrites error = %v", err)
+	}
+	byPath := writesByPath(writes)
+
+	assertQuickshellOverlay(t, byPath, "/home/test/.config/quickshell/theme/theme.json", "#000000")
+}
+
+func TestRenderQuickshellUsesOpaqueLightOverlay(t *testing.T) {
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-light")
+	if err != nil {
+		t.Fatalf("LoadTheme orgm-light fixture error = %v", err)
+	}
+	env := Env{ConfigHome: "/home/test/.config", DataHome: "/home/test/.local/share"}
+
+	writes, err := BuildWrites(env, theme)
+	if err != nil {
+		t.Fatalf("BuildWrites error = %v", err)
+	}
+	byPath := writesByPath(writes)
+
+	assertQuickshellOverlay(t, byPath, "/home/test/.config/quickshell/theme/theme.json", "#ffffff")
 }
 
 func TestBuildWritesRejectsRelativeRoots(t *testing.T) {
@@ -97,6 +130,28 @@ func assertRenderedContains(t *testing.T, byPath map[string]string, path, want s
 	}
 	if !strings.Contains(content, want) {
 		t.Fatalf("rendered %s does not contain %q\ncontent:\n%s", path, want, content)
+	}
+}
+
+func assertQuickshellOverlay(t *testing.T, byPath map[string]string, path, expected string) {
+	t.Helper()
+	content, ok := byPath[path]
+	if !ok {
+		t.Fatalf("missing rendered path %s", path)
+	}
+	var parsed map[string]string
+	if err := json.Unmarshal([]byte(content), &parsed); err != nil {
+		t.Fatalf("rendered %s is not valid json: %v", path, err)
+	}
+	got, ok := parsed["overlay"]
+	if !ok {
+		t.Fatalf("rendered %s missing overlay", path)
+	}
+	if got != expected {
+		t.Fatalf("rendered %s overlay %q, want %q", path, got, expected)
+	}
+	if len(got) != 7 {
+		t.Fatalf("rendered %s overlay %q has alpha or invalid length", path, got)
 	}
 }
 

@@ -233,7 +233,7 @@ func renderQuickshell(t Theme) string {
   "onAccent": "#%s",
   "disabled": "#%s"
 }
-`, t.QSOverlay, t.QSCardStrong, t.Text, t.Subtext0, t.Overlay0, t.Blue, t.Green, t.Yellow, t.Red, t.Pink, t.QSCard, t.QSCardStrong, t.QSCardSoft, t.QSEvent, t.QSHover, t.Surface1, t.OnAccent, t.Surface0)
+`, opaqueHex(t.QSOverlay), t.QSCardStrong, t.Text, t.Subtext0, t.Overlay0, t.Blue, t.Green, t.Yellow, t.Red, t.Pink, t.QSCard, t.QSCardStrong, t.QSCardSoft, t.QSEvent, t.QSHover, t.Surface1, t.OnAccent, t.Surface0)
 }
 
 func renderGTKSettings(t Theme) string {
@@ -467,6 +467,14 @@ func cssColor(hex string) string {
 	default:
 		return "#" + h
 	}
+}
+
+func opaqueHex(hexValue string) string {
+	h := strings.TrimPrefix(strings.TrimSpace(hexValue), "#")
+	if len(h) == 8 {
+		return h[:6]
+	}
+	return h
 }
 
 func hexToRGB(hex string) (int, int, int, bool) {

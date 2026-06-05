@@ -248,7 +248,7 @@ ShellRoot {
             width: root.unit(210)
             height: parent.height
             radius: root.unit(14)
-            color: root.theme.onAccent
+            color: root.theme.buttonSoft
             border.color: root.theme.outline
 
             Column {
@@ -305,7 +305,7 @@ ShellRoot {
                 width: parent.width
                 height: root.unit(54)
                 radius: root.unit(12)
-                color: root.theme.onAccent
+                color: root.theme.eventCard
                 border.color: root.theme.outline
 
                 Text {
