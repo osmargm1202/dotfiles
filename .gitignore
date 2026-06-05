@@ -3,6 +3,10 @@
 /result
 config/codex/.codex/
 
+# Python bytecode/cache artifacts
+__pycache__/
+*.py[cod]
+
 # plaintext secrets; only *.age encrypted files belong in git
 config/**/.config/fish/private-env.fish
 config/**/.config/fish/private-env.fish.tmp
