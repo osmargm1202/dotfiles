@@ -7,13 +7,11 @@
   font-size: 17px;
 }
 
-window.top_bar#waybar {
-  background-color: transparent;
-  border: none;
-}
+window.top_bar#waybar,
 window.bottom_bar#waybar {
-  background-color: transparent;
-  border: none;
+  border: 2px solid rgba(56, 213, 255, 0.42);
+  border-radius: 12px;
+  box-shadow: inset 0 1px rgba(96, 165, 250, 0.20), inset 0 -1px rgba(15, 51, 87, 0.85);
 }
 #custom-ws_1, #custom-ws_2, #custom-ws_3, #custom-ws_4, #custom-ws_5,
 #custom-ws_6, #custom-ws_7, #custom-ws_8, #custom-ws_9, #custom-ws_10 {
@@ -35,52 +33,38 @@ window.bottom_bar#waybar {
   margin-top: 7px;
   margin-bottom: 7px;
 }
+window.top_bar .modules-left,
+window.top_bar .modules-center,
 window.top_bar .modules-right,
 window.bottom_bar .modules-left,
-window.bottom_bar .modules-right {
-  background: @panel_bg;
-  border-radius: 12px;
+window.bottom_bar .modules-center,
+window.bottom_bar .modules-right,
+#group-workspaces,
+#workspaces,
+#group-system,
+#system {
+  background: transparent;
+  border: none;
+  border-radius: 0;
   min-height: 40px;
   padding: 10px 10px;
 }
 window.top_bar .modules-left {
-  background: transparent;
-  padding: 0;
-}
-#group-workspaces,
-#workspaces {
-  background: @panel_bg;
-  border-radius: 12px;
-  min-height: 40px;
-  padding: 10px 10px;
-}
-#group-system,
-#system {
-  background: @panel_bg;
-  border-radius: 12px;
-  min-height: 40px;
-  padding: 10px 10px;
-}
-window.top_bar .modules-center {
-  background: @panel_bg;
-  border-radius: 12px;
-  min-height: 40px;
-  padding: 10px 10px;
-}
-window.bottom_bar .modules-center {
-  background: @panel_bg;
-  border-radius: 12px;
-  min-height: 40px;
-  padding: 10px 10px;
+  padding-left: 14px;
 }
 window.top_bar .modules-center {
   font-weight: bold;
   color: @blue;
-  padding: 0 8px;
+  padding: 0 18px;
 }
-window.top_bar .modules-right { padding-left: 24px; padding-right: 24px; }
-window.bottom_bar .modules-left { border-radius: 12px; margin-left: 0; }
-window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
+window.top_bar .modules-right {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+window.bottom_bar .modules-center {
+}
+window.bottom_bar .modules-left { margin-left: 0; }
+window.bottom_bar .modules-right { margin-right: 0; }
 #custom-day_month, #custom-date {
   color: @text;
   padding: 0 14px;
@@ -108,60 +92,103 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
   background: transparent;
   background-image: url("orgm-hypr.png");
   background-repeat: no-repeat;
-  background-position: center;
-  background-size: 28px auto;
-  font-size: 0;
-  min-height: 0;
-  min-width: 34px;
-  padding: 0;
+  background-position: 7px center;
+  background-size: 22px auto;
+  min-height: 30px;
+  min-width: 78px;
+  padding: 0 0 0 34px;
   margin: 0 2px 0 0;
+  font-size: 17px;
+  color: @text;
+  font-weight: bold;
 }
-#group-usage, #usage, #group-system, #system, #cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-headset_reconnect, #bluetooth, #network, #privacy, #tray { color: @text; }
+#group-usage, #usage, #group-system, #system,
+#custom-metric_cpu, #custom-metric_gpu, #custom-metric_ram, #custom-metric_ssd, #custom-metric_swap,
+#cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-headset_reconnect, #bluetooth, #network, #privacy, #custom-keybindings_help, #tray { color: @text; }
 #group-usage, #usage {
   background: transparent;
 }
-#custom-wallpaper, #custom-headset_reconnect, #custom-hardware_fetch, #custom-pi_status, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#custom-theme_toggle, #custom-wallpaper, #custom-usb_devices, #custom-nixclean, #custom-headset_reconnect, #custom-hardware_fetch, #custom-pi_status, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
 #custom-user, #window, #mpris, #backlight, #pulseaudio, #pulseaudio-slider, #battery, #custom-kbd_layout,
-#cpu, #memory, #temperature, #disk, #custom-swap {
-  background: transparent;
+#cpu, #memory, #temperature, #disk, #custom-swap,
+#custom-metric_cpu, #custom-metric_gpu, #custom-metric_ram, #custom-metric_ssd, #custom-metric_swap {
+  background-color: transparent;
 }
 
-#custom-theme_toggle {
-  color: @yellow;
+#custom-theme_toggle, #custom-wallpaper, #custom-usb_devices, #custom-nixclean, #custom-hardware_fetch, #custom-pi_status, #custom-headset_reconnect, #custom-logout_menu {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 22px 22px;
+  color: transparent;
+  font-size: 0;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 7px;
+}
+#custom-theme_toggle { background-image: url("icons/theme_toggle.svg"); }
+#custom-wallpaper { background-image: url("icons/wallpaper.svg"); }
+#custom-usb_devices { background-image: url("icons/usb_devices.svg"); }
+#custom-nixclean { background-image: url("icons/nixclean.svg"); }
+#custom-hardware_fetch { background-image: url("icons/hardware_fetch.svg"); }
+#custom-pi_status { background-image: url("icons/pi_status.svg"); }
+#custom-headset_reconnect { background-image: url("icons/headset_reconnect.svg"); }
+#custom-logout_menu { background-image: url("icons/logout_menu.svg"); margin-right: 10px; }
+#custom-wallpaper { color: @text; font-size: 20px; }
+#custom-pi_status.ready, #custom-pi_status.outdated { color: transparent; }
+#bluetooth, #network {
   padding: 0 10px;
 }
-#custom-theme_toggle.light { color: @peach; }
-#custom-theme_toggle.dark { color: @yellow; }
-
-#custom-wallpaper {
-  color: @mauve;
-  margin-left: 18px;
-}
-#custom-headset_reconnect {
-  color: @blue;
-}
-#custom-usb_devices { color: @sky; font-size: 20px; }
-#custom-nixclean { color: @green; font-size: 20px; }
-#custom-hardware_fetch { color: @blue; font-size: 20px; }
-#custom-pi_status { color: @blue; font-weight: bold; font-size: 16px; }
-#custom-pi_status.ready { color: @blue; }
-#custom-pi_status.outdated { color: @red; }
-#custom-theme_toggle, #custom-wallpaper, #custom-headset_reconnect, #custom-hardware_fetch, #custom-pi_status, #bluetooth, #network, #custom-logout_menu {
-  padding: 0 10px;
-}
-#custom-logout_menu {
-  color: @sky;
-  font-size: 23px;
-  margin-right: 10px;
-}
-#group-usage #cpu, #group-usage #memory, #group-usage #temperature, #group-usage #disk, #group-usage #custom-swap,
-#usage #cpu, #usage #memory, #usage #temperature, #usage #disk, #usage #custom-swap,
+#group-usage #custom-metric_cpu, #group-usage #custom-metric_gpu, #group-usage #custom-metric_ram, #group-usage #custom-metric_ssd, #group-usage #custom-metric_swap,
+#usage #custom-metric_cpu, #usage #custom-metric_gpu, #usage #custom-metric_ram, #usage #custom-metric_ssd, #usage #custom-metric_swap,
 #group-system #backlight, #group-system #pulseaudio, #group-system #pulseaudio-slider, #group-system #battery,
 #system #backlight, #system #pulseaudio, #system #pulseaudio-slider, #system #battery {
   background: transparent;
   padding: 0 5px;
   margin: 0;
 }
+#group-usage #custom-metric_cpu,
+#group-usage #custom-metric_gpu,
+#group-usage #custom-metric_ram,
+#group-usage #custom-metric_ssd,
+#group-usage #custom-metric_swap,
+#usage #custom-metric_cpu,
+#usage #custom-metric_gpu,
+#usage #custom-metric_ram,
+#usage #custom-metric_ssd,
+#usage #custom-metric_swap {
+  margin: 0 7px;
+}
+.metric-widget {
+  background: @surface0;
+  border: 1px solid @panel_border;
+  border-radius: 11px;
+  padding: 4px 8px;
+  margin: 0 6px;
+  min-width: 92px;
+  font-size: 15px;
+}
+#custom-metric_cpu,
+#custom-metric_gpu,
+#custom-metric_ram,
+#custom-metric_ssd,
+#custom-metric_swap {
+  color: @text;
+}
+#custom-metric_cpu.metric-high,
+#custom-metric_gpu.metric-high,
+#custom-metric_ram.metric-high,
+#custom-metric_ssd.metric-high,
+#custom-metric_swap.metric-high { color: @green; }
+#custom-metric_cpu.metric-warn,
+#custom-metric_gpu.metric-warn,
+#custom-metric_ram.metric-warn,
+#custom-metric_ssd.metric-warn,
+#custom-metric_swap.metric-warn { color: @yellow; }
+#custom-metric_cpu.metric-critical,
+#custom-metric_gpu.metric-critical,
+#custom-metric_ram.metric-critical,
+#custom-metric_ssd.metric-critical,
+#custom-metric_swap.metric-critical { color: @red; }
 #bluetooth.disabled, #network.disabled, #idle_inhibitor.deactivated, #mpris.paused { color: @overlay0; }
 #network.disconnected, #battery.critical, #temperature.critical { color: @red; }
 #privacy-item.screenshare, #privacy-item.audio-in { color: @red; }
@@ -262,17 +289,6 @@ window.dock_bar#waybar {
   font-size: 8px;
   letter-spacing: 1px;
 }
-#mode,
-#submap,
-window.top_bar .modules-right,
-window.bottom_bar .modules-left,
-window.bottom_bar .modules-right,
-#group-workspaces,
-#workspaces,
-#group-system,
-#system,
-window.top_bar .modules-center,
-window.bottom_bar .modules-center,
 window.dock_bar#waybar {
   border: 2px solid @panel_border;
 }

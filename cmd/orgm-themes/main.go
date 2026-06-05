@@ -26,7 +26,7 @@ func runWithIO(args []string, stdout, stderr io.Writer, env map[string]string) e
 	if len(args) < 1 {
 		return cli.UsageError(usage())
 	}
-	if len(args) > 1 && (args[0] == "list" || args[0] == "current" || args[0] == "status" || args[0] == "toggle") {
+	if len(args) > 1 && (args[0] == "list" || args[0] == "current" || args[0] == "status") {
 		return cli.UsageError("unexpected argument: %s", args[1])
 	}
 
@@ -63,11 +63,15 @@ func runWithIO(args []string, stdout, stderr io.Writer, env map[string]string) e
 		printApplied(stdout, result)
 		return nil
 	case "toggle":
+		noReload, dryRun, printReload, err := toggleOptionsFromArgs(args[1:])
+		if err != nil {
+			return err
+		}
 		name := "orgm-light"
 		if currentTheme(paths.currentFile) == "orgm-light" {
 			name = "orgm-dark"
 		}
-		result, err := orgmtheme.Apply(applyOptions(paths, name, false, false, false))
+		result, err := orgmtheme.Apply(applyOptions(paths, name, noReload, dryRun, printReload))
 		if err != nil {
 			return err
 		}
@@ -153,6 +157,22 @@ func applyOptionsFromArgs(args []string, paths themePaths) (orgmtheme.ApplyOptio
 	return applyOptions(paths, themeName, noReload, dryRun, printReload), nil
 }
 
+func toggleOptionsFromArgs(args []string) (noReload, dryRun, printReload bool, err error) {
+	for _, arg := range args {
+		switch arg {
+		case "--no-reload":
+			noReload = true
+		case "--dry-run":
+			dryRun = true
+		case "--print-reload":
+			printReload = true
+		default:
+			return false, false, false, cli.UsageError("unexpected toggle argument: %s", arg)
+		}
+	}
+	return noReload, dryRun, printReload, nil
+}
+
 func applyOptions(paths themePaths, themeName string, noReload, dryRun, printReload bool) orgmtheme.ApplyOptions {
 	return orgmtheme.ApplyOptions{
 		ThemeName:   themeName,
@@ -190,5 +210,6 @@ commands:
   status            show current theme and key toolkit settings
   apply THEME [--no-reload]
                     apply theme
-  toggle            toggle orgm-dark/orgm-light`
+  toggle [--no-reload]
+                    toggle orgm-dark/orgm-light`
 }

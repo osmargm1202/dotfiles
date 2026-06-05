@@ -139,20 +139,17 @@
     "custom/day_month": {
       "exec": "waybar-day-month-es",
       "interval": 60,
-      "tooltip": false,
-      "on-click": "orgm-calendar toggle-ui"
+      "tooltip": false
     },
     "custom/time": {
       "exec": "waybar-time-ampm",
       "interval": 1,
-      "tooltip": false,
-      "on-click": "orgm-calendar toggle-ui"
+      "tooltip": false
     },
     "custom/date": {
       "exec": "waybar-date-es",
       "interval": 60,
-      "tooltip": false,
-      "on-click": "orgm-calendar toggle-ui"
+      "tooltip": false
     },
     "custom/wallpaper": {
       "format": "",
@@ -364,7 +361,7 @@
     "name": "bottom_bar",
     "layer": "top",
     "position": "bottom",
-    "height": 52,
+    "height": 60,
     "spacing": 5,
     "margin-bottom": 10,
     "margin-left": 12,
@@ -384,7 +381,7 @@
       "custom/keybindings_help"
     ],
     "custom/orgm_logo": {
-      "format": " ",
+      "format": "NixOS",
       "tooltip": true,
       "tooltip-format": "Abrir menú ORGM-HYPR",
       "on-click": "hypr-main-menu"
@@ -419,41 +416,64 @@
       "on-click-right": "playerctl next",
       "on-click-middle": "playerctl previous"
     },
-    "cpu": {
-      "format": " {usage}%",
+    "custom/metric_cpu": {
+      "exec": "waybar-metric-widget cpu",
+      "return-type": "json",
+      "interval": 2,
+      "format": "{}",
+      "markup": "pango",
+      "escape": false,
       "tooltip": true,
       "on-click": "kitty -e btop"
     },
-    "memory": {
-      "format": " {percentage}%",
-      "tooltip-format": "{used:0.1f}G / {total:0.1f}G",
+    "custom/metric_gpu": {
+      "exec": "waybar-metric-widget gpu",
+      "return-type": "json",
+      "interval": 3,
+      "format": "{}",
+      "markup": "pango",
+      "escape": false,
+      "tooltip": true,
       "on-click": "kitty -e btop"
     },
-    "temperature": {
-      "format": " {temperatureC}°C",
-      "critical-threshold": 85,
-      "on-click": "kitty -e btop"
-    },
-    "disk#ssd": {
-      "path": "/",
-      "format": "󰋊 SSD {percentage_used}%",
-      "tooltip-format": "{used} used / {total} total",
-      "on-click": "kitty -e btop"
-    },
-    "custom/swap": {
-      "exec": "waybar-swap-usage",
+    "custom/metric_ram": {
+      "exec": "waybar-metric-widget ram",
+      "return-type": "json",
       "interval": 5,
-      "tooltip": false,
+      "format": "{}",
+      "markup": "pango",
+      "escape": false,
+      "tooltip": true,
+      "on-click": "kitty -e btop"
+    },
+    "custom/metric_ssd": {
+      "exec": "waybar-metric-widget ssd",
+      "return-type": "json",
+      "interval": 10,
+      "format": "{}",
+      "markup": "pango",
+      "escape": false,
+      "tooltip": true,
+      "on-click": "kitty -e btop"
+    },
+    "custom/metric_swap": {
+      "exec": "waybar-metric-widget swap",
+      "return-type": "json",
+      "interval": 5,
+      "format": "{}",
+      "markup": "pango",
+      "escape": false,
+      "tooltip": true,
       "on-click": "kitty -e btop"
     },
     "group/usage": {
       "orientation": "horizontal",
       "modules": [
-        "cpu",
-        "memory",
-        "temperature",
-        "disk#ssd",
-        "custom/swap"
+        "custom/metric_cpu",
+        "custom/metric_gpu",
+        "custom/metric_ram",
+        "custom/metric_ssd",
+        "custom/metric_swap"
       ]
     },
     "backlight": {

@@ -38,7 +38,7 @@ func BuildWrites(env Env, theme Theme) ([]PlannedWrite, error) {
 		{Path: filepath.Join(env.ConfigHome, "rofi", "orgm-current.rasi"), Content: renderRofi(theme)},
 		{Path: filepath.Join(env.ConfigHome, "fuzzel", "fuzzel.ini"), Content: renderFuzzel(theme)},
 		{Path: filepath.Join(env.ConfigHome, "waybar", "orgm-current.css"), Content: renderWaybarPalette(theme)},
-		{Path: filepath.Join(env.ConfigHome, "waybar-hypr", "orgm-current.css"), Content: renderWaybarPalette(theme)},
+		{Path: filepath.Join(env.ConfigHome, "waybar-hypr", "orgm-current.css"), Content: renderWaybarHyprPalette(theme)},
 		{Path: filepath.Join(env.ConfigHome, "nwg-dock-hyprland", "orgm-current.css"), Content: renderDock()},
 		{Path: filepath.Join(env.ConfigHome, "swaync", "orgm-current.css"), Content: renderSwayNC(theme)},
 		{Path: filepath.Join(env.ConfigHome, "quickshell", "theme", "theme.json"), Content: renderQuickshell(theme)},
@@ -172,6 +172,28 @@ func renderWaybarPalette(t Theme) string {
 @define-color panel_bg %s;
 @define-color panel_border %s;
 `, t.Base, t.Mantle, t.Crust, t.Text, t.Subtext0, t.Subtext1, t.Surface0, t.Surface1, t.Surface2, t.Overlay0, t.Overlay1, t.Overlay2, t.Blue, t.Mauve, t.Sky, t.Sky, t.Teal, t.Green, t.Yellow, t.Peach, t.Peach, t.Red, t.Mauve, t.Pink, t.Rosewater, t.Rosewater, cssColor(t.PanelBG), cssColor(t.Blue+"ff"))
+}
+
+func renderWaybarHyprPalette(t Theme) string {
+	css := renderWaybarPalette(t)
+	if t.ColorScheme == "prefer-light" {
+		css += `window.top_bar#waybar,
+window.bottom_bar#waybar {
+  background: linear-gradient(to right, #ffffff 0%, #f3f4f6 24%, #d1d5db 50%, #f3f4f6 76%, #ffffff 100%);
+}
+`
+		for _, name := range []string{"theme_toggle", "usb_devices", "nixclean", "hardware_fetch", "pi_status", "headset_reconnect", "logout_menu"} {
+			css += fmt.Sprintf(`#custom-%s { background-image: url("icons/light/%s.svg"); }
+`, name, name)
+		}
+		return css
+	}
+	css += `window.top_bar#waybar,
+window.bottom_bar#waybar {
+  background-color: rgba(2, 10, 24, 0.78);
+}
+`
+	return css
 }
 
 func renderDock() string {
@@ -469,14 +491,6 @@ func cssColor(hex string) string {
 	}
 }
 
-func opaqueHex(hexValue string) string {
-	h := strings.TrimPrefix(strings.TrimSpace(hexValue), "#")
-	if len(h) == 8 {
-		return h[:6]
-	}
-	return h
-}
-
 func hexToRGB(hex string) (int, int, int, bool) {
 	h := strings.TrimPrefix(hex, "#")
 	if len(h) < 6 {
@@ -495,4 +509,12 @@ func hexToRGB(hex string) (int, int, int, bool) {
 		return 0, 0, 0, false
 	}
 	return int(red), int(green), int(blue), true
+}
+
+func opaqueHex(hexValue string) string {
+	h := strings.TrimPrefix(strings.TrimSpace(hexValue), "#")
+	if len(h) == 8 {
+		return h[:6]
+	}
+	return h
 }

@@ -25,12 +25,49 @@ func TestRenderOrgmLightFixtureActiveFiles(t *testing.T) {
 	}
 	byPath := writesByPath(writes)
 
-	assertRenderedContains(t, byPath, "/home/test/.config/waybar/orgm-current.css", "@define-color text     #111827;")
-	assertRenderedContains(t, byPath, "/home/test/.config/waybar/orgm-current.css", "@define-color panel_bg rgba(255, 255, 255, 1);")
-	assertRenderedContains(t, byPath, "/home/test/.config/gtk-4.0/gtk.css", "@define-color window_fg_color #111827;")
+	assertRenderedContains(t, byPath, "/home/test/.config/waybar/orgm-current.css", "@define-color text     #4c4f69;")
+	assertRenderedContains(t, byPath, "/home/test/.config/waybar/orgm-current.css", "@define-color panel_bg rgba(239, 241, 245, 0.867);")
+	assertRenderedContains(t, byPath, "/home/test/.config/gtk-4.0/gtk.css", "@define-color window_fg_color #4c4f69;")
 	assertRenderedContains(t, byPath, "/home/test/.config/kitty/current-theme.conf", "background_opacity 1.0")
-	assertRenderedContains(t, byPath, "/home/test/.config/hypr/scheme/current.conf", "$background = ffffff")
-	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"accent": "#0057d9"`)
+	assertRenderedContains(t, byPath, "/home/test/.config/hypr/scheme/current.conf", "$background = eff1f5")
+	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"accent": "#1e66f5"`)
+}
+
+func TestRenderWaybarHyprLightIconOverrides(t *testing.T) {
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-light")
+	if err != nil {
+		t.Fatalf("LoadTheme orgm-light fixture error = %v", err)
+	}
+	env := Env{ConfigHome: "/home/test/.config", DataHome: "/home/test/.local/share"}
+
+	writes, err := BuildWrites(env, theme)
+	if err != nil {
+		t.Fatalf("BuildWrites error = %v", err)
+	}
+	byPath := writesByPath(writes)
+
+	assertRenderedContains(t, byPath, "/home/test/.config/waybar-hypr/orgm-current.css", `#custom-theme_toggle { background-image: url("icons/light/theme_toggle.svg"); }`)
+	assertRenderedContains(t, byPath, "/home/test/.config/waybar-hypr/orgm-current.css", `background: linear-gradient(to right, #ffffff 0%, #f3f4f6 24%, #d1d5db 50%, #f3f4f6 76%, #ffffff 100%);`)
+	regular := byPath["/home/test/.config/waybar/orgm-current.css"]
+	if strings.Contains(regular, "icons/light/theme_toggle.svg") {
+		t.Fatalf("regular Waybar palette contains Hypr icon overrides:\n%s", regular)
+	}
+}
+
+func TestRenderWaybarHyprDarkUsesDeepBlueSurface(t *testing.T) {
+	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-dark")
+	if err != nil {
+		t.Fatalf("LoadTheme orgm-dark fixture error = %v", err)
+	}
+	env := Env{ConfigHome: "/home/test/.config", DataHome: "/home/test/.local/share"}
+
+	writes, err := BuildWrites(env, theme)
+	if err != nil {
+		t.Fatalf("BuildWrites error = %v", err)
+	}
+	byPath := writesByPath(writes)
+
+	assertRenderedContains(t, byPath, "/home/test/.config/waybar-hypr/orgm-current.css", `background-color: rgba(2, 10, 24, 0.78);`)
 }
 
 func TestRenderQuickshellUsesOpaqueDarkOverlay(t *testing.T) {
@@ -47,9 +84,11 @@ func TestRenderQuickshellUsesOpaqueDarkOverlay(t *testing.T) {
 	byPath := writesByPath(writes)
 
 	assertQuickshellOverlay(t, byPath, "/home/test/.config/quickshell/theme/theme.json", "#000000")
+	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"border": "#33494d64"`)
+	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"button": "#22363a4f"`)
 }
 
-func TestRenderQuickshellUsesOpaqueLightOverlay(t *testing.T) {
+func TestRenderQuickshellUsesOpaqueWhiteOverlay(t *testing.T) {
 	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-light")
 	if err != nil {
 		t.Fatalf("LoadTheme orgm-light fixture error = %v", err)
@@ -62,7 +101,9 @@ func TestRenderQuickshellUsesOpaqueLightOverlay(t *testing.T) {
 	}
 	byPath := writesByPath(writes)
 
-	assertQuickshellOverlay(t, byPath, "/home/test/.config/quickshell/theme/theme.json", "#ffffff")
+	assertQuickshellOverlay(t, byPath, "/home/test/.config/quickshell/theme/theme.json", "#eff1f5")
+	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"button": "#e6e9efcc"`)
+	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"onAccent": "#eff1f5"`)
 }
 
 func TestBuildWritesRejectsRelativeRoots(t *testing.T) {

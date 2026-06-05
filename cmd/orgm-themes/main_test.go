@@ -87,6 +87,49 @@ func TestStatusPrintsCurrentThemeSettings(t *testing.T) {
 	}
 }
 
+func TestToggleAcceptsNoReloadAndWritesNextTheme(t *testing.T) {
+	root := t.TempDir()
+	configHome := filepath.Join(root, "config")
+	stateHome := filepath.Join(root, "state")
+	themesDir := filepath.Join(configHome, "orgm-theme", "themes")
+	writeCLITheme(t, themesDir, "orgm-light")
+	writeCLITheme(t, themesDir, "orgm-dark")
+	stateDir := filepath.Join(stateHome, "orgm-theme")
+	if err := os.MkdirAll(stateDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(stateDir, "current"), []byte("orgm-light\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	err := runWithIO([]string{"toggle", "--no-reload"}, &stdout, &stderr, map[string]string{
+		"HOME":            root,
+		"XDG_CONFIG_HOME": configHome,
+		"XDG_STATE_HOME":  stateHome,
+	})
+	if err != nil {
+		t.Fatalf("runWithIO toggle --no-reload error = %v stderr=%s", err, stderr.String())
+	}
+	if got, want := stdout.String(), "Applied orgm-dark\n"; got != want {
+		t.Fatalf("stdout = %q, want %q", got, want)
+	}
+	current, err := os.ReadFile(filepath.Join(stateDir, "current"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(current) != "orgm-dark\n" {
+		t.Fatalf("current = %q, want orgm-dark", current)
+	}
+	css, err := os.ReadFile(filepath.Join(configHome, "waybar-hypr", "orgm-current.css"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(css), "background-color: rgba(2, 10, 24, 0.78);") {
+		t.Fatalf("waybar-hypr css missing dark background:\n%s", css)
+	}
+}
+
 func TestMissingCommandReturnsUsageError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	err := runWithIO(nil, &stdout, &stderr, map[string]string{"HOME": t.TempDir()})
@@ -103,14 +146,22 @@ func writeCLITheme(t *testing.T, themesDir, name string) {
 	if err := os.MkdirAll(themesDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
+	colorScheme := "prefer-light"
+	gtkTheme := "Adwaita"
+	piTheme := "orgm-light"
+	if name == "orgm-dark" {
+		colorScheme = "prefer-dark"
+		gtkTheme = "Adwaita-dark"
+		piTheme = "orgm"
+	}
 	content := `THEME_NAME=` + name + `
-COLOR_SCHEME=prefer-light
-GTK_THEME=Adwaita
+COLOR_SCHEME=` + colorScheme + `
+GTK_THEME=` + gtkTheme + `
 ICON_THEME=Adwaita
 CURSOR_THEME=Catppuccin-Latte-Teal-Cursors
 CURSOR_SIZE=36
 QT_STYLE=Fusion
-PI_THEME=orgm-light
+PI_THEME=` + piTheme + `
 KITTY_BACKGROUND_OPACITY=1.0
 BASE=ffffff
 MANTLE=f8fafc

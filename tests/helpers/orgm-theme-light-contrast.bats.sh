@@ -53,21 +53,21 @@ assert_contains() {
   fi
 }
 
-assert_contains "$WAYBAR" '@define-color text     #111827;'
-assert_contains "$WAYBAR" '@define-color subtext0 #1f2937;'
-assert_contains "$WAYBAR" '@define-color overlay0 #374151;'
-assert_contains "$WAYBAR" '@define-color blue      #0057d9;'
-assert_contains "$WAYBAR" '@define-color panel_bg rgba(255, 255, 255, 1);'
-assert_contains "$WAYBAR" '@define-color panel_border rgba(0, 87, 217, 1);'
+assert_contains "$WAYBAR" '@define-color text     #4c4f69;'
+assert_contains "$WAYBAR" '@define-color subtext0 #6c6f85;'
+assert_contains "$WAYBAR" '@define-color overlay0 #9ca0b0;'
+assert_contains "$WAYBAR" '@define-color blue      #1e66f5;'
+assert_contains "$WAYBAR" '@define-color panel_bg rgba(239, 241, 245, 0.867);'
+assert_contains "$WAYBAR" '@define-color panel_border rgba(30, 102, 245, 1);'
 if grep -Eq '@define-color [^;]+#[0-9a-fA-F]{8};' "$WAYBAR"; then
   echo "FAIL: Waybar generated colors must avoid 8-digit hex syntax" >&2
   cat "$WAYBAR" >&2
   exit 1
 fi
-assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color base #ffffffff;'
-assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color surface #e5e7ebff;'
-assert_contains "$GTK" '@define-color window_fg_color #111827;'
-assert_contains "$GTK" '@define-color accent_color #0057d9;'
+assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color base #eff1f5dd;'
+assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color surface #e6e9efcc;'
+assert_contains "$GTK" '@define-color window_fg_color #4c4f69;'
+assert_contains "$GTK" '@define-color accent_color #1e66f5;'
 assert_contains "$GTK3_SETTINGS" 'gtk-font-name=Inter 11'
 assert_contains "$GTK4_SETTINGS" 'gtk-font-name=Inter 11'
 assert_contains "$QT5" 'general="Inter,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'
@@ -103,14 +103,22 @@ if ! grep -Fqx '.*=1.0 override 1.0 override 1.0 override' <<<"$HYPR_RULES"; the
 fi
 
 for style in "$ROOT/config/shared/.config/waybar/style.css" "$ROOT/config/shared/.config/waybar-hypr/style.css"; do
-  grep -Eq '^#group-usage, .*\{ color: @text; \}$' "$style" || {
-    echo "FAIL: Waybar status modules should use @text, not muted gray: $style" >&2
-    exit 1
-  }
-  grep -Fq '#custom-day_month, #custom-date {' "$style" && grep -A4 -F '#custom-day_month, #custom-date {' "$style" | grep -Fq 'color: @text;' || {
+  python3 - "$style" <<'PY'
+import re
+import sys
+path = sys.argv[1]
+content = open(path, encoding='utf-8').read()
+for selector in ("#group-usage", "#usage"):
+    match = re.search(rf"{re.escape(selector)}[^{{]*\{{([^}}]*)\}}", content, re.S)
+    if not match or "color: @text;" not in match.group(1):
+        print(f"FAIL: Waybar status modules should use @text, not muted gray: {path}")
+        raise SystemExit(1)
+PY
+  if ! grep -Fq '#custom-day_month, #custom-date {' "$style" ||
+      ! grep -A4 -F '#custom-day_month, #custom-date {' "$style" | grep -Fq 'color: @text;'; then
     echo "FAIL: Waybar date should use @text, not muted gray: $style" >&2
     exit 1
-  }
+  fi
   grep -Fq '@panel_bg' "$style" || {
     echo "FAIL: Waybar should use generated @panel_bg instead of hardcoded translucent alpha: $style" >&2
     exit 1
