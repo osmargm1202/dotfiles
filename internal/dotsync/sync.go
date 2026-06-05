@@ -17,6 +17,7 @@ import (
 type Options struct {
 	Host   string
 	DryRun bool
+	Target string
 }
 
 type Action struct {
@@ -178,6 +179,10 @@ func Run(rt dotconfig.Runtime, opts Options) ([]Action, error) {
 		return nil, err
 	}
 
+	if opts.Target != "" {
+		return syncTarget(rt, profile, opts)
+	}
+
 	var actions []Action
 	for _, rel := range rt.Config.Shared.Paths {
 		if !shouldSyncPath(profile, rel) {
@@ -215,6 +220,70 @@ func Format(actions []Action) []string {
 		lines = append(lines, fmt.Sprintf("%s  %s", action.Code, action.Path))
 	}
 	return lines
+}
+
+func syncTarget(rt dotconfig.Runtime, profile DesktopProfile, opts Options) ([]Action, error) {
+	target := dotmanifest.Normalize(opts.Target)
+	if target == "" {
+		return nil, fmt.Errorf("sync target path is empty")
+	}
+
+	var actions []Action
+	matched := false
+	for _, managed := range rt.Config.Shared.Paths {
+		if !targetWithinManaged(target, managed) {
+			continue
+		}
+		matched = true
+		if !shouldSyncPath(profile, target) {
+			continue
+		}
+		as, err := syncOne(rt, rt.SourceShared, target, profile, opts)
+		if err != nil {
+			return nil, err
+		}
+		actions = append(actions, as...)
+	}
+	for _, managed := range rt.HostPaths(opts.Host) {
+		if !targetWithinManaged(target, managed) {
+			continue
+		}
+		matched = true
+		if !shouldSyncPath(profile, target) {
+			continue
+		}
+		as, err := syncOne(rt, rt.HostSource(opts.Host), target, profile, opts)
+		if err != nil {
+			return nil, err
+		}
+		actions = append(actions, as...)
+	}
+	for _, managed := range rt.Config.LocalDefaults.Paths {
+		if !targetSelectsLocalDefault(target, managed) {
+			continue
+		}
+		matched = true
+		as, err := syncLocalDefault(rt, managed, profile, opts)
+		if err != nil {
+			return nil, err
+		}
+		actions = append(actions, as...)
+	}
+	if !matched {
+		return nil, fmt.Errorf("sync target %q is not managed", target)
+	}
+	sort.SliceStable(actions, func(i, j int) bool { return actions[i].Path < actions[j].Path })
+	return actions, nil
+}
+
+func targetWithinManaged(target, managed string) bool {
+	managed = dotmanifest.Normalize(managed)
+	return target == managed || strings.HasPrefix(target, managed+"/")
+}
+
+func targetSelectsLocalDefault(target, managed string) bool {
+	managed = dotmanifest.Normalize(managed)
+	return target == managed || strings.HasPrefix(managed, target+"/")
 }
 
 func syncOne(rt dotconfig.Runtime, base, rel string, profile DesktopProfile, opts Options) ([]Action, error) {

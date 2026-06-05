@@ -22,6 +22,23 @@ func TestParseLegacyStatus(t *testing.T) {
 	}
 }
 
+func TestParseSyncTarget(t *testing.T) {
+	cmd, err := Parse([]string{"sync", ".local/bin/tool", "--dry-run"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cmd.Name != "sync" || cmd.Target != ".local/bin/tool" || !cmd.DryRun {
+		t.Fatalf("unexpected command: %+v", cmd)
+	}
+}
+
+func TestParseSyncRejectsMultipleTargets(t *testing.T) {
+	_, err := Parse([]string{"sync", ".local/bin/one", ".local/bin/two"})
+	if err == nil {
+		t.Fatal("expected multiple-target error")
+	}
+}
+
 func TestParseAddTargetAndScope(t *testing.T) {
 	cmd, err := Parse([]string{"add", "~/.config/example", "--shared"})
 	if err != nil {

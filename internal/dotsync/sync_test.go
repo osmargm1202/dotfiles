@@ -88,6 +88,41 @@ func TestRunPreservesConfiguredLocalOnlyTypesAndPatterns(t *testing.T) {
 	}
 }
 
+func TestRunTargetCopiesOnlyRequestedManagedFile(t *testing.T) {
+	rt := testRuntime(t)
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "app", "one.txt"), "repo one")
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "app", "two.txt"), "repo two")
+	writeFile(t, filepath.Join(rt.Destination, ".config", "app", "one.txt"), "home one")
+	writeFile(t, filepath.Join(rt.Destination, ".config", "app", "two.txt"), "home two")
+
+	actions, err := Run(rt, Options{Target: ".config/app/one.txt"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	one := filepath.Join(rt.Destination, ".config", "app", "one.txt")
+	two := filepath.Join(rt.Destination, ".config", "app", "two.txt")
+	assertHasAction(t, actions, "M", one)
+	assertNoAction(t, actions, two)
+	content, err := os.ReadFile(two)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(content) != "home two" {
+		t.Fatalf("unrequested file content = %q, want home two", string(content))
+	}
+}
+
+func TestRunTargetRejectsPathOutsideManifest(t *testing.T) {
+	rt := testRuntime(t)
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "other", "config.json"), "repo")
+
+	_, err := Run(rt, Options{Target: ".config/other/config.json"})
+	if err == nil {
+		t.Fatal("expected unmanaged target error")
+	}
+}
+
 func TestRunSeedsMissingLocalDefaultWithoutOverwritingExistingLocalFile(t *testing.T) {
 	rt := testRuntime(t)
 	rt.Config.Shared.Paths = []string{".config/rofi"}

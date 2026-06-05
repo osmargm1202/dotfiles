@@ -56,7 +56,7 @@ func main() {
 			fatal(err)
 		}
 		host := resolveHost(runtime, cmd.Host)
-		actions, err := dotsync.Run(runtime, dotsync.Options{Host: host, DryRun: cmd.DryRun})
+		actions, err := dotsync.Run(runtime, dotsync.Options{Host: host, DryRun: cmd.DryRun, Target: cmd.Target})
 		if err != nil {
 			fatal(err)
 		}

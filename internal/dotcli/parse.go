@@ -1,6 +1,9 @@
 package dotcli
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Command is the parsed orgm-dot command line.
 type Command struct {
@@ -90,6 +93,13 @@ func Parse(args []string) (Command, error) {
 		case "--help", "-h":
 			cmd.Name = "help"
 		default:
+			if cmd.Name == "sync" && cmd.Target == "" && !strings.HasPrefix(arg, "-") {
+				cmd.Target = arg
+				continue
+			}
+			if cmd.Name == "sync" && cmd.Target != "" && !strings.HasPrefix(arg, "-") {
+				return Command{}, fmt.Errorf("sync accepts at most one PATH")
+			}
 			return Command{}, fmt.Errorf("unknown argument: %s", arg)
 		}
 	}
