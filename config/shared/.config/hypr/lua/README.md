@@ -27,6 +27,6 @@ Keep this order deterministic. Put shared external command names in
 - Lua modules must be fast to load and safe during compositor startup/reload.
 - Long-running or interactive work should call small scripts in `~/.local/bin`
   instead of embedding large shell pipelines in Lua.
-- High-cost helpers should call focused Go binaries directly: `orgm-wallpaper`,
-  `orgm-calendar`, or `orgm-dot`.
+- High-cost helpers should call focused Go binaries directly: `orgm-wallpaper`
+  or `orgm-dot`.
 - Do not add new `orgm-hypr` calls; that umbrella command is retired.
