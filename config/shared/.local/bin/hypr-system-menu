@@ -13,8 +13,8 @@ case "$choice" in
   *'Reload Hyprland') exec hyprctl reload ;;
   *'Restart Waybar') exec waybar-watch ~/.config/waybar-hypr ;;
   *'Reload Dock') exec ~/.local/bin/hypr-nwg-dock reload ;;
-  *'Theme light') exec orgm-theme apply orgm-light ;;
-  *'Theme dark') exec orgm-theme apply orgm-dark ;;
+  *'Theme light') exec orgm-themes apply orgm-light ;;
+  *'Theme dark') exec orgm-themes apply orgm-dark ;;
   *'User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
   *'orgm-dot status') exec kitty --class dot-status -e sh -lc "cd '$repo' && distrobox-host-exec orgm-dot status; read -r -p 'press enter...'" ;;
   *'orgm-dot diff') exec kitty --class dot-diff -e sh -lc "cd '$repo' && distrobox-host-exec orgm-dot diff; read -r -p 'press enter...'" ;;

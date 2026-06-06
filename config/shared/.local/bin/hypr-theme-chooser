@@ -5,7 +5,7 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 # shellcheck disable=SC1090
 . "$lib"
 
-current="$(orgm-theme current 2>/dev/null || echo orgm-dark)"
+current="$(orgm-themes current 2>/dev/null || echo orgm-dark)"
 choice="$(printf '%s\n' \
   "󰔎 Toggle ($current)" \
   '󰖔 orgm-dark' \
@@ -15,9 +15,9 @@ choice="$(printf '%s\n' \
   | hypr_rofi_dmenu 'Theme' || true)"
 
 case "$choice" in
-  *Toggle*) exec orgm-theme toggle ;;
-  *orgm-dark*) exec orgm-theme apply orgm-dark ;;
-  *orgm-light*) exec orgm-theme apply orgm-light ;;
-  *Status*) orgm-theme status | hypr_rofi_dmenu 'Theme status' >/dev/null || true ;;
+  *Toggle*) exec orgm-themes toggle ;;
+  *orgm-dark*) exec orgm-themes apply orgm-dark ;;
+  *orgm-light*) exec orgm-themes apply orgm-light ;;
+  *Status*) orgm-themes status | hypr_rofi_dmenu 'Theme status' >/dev/null || true ;;
   *) exit 0 ;;
 esac

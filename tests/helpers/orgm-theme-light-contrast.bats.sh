@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SCRIPT="$ROOT/config/shared/.local/bin/orgm-theme"
+SCRIPT="${ORGM_THEMES_BIN:-orgm-themes}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 

@@ -2,13 +2,7 @@
 set -euo pipefail
 
 orgm_theme_cmd() {
-  if command -v orgm-theme >/dev/null 2>&1; then
-    command -v orgm-theme
-  elif [ -x "$HOME/.local/bin/orgm-theme" ]; then
-    printf '%s\n' "$HOME/.local/bin/orgm-theme"
-  else
-    return 1
-  fi
+  command -v orgm-themes
 }
 
 current_theme() {
@@ -38,6 +32,6 @@ status() {
 
 case "${1:-status}" in
   status) status ;;
-  toggle) cmd="$(orgm_theme_cmd)" || { echo "waybar-theme-toggle: orgm-theme not found" >&2; exit 1; }; "$cmd" toggle >/dev/null; status ;;
+  toggle) cmd="$(orgm_theme_cmd)" || { echo "waybar-theme-toggle: orgm-themes not found" >&2; exit 1; }; "$cmd" toggle >/dev/null; status ;;
   *) echo "usage: waybar-theme-toggle [status|toggle]" >&2; exit 2 ;;
 esac

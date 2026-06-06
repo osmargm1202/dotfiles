@@ -108,7 +108,6 @@
       ".local/bin/waybar-time-ampm",
       ".local/bin/waybar-watch",
       ".config/orgm-theme",
-      ".local/bin/orgm-theme",
       ".local/bin/hypr-theme-chooser",
       ".local/bin/waybar-theme-toggle",
       ".pi/agent/themes/orgm-light.json",
