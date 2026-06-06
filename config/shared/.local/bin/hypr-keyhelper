@@ -32,7 +32,7 @@ write_cache() {
     {"id":"system","title":"Sistema","icon":"󰒓","entries":[
       {"key":"Win+P","description":"Pantallas","command":"nwg-displays"},
       {"key":"Win+Shift+W","description":"Elegir wallpaper","command":"orgm-wallpaper pick"},
-      {"key":"Win+Shift+C","description":"Calendario","command":"orgm-calendar toggle-ui"},
+      {"key":"Win+Shift+C","description":"Calendario","command":"orgm-hypr calendar toggle-ui"},
       {"key":"Win+Alt+E","description":"Power menu","command":"hypr-power-menu"}
     ]}
   ]
