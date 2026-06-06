@@ -38,6 +38,8 @@ func TestApplyWritesStateRenderedFilesAndSavesOutgoingWallpaper(t *testing.T) {
 	assertFileEquals(t, filepath.Join(paths.stateHome, "orgm-theme", "current"), "orgm-light\n")
 	assertFileEquals(t, filepath.Join(paths.stateHome, "orgm-theme", "current.env"), validThemeEnv("orgm-light"))
 	assertFileContains(t, filepath.Join(paths.configHome, "waybar", "orgm-current.css"), "@define-color text     #111827;")
+	assertFileContains(t, filepath.Join(paths.configHome, "quickshell", "theme", "current.json"), `"accent": "#1e66f5"`)
+	assertFileContains(t, filepath.Join(paths.configHome, "quickshell", "theme", "theme.json"), `"accent": "#1e66f5"`)
 	assertFileEquals(t, filepath.Join(paths.stateHome, "orgm-theme", "wallpapers", "orgm-dark.state"), "mode=static\npath=/wallpapers/dark.png\n")
 	assertFileEquals(t, filepath.Join(paths.stateHome, "orgm-theme", "wallpapers", "orgm-dark.monitors", "DP-1.state"), "mode=static\npath=/wallpapers/dark-dp1.png\n")
 	assertFileEquals(t, filepath.Join(paths.stateHome, "orgm-theme", "wallpapers", "orgm-dark.monitors", "HDMI-A-1.state"), "mode=static\npath=/wallpapers/dark-hdmi.png\n")

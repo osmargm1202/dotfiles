@@ -30,6 +30,7 @@ func TestRenderOrgmLightFixtureActiveFiles(t *testing.T) {
 	assertRenderedContains(t, byPath, "/home/test/.config/gtk-4.0/gtk.css", "@define-color window_fg_color #4c4f69;")
 	assertRenderedContains(t, byPath, "/home/test/.config/kitty/current-theme.conf", "background_opacity 1.0")
 	assertRenderedContains(t, byPath, "/home/test/.config/hypr/scheme/current.conf", "$background = eff1f5")
+	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/current.json", `"accent": "#1e66f5"`)
 	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"accent": "#1e66f5"`)
 }
 
@@ -83,9 +84,10 @@ func TestRenderQuickshellUsesOpaqueDarkOverlay(t *testing.T) {
 	}
 	byPath := writesByPath(writes)
 
+	assertQuickshellOverlay(t, byPath, "/home/test/.config/quickshell/theme/current.json", "#000000")
 	assertQuickshellOverlay(t, byPath, "/home/test/.config/quickshell/theme/theme.json", "#000000")
-	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"border": "#33494d64"`)
-	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"button": "#22363a4f"`)
+	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/current.json", `"border": "#33494d64"`)
+	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/current.json", `"button": "#22363a4f"`)
 }
 
 func TestRenderQuickshellUsesOpaqueWhiteOverlay(t *testing.T) {
@@ -101,9 +103,10 @@ func TestRenderQuickshellUsesOpaqueWhiteOverlay(t *testing.T) {
 	}
 	byPath := writesByPath(writes)
 
+	assertQuickshellOverlay(t, byPath, "/home/test/.config/quickshell/theme/current.json", "#eff1f5")
 	assertQuickshellOverlay(t, byPath, "/home/test/.config/quickshell/theme/theme.json", "#eff1f5")
-	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"button": "#e6e9efcc"`)
-	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/theme.json", `"onAccent": "#eff1f5"`)
+	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/current.json", `"button": "#e6e9efcc"`)
+	assertRenderedContains(t, byPath, "/home/test/.config/quickshell/theme/current.json", `"onAccent": "#eff1f5"`)
 }
 
 func TestBuildWritesRejectsRelativeRoots(t *testing.T) {
@@ -151,6 +154,7 @@ func TestRenderActivePathsMatchBashHelper(t *testing.T) {
 		"/cfg/qt5ct/qt5ct.conf",
 		"/cfg/qt6ct/colors/orgm-current.colors",
 		"/cfg/qt6ct/qt6ct.conf",
+		"/cfg/quickshell/theme/current.json",
 		"/cfg/quickshell/theme/theme.json",
 		"/cfg/rofi/orgm-current.rasi",
 		"/cfg/swaync/orgm-current.css",

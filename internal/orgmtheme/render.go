@@ -41,7 +41,8 @@ func BuildWrites(env Env, theme Theme) ([]PlannedWrite, error) {
 		{Path: filepath.Join(env.ConfigHome, "waybar-hypr", "orgm-current.css"), Content: renderWaybarHyprPalette(theme)},
 		{Path: filepath.Join(env.ConfigHome, "nwg-dock-hyprland", "orgm-current.css"), Content: renderDock()},
 		{Path: filepath.Join(env.ConfigHome, "swaync", "orgm-current.css"), Content: renderSwayNC(theme)},
-		{Path: filepath.Join(env.ConfigHome, "quickshell", "theme", "theme.json"), Content: renderQuickshell(theme)},
+		{Path: filepath.Join(env.ConfigHome, "quickshell", "theme", "current.json"), Content: renderFixedQuickshell(theme)},
+		{Path: filepath.Join(env.ConfigHome, "quickshell", "theme", "theme.json"), Content: renderFixedQuickshell(theme)},
 		{Path: filepath.Join(env.ConfigHome, "gtk-3.0", "settings.ini"), Content: gtkSettings},
 		{Path: filepath.Join(env.ConfigHome, "gtk-4.0", "settings.ini"), Content: gtkSettings},
 		{Path: filepath.Join(env.ConfigHome, "gtk-4.0", "gtk.css"), Content: gtkCSS},
@@ -233,6 +234,61 @@ func renderSwayNC(t Theme) string {
 @define-color red #%s;
 `, t.PanelBG, t.QSCardSoft, t.QSCard, t.QSHover, t.Text, t.Subtext0, t.Teal, t.Mauve, t.Red)
 }
+
+func renderFixedQuickshell(t Theme) string {
+	switch t.Name {
+	case "orgm-dark":
+		return fixedQuickshellDark
+	case "orgm-light":
+		return fixedQuickshellLight
+	default:
+		return renderQuickshell(t)
+	}
+}
+
+const fixedQuickshellDark = `{
+  "overlay": "#000000",
+  "border": "#33494d64",
+  "text": "#cad3f5",
+  "subtext": "#a5adcb",
+  "muted": "#6e738d",
+  "accent": "#8aadf4",
+  "success": "#a6da95",
+  "warning": "#eed49f",
+  "error": "#ed8796",
+  "pink": "#f5bde6",
+  "button": "#22363a4f",
+  "buttonStrong": "#33494d64",
+  "buttonSoft": "#1e363a4f",
+  "eventCard": "#2b363a4f",
+  "hover": "#55363a4f",
+  "outline": "#494d64",
+  "onAccent": "#11111b",
+  "disabled": "#363a4f"
+}
+`
+
+const fixedQuickshellLight = `{
+  "overlay": "#eff1f5",
+  "border": "#ccd0dacc",
+  "text": "#4c4f69",
+  "subtext": "#6c6f85",
+  "muted": "#9ca0b0",
+  "accent": "#1e66f5",
+  "success": "#40a02b",
+  "warning": "#df8e1d",
+  "error": "#d20f39",
+  "pink": "#ea76cb",
+  "button": "#e6e9efcc",
+  "buttonStrong": "#ccd0dacc",
+  "buttonSoft": "#dce0e8cc",
+  "eventCard": "#eff1f5ee",
+  "hover": "#bcc0ccaa",
+  "outline": "#bcc0cc",
+  "onAccent": "#eff1f5",
+  "disabled": "#ccd0da"
+}
+`
 
 func renderQuickshell(t Theme) string {
 	return fmt.Sprintf(`{
