@@ -39,7 +39,7 @@ jq -e '.monitors["BOE 0x09DE"].primary == true' "$STATE" >/dev/null || fail "sin
 [ -s "$GENERATED" ] || fail "waybar-config should print generated config path"
 config_path="$(cat "$GENERATED")"
 [ -f "$config_path" ] || fail "generated config file missing: $config_path"
-jq -e 'length == 2 and all(.[]; .output == "eDP-1")' "$config_path" >/dev/null || fail "primary mode should target eDP-1"
+jq -e 'all(.[]; has("output") | not)' "$config_path" >/dev/null || fail "single-monitor primary mode should use base config without output"
 
 jq '.waybar.mode = "all"' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
 "$BIN/hypr-display-targets" waybar-config "$ROOT/config/shared/.config/waybar-hypr" >"$GENERATED"
@@ -49,7 +49,7 @@ jq -e 'all(.[]; has("output") | not)' "$config_path" >/dev/null || fail "all mod
 jq '.waybar.mode = "selected" | .waybar.selected = ["BOE 0x09DE"]' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
 "$BIN/hypr-display-targets" waybar-config "$ROOT/config/shared/.config/waybar-hypr" >"$GENERATED"
 config_path="$(cat "$GENERATED")"
-jq -e 'length == 2 and all(.[]; .output == "eDP-1")' "$config_path" >/dev/null || fail "selected mode should target selected monitor output"
+jq -e 'all(.[]; has("output") | not)' "$config_path" >/dev/null || fail "single-monitor selected mode should use base config without output"
 
 "$BIN/hypr-display-targets" dock-env | grep -qx -- '-o eDP-1' || fail "dock-env should target primary output"
 

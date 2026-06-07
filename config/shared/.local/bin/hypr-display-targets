@@ -192,7 +192,7 @@ waybar_config_cmd() {
   generated="$out_dir/config"
   outputs="$(waybar_output_json)"
   mode="$(jq -r '.waybar.mode // "primary"' "$state_file")"
-  if [ "$mode" = "all" ] || [ "$(printf '%s' "$outputs" | jq 'length')" -eq 0 ]; then
+  if [ "$mode" = "all" ] || [ "$(monitor_count)" -le 1 ] || [ "$(printf '%s' "$outputs" | jq 'length')" -eq 0 ]; then
     strip_jsonc "$source_config" | jq 'map(del(.output))' >"$generated"
   else
     strip_jsonc "$source_config" | jq --argjson outs "$outputs" '[ $outs[] as $out | .[] | . + {output: $out} ]' >"$generated"
