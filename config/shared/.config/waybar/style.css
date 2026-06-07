@@ -219,7 +219,7 @@ window.bottom_bar .modules-center,
 #group-system,
 #system,
 window.dock_bar#waybar {
-  border: 2px solid @panel_border;
+  border: none;
 }
 
 #custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }
