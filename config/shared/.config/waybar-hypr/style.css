@@ -160,7 +160,7 @@ window.bottom_bar .modules-right { margin-right: 0; }
 }
 .metric-widget {
   background: @surface0;
-  border: 1px solid @panel_border;
+  border: none;
   border-radius: 11px;
   padding: 4px 8px;
   margin: 0 6px;

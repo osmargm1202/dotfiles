@@ -216,7 +216,6 @@ window.top_bar .modules-center,
 window.top_bar .modules-right,
 window.bottom_bar .modules-left,
 window.bottom_bar .modules-center,
-window.bottom_bar .modules-right,
 #group-system,
 #system,
 window.dock_bar#waybar {
