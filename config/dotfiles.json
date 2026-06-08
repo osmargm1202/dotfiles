@@ -69,6 +69,7 @@
       ".local/bin/brightness-osd",
       ".local/bin/hypr-battery-alerts",
       ".local/bin/hypr-app-launcher",
+      ".local/bin/hypr-audio-device-menu",
       ".local/bin/hypr-bluetooth-menu",
       ".local/bin/hypr-current-wallpaper",
       ".local/bin/hypr-display-targets",

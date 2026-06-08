@@ -21,6 +21,7 @@
     "modules-right": [
       "privacy",
       "tray",
+      "custom/clipboard",
       "custom/theme_toggle",
       "custom/wallpaper",
       "custom/usb_devices",
@@ -262,6 +263,7 @@
         ]
       },
       "on-click": "pamixer -t",
+      "on-click-middle": "hypr-audio-device-menu output",
       "on-click-right": "pavucontrol",
       "max-volume": 150
     },
@@ -276,6 +278,7 @@
       "format-source": "󰍬",
       "format-source-muted": "󰍭",
       "on-click": "pamixer --default-source -t",
+      "on-click-middle": "hypr-audio-device-menu input",
       "on-click-right": "pavucontrol",
       "max-volume": 150
     },
@@ -347,6 +350,12 @@
       "format": "󰐥",
       "tooltip": false,
       "on-click": "hypr-power-menu"
+    },
+    "custom/clipboard": {
+      "format": "",
+      "tooltip": true,
+      "tooltip-format": "Historial clipboard",
+      "on-click": "hypr-rofi-clipboard"
     },
     "custom/theme_toggle": {
       "exec": "waybar-theme-toggle status",

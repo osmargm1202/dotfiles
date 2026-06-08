@@ -104,7 +104,7 @@ window.bottom_bar .modules-right { margin-right: 0; }
 }
 #group-usage, #usage, #group-system, #system,
 #custom-metric_cpu, #custom-metric_gpu, #custom-metric_ram, #custom-metric_ssd, #custom-metric_swap,
-#cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-headset_reconnect, #bluetooth, #network, #privacy, #custom-keybindings_help, #tray { color: @text; }
+#cpu, #memory, #temperature, #disk, #custom-swap, #custom-wallpaper, #custom-headset_reconnect, #custom-clipboard, #bluetooth, #network, #privacy, #custom-keybindings_help, #tray { color: @text; }
 #group-usage, #usage {
   background: transparent;
 }
@@ -118,12 +118,12 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #custom-theme_toggle, #custom-wallpaper, #custom-usb_devices, #custom-nixclean, #custom-hardware_fetch, #custom-pi_status, #custom-headset_reconnect, #custom-logout_menu {
   background-repeat: no-repeat;
   background-position: center;
-  background-size: 22px 22px;
+  background-size: 18px 18px;
   color: transparent;
   font-size: 0;
-  min-width: 32px;
-  min-height: 32px;
-  padding: 0 7px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 3px;
 }
 #custom-theme_toggle { background-image: url("icons/theme_toggle.svg"); }
 #custom-wallpaper { background-image: url("icons/wallpaper.svg"); }
@@ -132,11 +132,18 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #custom-hardware_fetch { background-image: url("icons/hardware_fetch.svg"); }
 #custom-pi_status { background-image: url("icons/pi_status.svg"); }
 #custom-headset_reconnect { background-image: url("icons/headset_reconnect.svg"); }
-#custom-logout_menu { background-image: url("icons/logout_menu.svg"); margin-right: 10px; }
-#custom-wallpaper { color: @text; font-size: 20px; }
+#custom-logout_menu { background-image: url("icons/logout_menu.svg"); margin-right: 4px; }
+#custom-wallpaper { color: @text; font-size: 18px; }
+#custom-clipboard {
+  color: @text;
+  font-size: 18px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 3px;
+}
 #custom-pi_status.ready, #custom-pi_status.outdated { color: transparent; }
 #bluetooth, #network {
-  padding: 0 10px;
+  padding: 0 6px;
 }
 #group-usage #custom-metric_cpu, #group-usage #custom-metric_gpu, #group-usage #custom-metric_ram, #group-usage #custom-metric_ssd, #group-usage #custom-metric_swap,
 #usage #custom-metric_cpu, #usage #custom-metric_gpu, #usage #custom-metric_ram, #usage #custom-metric_ssd, #usage #custom-metric_swap,

@@ -55,6 +55,47 @@ func TestRenderWaybarHyprLightIconOverrides(t *testing.T) {
 	}
 }
 
+func TestRenderSwayNCUsesWaybarPalette(t *testing.T) {
+	for _, themeName := range []string{"orgm-dark", "orgm-light"} {
+		t.Run(themeName, func(t *testing.T) {
+			theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), themeName)
+			if err != nil {
+				t.Fatalf("LoadTheme %s fixture error = %v", themeName, err)
+			}
+			env := Env{ConfigHome: "/home/test/.config", DataHome: "/home/test/.local/share"}
+
+			writes, err := BuildWrites(env, theme)
+			if err != nil {
+				t.Fatalf("BuildWrites error = %v", err)
+			}
+			byPath := writesByPath(writes)
+			swaync := byPath["/home/test/.config/swaync/orgm-current.css"]
+			waybar := byPath["/home/test/.config/waybar-hypr/orgm-current.css"]
+
+			for _, want := range []string{
+				"@define-color surface0",
+				"@define-color surface1",
+				"@define-color surface2",
+				"@define-color overlay0",
+				"@define-color blue",
+				"@define-color panel_bg",
+				"@define-color panel_border",
+			} {
+				if !strings.Contains(swaync, want) {
+					t.Fatalf("SwayNC palette missing %q\n%s", want, swaync)
+				}
+				if !strings.Contains(waybar, want) {
+					t.Fatalf("Waybar palette missing %q\n%s", want, waybar)
+				}
+			}
+
+			if strings.Contains(swaync, "surface_hover") || strings.Contains(swaync, "@define-color accent") {
+				t.Fatalf("SwayNC palette still uses legacy-only names:\n%s", swaync)
+			}
+		})
+	}
+}
+
 func TestRenderWaybarHyprDarkUsesDeepBlueSurface(t *testing.T) {
 	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-dark")
 	if err != nil {

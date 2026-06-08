@@ -64,8 +64,9 @@ if grep -Eq '@define-color [^;]+#[0-9a-fA-F]{8};' "$WAYBAR"; then
   cat "$WAYBAR" >&2
   exit 1
 fi
-assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color base #eff1f5dd;'
-assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color surface #e6e9efcc;'
+assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color panel_bg rgba(239, 241, 245, 0.867);'
+assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color surface0 #ccd0da;'
+assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color blue      #1e66f5;'
 assert_contains "$GTK" '@define-color window_fg_color #4c4f69;'
 assert_contains "$GTK" '@define-color accent_color #1e66f5;'
 assert_contains "$GTK3_SETTINGS" 'gtk-font-name=Inter 11'
