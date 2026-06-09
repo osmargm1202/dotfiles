@@ -198,6 +198,7 @@
       ".config/helix/themes/orgm-hypr.toml",
       ".config/kitty/current-theme.conf",
       ".config/orgm-hypr/display-targets.json",
+      ".local/state/hypr-rofi-ssh-host",
       ".config/rofi/orgm-current.rasi",
       ".config/waybar/orgm-current.css",
       ".config/waybar-hypr/orgm-current.css",
