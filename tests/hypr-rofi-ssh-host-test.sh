@@ -30,6 +30,13 @@ printf '%s\n' "$*" >"$KITTY_ARGS"
 SH
 chmod +x "$TMP/bin/kitty"
 
+cat >"$TMP/bin/ssh-keygen" <<'SH'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"$SSH_KEYGEN_ARGS"
+exit 0
+SH
+chmod +x "$TMP/bin/ssh-keygen"
+
 run_menu() {
   HOME="$TMP/home" \
   XDG_STATE_HOME="$TMP/state" \
@@ -38,6 +45,7 @@ run_menu() {
   ROFI_RESPONSES="$TMP/responses" \
   ROFI_PROMPTS="$TMP/prompts" \
   KITTY_ARGS="$TMP/kitty.args" \
+  SSH_KEYGEN_ARGS="$TMP/ssh-keygen.args" \
   "$SCRIPT"
 }
 
@@ -67,6 +75,35 @@ grep -Fxq -- '-e ssh deploy@server-a' "$TMP/kitty.args" || {
 
 if grep -Fxq 'server-b	deploy' "$TMP/state/hypr-rofi-ssh-host/users.tsv"; then
   echo "FAIL: users must be saved per known host" >&2
+  cat "$TMP/state/hypr-rofi-ssh-host/users.tsv" >&2
+  exit 1
+fi
+
+printf 'server-a	admin\nserver-b	root\n' >>"$TMP/state/hypr-rofi-ssh-host/users.tsv"
+printf '🗑 Eliminar usuarios de known host\nserver-a\nadmin\n' >"$TMP/responses"
+: >"$TMP/prompts"
+run_menu
+if grep -Fxq 'server-a	admin' "$TMP/state/hypr-rofi-ssh-host/users.tsv"; then
+  echo "FAIL: selected saved user should be removed for host" >&2
+  cat "$TMP/state/hypr-rofi-ssh-host/users.tsv" >&2
+  exit 1
+fi
+grep -Fxq 'server-a	deploy' "$TMP/state/hypr-rofi-ssh-host/users.tsv" || {
+  echo "FAIL: removing one user should keep other users for same host" >&2
+  cat "$TMP/state/hypr-rofi-ssh-host/users.tsv" >&2
+  exit 1
+}
+
+printf '🗑 Eliminar known host\nserver-b\nSí, eliminar server-b\n' >"$TMP/responses"
+: >"$TMP/prompts"
+run_menu
+grep -Fxq -- '-R server-b' "$TMP/ssh-keygen.args" || {
+  echo "FAIL: deleting known host should call ssh-keygen -R host" >&2
+  cat "$TMP/ssh-keygen.args" >&2 || true
+  exit 1
+}
+if grep -Fxq 'server-b	root' "$TMP/state/hypr-rofi-ssh-host/users.tsv"; then
+  echo "FAIL: deleting known host should delete saved users for that host" >&2
   cat "$TMP/state/hypr-rofi-ssh-host/users.tsv" >&2
   exit 1
 fi
