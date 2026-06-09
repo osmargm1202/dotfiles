@@ -39,5 +39,10 @@ function load_private_env --description 'Decrypt age-encrypted fish env vars and
         return 1
     end
 
-    source (age -d -i "$DOT_AGE_IDENTITY" "$encrypted" | psub)
+    # Secrets may use `set -x`, which would become function-local here.
+    # Promote exported vars to global scope while loading from inside function.
+    source (age -d -i "$DOT_AGE_IDENTITY" "$encrypted" \
+        | string replace -r '^set -x ' 'set -gx ' \
+        | psub)
+    or return 1
 end

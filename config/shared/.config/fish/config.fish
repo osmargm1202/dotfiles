@@ -20,9 +20,7 @@ if test -f $host_config
     source $host_config
 end
 
-if functions -q load_private_env
-    load_private_env
-end
+type -q load_private_env; and load_private_env
 
 if test -f ~/.config/fish/insforge.env
     source ~/.config/fish/insforge.env
