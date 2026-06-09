@@ -33,12 +33,20 @@ grep -q 'address:0xdota' "$CALLS" || {
 }
 
 : >"$CALLS"
-PATH="$TMP/bin:$PATH" CALLS="$CALLS" SWAYNC_HINT_PI_FOCUS_PID="999" SWAYNC_APP_NAME="Pi" "$SCRIPT"
-if grep -q 'address:0/chrome' "$CALLS"; then
-  echo "FAIL: legacy Pi focus hint should be ignored" >&2
-  cat "$CALLS" >&2
+PATH="$TMP/bin:$PATH" CALLS="$CALLS" SWAYNC_HINT_PID="999" SWAYNC_APP_NAME="Pi" "$SCRIPT"
+grep -q 'address:0/chrome' "$CALLS" || {
+  echo "FAIL: generic pid hint did not focus exact window pid 999" >&2
+  cat "$CALLS" >&2 || true
   exit 1
-fi
+}
+
+: >"$CALLS"
+PATH="$TMP/bin:$PATH" CALLS="$CALLS" SWAYNC_HINT_PI_FOCUS_PID="999" SWAYNC_APP_NAME="Pi" "$SCRIPT"
+grep -q 'address:0/chrome' "$CALLS" || {
+  echo "FAIL: Pi focus hint did not focus exact window pid 999" >&2
+  cat "$CALLS" >&2 || true
+  exit 1
+}
 
 : >"$CALLS"
 PATH="/usr/sbin:/usr/bin:/bin" SWAYNC_APP_NAME="Missing Hyprctl" "$SCRIPT"
