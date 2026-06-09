@@ -88,6 +88,31 @@ func TestRunPreservesConfiguredLocalOnlyTypesAndPatterns(t *testing.T) {
 	}
 }
 
+func TestRunCopiesSharedPathsWhenHostIsUnknown(t *testing.T) {
+	rt := testRuntime(t)
+	rt.Config.Hosts = map[string]dotconfig.PathList{
+		"lenovo": {Paths: []string{".config/fish/host-lenovo.fish"}},
+	}
+	writeFile(t, filepath.Join(rt.SourceShared, ".config", "app", "config.json"), "shared")
+	writeFile(t, filepath.Join(rt.HostSource("lenovo"), ".config", "fish", "host-lenovo.fish"), "host")
+
+	actions, err := Run(rt, Options{Host: "unlisted"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertHasAction(t, actions, "A", filepath.Join(rt.Destination, ".config", "app", "config.json"))
+	assertNoAction(t, actions, filepath.Join(rt.Destination, ".config", "fish", "host-lenovo.fish"))
+	content, err := os.ReadFile(filepath.Join(rt.Destination, ".config", "app", "config.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(content) != "shared" {
+		t.Fatalf("shared content = %q, want shared", string(content))
+	}
+	assertNotExists(t, filepath.Join(rt.Destination, ".config", "fish", "host-lenovo.fish"))
+}
+
 func TestRunTargetCopiesOnlyRequestedManagedFile(t *testing.T) {
 	rt := testRuntime(t)
 	writeFile(t, filepath.Join(rt.SourceShared, ".config", "app", "one.txt"), "repo one")
