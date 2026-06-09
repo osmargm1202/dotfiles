@@ -65,6 +65,7 @@ if grep -Eq '@define-color [^;]+#[0-9a-fA-F]{8};' "$WAYBAR"; then
   exit 1
 fi
 assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color panel_bg rgba(239, 241, 245, 0.867);'
+assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color swaync_bg rgba(239, 241, 245, 0.8);'
 assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color surface0 #ccd0da;'
 assert_contains "$TMP/config/swaync/orgm-current.css" '@define-color blue      #1e66f5;'
 assert_contains "$GTK" '@define-color window_fg_color #4c4f69;'
@@ -75,9 +76,11 @@ assert_contains "$QT5" 'general="Inter,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'
 assert_contains "$QT5" 'fixed="JetBrains Mono,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'
 assert_contains "$QT6" 'general="Inter,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'
 assert_contains "$QT6" 'fixed="JetBrains Mono,11,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'
-assert_contains "$TMP/gsettings.log" 'gsettings set org.gnome.desktop.interface font-name Inter 11'
-assert_contains "$TMP/gsettings.log" 'gsettings set org.gnome.desktop.interface document-font-name Inter 11'
-assert_contains "$TMP/gsettings.log" 'gsettings set org.gnome.desktop.interface monospace-font-name JetBrains Mono 11'
+if [ -s "$TMP/gsettings.log" ]; then
+  echo "FAIL: orgm-themes must not mutate system gsettings during dark/light preset switch" >&2
+  cat "$TMP/gsettings.log" >&2
+  exit 1
+fi
 assert_contains "$KITTY" 'background_opacity 1.0'
 
 HYPR_RULES=$(ROOT="$ROOT" XDG_STATE_HOME="$TMP/state" HOME="$TMP/home" lua - <<'LUA'

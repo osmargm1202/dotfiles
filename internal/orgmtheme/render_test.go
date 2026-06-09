@@ -72,6 +72,10 @@ func TestRenderSwayNCUsesWaybarPalette(t *testing.T) {
 			swaync := byPath["/home/test/.config/swaync/orgm-current.css"]
 			waybar := byPath["/home/test/.config/waybar-hypr/orgm-current.css"]
 
+			if !strings.Contains(swaync, "@define-color swaync_bg") {
+				t.Fatalf("SwayNC palette missing swaync_bg:\n%s", swaync)
+			}
+
 			for _, want := range []string{
 				"@define-color surface0",
 				"@define-color surface1",
@@ -87,6 +91,10 @@ func TestRenderSwayNCUsesWaybarPalette(t *testing.T) {
 				if !strings.Contains(waybar, want) {
 					t.Fatalf("Waybar palette missing %q\n%s", want, waybar)
 				}
+			}
+
+			if !strings.Contains(swaync, "0.8);") {
+				t.Fatalf("SwayNC background must have fixed 0.80 alpha:\n%s", swaync)
 			}
 
 			if strings.Contains(swaync, "surface_hover") || strings.Contains(swaync, "@define-color accent") {

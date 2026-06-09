@@ -48,6 +48,24 @@ func TestApplyWritesStateRenderedFilesAndSavesOutgoingWallpaper(t *testing.T) {
 	}
 }
 
+func TestApplyRejectsNonPresetThemeNames(t *testing.T) {
+	root := t.TempDir()
+	paths := newApplyTestPaths(t, root)
+	writeTestTheme(t, paths.themesDir, "custom-theme")
+
+	_, err := Apply(ApplyOptions{
+		ThemeName: "custom-theme",
+		NoReload:  true,
+		Env:       Env{ConfigHome: paths.configHome, DataHome: paths.dataHome},
+		StateHome: paths.stateHome,
+		ThemesDir: paths.themesDir,
+		Home:      paths.home,
+	})
+	if err == nil {
+		t.Fatal("Apply accepted custom-theme, want only orgm-dark/orgm-light")
+	}
+}
+
 func TestApplySkipsInvalidPersistedPreviousThemeName(t *testing.T) {
 	root := t.TempDir()
 	paths := newApplyTestPaths(t, root)
@@ -180,7 +198,7 @@ func TestApplyRestoresIncomingVideoAndSingleStaticWallpaper(t *testing.T) {
 	}
 }
 
-func TestApplyReloadQuitsNautilusSoGTK4AppsPickUpTheme(t *testing.T) {
+func TestApplyLiveReloadOnlyUsesThemeOwnedDesktopTargets(t *testing.T) {
 	root := t.TempDir()
 	paths := newApplyTestPaths(t, root)
 	writeTestTheme(t, paths.themesDir, "orgm-light")
@@ -197,9 +215,17 @@ func TestApplyReloadQuitsNautilusSoGTK4AppsPickUpTheme(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Apply error = %v", err)
 	}
-	want := Command{Name: "nautilus", Args: []string{"-q"}}
-	if !containsCommand(runner.commands, want) {
-		t.Fatalf("runner commands = %#v, want %#v", runner.commands, want)
+	for _, unwanted := range []string{"gsettings", "kitty", "nautilus"} {
+		for _, command := range runner.commands {
+			if command.Name == unwanted {
+				t.Fatalf("runner commands = %#v, should not run system command %s", runner.commands, unwanted)
+			}
+		}
+	}
+	for _, want := range []Command{{Name: "hyprctl", Args: []string{"reload"}}, {Name: "swaync-client", Args: []string{"-rs"}}} {
+		if !containsCommand(runner.commands, want) {
+			t.Fatalf("runner commands = %#v, want %#v", runner.commands, want)
+		}
 	}
 }
 
@@ -225,7 +251,7 @@ func TestApplyTreatsLiveReloadCommandErrorsAsBestEffort(t *testing.T) {
 	}
 }
 
-func TestApplyUpdatesExistingPiSettingsJSONOnly(t *testing.T) {
+func TestApplyDoesNotMutatePiSettings(t *testing.T) {
 	root := t.TempDir()
 	paths := newApplyTestPaths(t, root)
 	writeTestTheme(t, paths.themesDir, "orgm-light")
@@ -243,7 +269,7 @@ func TestApplyUpdatesExistingPiSettingsJSONOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Apply error = %v", err)
 	}
-	assertFileContains(t, settingsPath, "\"theme\": \"orgm-light\"")
+	assertFileEquals(t, settingsPath, "{\"other\":true,\"theme\":\"old\"}\n")
 
 	missingRoot := t.TempDir()
 	missingPaths := newApplyTestPaths(t, missingRoot)

@@ -52,9 +52,7 @@ for _, rule in ipairs(utilities) do
   hl.window_rule({ match = { class = rule.class }, center = true })
 end
 
-hl.window_rule({ match = { title = "^hardware-fastfetch$" }, float = true })
-hl.window_rule({ match = { title = "^hardware-fastfetch$" }, size = "1280 1000" })
-hl.window_rule({ match = { title = "^hardware-fastfetch$" }, center = true })
+hl.window_rule({ match = { title = "^hardware-fastfetch$" }, maximize = true })
 
 hl.window_rule({ match = { modal = true }, float = true })
 

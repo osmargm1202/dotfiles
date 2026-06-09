@@ -1,8 +1,6 @@
 package orgmtheme
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -49,6 +47,9 @@ func Apply(options ApplyOptions) (ApplyResult, error) {
 	if err != nil {
 		return ApplyResult{}, err
 	}
+	if options.ThemeName != "orgm-dark" && options.ThemeName != "orgm-light" {
+		return ApplyResult{}, fmt.Errorf("theme must be orgm-dark or orgm-light")
+	}
 	theme, err := LoadTheme(paths.themesDir, options.ThemeName)
 	if err != nil {
 		return ApplyResult{}, err
@@ -81,14 +82,10 @@ func Apply(options ApplyOptions) (ApplyResult, error) {
 				return ApplyResult{}, err
 			}
 		}
-		if err := updatePiSettings(paths.home, theme); err != nil {
-			return ApplyResult{}, err
-		}
 	}
 
 	commands := make([]Command, 0)
 	if !options.NoReload {
-		commands = append(commands, gsettingsCommands(theme)...)
 		commands = append(commands, liveReloadCommands()...)
 	}
 	commands = append(commands, restoreWallpaperCommands(paths.stateHome, theme.Name)...)
@@ -249,60 +246,11 @@ func monitorWallpaperCommands(dir string) []Command {
 	return commands
 }
 
-func gsettingsCommands(theme Theme) []Command {
-	return []Command{
-		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "color-scheme", theme.ColorScheme}},
-		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "gtk-theme", theme.GTKTheme}},
-		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "icon-theme", theme.IconTheme}},
-		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "cursor-theme", theme.CursorTheme}},
-		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "cursor-size", theme.CursorSize}},
-		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "font-name", "Inter 11"}},
-		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "document-font-name", "Inter 11"}},
-		{Name: "gsettings", Args: []string{"set", "org.gnome.desktop.interface", "monospace-font-name", "JetBrains Mono 11"}},
-	}
-}
-
 func liveReloadCommands() []Command {
 	return []Command{
 		{Name: "hyprctl", Args: []string{"reload"}},
-		{Name: "pkill", Args: []string{"-SIGUSR1", "kitty"}},
 		{Name: "swaync-client", Args: []string{"-rs"}},
-		{Name: "nautilus", Args: []string{"-q"}},
 	}
-}
-
-func updatePiSettings(home string, theme Theme) error {
-	if home == "" {
-		return nil
-	}
-	settingsPath := filepath.Join(home, ".pi", "agent", "settings.json")
-	stat, err := os.Stat(settingsPath)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-		return err
-	}
-	content, err := os.ReadFile(settingsPath)
-	if err != nil {
-		return err
-	}
-	var settings map[string]any
-	decoder := json.NewDecoder(bytes.NewReader(content))
-	if err := decoder.Decode(&settings); err != nil {
-		return err
-	}
-	piTheme := theme.PITheme
-	if piTheme == "" {
-		piTheme = theme.Name
-	}
-	settings["theme"] = piTheme
-	updated, err := json.MarshalIndent(settings, "", "  ")
-	if err != nil {
-		return err
-	}
-	updated = append(updated, '\n')
-	return AtomicWriteFile(settingsPath, updated, stat.Mode().Perm())
 }
 
 func readStateFile(path string) map[string]string {

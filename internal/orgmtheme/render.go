@@ -222,7 +222,11 @@ button.active {
 }
 
 func renderSwayNC(t Theme) string {
-	return renderWaybarPalette(t)
+	palette := renderWaybarPalette(t)
+	if t.ColorScheme == "prefer-light" {
+		return palette + "@define-color swaync_bg rgba(239, 241, 245, 0.8);\n"
+	}
+	return palette + "@define-color swaync_bg rgba(2, 10, 24, 0.8);\n"
 }
 
 func renderFixedQuickshell(t Theme) string {

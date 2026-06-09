@@ -40,4 +40,14 @@ if grep -q 'address:0/chrome' "$CALLS"; then
   exit 1
 fi
 
+: >"$CALLS"
+PATH="/usr/sbin:/usr/bin:/bin" SWAYNC_APP_NAME="Missing Hyprctl" "$SCRIPT"
+
+cat >"$TMP/bin/hyprctl" <<'SH'
+#!/usr/bin/env bash
+exit 1
+SH
+chmod +x "$TMP/bin/hyprctl"
+PATH="$TMP/bin:/usr/bin:/bin" CALLS="$CALLS" SWAYNC_APP_NAME="Broken Hyprctl" "$SCRIPT"
+
 echo "hypr focus notification smoke test passed"
