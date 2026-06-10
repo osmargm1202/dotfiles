@@ -111,7 +111,6 @@
       ".config/orgm-theme",
       ".local/bin/hypr-theme-chooser",
       ".local/bin/waybar-theme-toggle",
-      ".pi/agent/themes/orgm-light.json",
       ".local/bin/hypr-bluetooth-reconnect",
       ".local/bin/hypr-rofi-calc",
       ".local/bin/hypr-rofi-clipboard",
