@@ -666,6 +666,64 @@ func (m *Manager) SetRandomStatic() error {
 	return m.SetStatic(wallpaper, "static-random")
 }
 
+func (m *Manager) SetRandomStaticForMonitors(outputs []string) error {
+	if err := m.ensureDirs(); err != nil {
+		return err
+	}
+	items, err := m.StaticWallpapers()
+	if err != nil {
+		return err
+	}
+	if len(items) == 0 {
+		items = []string{m.Fallback}
+	}
+	if len(outputs) == 0 {
+		return m.SetRandomStatic()
+	}
+
+	outputs = append([]string(nil), outputs...)
+	sort.Strings(outputs)
+	items = append([]string(nil), items...)
+	rand.New(rand.NewSource(time.Now().UnixNano())).Shuffle(len(items), func(i, j int) {
+		items[i], items[j] = items[j], items[i]
+	})
+
+	states := make([]MonitorState, 0, len(outputs))
+	for i, output := range outputs {
+		if output == "" {
+			continue
+		}
+		path := items[i%len(items)]
+		if !fileExists(path) {
+			return fmt.Errorf("Wallpaper not found: %s", path)
+		}
+		states = append(states, MonitorState{Output: output, Mode: "static-random", Path: path})
+	}
+	if len(states) == 0 {
+		return m.SetRandomStatic()
+	}
+
+	m.StopMPVPaper()
+	for _, state := range states {
+		if err := m.WriteMonitorState(state.Output, state.Mode, state.Path); err != nil {
+			return err
+		}
+	}
+	if err := m.writeHyprpaperMonitorConfig(states); err != nil {
+		return err
+	}
+	if err := m.restartHyprpaper(); err != nil {
+		return err
+	}
+	first := states[0].Path
+	if err := os.MkdirAll(filepath.Dir(m.CurrentFile), 0o755); err == nil {
+		_ = os.WriteFile(m.CurrentFile, []byte(first+"\n"), 0o644)
+	}
+	_ = os.Remove(m.LockWallpaper)
+	_ = os.Symlink(first, m.LockWallpaper)
+	return m.WriteState("static-random", first)
+}
+
 func (m *Manager) SetStaticForMonitor(path, output, mode string) error {
 	if err := m.ensureDirs(); err != nil {
 		return err
@@ -738,7 +796,7 @@ func (m *Manager) isWallpaperDaemonPID(pid string) bool {
 		return false
 	}
 	cmdline := string(out)
-	return strings.Contains(cmdline, "hypr-random-wallpaper daemon") || strings.Contains(cmdline, "orgm-hypr wallpaper daemon")
+	return strings.Contains(cmdline, "hypr-random-wallpaper daemon") || strings.Contains(cmdline, "orgm-hypr wallpaper daemon") || strings.Contains(cmdline, "orgm-wallpaper daemon")
 }
 
 func (m *Manager) SetVideo(path string) error {
@@ -1133,15 +1191,38 @@ func (m *Manager) RunDaemon() error {
 	if err := os.WriteFile(m.DaemonPIDFile, []byte(strconv.Itoa(os.Getpid())+"\n"), 0o644); err != nil {
 		return err
 	}
-	if err := m.Restore(); err != nil {
-		return err
-	}
 	for {
-		m.sleep(m.Interval)
+		m.sleepDuration(nextHourlyWallpaperDelay(time.Now()))
 		if m.CurrentMode() == "static-random" {
-			_ = m.SetRandomStatic()
+			_ = m.SetRandomStaticForActiveMonitors()
 		}
 	}
+}
+
+func (m *Manager) SetRandomStaticForActiveMonitors() error {
+	monitors := m.DetectMonitors()
+	outputs := make([]string, 0, len(monitors))
+	for _, monitor := range monitors {
+		if monitor.Name != "" {
+			outputs = append(outputs, monitor.Name)
+		}
+	}
+	return m.SetRandomStaticForMonitors(outputs)
+}
+
+func (m *Manager) sleepDuration(delay time.Duration) {
+	if delay <= 0 {
+		return
+	}
+	m.runIgnore("sleep", strconv.FormatFloat(delay.Seconds(), 'f', 3, 64))
+}
+
+func nextHourlyWallpaperDelay(now time.Time) time.Duration {
+	next := now.Truncate(time.Hour)
+	if next.Before(now) {
+		next = next.Add(time.Hour)
+	}
+	return next.Sub(now)
 }
 
 func shellQuote(s string) string {

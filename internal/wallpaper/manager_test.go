@@ -272,6 +272,75 @@ func TestSetVideoForMonitorStopsUntrackedGlobalVideoWallpaper(t *testing.T) {
 	}
 }
 
+func TestWallpaperDaemonPIDRecognizesOrgmWallpaperCommand(t *testing.T) {
+	proc := exec.Command("bash", "-c", "exec -a 'orgm-wallpaper daemon' sleep 30")
+	if err := proc.Start(); err != nil {
+		t.Fatalf("start daemon-shaped process: %v", err)
+	}
+	t.Cleanup(func() { _ = proc.Process.Kill() })
+
+	m := NewManager(io.Discard, io.Discard)
+	if !m.isWallpaperDaemonPID(strconv.Itoa(proc.Process.Pid)) {
+		t.Fatalf("isWallpaperDaemonPID did not recognize orgm-wallpaper daemon")
+	}
+}
+
+func TestNextHourlyWallpaperDelayAlignsToTopOfHour(t *testing.T) {
+	at := time.Date(2026, 6, 11, 18, 13, 17, 0, time.UTC)
+	got := nextHourlyWallpaperDelay(at)
+	want := 46*time.Minute + 43*time.Second
+	if got != want {
+		t.Fatalf("delay = %s, want %s", got, want)
+	}
+
+	at = time.Date(2026, 6, 11, 19, 0, 0, 0, time.UTC)
+	if got := nextHourlyWallpaperDelay(at); got != 0 {
+		t.Fatalf("delay at hour boundary = %s, want 0", got)
+	}
+}
+
+func TestSetRandomStaticForMonitorsAssignsDifferentWallpaperPerOutput(t *testing.T) {
+	tmp := t.TempDir()
+	staticDir := filepath.Join(tmp, "wallpapers")
+	if err := os.MkdirAll(staticDir, 0o755); err != nil {
+		t.Fatalf("mkdir static dir: %v", err)
+	}
+	wallA := filepath.Join(staticDir, "a.png")
+	wallB := filepath.Join(staticDir, "b.png")
+	for _, path := range []string{wallA, wallB} {
+		if err := os.WriteFile(path, []byte("x"), 0o600); err != nil {
+			t.Fatalf("write wallpaper %s: %v", path, err)
+		}
+	}
+
+	m := NewManager(io.Discard, io.Discard)
+	m.StaticDir = staticDir
+	m.StateDir = filepath.Join(tmp, "state", "hypr-wallpaper")
+	m.StateFile = filepath.Join(m.StateDir, "state")
+	m.CurrentFile = filepath.Join(tmp, "runtime", "hypr-random-wallpaper.current")
+	m.LockWallpaper = filepath.Join(tmp, "runtime", "hypr-current-wallpaper")
+	m.HyprpaperConf = filepath.Join(tmp, "runtime", "hyprpaper.conf")
+	m.HyprpaperBin = "true"
+	m.KillBin = "true"
+
+	if err := m.SetRandomStaticForMonitors([]string{"DP-3", "HDMI-A-1"}); err != nil {
+		t.Fatalf("SetRandomStaticForMonitors: %v", err)
+	}
+
+	content := readTrim(m.HyprpaperConf)
+	for _, want := range []string{"monitor = DP-3", "monitor = HDMI-A-1"} {
+		if !strings.Contains(content, want) {
+			t.Fatalf("hyprpaper config missing %q:\n%s", want, content)
+		}
+	}
+	if strings.Count(content, "path = "+wallA) != 1 || strings.Count(content, "path = "+wallB) != 1 {
+		t.Fatalf("expected each wallpaper once across monitors, got:\n%s", content)
+	}
+	if got := m.CurrentMode(); got != "static-random" {
+		t.Fatalf("CurrentMode = %q, want static-random", got)
+	}
+}
+
 func TestSetStaticForMonitorUpdatesGlobalCurrentMode(t *testing.T) {
 	tmp := t.TempDir()
 	m := NewManager(io.Discard, io.Discard)
