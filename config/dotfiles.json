@@ -72,6 +72,7 @@
       ".local/bin/hypr-app-launcher",
       ".local/bin/hypr-audio-device-menu",
       ".local/bin/hypr-bluetooth-menu",
+      ".local/bin/hypr-config-editor",
       ".local/bin/hypr-current-wallpaper",
       ".local/bin/hypr-display-targets",
       ".local/bin/hypr-focus-notification-app",

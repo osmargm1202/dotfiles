@@ -29,6 +29,7 @@
       "custom/hardware_fetch",
       "custom/pi_status",
       "custom/headset_reconnect",
+      "custom/hypr_config_editor",
       "custom/logout_menu"
     ],
     "group/workspaces": {
@@ -345,6 +346,12 @@
     "tray": {
       "icon-size": 21,
       "spacing": 10
+    },
+    "custom/hypr_config_editor": {
+      "format": "",
+      "tooltip": true,
+      "tooltip-format": "Editar configs Hyprland",
+      "on-click": "hypr-config-editor"
     },
     "custom/logout_menu": {
       "format": "󰐥",

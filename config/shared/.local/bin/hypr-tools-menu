@@ -5,12 +5,13 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 # shellcheck disable=SC1090
 . "$lib"
 
-choice="$(printf '%s\n' '󰆍 Terminal' '󰉋 Files' '󰍉 Search files' '󰃭 Calculator' '󰍹 Displays' '󰸉 Wallpaper next' '󰅖 Cancel' | hypr_rofi_dmenu 'Tools' || true)"
+choice="$(printf '%s\n' '󰆍 Terminal' '󰉋 Files' '󰍉 Search files' ' Hypr config' '󰃭 Calculator' '󰍹 Displays' '󰸉 Wallpaper next' '󰅖 Cancel' | hypr_rofi_dmenu 'Tools' || true)"
 
 case "$choice" in
   *'Terminal') exec kitty ;;
   *'Files') exec nautilus ;;
   *'Search files') exec ~/.local/bin/hypr-rofi-open-file ;;
+  *'Hypr config') exec ~/.local/bin/hypr-config-editor ;;
   *'Calculator') exec ~/.local/bin/hypr-rofi-calc ;;
   *'Displays') exec nwg-displays ;;
   *'Wallpaper') exec ~/.local/bin/hypr-random-wallpaper next ;;
