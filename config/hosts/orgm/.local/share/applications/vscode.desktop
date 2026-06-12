@@ -1,12 +1,13 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Visual Studio Code
+Name=VSCode (Arch)
 GenericName=Text Editor
 Comment=Visual Studio Code from Arch distrobox
 Exec=distrobox-enter arch -- code --disable-gpu %F
 Icon=/home/osmarg/.local/share/icons/vscode.png
-Categories=Development;IDE;TextEditor;
+Categories=Development;IDE;
+Keywords=vscode;code;visual studio;distrobox;arch;
 MimeType=text/plain;inode/directory;
 NoDisplay=false
 StartupWMClass=code
