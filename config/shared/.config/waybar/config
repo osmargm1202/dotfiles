@@ -10,7 +10,7 @@
     "margin-right": 12,
     "modules-left": ["custom/menu", "sway/workspaces", "group/system", "sway/mode"],
     "modules-center": ["custom/day_month", "custom/time", "custom/date"],
-    "modules-right": ["custom/wallpaper", "bluetooth", "network", "privacy", "custom/usb_devices", "custom/nixclean", "tray", "custom/logout_menu"],
+    "modules-right": ["custom/wallpaper", "bluetooth", "network", "privacy", "custom/usb_devices", "custom/memclean", "custom/nixclean", "tray", "custom/logout_menu"],
 
     "custom/menu": {
       "format": "",
@@ -54,6 +54,17 @@
       "tooltip": true,
       "on-click": "hypr-usb-menu open",
       "on-click-right": "hypr-usb-menu nickname"
+    },
+
+    "custom/memclean": {
+      "exec": "memclean-dev status",
+      "return-type": "json",
+      "interval": 10,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "memclean-dev clean",
+      "on-click-right": "kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P \"enter...\"'",
+      "on-click-middle": "kitty -e btop"
     },
 
     "custom/nixclean": {

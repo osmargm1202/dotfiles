@@ -108,14 +108,14 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #group-usage, #usage {
   background: transparent;
 }
-#custom-theme_toggle, #custom-wallpaper, #custom-usb_devices, #custom-nixclean, #custom-headset_reconnect, #custom-hardware_fetch, #custom-pi_status, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
+#custom-theme_toggle, #custom-wallpaper, #custom-usb_devices, #custom-memclean, #custom-nixclean, #custom-headset_reconnect, #custom-hardware_fetch, #custom-pi_status, #bluetooth, #network, #privacy, #tray, #custom-logout_menu,
 #custom-user, #window, #mpris, #backlight, #pulseaudio, #pulseaudio-slider, #battery, #custom-kbd_layout,
 #cpu, #memory, #temperature, #disk, #custom-swap,
 #custom-metric_cpu, #custom-metric_gpu, #custom-metric_ram, #custom-metric_ssd, #custom-metric_swap {
   background-color: transparent;
 }
 
-#custom-theme_toggle, #custom-wallpaper, #custom-usb_devices, #custom-nixclean, #custom-hardware_fetch, #custom-pi_status, #custom-headset_reconnect, #custom-logout_menu {
+#custom-theme_toggle, #custom-wallpaper, #custom-usb_devices, #custom-memclean, #custom-nixclean, #custom-hardware_fetch, #custom-pi_status, #custom-headset_reconnect, #custom-logout_menu {
   background-repeat: no-repeat;
   background-position: center;
   background-size: 18px 18px;
@@ -128,6 +128,7 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #custom-theme_toggle { background-image: url("icons/theme_toggle.svg"); }
 #custom-wallpaper { background-image: url("icons/wallpaper.svg"); }
 #custom-usb_devices { background-image: url("icons/usb_devices.svg"); }
+#custom-memclean { background-image: url("icons/memclean.svg"); }
 #custom-nixclean { background-image: url("icons/nixclean.svg"); }
 #custom-hardware_fetch { background-image: url("icons/hardware_fetch.svg"); }
 #custom-pi_status { background-image: url("icons/pi_status.svg"); }

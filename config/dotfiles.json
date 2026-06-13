@@ -101,6 +101,7 @@
       ".local/bin/hypr-wifi-menu",
       ".local/bin/hypr-workspace-button",
       ".local/bin/hypr-zen-new-window",
+      ".local/bin/memclean-dev",
       ".local/bin/mic-volume-osd",
       ".local/bin/volume-osd",
       ".local/bin/waybar-date-es",
