@@ -156,8 +156,8 @@
     "custom/wallpaper": {
       "format": "",
       "tooltip": true,
-      "tooltip-format": "Elegir wallpaper",
-      "on-click": "orgm-wallpaper pick"
+      "tooltip-format": "Wallpaper aleatorio",
+      "on-click": "hypr-random-wallpaper next"
     },
     "custom/usb_devices": {
       "exec": "hypr-usb-menu status",
