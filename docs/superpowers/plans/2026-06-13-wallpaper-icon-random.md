@@ -4,7 +4,7 @@
 
 **Goal:** Make the Waybar-Hypr wallpaper icon choose a random wallpaper for all Hyprland screens on left click.
 
-**Architecture:** Reuse the existing `hypr-random-wallpaper next` helper rather than adding a new wrapper. Update the Waybar `custom/wallpaper` command and tooltip, then add a focused shell test assertion so the click behavior cannot regress back to opening the picker.
+**Architecture:** Use the active `orgm-wallpaper` backend directly rather than the old Hyprpaper helper. Update the Waybar `custom/wallpaper` left and right click commands, then add focused shell test assertions so click behavior cannot regress.
 
 **Tech Stack:** Waybar JSONC-style config, Bash helper tests, existing dotfiles `orgm-dot` workflow.
 
@@ -14,12 +14,12 @@
 
 - Modify: `config/shared/.config/waybar-hypr/config`
   - Owns Waybar-Hypr module configuration.
-  - Change only `custom/wallpaper` left-click command and tooltip.
+  - Change only `custom/wallpaper` left-click command, right-click command, and tooltip.
 - Modify: `tests/helpers/waybar-hypr-custom-icons.bats.sh`
   - Existing Waybar-Hypr smoke test.
   - Add assertions for wallpaper click command and tooltip text.
-- Read-only verification: `config/shared/.local/bin/hypr-random-wallpaper`
-  - Existing command used by Waybar. Do not modify in this plan.
+- Read-only verification: `/run/current-system/sw/bin/orgm-wallpaper`
+  - Active wallpaper backend used by Hyprland autostart. Do not modify in this plan.
 
 ---
 
@@ -41,10 +41,11 @@ grep -q 'margin-right": 12' "$root/config/shared/.config/waybar-hypr/config" || 
 Add these assertions:
 
 ```bash
-grep -q '"on-click": "hypr-random-wallpaper next"' "$root/config/shared/.config/waybar-hypr/config" || fail "wallpaper icon left click should choose a random wallpaper"
+grep -q '"on-click": "orgm-wallpaper random-static"' "$root/config/shared/.config/waybar-hypr/config" || fail "wallpaper icon left click should use the active orgm-wallpaper backend"
+grep -q '"on-click-right": "orgm-wallpaper pick"' "$root/config/shared/.config/waybar-hypr/config" || fail "wallpaper icon right click should open picker"
 grep -q '"tooltip-format": "Wallpaper aleatorio"' "$root/config/shared/.config/waybar-hypr/config" || fail "wallpaper icon tooltip should describe random behavior"
-if grep -q '"on-click": "orgm-wallpaper pick"' "$root/config/shared/.config/waybar-hypr/config"; then
-  fail "wallpaper icon left click should not open picker"
+if grep -q '"on-click": "hypr-random-wallpaper next"' "$root/config/shared/.config/waybar-hypr/config"; then
+  fail "wallpaper icon left click should not use old hyprpaper helper"
 fi
 ```
 
@@ -59,7 +60,7 @@ bash tests/helpers/waybar-hypr-custom-icons.bats.sh
 Expected result before implementation:
 
 ```text
-FAIL: wallpaper icon left click should choose a random wallpaper
+FAIL: wallpaper icon left click should use the active orgm-wallpaper backend
 ```
 
 - [ ] **Step 3: Write minimal implementation**
@@ -70,8 +71,8 @@ Edit `config/shared/.config/waybar-hypr/config`. Change only the `custom/wallpap
     "custom/wallpaper": {
       "format": "",
       "tooltip": true,
-      "tooltip-format": "Elegir wallpaper",
-      "on-click": "orgm-wallpaper pick"
+      "tooltip-format": "Wallpaper aleatorio",
+      "on-click": "hypr-random-wallpaper next"
     },
 ```
 
@@ -82,7 +83,8 @@ to:
       "format": "",
       "tooltip": true,
       "tooltip-format": "Wallpaper aleatorio",
-      "on-click": "hypr-random-wallpaper next"
+      "on-click": "orgm-wallpaper random-static",
+      "on-click-right": "orgm-wallpaper pick"
     },
 ```
 
@@ -92,15 +94,10 @@ Run:
 
 ```bash
 bash tests/helpers/waybar-hypr-custom-icons.bats.sh
-bash tests/helpers/hypr-random-wallpaper.bats.sh
+distrobox-host-exec sh -lc 'before=$(orgm-wallpaper status | sed -n "s/^path=//p"); orgm-wallpaper random-static >/tmp/orgm-wallpaper-random-static-test.log 2>&1; after=$(orgm-wallpaper status | sed -n "s/^path=//p"); test -n "$after"; printf "before=%s\nafter=%s\n" "$before" "$after"'
 ```
 
-Expected result:
-
-```text
-PASS: Waybar-Hypr custom icons configured
-hypr random wallpaper smoke test passed
-```
+Expected result: first command prints `PASS: Waybar-Hypr custom icons configured`; second command exits 0 and prints non-empty `before=` and `after=` wallpaper paths.
 
 - [ ] **Step 5: Review dotfiles diff**
 

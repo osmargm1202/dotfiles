@@ -35,10 +35,11 @@ if not match or 'border-radius: 12px;' not in match.group('body'):
 PY
 grep -q 'margin-left": 12' "$root/config/shared/.config/waybar-hypr/config" || fail "Waybar should keep Hyprland-like side gap"
 grep -q 'margin-right": 12' "$root/config/shared/.config/waybar-hypr/config" || fail "Waybar should keep Hyprland-like side gap"
-grep -q '"on-click": "hypr-random-wallpaper next"' "$root/config/shared/.config/waybar-hypr/config" || fail "wallpaper icon left click should choose a random wallpaper"
+grep -q '"on-click": "orgm-wallpaper random-static"' "$root/config/shared/.config/waybar-hypr/config" || fail "wallpaper icon left click should use the active orgm-wallpaper backend"
+grep -q '"on-click-right": "orgm-wallpaper pick"' "$root/config/shared/.config/waybar-hypr/config" || fail "wallpaper icon right click should open picker"
 grep -q '"tooltip-format": "Wallpaper aleatorio"' "$root/config/shared/.config/waybar-hypr/config" || fail "wallpaper icon tooltip should describe random behavior"
-if grep -q '"on-click": "orgm-wallpaper pick"' "$root/config/shared/.config/waybar-hypr/config"; then
-  fail "wallpaper icon left click should not open picker"
+if grep -q '"on-click": "hypr-random-wallpaper next"' "$root/config/shared/.config/waybar-hypr/config"; then
+  fail "wallpaper icon left click should not use old hyprpaper helper"
 fi
 if grep -q 'background-image: url("textura' "$style"; then
   fail "bar style should not use texture background"
