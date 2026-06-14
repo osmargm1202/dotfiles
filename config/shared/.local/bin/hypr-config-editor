@@ -17,10 +17,10 @@ sync_file() {
   local rel="$1"
   local sync_path="$sync_prefix/$rel"
 
-  if command -v orgm-dot >/dev/null 2>&1; then
+  if command -v hypr-orgm-dot >/dev/null 2>&1; then
+    hypr-orgm-dot sync "$sync_path"
+  elif command -v orgm-dot >/dev/null 2>&1; then
     orgm-dot sync "$sync_path"
-  elif command -v distrobox-host-exec >/dev/null 2>&1; then
-    distrobox-host-exec orgm-dot sync "$sync_path"
   else
     notify "No encontré orgm-dot para sincronizar $sync_path"
     return 1

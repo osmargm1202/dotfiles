@@ -6,7 +6,6 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 . "$lib"
 
 repo="${DOTFILES_REPO:-$HOME/Hobby/dotfiles}"
-host="${HYPR_HOST:-$(hostname)}"
 orgm_themes_cmd() {
   if [ -x "$HOME/go/bin/orgm-themes" ]; then
     printf '%s\n' "$HOME/go/bin/orgm-themes"
@@ -17,7 +16,21 @@ orgm_themes_cmd() {
   fi
 }
 theme_cmd="$(orgm_themes_cmd || true)"
-choice="$(printf '%s\n' '󰑓 Restart all' '󰑓 Reload Hyprland' '󰑓 Restart Waybar' '󰑓 Reload Dock' '󰔎 Theme light' '󰔎 Theme dark' '󰆍 User logs' '󰁯 orgm-dot status' '󰕚 orgm-dot diff' '󰑓 orgm-dot sync' '󰉋 Open dotfiles' '󰅖 Cancel' | hypr_rofi_dmenu 'System' || true)"
+choice="$(printf '%s\n' \
+  '󰑓 Restart all' \
+  '󰑓 Reload Hyprland' \
+  '󰑓 Restart Waybar' \
+  '󰑓 Reload Dock' \
+  '󰔎 Theme light' \
+  '󰔎 Theme dark' \
+  '󰆍 User logs' \
+  '󰁯 orgm-dot status' \
+  '󰕚 orgm-dot diff' \
+  '󰑓 orgm-dot sync' \
+  '󰉋 Open dotfiles' \
+  '󰐥 Power' \
+  '󰅖 Cancel' | hypr_rofi_dmenu 'System' || true)"
+
 case "$choice" in
   *'Restart all') exec sh -lc 'hyprctl reload >/dev/null 2>&1 || true; (waybar-watch ~/.config/waybar-hypr >/dev/null 2>&1 &); ~/.local/bin/hypr-nwg-dock reload >/dev/null 2>&1 || true' ;;
   *'Reload Hyprland') exec hyprctl reload ;;
@@ -26,9 +39,10 @@ case "$choice" in
   *'Theme light') [ -n "$theme_cmd" ] && exec "$theme_cmd" apply orgm-light ;;
   *'Theme dark') [ -n "$theme_cmd" ] && exec "$theme_cmd" apply orgm-dark ;;
   *'User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
-  *'orgm-dot status') exec kitty --class dot-status -e sh -lc "cd '$repo' && distrobox-host-exec orgm-dot status; read -r -p 'press enter...'" ;;
-  *'orgm-dot diff') exec kitty --class dot-diff -e sh -lc "cd '$repo' && distrobox-host-exec orgm-dot diff; read -r -p 'press enter...'" ;;
-  *'orgm-dot sync') exec kitty --class dot-sync -e sh -lc "cd '$repo' && distrobox-host-exec orgm-dot sync; read -r -p 'press enter...'" ;;
+  *'orgm-dot status') exec kitty --class dot-status -e sh -lc "hypr-orgm-dot status; read -r -p 'press enter...'" ;;
+  *'orgm-dot diff') exec kitty --class dot-diff -e sh -lc "hypr-orgm-dot diff; read -r -p 'press enter...'" ;;
+  *'orgm-dot sync') exec kitty --class dot-sync -e sh -lc "hypr-orgm-dot sync; read -r -p 'press enter...'" ;;
   *'Open dotfiles') exec nautilus "$repo" ;;
+  *'Power') exec hypr-power-menu ;;
   *) exit 0 ;;
 esac

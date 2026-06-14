@@ -10,34 +10,22 @@ bin_dir="${HYPR_BIN_DIR:-$HOME/.local/bin}"
 choice="$(printf '%s\n' \
   '󰀻 Apps' \
   '󰒓 Tools' \
-  '󱐋 Performance' \
-  '󰖩 WiFi' \
-  '󰂯 Bluetooth' \
-  '󰍉 Search' \
-  '󰌌 Keybinds' \
-  '󰍹 Displays' \
-  '󰔎 Theme' \
-  '󰹹 Transitions' \
+  '󰔎 Tweaks' \
+  '󰖩 Devices' \
+  '󰍛 Performance / Cleanup' \
   '󰒓 System' \
+  '󰌌 Help' \
   '󰐥 Power' \
-  '󰌌 Keyboard' \
-  '󰣆 Web App Maker' \
   '󰅖 Quit' | hypr_rofi_dmenu 'Hyprland' || true)"
 
 case "$choice" in
-  *'Apps') hypr_rofi_drun; exit $? ;;
+  *'Apps') exec "$bin_dir/hypr-apps-menu" ;;
   *'Tools') exec "$bin_dir/hypr-tools-menu" ;;
-  *'Performance') exec "$bin_dir/hypr-performance-menu" ;;
-  *'WiFi') exec "$bin_dir/hypr-wifi-menu" ;;
-  *'Bluetooth') exec "$bin_dir/hypr-bluetooth-menu" ;;
-  *'Search') exec "$bin_dir/hypr-smart-run" ;;
-  *'Keybinds') exec "$bin_dir/hypr-keybindings-help" ;;
-  *'Displays') exec "$bin_dir/hypr-display-targets" menu ;;
-  *'Theme') exec "$bin_dir/hypr-theme-chooser" ;;
-  *'Transitions') exec "$bin_dir/hypr-transition-menu" ;;
+  *'Tweaks') exec "$bin_dir/hypr-tweaks-menu" ;;
+  *'Devices') exec "$bin_dir/hypr-devices-menu" ;;
+  *'Performance / Cleanup') exec "$bin_dir/hypr-performance-menu" ;;
   *'System') exec "$bin_dir/hypr-system-menu" ;;
+  *'Help') exec "$bin_dir/hypr-help-menu" ;;
   *'Power') exec "$bin_dir/hypr-power-menu" ;;
-  *'Keyboard') exec "$bin_dir/hypr-keyboard-menu" ;;
-  *'Web App Maker') exec "$bin_dir/hypr-webapp-maker" ;;
   *'Quit'|'') exit 0 ;;
 esac

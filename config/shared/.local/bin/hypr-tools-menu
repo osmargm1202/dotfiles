@@ -5,15 +5,25 @@ lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
 # shellcheck disable=SC1090
 . "$lib"
 
-choice="$(printf '%s\n' '󰆍 Terminal' '󰉋 Files' '󰍉 Search files' ' Hypr config' '󰃭 Calculator' '󰍹 Displays' '󰸉 Wallpaper next' '󰅖 Cancel' | hypr_rofi_dmenu 'Tools' || true)"
+choice="$(printf '%s\n' \
+  '󰆍 Terminal' \
+  '󰆍 Terminal Arch' \
+  '󰉋 Files' \
+  '󰍉 Search files' \
+  ' Clipboard' \
+  ' Hypr config' \
+  '󰃭 Calculator' \
+  '󰣆 Web App Maker' \
+  '󰅖 Cancel' | hypr_rofi_dmenu 'Tools' || true)"
 
 case "$choice" in
+  *'Terminal Arch') exec kitty -e distrobox-enter arch ;;
   *'Terminal') exec kitty ;;
   *'Files') exec nautilus ;;
-  *'Search files') exec ~/.local/bin/hypr-rofi-open-file ;;
-  *'Hypr config') exec ~/.local/bin/hypr-config-editor ;;
-  *'Calculator') exec ~/.local/bin/hypr-rofi-calc ;;
-  *'Displays') exec nwg-displays ;;
-  *'Wallpaper') exec ~/.local/bin/hypr-random-wallpaper next ;;
+  *'Search files') exec hypr-rofi-open-file ;;
+  *'Clipboard') exec hypr-rofi-clipboard ;;
+  *'Hypr config') exec hypr-config-editor ;;
+  *'Calculator') exec hypr-rofi-calc ;;
+  *'Web App Maker') exec hypr-webapp-maker ;;
   *) exit 0 ;;
 esac
