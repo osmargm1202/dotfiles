@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/osmargm1202/nixos/internal/orgmtheme"
@@ -230,5 +231,117 @@ func TestColorSourceImage_NoWallpaper(t *testing.T) {
 	_, err := m.ColorSourceImage()
 	if err == nil {
 		t.Error("expected error when no wallpaper set, got nil")
+	}
+}
+
+func writeThemeEnv(t *testing.T, dir, name string) {
+	t.Helper()
+	themesDir := filepath.Join(dir, "orgm-theme", "themes")
+	if err := os.MkdirAll(themesDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	content := `# test theme
+THEME_NAME=` + name + `
+COLOR_SCHEME=prefer-dark
+GTK_THEME=Adwaita-dark
+ICON_THEME=Adwaita
+CURSOR_THEME=Catppuccin-Macchiato-Teal-Cursors
+CURSOR_SIZE=36
+QT_STYLE=Darkly
+PI_THEME=orgm
+KITTY_BACKGROUND_OPACITY=0.90
+BASE=24273a
+MANTLE=1e2030
+CRUST=181926
+TEXT=cad3f5
+SUBTEXT0=a5adcb
+SUBTEXT1=b8c0e0
+SURFACE0=363a4f
+SURFACE1=494d64
+SURFACE2=5b6078
+OVERLAY0=6e738d
+OVERLAY1=8087a2
+OVERLAY2=939ab7
+BLUE=8aadf4
+GREEN=a6da95
+YELLOW=eed49f
+PEACH=f5a97f
+RED=ed8796
+MAUVE=c6a0f6
+PINK=f5bde6
+TEAL=8bd5ca
+SKY=91d7e3
+ROSEWATER=f4dbd6
+PANEL_BG=00000099
+MENU_BG=000000dd
+QS_OVERLAY=000000
+QS_CARD=22363a4f
+QS_CARD_STRONG=33494d64
+QS_CARD_SOFT=1e363a4f
+QS_EVENT=2b363a4f
+QS_HOVER=55363a4f
+ON_ACCENT=11111b
+`
+	if err := os.WriteFile(filepath.Join(themesDir, name+".env"), []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestApplyColors_DryRun(t *testing.T) {
+	tmp := t.TempDir()
+	writeFakeMatugen(t, tmp)
+
+	// Set up wallpaper image.
+	wallpaper := filepath.Join(tmp, "wall.png")
+	if err := os.WriteFile(wallpaper, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	// Set up manager with temp dirs.
+	m, _ := newTestManager(t)
+	m.StateHome = filepath.Join(tmp, "state")
+	m.ConfigHome = filepath.Join(tmp, "config")
+	m.DataHome = filepath.Join(tmp, "data")
+
+	// Write current theme state.
+	themeStateDir := filepath.Join(m.StateHome, "orgm-theme")
+	if err := os.MkdirAll(themeStateDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(themeStateDir, "current"), []byte("orgm-dark\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	// Write theme .env file.
+	writeThemeEnv(t, m.ConfigHome, "orgm-dark")
+
+	// Write wallpaper state.
+	if err := os.MkdirAll(m.StateDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(m.StateFile, []byte("mode=static\npath="+wallpaper+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	// Capture stdout.
+	r, w, _ := os.Pipe()
+	m.Stdout = w
+
+	err := m.ApplyColors(ApplyColorsOptions{DryRun: true})
+	w.Close()
+	if err != nil {
+		t.Fatalf("ApplyColors dry-run: %v", err)
+	}
+
+	buf := make([]byte, 4096)
+	n, _ := r.Read(buf)
+	output := string(buf[:n])
+
+	// Dry-run should list at least the waybar and kitty write paths.
+	if !strings.Contains(output, "waybar") {
+		t.Errorf("dry-run output missing waybar path: %s", output)
+	}
+	if !strings.Contains(output, "kitty") {
+		t.Errorf("dry-run output missing kitty path: %s", output)
 	}
 }

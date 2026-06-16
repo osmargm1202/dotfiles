@@ -3,7 +3,9 @@ package wallpaper
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/osmargm1202/nixos/internal/orgmtheme"
@@ -81,6 +83,82 @@ func MapColors(palette map[string]string, base orgmtheme.Theme) orgmtheme.Theme 
 	t.QSHover = "55" + sc
 
 	return t
+}
+
+// ApplyColorsOptions controls ApplyColors behaviour.
+type ApplyColorsOptions struct {
+	NoReload bool
+	DryRun   bool
+}
+
+// ApplyColors extracts a color palette from the active wallpaper via matugen,
+// maps it onto the current orgm theme, and regenerates all themed component files.
+func (m *Manager) ApplyColors(opts ApplyColorsOptions) error {
+	src, err := m.ColorSourceImage()
+	if err != nil {
+		return fmt.Errorf("source image: %w", err)
+	}
+
+	matout, err := runMatugen(src)
+	if err != nil {
+		return err
+	}
+
+	themeName := readTrim(filepath.Join(m.StateHome, "orgm-theme", "current"))
+	if themeName == "" {
+		themeName = "orgm-dark"
+	}
+	themesDir := filepath.Join(m.ConfigHome, "orgm-theme", "themes")
+	base, err := orgmtheme.LoadTheme(themesDir, themeName)
+	if err != nil {
+		return fmt.Errorf("load theme: %w", err)
+	}
+
+	var palette map[string]string
+	if base.ColorScheme == "prefer-light" {
+		palette = matout.Colors.Light
+	} else {
+		palette = matout.Colors.Dark
+	}
+
+	theme := MapColors(palette, base)
+	env := orgmtheme.Env{ConfigHome: m.ConfigHome, DataHome: m.DataHome}
+	writes, err := orgmtheme.BuildWrites(env, theme)
+	if err != nil {
+		return fmt.Errorf("build writes: %w", err)
+	}
+
+	if opts.DryRun {
+		for _, w := range writes {
+			fmt.Fprintf(m.Stdout, "write %s\n", w.Path)
+		}
+		return nil
+	}
+
+	for _, w := range writes {
+		if err := os.MkdirAll(filepath.Dir(w.Path), 0o755); err != nil {
+			return fmt.Errorf("mkdir %s: %w", filepath.Dir(w.Path), err)
+		}
+		if err := os.WriteFile(w.Path, []byte(w.Content), 0o644); err != nil {
+			return fmt.Errorf("write %s: %w", w.Path, err)
+		}
+	}
+
+	if !opts.NoReload {
+		_ = exec.Command("pkill", "-SIGUSR2", "waybar").Run()
+		_ = exec.Command("swaync-client", "-rs").Run()
+	}
+	return nil
+}
+
+// applyColorsQuiet runs ApplyColors and, on error, logs to stderr and sends a
+// desktop notification instead of returning the error to the caller.
+func (m *Manager) applyColorsQuiet() {
+	if err := m.ApplyColors(ApplyColorsOptions{}); err != nil {
+		msg := "Color extraction failed: " + err.Error()
+		fmt.Fprintln(m.Stderr, "orgm-wallpaper: "+msg)
+		_ = exec.Command("notify-send", "-u", "normal", "orgm-wallpaper", msg).Run()
+	}
 }
 
 // ColorSourceImage returns the image path to use for color extraction.
