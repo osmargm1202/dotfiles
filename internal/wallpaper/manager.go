@@ -47,6 +47,8 @@ type Manager struct {
 	MPVPaperBin        string
 	Stdout             io.Writer
 	Stderr             io.Writer
+	ConfigHome         string
+	DataHome           string
 }
 
 // NewManager returns a wallpaper manager configured from the current environment.
@@ -56,6 +58,7 @@ func NewManager(stdout, stderr io.Writer) *Manager {
 	stateHome := envDefault("XDG_STATE_HOME", filepath.Join(home, ".local/state"))
 	stateDir := filepath.Join(stateHome, "hypr-wallpaper")
 	configHome := envDefault("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	dataHome := envDefault("XDG_DATA_HOME", filepath.Join(home, ".local", "share"))
 	m := &Manager{
 		Home:               home,
 		StaticDir:          envDefault("HYPR_STATIC_WALLPAPER_DIR", filepath.Join(home, "Pictures/Wallpapers")),
@@ -81,6 +84,8 @@ func NewManager(stdout, stderr io.Writer) *Manager {
 		QuickshellConfig:   envDefault("HYPR_WALLPAPER_QUICKSHELL_DIR", filepath.Join(configHome, "quickshell/wallpaper-picker")),
 		Stdout:             stdout,
 		Stderr:             stderr,
+		ConfigHome:         configHome,
+		DataHome:           dataHome,
 	}
 	m.HyprpaperBin = resolveBinary("HYPRPAPER_BIN", "hyprpaper")
 	m.MPVPaperBin = resolveBinary("MPVPAPER_BIN", "mpvpaper")
