@@ -657,7 +657,11 @@ func (m *Manager) SetStatic(path, mode string) error {
 	}
 	_ = os.Remove(m.LockWallpaper)
 	_ = os.Symlink(path, m.LockWallpaper)
-	return m.WriteState(mode, path)
+	if err := m.WriteState(mode, path); err != nil {
+		return err
+	}
+	m.applyColorsQuiet()
+	return nil
 }
 
 func (m *Manager) SetRandomStatic() error {
@@ -817,7 +821,11 @@ func (m *Manager) SetVideo(path string) error {
 		return err
 	}
 	m.ensureLockWallpaper()
-	return m.WriteState("video", path)
+	if err := m.WriteState("video", path); err != nil {
+		return err
+	}
+	m.applyColorsQuiet()
+	return nil
 }
 
 func (m *Manager) SetVideoForMonitor(path, output string) error {
