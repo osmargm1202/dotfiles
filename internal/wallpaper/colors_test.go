@@ -161,3 +161,74 @@ func parseFakeJSON(t *testing.T) matugenOutput {
 	}
 	return out
 }
+
+func newTestManager(t *testing.T) (*Manager, string) {
+	t.Helper()
+	tmp := t.TempDir()
+	m := NewManager(os.Stdout, os.Stderr)
+	m.StateDir = filepath.Join(tmp, "state")
+	m.StateFile = filepath.Join(m.StateDir, "state")
+	if err := os.MkdirAll(m.StateDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return m, tmp
+}
+
+func TestColorSourceImage_Static(t *testing.T) {
+	m, tmp := newTestManager(t)
+	wallpaper := filepath.Join(tmp, "wall.png")
+	if err := os.WriteFile(wallpaper, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(m.StateFile, []byte("mode=static\npath="+wallpaper+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := m.ColorSourceImage()
+	if err != nil {
+		t.Fatalf("ColorSourceImage: %v", err)
+	}
+	if got != wallpaper {
+		t.Errorf("got %q, want %q", got, wallpaper)
+	}
+}
+
+func TestColorSourceImage_Video_ThumbExists(t *testing.T) {
+	m, tmp := newTestManager(t)
+	video := filepath.Join(tmp, "Videos", "wallpapers", "city.mp4")
+	if err := os.MkdirAll(filepath.Dir(video), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(video, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Pre-create thumb so ffmpeg is never called.
+	thumb := filepath.Join(filepath.Dir(video), ".thumb", "city.mp4.jpg")
+	if err := os.MkdirAll(filepath.Dir(thumb), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(thumb, []byte("fake-jpeg-data"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(m.StateFile, []byte("mode=video\npath="+video+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := m.ColorSourceImage()
+	if err != nil {
+		t.Fatalf("ColorSourceImage: %v", err)
+	}
+	if got != thumb {
+		t.Errorf("got %q, want %q", got, thumb)
+	}
+}
+
+func TestColorSourceImage_NoWallpaper(t *testing.T) {
+	m, _ := newTestManager(t)
+	// StateFile does not exist → no wallpaper set.
+
+	_, err := m.ColorSourceImage()
+	if err == nil {
+		t.Error("expected error when no wallpaper set, got nil")
+	}
+}
