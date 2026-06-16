@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/osmargm1202/nixos/internal/orgmtheme"
 )
 
 // fakeMatugenJSON is a minimal valid matugen --json hex output.
@@ -91,6 +93,62 @@ func TestRunMatugen(t *testing.T) {
 	}
 	if got := out.Colors.Light["primary"]; got != "#1e66f5" {
 		t.Errorf("light primary = %q, want #1e66f5", got)
+	}
+}
+
+func baseTheme(scheme string) orgmtheme.Theme {
+	return orgmtheme.Theme{
+		Name:                   "orgm-dark",
+		ColorScheme:            scheme,
+		GTKTheme:               "Adwaita-dark",
+		IconTheme:              "Adwaita",
+		CursorTheme:            "Catppuccin-Macchiato-Teal-Cursors",
+		CursorSize:             "36",
+		QTStyle:                "Darkly",
+		PITheme:                "orgm",
+		KittyBackgroundOpacity: "0.90",
+	}
+}
+
+func TestMapColors_Dark(t *testing.T) {
+	out := parseFakeJSON(t)
+	result := MapColors(out.Colors.Dark, baseTheme("prefer-dark"))
+
+	if result.GTKTheme != "Adwaita-dark" {
+		t.Errorf("GTKTheme = %q, want Adwaita-dark", result.GTKTheme)
+	}
+	if result.Blue != "6d9eeb" {
+		t.Errorf("Blue = %q, want 6d9eeb", result.Blue)
+	}
+	if result.Base != "1a1c2e" {
+		t.Errorf("Base = %q, want 1a1c2e", result.Base)
+	}
+	if result.Text != "e2e4f6" {
+		t.Errorf("Text = %q, want e2e4f6", result.Text)
+	}
+	if result.Red != "ed8796" {
+		t.Errorf("Red = %q, want ed8796", result.Red)
+	}
+	if result.PanelBG != "1a1c2e99" {
+		t.Errorf("PanelBG = %q, want 1a1c2e99", result.PanelBG)
+	}
+	if result.QSCard != "22252736" {
+		t.Errorf("QSCard = %q, want 22252736", result.QSCard)
+	}
+}
+
+func TestMapColors_Light(t *testing.T) {
+	out := parseFakeJSON(t)
+	result := MapColors(out.Colors.Light, baseTheme("prefer-light"))
+
+	if result.Blue != "1e66f5" {
+		t.Errorf("Blue = %q, want 1e66f5", result.Blue)
+	}
+	if result.PanelBG != "eff1f5dd" {
+		t.Errorf("PanelBG = %q, want eff1f5dd", result.PanelBG)
+	}
+	if result.MenuBG != "eff1f5ee" {
+		t.Errorf("MenuBG = %q, want eff1f5ee", result.MenuBG)
 	}
 }
 
