@@ -2,9 +2,12 @@ import { bind } from "astal"
 import { exec } from "astal/process"
 import Network from "gi://AstalNetwork"
 import Bluetooth from "gi://AstalBluetooth"
+import SpecsPanel from "../popups/SpecsPanel"
 
 const network = Network.get_default()
 const bluetooth = Bluetooth.get_default()
+
+let specsRevealer: any = null
 
 function AudioModule() {
   return (
@@ -71,6 +74,19 @@ function ThemeModule() {
   )
 }
 
+function SpecsButton() {
+  return (
+    <button
+      className="bar-module specs-btn"
+      tooltipText="Specs del sistema"
+      onHover={() => specsRevealer?.set_reveal_child(true)}
+      onHoverLost={() => specsRevealer?.set_reveal_child(false)}
+    >
+      󰍛
+    </button>
+  )
+}
+
 export default function RightModules() {
   return (
     <box className="right-modules" spacing={4}>
@@ -79,10 +95,13 @@ export default function RightModules() {
       <BluetoothModule />
       <ClipboardModule />
       <ThemeModule />
-      {/* Wallpaper, Help, Specs placeholders — filled in Tasks 7, 8, 9 */}
+      {/* Wallpaper, Help placeholders — filled in Tasks 8, 9 */}
       <button className="bar-module" tooltipText="Wallpaper (próximamente)">󰋩</button>
       <button className="bar-module" tooltipText="Ayuda (próximamente)">󰘥</button>
-      <button className="bar-module" tooltipText="Specs (próximamente)">󰍛</button>
+      <box vertical>
+        <SpecsButton />
+        <SpecsPanel setup={self => (specsRevealer = self)} />
+      </box>
     </box>
   )
 }
