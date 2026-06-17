@@ -34,3 +34,20 @@
   font-size: 10px;
   margin-top: 2px;
 }
+
+.specs-panel,
+.wallpaper-panel,
+.help-panel {
+  animation: panel-appear 200ms ease;
+}
+
+@keyframes panel-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

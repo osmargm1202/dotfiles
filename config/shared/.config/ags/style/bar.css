@@ -178,3 +178,15 @@
   color: @text;
   font-size: 11px;
 }
+
+.bar-module {
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.workspace-btn {
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.workspace-btn.active {
+  background-color: rgba(137, 180, 250, 0.12);
+}
