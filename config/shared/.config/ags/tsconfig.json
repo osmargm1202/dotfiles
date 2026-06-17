@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": ["ES2022"],
+    "strict": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "astal/gtk3",
+    "moduleResolution": "bundler",
+    "paths": {
+      "astal/*": ["/usr/share/astal/gjs/astal/*"],
+      "gi://*": ["types/gi/*"]
+    }
+  }
+}
