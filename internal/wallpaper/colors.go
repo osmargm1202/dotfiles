@@ -188,7 +188,7 @@ func (m *Manager) ApplyColors(opts ApplyColorsOptions) error {
 	}
 
 	if !opts.NoReload {
-		_ = exec.Command("pkill", "-SIGUSR2", "waybar").Run()
+		// waybar-watch detects orgm-current.css change and restarts waybar automatically.
 		_ = exec.Command("swaync-client", "-rs").Run()
 		_ = exec.Command("pkill", "-HUP", "ags").Run()
 	}
