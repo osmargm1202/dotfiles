@@ -1,6 +1,7 @@
 @import "ags-colors.css";
 @import "bar.css";
 @import "rings.css";
+@import "dock.css";
 
 * {
   font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font Mono", sans-serif;

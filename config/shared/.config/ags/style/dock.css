@@ -1,0 +1,59 @@
+.dock-bar {
+  background-color: @base;
+  border: 1.5px solid @panel_border;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.dock-apps {
+  padding: 6px 14px;
+}
+
+.dock-app {
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 4px;
+  margin: 0 2px;
+}
+
+.dock-app:hover {
+  background-color: @surface0;
+}
+
+.app-indicator {
+  background-color: @subtext0;
+  border-radius: 3px;
+}
+
+.app-indicator.active {
+  background-color: @blue;
+}
+
+.utility-buttons {
+  padding: 6px 14px 6px 8px;
+}
+
+.util-separator {
+  background-color: @surface0;
+  border-radius: 1px;
+  margin: 8px 4px;
+}
+
+.util-btn {
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 4px;
+  min-width: 28px;
+  min-height: 28px;
+  margin: 4px 1px;
+}
+
+.util-btn:hover {
+  background-color: @surface0;
+}
+
+.util-btn.power-btn:hover {
+  background-color: rgba(243, 139, 168, 0.2);
+}
