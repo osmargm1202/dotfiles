@@ -96,7 +96,7 @@ function parseSSD(): number {
 }
 
 export function metricsColor(percent: number, isCelsius = false): string {
-  const high = isCelsius ? 80 : 80
+  const high = 80
   const med = isCelsius ? 65 : 60
   if (percent >= high) return "@red"
   if (percent >= med) return "@yellow"
