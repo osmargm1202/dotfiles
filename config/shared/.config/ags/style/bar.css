@@ -34,3 +34,20 @@
   min-width: 47px;
   margin: 0;
 }
+
+.clock {
+  padding: 0 18px;
+}
+
+.clock-time {
+  color: @blue;
+  font-size: 34px;
+  font-weight: 800;
+  padding: 0 16px;
+}
+
+.clock-date {
+  color: @text;
+  padding: 0 10px;
+  margin: 7px 5px;
+}
