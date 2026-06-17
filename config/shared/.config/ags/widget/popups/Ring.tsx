@@ -1,5 +1,3 @@
-import { ringOffset } from "../../service/SystemMetrics"
-
 interface RingProps {
   percent: number
   label: string
