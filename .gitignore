@@ -24,3 +24,23 @@ config/tmux/.tmux/plugins/
 
 # Superpowers visual brainstorming artifacts
 .superpowers/
+
+# orgm-themes generated files — managed at runtime, not in git
+config/shared/.config/waybar/orgm-current.css
+config/shared/.config/waybar-hypr/orgm-current.css
+config/shared/.config/nwg-dock-hyprland/orgm-current.css
+config/shared/.config/swaync/orgm-current.css
+config/shared/.config/rofi/orgm-current.rasi
+config/shared/.config/kitty/current-theme.conf
+config/shared/.config/gtk-4.0/gtk.css
+config/shared/.config/gtk-4.0/gtk-dark.css
+config/shared/.config/gtk-4.0/settings.ini
+config/shared/.config/qt5ct/qt5ct.conf
+config/shared/.config/qt5ct/colors/orgm-current.colors
+config/shared/.config/qt6ct/qt6ct.conf
+config/shared/.config/qt6ct/colors/orgm-current.colors
+config/shared/.config/Kvantum/kvantum.kvconfig
+config/shared/.config/kdeglobals
+config/shared/.config/hypr/scheme/current.conf
+config/shared/.config/quickshell/theme/theme.json
+config/shared/.config/quickshell/theme/current.json
