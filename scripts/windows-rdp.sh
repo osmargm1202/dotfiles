@@ -93,7 +93,10 @@ wait_rdp() {
 rdp_command() {
   local rdp_bin=""
 
-  if command -v xfreerdp3 &>/dev/null; then
+  # Prefer native Wayland backend to get compositor clipboard access
+  if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wlfreerdp &>/dev/null; then
+    rdp_bin="wlfreerdp"
+  elif command -v xfreerdp3 &>/dev/null; then
     rdp_bin="xfreerdp3"
   elif command -v xfreerdp &>/dev/null; then
     rdp_bin="xfreerdp"
@@ -108,12 +111,16 @@ rdp_command() {
       RDP_CMD=(/usr/bin/env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only "$rdp_bin")
     fi
   else
+    local fallback_bin="xfreerdp3"
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+      fallback_bin="wlfreerdp"
+    fi
     if command -v nvidia-offload &>/dev/null; then
-      RDP_CMD=(nvidia-offload distrobox-enter "$DISTROBOX" -- xfreerdp3)
+      RDP_CMD=(nvidia-offload distrobox-enter "$DISTROBOX" -- "$fallback_bin")
     elif command -v prime-run &>/dev/null; then
-      RDP_CMD=(prime-run distrobox-enter "$DISTROBOX" -- xfreerdp3)
+      RDP_CMD=(prime-run distrobox-enter "$DISTROBOX" -- "$fallback_bin")
     else
-      RDP_CMD=(/usr/bin/env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only distrobox-enter "$DISTROBOX" -- xfreerdp3)
+      RDP_CMD=(/usr/bin/env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __VK_LAYER_NV_optimus=NVIDIA_only distrobox-enter "$DISTROBOX" -- "$fallback_bin")
     fi
   fi
 }
