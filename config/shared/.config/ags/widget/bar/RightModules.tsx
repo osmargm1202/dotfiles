@@ -3,11 +3,13 @@ import { exec } from "astal/process"
 import Network from "gi://AstalNetwork"
 import Bluetooth from "gi://AstalBluetooth"
 import SpecsPanel from "../popups/SpecsPanel"
+import WallpaperMenu from "../popups/WallpaperMenu"
 
 const network = Network.get_default()
 const bluetooth = Bluetooth.get_default()
 
 let specsRevealer: any = null
+let wallpaperRevealer: any = null
 
 function AudioModule() {
   return (
@@ -74,6 +76,21 @@ function ThemeModule() {
   )
 }
 
+function WallpaperButton() {
+  return (
+    <button
+      className="bar-module"
+      onClicked={() => {
+        const current = wallpaperRevealer?.get_reveal_child()
+        wallpaperRevealer?.set_reveal_child(!current)
+      }}
+      tooltipText="Wallpaper"
+    >
+      󰋩
+    </button>
+  )
+}
+
 function SpecsButton() {
   return (
     <button
@@ -95,8 +112,11 @@ export default function RightModules() {
       <BluetoothModule />
       <ClipboardModule />
       <ThemeModule />
-      {/* Wallpaper, Help placeholders — filled in Tasks 8, 9 */}
-      <button className="bar-module" tooltipText="Wallpaper (próximamente)">󰋩</button>
+      <box vertical>
+        <WallpaperButton />
+        <WallpaperMenu setup={self => (wallpaperRevealer = self)} />
+      </box>
+      {/* Help placeholder — filled in Task 9 */}
       <button className="bar-module" tooltipText="Ayuda (próximamente)">󰘥</button>
       <box vertical>
         <SpecsButton />

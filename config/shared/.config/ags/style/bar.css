@@ -76,3 +76,57 @@
   color: @subtext0;
   opacity: 0.5;
 }
+
+.wallpaper-revealer {
+  position: absolute;
+  top: 57px;
+  right: 60px;
+}
+
+.wallpaper-panel {
+  background-color: @base;
+  border: 1.5px solid @panel_border;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.panel-title {
+  color: @blue;
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.wallpaper-thumb {
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 0;
+}
+
+.wallpaper-thumb.active {
+  border-color: @blue;
+}
+
+.thumb-label {
+  color: @subtext0;
+  font-size: 9px;
+  padding: 2px 4px;
+  background-color: @base;
+}
+
+.wallpaper-actions {
+  margin-top: 10px;
+}
+
+.action-btn {
+  flex: 1;
+  background-color: @surface0;
+  border: none;
+  border-radius: 8px;
+  color: @text;
+  font-size: 11px;
+  padding: 5px 8px;
+}
