@@ -2,6 +2,7 @@ import { App, Gdk } from "astal/gtk3"
 import Astal from "gi://Astal"
 import Workspaces from "./bar/Workspaces"
 import Clock from "./bar/Clock"
+import RightModules from "./bar/RightModules"
 
 export default function Bar(monitor: Gdk.Monitor) {
   return (
@@ -22,7 +23,7 @@ export default function Bar(monitor: Gdk.Monitor) {
       <centerbox>
         <Workspaces />
         <Clock />
-        <box />
+        <RightModules />
       </centerbox>
     </window>
   )
