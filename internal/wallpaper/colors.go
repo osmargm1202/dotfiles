@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/osmargm1202/nixos/internal/orgmtheme"
 )
@@ -189,16 +188,10 @@ func (m *Manager) ApplyColors(opts ApplyColorsOptions) error {
 	}
 
 	if !opts.NoReload {
-		// Touch style.css in each waybar config dir so waybar-watch detects a change
-		// and restarts waybar (waybar-watch excludes orgm-current.css from its signature).
-		now := time.Now()
-		for _, cssDir := range []string{
-			filepath.Join(m.ConfigHome, "waybar-hypr"),
-			filepath.Join(m.ConfigHome, "waybar"),
-		} {
-			stylePath := filepath.Join(cssDir, "style.css")
-			_ = os.Chtimes(stylePath, now, now)
-		}
+		// Kill waybar so waybar-watch restarts it with the new CSS.
+		// style.css is a symlink to the nix store (read-only), so touching it
+		// is not possible; killing waybar is the reliable reload trigger.
+		_ = exec.Command("pkill", "-TERM", "waybar").Run()
 		_ = exec.Command("swaync-client", "-rs").Run()
 		_ = exec.Command("pkill", "-HUP", "ags").Run()
 	}
