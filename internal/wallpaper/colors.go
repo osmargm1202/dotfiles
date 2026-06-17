@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/osmargm1202/nixos/internal/orgmtheme"
 )
@@ -188,7 +189,16 @@ func (m *Manager) ApplyColors(opts ApplyColorsOptions) error {
 	}
 
 	if !opts.NoReload {
-		// waybar-watch detects orgm-current.css change and restarts waybar automatically.
+		// Touch style.css in each waybar config dir so waybar-watch detects a change
+		// and restarts waybar (waybar-watch excludes orgm-current.css from its signature).
+		now := time.Now()
+		for _, cssDir := range []string{
+			filepath.Join(m.ConfigHome, "waybar-hypr"),
+			filepath.Join(m.ConfigHome, "waybar"),
+		} {
+			stylePath := filepath.Join(cssDir, "style.css")
+			_ = os.Chtimes(stylePath, now, now)
+		}
 		_ = exec.Command("swaync-client", "-rs").Run()
 		_ = exec.Command("pkill", "-HUP", "ags").Run()
 	}
