@@ -130,3 +130,51 @@
   font-size: 11px;
   padding: 5px 8px;
 }
+
+.help-revealer {
+  position: absolute;
+  top: 57px;
+  right: 100px;
+}
+
+.help-panel {
+  background-color: @base;
+  border: 1.5px solid @panel_border;
+  border-radius: 14px;
+  padding: 14px 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.sys-info {
+  color: @subtext0;
+  font-size: 11px;
+  margin-bottom: 10px;
+}
+
+.keybind-category {
+  margin-bottom: 4px;
+}
+
+.category-label {
+  color: @blue;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.keybind-row {
+  padding: 2px 0;
+}
+
+.keybind-keys {
+  color: @blue;
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 11px;
+  min-width: 140px;
+}
+
+.keybind-action {
+  color: @text;
+  font-size: 11px;
+}

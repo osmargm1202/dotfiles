@@ -4,12 +4,14 @@ import Network from "gi://AstalNetwork"
 import Bluetooth from "gi://AstalBluetooth"
 import SpecsPanel from "../popups/SpecsPanel"
 import WallpaperMenu from "../popups/WallpaperMenu"
+import HelpPanel from "../popups/HelpPanel"
 
 const network = Network.get_default()
 const bluetooth = Bluetooth.get_default()
 
 let specsRevealer: any = null
 let wallpaperRevealer: any = null
+let helpRevealer: any = null
 
 function AudioModule() {
   return (
@@ -91,6 +93,21 @@ function WallpaperButton() {
   )
 }
 
+function HelpButton() {
+  return (
+    <button
+      className="bar-module"
+      onClicked={() => {
+        const current = helpRevealer?.get_reveal_child()
+        helpRevealer?.set_reveal_child(!current)
+      }}
+      tooltipText="Ayuda"
+    >
+      󰘥
+    </button>
+  )
+}
+
 function SpecsButton() {
   return (
     <button
@@ -116,8 +133,10 @@ export default function RightModules() {
         <WallpaperButton />
         <WallpaperMenu setup={self => (wallpaperRevealer = self)} />
       </box>
-      {/* Help placeholder — filled in Task 9 */}
-      <button className="bar-module" tooltipText="Ayuda (próximamente)">󰘥</button>
+      <box vertical>
+        <HelpButton />
+        <HelpPanel setup={self => (helpRevealer = self)} />
+      </box>
       <box vertical>
         <SpecsButton />
         <SpecsPanel setup={self => (specsRevealer = self)} />
