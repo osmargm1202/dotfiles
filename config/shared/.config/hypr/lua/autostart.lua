@@ -1,7 +1,7 @@
 local exec_once = {
   "hypr-session-import-env",
   "systemctl --user start sunshine.service",
-  "sh -lc '$HOME/.local/bin/hypr-display-targets ensure && $HOME/.local/bin/waybar-watch ~/.config/waybar-hypr'",
+  "sh -lc '$HOME/.local/bin/hypr-display-targets ensure && ags run $HOME/.config/ags/ >>/tmp/ags.log 2>&1'",
   "sh -lc 'orgm-wallpaper daemon >/tmp/orgm-wallpaper.log 2>&1'",
   "swaync",
   "nm-applet --indicator",
@@ -15,7 +15,6 @@ local exec_once = {
   "wl-paste --type text --watch cliphist store",
   "wl-paste --type image --watch cliphist store",
   "hypridle",
-  "sh -lc '$HOME/.local/bin/hypr-nwg-dock 2>/tmp/hypr-nwg-dock.log'",
 }
 
 hl.on("hyprland.start", function()
