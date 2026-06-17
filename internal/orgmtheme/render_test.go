@@ -190,6 +190,7 @@ func TestRenderActivePathsMatchBashHelper(t *testing.T) {
 	}
 	sort.Strings(got)
 	want := []string{
+		"/cfg/ags/style/ags-colors.css",
 		"/cfg/fuzzel/fuzzel.ini",
 		"/cfg/gtk-3.0/settings.ini",
 		"/cfg/gtk-4.0/gtk-dark.css",
@@ -255,4 +256,70 @@ func writesByPath(writes []PlannedWrite) map[string]string {
 		byPath[write.Path] = write.Content
 	}
 	return byPath
+}
+
+func testTheme() Theme {
+	return Theme{
+		Name:        "orgm-dark",
+		ColorScheme: "prefer-dark",
+		GTKTheme:    "Adwaita-dark",
+		IconTheme:   "Papirus-Dark",
+		CursorTheme: "Bibata-Modern-Ice",
+		CursorSize:  "24",
+		QTStyle:     "kvantum",
+		PITheme:     "pi-dark",
+		Base:        "24273a",
+		Mantle:      "1e2030",
+		Crust:       "181926",
+		Text:        "cad3f5",
+		Subtext0:    "a5adcb",
+		Subtext1:    "b8c0e0",
+		Surface0:    "363a4f",
+		Surface1:    "494d64",
+		Surface2:    "5b6078",
+		Overlay0:    "6e738d",
+		Overlay1:    "8087a2",
+		Overlay2:    "939ab7",
+		Blue:        "8aadf4",
+		Green:       "a6da95",
+		Yellow:      "eed49f",
+		Peach:       "f5a97f",
+		Red:         "ed8796",
+		Mauve:       "c6a0f6",
+		Pink:        "f5bde6",
+		Teal:        "8bd5ca",
+		Sky:         "91d7e3",
+		Rosewater:   "f4dbd6",
+		PanelBG:     "24273a99",
+		MenuBG:      "24273add",
+		QSOverlay:   "24273a",
+		QSCard:      "22363a4f",
+		QSCardStrong: "33494d64",
+		QSCardSoft:  "1e363a4f",
+		QSEvent:     "2b363a4f",
+		QSHover:     "55363a4f",
+		OnAccent:    "11111b",
+	}
+}
+
+func TestRenderAGSColorsPresent(t *testing.T) {
+	theme := testTheme()
+	env := Env{ConfigHome: "/home/test/.config", DataHome: "/home/test/.local/share"}
+	writes, err := BuildWrites(env, theme)
+	if err != nil {
+		t.Fatalf("BuildWrites: %v", err)
+	}
+	byPath := map[string]string{}
+	for _, w := range writes {
+		byPath[w.Path] = w.Content
+	}
+	agsCSS := byPath["/home/test/.config/ags/style/ags-colors.css"]
+	if agsCSS == "" {
+		t.Fatal("ags-colors.css not rendered")
+	}
+	assertRenderedContains(t, byPath, "/home/test/.config/ags/style/ags-colors.css", "@define-color base #")
+	assertRenderedContains(t, byPath, "/home/test/.config/ags/style/ags-colors.css", "@define-color panel_bg")
+	assertRenderedContains(t, byPath, "/home/test/.config/ags/style/ags-colors.css", "@define-color green #")
+	assertRenderedContains(t, byPath, "/home/test/.config/ags/style/ags-colors.css", "@define-color yellow #")
+	assertRenderedContains(t, byPath, "/home/test/.config/ags/style/ags-colors.css", "@define-color red #")
 }

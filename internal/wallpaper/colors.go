@@ -147,6 +147,7 @@ func (m *Manager) ApplyColors(opts ApplyColorsOptions) error {
 	if !opts.NoReload {
 		_ = exec.Command("pkill", "-SIGUSR2", "waybar").Run()
 		_ = exec.Command("swaync-client", "-rs").Run()
+		_ = exec.Command("pkill", "-HUP", "ags").Run()
 	}
 	return nil
 }
