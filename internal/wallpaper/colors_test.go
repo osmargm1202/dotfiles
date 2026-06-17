@@ -10,33 +10,59 @@ import (
 	"github.com/osmargm1202/nixos/internal/orgmtheme"
 )
 
-// fakeMatugenJSON is a minimal valid matugen 3.x --json hex output.
-// Format: colors keyed by token name, each with dark/light/default sub-keys.
+// fakeMatugenJSON is a minimal valid matugen --json hex output.
 const fakeMatugenJSON = `{
   "colors": {
-    "primary":                  {"dark": "#6d9eeb", "light": "#1e66f5", "default": "#6d9eeb"},
-    "on_primary":               {"dark": "#002b7c", "light": "#ffffff", "default": "#002b7c"},
-    "background":               {"dark": "#1a1c2e", "light": "#eff1f5", "default": "#1a1c2e"},
-    "on_background":            {"dark": "#e2e4f6", "light": "#4c4f69", "default": "#e2e4f6"},
-    "surface_container":        {"dark": "#252736", "light": "#e6e9ef", "default": "#252736"},
-    "surface_container_low":    {"dark": "#1e2030", "light": "#eceef4", "default": "#1e2030"},
-    "surface_container_lowest": {"dark": "#181926", "light": "#ffffff", "default": "#181926"},
-    "surface_container_high":   {"dark": "#2e3048", "light": "#dce0e8", "default": "#2e3048"},
-    "surface_container_highest":{"dark": "#393b54", "light": "#ccd0da", "default": "#393b54"},
-    "outline_variant":          {"dark": "#43456a", "light": "#8087a2", "default": "#43456a"},
-    "outline":                  {"dark": "#5f6290", "light": "#6c6f85", "default": "#5f6290"},
-    "on_surface_variant":       {"dark": "#9b9ec7", "light": "#5b6078", "default": "#9b9ec7"},
-    "on_surface":               {"dark": "#c4c6e3", "light": "#4c4f69", "default": "#c4c6e3"},
-    "secondary":                {"dark": "#8bd5ca", "light": "#179299", "default": "#8bd5ca"},
-    "tertiary":                 {"dark": "#c6a0f6", "light": "#8839ef", "default": "#c6a0f6"},
-    "primary_fixed_dim":        {"dark": "#91d7e3", "light": "#0089a0", "default": "#91d7e3"},
-    "secondary_fixed":          {"dark": "#a6da95", "light": "#40a02b", "default": "#a6da95"},
-    "tertiary_fixed":           {"dark": "#eed49f", "light": "#df8e1d", "default": "#eed49f"},
-    "primary_container":        {"dark": "#3d5f9e", "light": "#b7bdf8", "default": "#3d5f9e"},
-    "error":                    {"dark": "#ed8796", "light": "#d20f39", "default": "#ed8796"},
-    "tertiary_container":       {"dark": "#523d6e", "light": "#ea76cb", "default": "#523d6e"},
-    "on_tertiary_container":    {"dark": "#f4dbd6", "light": "#4c4f69", "default": "#f4dbd6"},
-    "on_secondary_container":   {"dark": "#f0c6c6", "light": "#cba6f7", "default": "#f0c6c6"}
+    "dark": {
+      "primary": "#6d9eeb",
+      "on_primary": "#002b7c",
+      "background": "#1a1c2e",
+      "on_background": "#e2e4f6",
+      "surface_container": "#252736",
+      "surface_container_low": "#1e2030",
+      "surface_container_lowest": "#181926",
+      "surface_container_high": "#2e3048",
+      "surface_container_highest": "#393b54",
+      "outline_variant": "#43456a",
+      "outline": "#5f6290",
+      "on_surface_variant": "#9b9ec7",
+      "on_surface": "#c4c6e3",
+      "secondary": "#8bd5ca",
+      "tertiary": "#c6a0f6",
+      "primary_fixed_dim": "#91d7e3",
+      "secondary_fixed": "#a6da95",
+      "tertiary_fixed": "#eed49f",
+      "primary_container": "#3d5f9e",
+      "error": "#ed8796",
+      "tertiary_container": "#523d6e",
+      "on_tertiary_container": "#f4dbd6",
+      "on_secondary_container": "#f0c6c6"
+    },
+    "light": {
+      "primary": "#1e66f5",
+      "on_primary": "#ffffff",
+      "background": "#eff1f5",
+      "on_background": "#4c4f69",
+      "surface_container": "#e6e9ef",
+      "surface_container_low": "#eceef4",
+      "surface_container_lowest": "#ffffff",
+      "surface_container_high": "#dce0e8",
+      "surface_container_highest": "#ccd0da",
+      "outline_variant": "#8087a2",
+      "outline": "#6c6f85",
+      "on_surface_variant": "#5b6078",
+      "on_surface": "#4c4f69",
+      "secondary": "#179299",
+      "tertiary": "#8839ef",
+      "primary_fixed_dim": "#0089a0",
+      "secondary_fixed": "#40a02b",
+      "tertiary_fixed": "#df8e1d",
+      "primary_container": "#b7bdf8",
+      "error": "#d20f39",
+      "tertiary_container": "#ea76cb",
+      "on_tertiary_container": "#4c4f69",
+      "on_secondary_container": "#cba6f7"
+    }
   }
 }`
 
@@ -63,10 +89,10 @@ func TestRunMatugen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("runMatugen: %v", err)
 	}
-	if got := out.Colors["primary"].Dark; got != "#6d9eeb" {
+	if got := out.Colors.Dark["primary"]; got != "#6d9eeb" {
 		t.Errorf("dark primary = %q, want #6d9eeb", got)
 	}
-	if got := out.Colors["primary"].Light; got != "#1e66f5" {
+	if got := out.Colors.Light["primary"]; got != "#1e66f5" {
 		t.Errorf("light primary = %q, want #1e66f5", got)
 	}
 }
@@ -87,7 +113,7 @@ func baseTheme(scheme string) orgmtheme.Theme {
 
 func TestMapColors_Dark(t *testing.T) {
 	out := parseFakeJSON(t)
-	result := MapColors(out.palette("prefer-dark"), baseTheme("prefer-dark"))
+	result := MapColors(out.Colors.Dark, baseTheme("prefer-dark"))
 
 	if result.GTKTheme != "Adwaita-dark" {
 		t.Errorf("GTKTheme = %q, want Adwaita-dark", result.GTKTheme)
@@ -114,7 +140,7 @@ func TestMapColors_Dark(t *testing.T) {
 
 func TestMapColors_Light(t *testing.T) {
 	out := parseFakeJSON(t)
-	result := MapColors(out.palette("prefer-light"), baseTheme("prefer-light"))
+	result := MapColors(out.Colors.Light, baseTheme("prefer-light"))
 
 	if result.Blue != "1e66f5" {
 		t.Errorf("Blue = %q, want 1e66f5", result.Blue)

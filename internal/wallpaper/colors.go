@@ -11,62 +11,18 @@ import (
 	"github.com/osmargm1202/nixos/internal/orgmtheme"
 )
 
-// matugenColor holds the dark/light/default variants for one color token.
-type matugenColor struct {
-	Dark    string `json:"dark"`
-	Light   string `json:"light"`
-	Default string `json:"default"`
-}
-
 // matugenOutput is the top-level JSON structure from `matugen image <path> --json hex`.
-// Colors is keyed by token name (e.g. "background", "primary"); each value has dark/light variants.
 type matugenOutput struct {
-	Colors map[string]matugenColor `json:"colors"`
-}
-
-// palette returns a flat map of token→hex for the requested scheme.
-func (m matugenOutput) palette(scheme string) map[string]string {
-	out := make(map[string]string, len(m.Colors))
-	for name, c := range m.Colors {
-		if scheme == "prefer-light" {
-			out[name] = c.Light
-		} else {
-			out[name] = c.Dark
-		}
-	}
-	return out
-}
-
-// nixMatugenPaths are fallback locations when matugen is not on PATH (NixOS).
-var nixMatugenPaths = []string{
-	"/run/current-system/sw/bin/matugen",
-	"/etc/profiles/per-user/osmarg/bin/matugen",
-	"/home/osmarg/.nix-profile/bin/matugen",
-	"/nix/profile/bin/matugen",
-}
-
-// resolveMatugen returns the path to a usable matugen binary.
-func resolveMatugen() (string, error) {
-	if bin := os.Getenv("MATUGEN_BIN"); bin != "" {
-		return bin, nil
-	}
-	if path, err := exec.LookPath("matugen"); err == nil {
-		return path, nil
-	}
-	for _, p := range nixMatugenPaths {
-		if _, err := os.Stat(p); err == nil {
-			return p, nil
-		}
-	}
-	return "", fmt.Errorf("matugen binary not found in PATH or %v", nixMatugenPaths)
+	Colors struct {
+		Dark  map[string]string `json:"dark"`
+		Light map[string]string `json:"light"`
+	} `json:"colors"`
 }
 
 // runMatugen runs matugen on imagePath and returns the parsed color palette.
+// The binary is resolved via the MATUGEN_BIN env var, falling back to "matugen".
 func runMatugen(imagePath string) (matugenOutput, error) {
-	bin, err := resolveMatugen()
-	if err != nil {
-		return matugenOutput{}, err
-	}
+	bin := envDefault("MATUGEN_BIN", "matugen")
 	out, err := exec.Command(bin, "image", imagePath, "--json", "hex").Output()
 	if err != nil {
 		return matugenOutput{}, fmt.Errorf("matugen: %w", err)
@@ -158,7 +114,14 @@ func (m *Manager) ApplyColors(opts ApplyColorsOptions) error {
 		return fmt.Errorf("load theme: %w", err)
 	}
 
-	theme := MapColors(matout.palette(base.ColorScheme), base)
+	var palette map[string]string
+	if base.ColorScheme == "prefer-light" {
+		palette = matout.Colors.Light
+	} else {
+		palette = matout.Colors.Dark
+	}
+
+	theme := MapColors(palette, base)
 	env := orgmtheme.Env{ConfigHome: m.ConfigHome, DataHome: m.DataHome}
 	writes, err := orgmtheme.BuildWrites(env, theme)
 	if err != nil {
@@ -175,12 +138,6 @@ func (m *Manager) ApplyColors(opts ApplyColorsOptions) error {
 	for _, w := range writes {
 		if err := os.MkdirAll(filepath.Dir(w.Path), 0o755); err != nil {
 			return fmt.Errorf("mkdir %s: %w", filepath.Dir(w.Path), err)
-		}
-		// Remove symlinks before writing so we don't try to overwrite nix-store files.
-		if fi, err := os.Lstat(w.Path); err == nil && fi.Mode()&os.ModeSymlink != 0 {
-			if err := os.Remove(w.Path); err != nil {
-				return fmt.Errorf("remove symlink %s: %w", w.Path, err)
-			}
 		}
 		if err := os.WriteFile(w.Path, []byte(w.Content), 0o644); err != nil {
 			return fmt.Errorf("write %s: %w", w.Path, err)
