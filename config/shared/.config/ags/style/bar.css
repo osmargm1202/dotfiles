@@ -1,0 +1,36 @@
+.top-bar {
+  background-color: @base;
+  border: 1.5px solid @panel_border;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.workspaces {
+  padding: 0 14px;
+}
+
+.workspace-btn {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: @subtext0;
+  font-size: 17px;
+  font-weight: 700;
+  min-width: 28px;
+  padding: 4px 6px;
+  margin: 7px 1px;
+}
+
+.workspace-btn.active {
+  color: @blue;
+}
+
+.menu-btn {
+  background: transparent;
+  border: none;
+  color: @text;
+  font-size: 29px;
+  padding: 0;
+  min-width: 47px;
+  margin: 0;
+}

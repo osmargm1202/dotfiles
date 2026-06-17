@@ -1,11 +1,9 @@
 import { App } from "astal/gtk3"
+import Bar from "./widget/Bar"
 
 App.start({
   css: `${import.meta.dir}/style/main.css`,
   main() {
-    console.log("AGS shell starting")
-    App.get_monitors().forEach(monitor => {
-      console.log(`Monitor: ${monitor.get_model()}`)
-    })
+    App.get_monitors().forEach(monitor => Bar(monitor))
   },
 })
