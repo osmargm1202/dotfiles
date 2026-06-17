@@ -188,18 +188,6 @@ func runWithIO(args []string, stdout, stderr io.Writer) error {
 		return m.StartQuickshellPicker(false)
 	case "daemon":
 		return m.RunDaemon()
-	case "apply-colors":
-		flags := flag.NewFlagSet("orgm-wallpaper apply-colors", flag.ContinueOnError)
-		flags.SetOutput(stderr)
-		noReload := flags.Bool("no-reload", false, "write files but skip waybar reload")
-		dryRun := flags.Bool("dry-run", false, "print planned writes without executing")
-		if err := flags.Parse(args[1:]); err != nil {
-			return cli.UsageError(err.Error())
-		}
-		if flags.NArg() != 0 {
-			return cli.UsageError("unexpected argument: %s", flags.Arg(0))
-		}
-		return m.ApplyColors(wallpaper.ApplyColorsOptions{NoReload: *noReload, DryRun: *dryRun})
 	default:
 		return cli.UsageError(usage())
 	}

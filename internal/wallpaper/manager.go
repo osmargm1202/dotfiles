@@ -660,7 +660,6 @@ func (m *Manager) SetStatic(path, mode string) error {
 	if err := m.WriteState(mode, path); err != nil {
 		return err
 	}
-	m.applyColorsQuiet()
 	return nil
 }
 
@@ -824,7 +823,6 @@ func (m *Manager) SetVideo(path string) error {
 	if err := m.WriteState("video", path); err != nil {
 		return err
 	}
-	m.applyColorsQuiet()
 	return nil
 }
 
