@@ -251,6 +251,7 @@
       "modules": [
         "backlight",
         "battery",
+        "custom/power_profile",
         "pulseaudio",
         "pulseaudio/slider",
         "pulseaudio#microphone",
@@ -323,6 +324,15 @@
         "󰂂",
         "󰁹"
       ]
+    },
+    "custom/power_profile": {
+      "exec-if": "waybar-power-profile check",
+      "exec": "waybar-power-profile status",
+      "return-type": "json",
+      "interval": 10,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "waybar-power-profile pick"
     },
     "network": {
       "format": "󰤭",
