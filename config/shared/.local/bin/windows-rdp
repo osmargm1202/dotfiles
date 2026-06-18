@@ -121,7 +121,9 @@ wait_rdp() {
 rdp_command() {
   local rdp_bin=""
 
-  if command -v xfreerdp3 &>/dev/null; then
+  if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wlfreerdp3 &>/dev/null; then
+    rdp_bin="wlfreerdp3"
+  elif command -v xfreerdp3 &>/dev/null; then
     rdp_bin="xfreerdp3"
   elif command -v xfreerdp &>/dev/null; then
     rdp_bin="xfreerdp"
