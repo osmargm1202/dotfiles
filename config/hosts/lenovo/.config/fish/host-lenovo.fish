@@ -1,6 +1,4 @@
 # Lenovo-specific shortcuts.
-alias dotd='orgm-dot diff'
-alias dots='orgm-dot sync'
 
 # NixOS rebuild shortcuts.
 alias os='nh os switch /home/osmarg/Hobby/nixos/ --hostname lenovo-hyprland'
