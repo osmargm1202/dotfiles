@@ -3,11 +3,11 @@
     "name": "top_bar",
     "layer": "top",
     "position": "top",
-    "height": 47,
+    "height": 33,
     "spacing": 5,
-    "margin-top": 10,
-    "margin-left": 12,
-    "margin-right": 12,
+    "margin-top": 0,
+    "margin-left": 0,
+    "margin-right": 0,
     "modules-left": [
       "group/workspaces",
       "group/system",
@@ -398,11 +398,11 @@
     "name": "bottom_bar",
     "layer": "top",
     "position": "bottom",
-    "height": 60,
+    "height": 42,
     "spacing": 5,
-    "margin-bottom": 10,
-    "margin-left": 12,
-    "margin-right": 12,
+    "margin-bottom": 0,
+    "margin-left": 0,
+    "margin-right": 0,
     "modules-left": [
       "custom/orgm_logo",
       "custom/user",
@@ -584,6 +584,18 @@
       "tooltip": true,
       "tooltip-format": "Ver stats 4s encima de ventanas",
       "on-click": "hypr-conky-toggle"
+    }
+  },
+  {
+    "name": "dock_spacer",
+    "layer": "top",
+    "position": "right",
+    "width": 80,
+    "exclusive": true,
+    "passthrough": true,
+    "modules-center": ["custom/dock_spacer"],
+    "custom/dock_spacer": {
+      "format": ""
     }
   }
 ]
