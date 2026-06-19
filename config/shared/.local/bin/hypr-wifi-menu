@@ -9,5 +9,5 @@ choice="$(printf '%s\n' '󰖩 NetworkManager GUI' '󰖩 nmtui' '󰅖 Cancel' | h
 case "$choice" in
   *'GUI') exec nm-connection-editor ;;
   *'nmtui') exec kitty -e nmtui ;;
-  *) exit 0 ;;
+  *) exec hypr-devices-menu ;;
 esac

@@ -406,17 +406,9 @@
     ],
     "modules-right": [
       "custom/wallpaper",
-      "custom/usb_devices",
-      "custom/headset_reconnect",
-      "custom/memclean",
-      "custom/nixclean",
-      "custom/hardware_fetch",
-      "custom/pi_status",
-      "custom/hypr_config_editor",
-      "custom/conky_toggle",
       "custom/kbd_layout",
       "custom/keybindings_help",
-      "custom/power_profile"
+      "custom/menu"
     ],
     "custom/orgm_logo": {
       "format": "NixOS",
@@ -546,6 +538,13 @@
       "tooltip-format": "Atajos Hyprland (Win+/)\nClick: abrir helper\nClick derecho: actualizar lista",
       "on-click": "hypr-keyhelper toggle",
       "on-click-right": "hypr-keyhelper init"
+    },
+    "custom/menu": {
+      "format": "󰍜",
+      "tooltip": true,
+      "tooltip-format": "Herramientas / Tweaks",
+      "on-click": "hypr-tweaks-menu",
+      "on-click-right": "hypr-main-menu"
     },
     "custom/power_profile": {
       "exec-if": "waybar-power-profile check",

@@ -15,5 +15,5 @@ case "$choice" in
   *'Keybindings help') exec hypr-keybindings-help ;;
   *'Keyhelper toggle') exec hypr-keyhelper toggle ;;
   *'Keyhelper init') exec hypr-keyhelper init ;;
-  *) exit 0 ;;
+  *) exec hypr-main-menu ;;
 esac

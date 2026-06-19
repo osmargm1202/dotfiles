@@ -17,6 +17,7 @@ choices+=(
   "󰌢 Hardware fastfetch"
   "󰚩 Pi update"
   "󰚩 Pi status refresh"
+  "󱐌 Power profile"
   "󰅖 Cancel"
 )
 choice="$(printf '%s\n' "${choices[@]}" | hypr_rofi_dmenu 'Performance / Cleanup' || true)"
@@ -32,5 +33,6 @@ case "$choice" in
   *'Hardware fastfetch') exec kitty --title hardware-fastfetch -e fish -lc 'fastfetch --config ~/.config/fastfetch/hardware.jsonc; echo; exec fish -i' ;;
   *'Pi update') exec kitty --title pi-update -e distrobox-enter arch -- fish -lc 'pi update; waybar-pi-status refresh >/dev/null 2>&1; echo; exec fish -i' ;;
   *'Pi status refresh') exec waybar-pi-status refresh ;;
-  *) exit 0 ;;
+  *'Power profile') exec waybar-power-profile pick ;;
+  *) exec hypr-main-menu ;;
 esac

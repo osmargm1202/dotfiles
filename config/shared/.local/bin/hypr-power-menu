@@ -15,5 +15,5 @@ case "$choice" in
   *'Logout') hyprctl dispatch exit ;;
   *'Reboot') systemctl reboot ;;
   *'Power off') systemctl poweroff ;;
-  *) exit 0 ;;
+  *) exec hypr-main-menu ;;
 esac

@@ -10,5 +10,5 @@ case "$choice" in
   *'GUI') exec blueman-manager ;;
   *'Reconnect') exec "$HOME/.local/bin/hypr-bluetooth-reconnect" ;;
   *'bluetui') exec kitty -e bluetui ;;
-  *) exit 0 ;;
+  *) exec hypr-devices-menu ;;
 esac

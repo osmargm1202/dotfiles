@@ -32,7 +32,7 @@ choice="$(printf '%s\n' \
 preset="${choice%% - *}"
 case "$preset" in
   fade|slide|slidevert|slidefade|slidefadevert|hyde|limefrenzy|off) ;;
-  *) exit 0 ;;
+  *) exec hypr-tweaks-menu ;;
 esac
 
 mkdir -p "$(dirname "$env_file")"

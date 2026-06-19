@@ -25,5 +25,5 @@ case "$choice" in
   *'Displays') exec hypr-display-targets menu ;;
   *'Audio output') exec hypr-audio-device-menu output ;;
   *'Audio input') exec hypr-audio-device-menu input ;;
-  *) exit 0 ;;
+  *) exec hypr-main-menu ;;
 esac

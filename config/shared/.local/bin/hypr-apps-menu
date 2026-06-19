@@ -17,5 +17,5 @@ case "$choice" in
   *'Web App Maker') exec hypr-webapp-maker ;;
   *'Zen new window') exec hypr-zen-new-window ;;
   *'Obsidian') exec hypr-obsidian-open-or-focus ;;
-  *) exit 0 ;;
+  *) exec hypr-main-menu ;;
 esac

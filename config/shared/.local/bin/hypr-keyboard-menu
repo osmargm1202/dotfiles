@@ -10,5 +10,5 @@ case "$choice" in
   *'Toggle') exec hyprctl switchxkblayout all next ;;
   *'US') exec hyprctl switchxkblayout all 0 ;;
   *'Latam') exec hyprctl switchxkblayout all 1 ;;
-  *) exit 0 ;;
+  *) exec hypr-main-menu ;;
 esac

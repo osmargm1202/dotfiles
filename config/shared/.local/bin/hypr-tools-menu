@@ -25,5 +25,5 @@ case "$choice" in
   *'Hypr config') exec hypr-config-editor ;;
   *'Calculator') exec hypr-rofi-calc ;;
   *'Web App Maker') exec hypr-webapp-maker ;;
-  *) exit 0 ;;
+  *) exec hypr-main-menu ;;
 esac
