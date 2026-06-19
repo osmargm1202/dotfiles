@@ -255,10 +255,9 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #battery.warning { color: @text; }
 
 window.dock_bar#waybar {
-  background: rgba(0, 0, 0, 0.6);
+  background-color: @panel_bg;
   border: none;
-  border-radius: 0;
-  box-shadow: none;
+  border-radius: 12px;
 }
 #custom-dock_windows,
 #custom-dock_kitty,
@@ -307,6 +306,9 @@ window.dock_spacer#waybar * {
   color: transparent;
   border: none;
   box-shadow: none;
+}
+window.dock_bar#waybar {
+  border: 2px solid @panel_border;
 }
 
 #custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }

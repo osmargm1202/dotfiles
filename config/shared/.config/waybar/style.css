@@ -166,10 +166,9 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #battery.warning { color: @text; }
 
 window.dock_bar#waybar {
-  background: rgba(0, 0, 0, 0.6);
+  background-color: @panel_bg;
   border: none;
-  border-radius: 0;
-  box-shadow: none;
+  border-radius: 12px;
 }
 #custom-dock_windows,
 #custom-dock_kitty,
