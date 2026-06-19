@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Show stats overlay above all windows for 4s. Background conky (layer-shell) stays untouched.
-LOCK=/tmp/hypr-conky-overlay.lock
-if [ -f "$LOCK" ]; then exit 0; fi
-touch "$LOCK"
+# If already showing, kill it early.
+if pgrep -f "conky-top.conf" >/dev/null 2>&1; then
+    pkill -f "conky-top.conf" 2>/dev/null || true
+    exit 0
+fi
 conky -c ~/.config/conky/conky-top.conf -d
-(sleep 4 && pkill -f "conky-top.conf" 2>/dev/null && rm -f "$LOCK") &
+(sleep 4 && pkill -f "conky-top.conf" 2>/dev/null) &
 disown $!
