@@ -13,6 +13,8 @@ window.bottom_bar#waybar {
   border: none;
   border-radius: 0;
   box-shadow: none;
+  padding: 0;
+  margin: 0;
 }
 #workspaces {
   background: transparent;

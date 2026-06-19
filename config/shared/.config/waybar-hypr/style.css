@@ -13,6 +13,8 @@ window.bottom_bar#waybar {
   border: none;
   border-radius: 0;
   box-shadow: none;
+  padding: 0;
+  margin: 0;
 }
 #custom-ws_1, #custom-ws_2, #custom-ws_3, #custom-ws_4, #custom-ws_5,
 #custom-ws_6, #custom-ws_7, #custom-ws_8, #custom-ws_9, #custom-ws_10 {
