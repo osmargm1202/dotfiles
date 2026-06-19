@@ -125,7 +125,7 @@ func TestToggleAcceptsNoReloadAndWritesNextTheme(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(css), "background-color: rgba(2, 10, 24, 0.78);") {
+	if !strings.Contains(string(css), "background-color: rgba(0, 0, 0, 0.6);") {
 		t.Fatalf("waybar-hypr css missing dark background:\n%s", css)
 	}
 }
@@ -149,10 +149,12 @@ func writeCLITheme(t *testing.T, themesDir, name string) {
 	colorScheme := "prefer-light"
 	gtkTheme := "Adwaita"
 	piTheme := "orgm-light"
+	panelBG := "ffffffff"
 	if name == "orgm-dark" {
 		colorScheme = "prefer-dark"
 		gtkTheme = "Adwaita-dark"
 		piTheme = "orgm"
+		panelBG = "00000099"
 	}
 	content := `THEME_NAME=` + name + `
 COLOR_SCHEME=` + colorScheme + `
@@ -185,7 +187,7 @@ PINK=ea76cb
 TEAL=179299
 SKY=04a5e5
 ROSEWATER=dc8a78
-PANEL_BG=ffffffff
+PANEL_BG=` + panelBG + `
 MENU_BG=ffffffff
 QS_OVERLAY=ffffffff
 QS_CARD=e5e7ebff

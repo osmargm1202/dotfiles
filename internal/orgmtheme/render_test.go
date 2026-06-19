@@ -48,7 +48,7 @@ func TestRenderWaybarHyprLightIconOverrides(t *testing.T) {
 	byPath := writesByPath(writes)
 
 	assertRenderedContains(t, byPath, "/home/test/.config/waybar-hypr/orgm-current.css", `#custom-theme_toggle { background-image: url("icons/light/theme_toggle.svg"); }`)
-	assertRenderedContains(t, byPath, "/home/test/.config/waybar-hypr/orgm-current.css", `background: linear-gradient(to right, #ffffff 0%, #f3f4f6 24%, #d1d5db 50%, #f3f4f6 76%, #ffffff 100%);`)
+	assertRenderedContains(t, byPath, "/home/test/.config/waybar-hypr/orgm-current.css", `background: linear-gradient(to right, #eff1f5 0%, #e6e9ef 24%, #ccd0da 50%, #e6e9ef 76%, #eff1f5 100%);`)
 	regular := byPath["/home/test/.config/waybar/orgm-current.css"]
 	if strings.Contains(regular, "icons/light/theme_toggle.svg") {
 		t.Fatalf("regular Waybar palette contains Hypr icon overrides:\n%s", regular)
@@ -104,7 +104,7 @@ func TestRenderSwayNCUsesWaybarPalette(t *testing.T) {
 	}
 }
 
-func TestRenderWaybarHyprDarkUsesDeepBlueSurface(t *testing.T) {
+func TestRenderWaybarHyprDarkUsesPanelBG(t *testing.T) {
 	theme, err := LoadTheme(filepath.Join("..", "..", "config", "shared", ".config", "orgm-theme", "themes"), "orgm-dark")
 	if err != nil {
 		t.Fatalf("LoadTheme orgm-dark fixture error = %v", err)
@@ -117,7 +117,7 @@ func TestRenderWaybarHyprDarkUsesDeepBlueSurface(t *testing.T) {
 	}
 	byPath := writesByPath(writes)
 
-	assertRenderedContains(t, byPath, "/home/test/.config/waybar-hypr/orgm-current.css", `background-color: rgba(2, 10, 24, 0.78);`)
+	assertRenderedContains(t, byPath, "/home/test/.config/waybar-hypr/orgm-current.css", `background-color: rgba(0, 0, 0, 0.6);`)
 }
 
 func TestRenderQuickshellUsesOpaqueDarkOverlay(t *testing.T) {
@@ -190,6 +190,7 @@ func TestRenderActivePathsMatchBashHelper(t *testing.T) {
 	}
 	sort.Strings(got)
 	want := []string{
+		"/cfg/conky/orgm-colors.lua",
 		"/cfg/fuzzel/fuzzel.ini",
 		"/cfg/gtk-3.0/settings.ini",
 		"/cfg/gtk-4.0/gtk-dark.css",
