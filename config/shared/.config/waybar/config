@@ -10,7 +10,7 @@
     "margin-right": 0,
     "modules-left": ["custom/menu", "sway/workspaces", "group/system", "sway/mode"],
     "modules-center": ["custom/day_month", "custom/time", "custom/date"],
-    "modules-right": ["custom/wallpaper", "bluetooth", "network", "privacy", "custom/usb_devices", "custom/memclean", "custom/nixclean", "tray", "custom/logout_menu"],
+    "modules-right": ["bluetooth", "network", "privacy", "tray", "custom/logout_menu"],
 
     "custom/menu": {
       "format": "",
@@ -142,7 +142,7 @@
     "margin-right": 0,
     "modules-left": ["custom/orgm_logo", "custom/user", "sway/window"],
     "modules-center": ["idle_inhibitor", "mpris"],
-    "modules-right": ["group/usage", "custom/kbd_layout", "custom/keybindings_help"],
+    "modules-right": ["group/usage", "custom/wallpaper", "custom/usb_devices", "custom/memclean", "custom/nixclean", "custom/kbd_layout", "custom/keybindings_help"],
 
     "custom/orgm_logo": { "format": " ", "tooltip": true, "tooltip-format": "Abrir fuzzel", "on-click": "fuzzel" },
     "custom/user": { "format": "  osmarg", "tooltip": false },
@@ -164,6 +164,41 @@
     },
     "backlight": { "format": "{icon} {percent}%", "format-icons": ["󰃞", "󰃟", "󰃠"] },
     "pulseaudio": { "format": "{icon} {volume}%", "format-muted": "󰝟 muted", "format-icons": { "default": ["", "", ""] }, "on-click": "pavucontrol" },
+    "custom/wallpaper": {
+      "format": "󰸉",
+      "tooltip": true,
+      "tooltip-format": "Cambiar fondo aleatorio",
+      "on-click": "~/.local/bin/sway-random-wallpaper next"
+    },
+
+    "custom/usb_devices": {
+      "exec": "hypr-usb-menu status",
+      "return-type": "json",
+      "interval": 5,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "hypr-usb-menu open",
+      "on-click-right": "hypr-usb-menu nickname"
+    },
+
+    "custom/memclean": {
+      "exec": "memclean-dev status",
+      "return-type": "json",
+      "interval": 10,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "memclean-dev clean",
+      "on-click-right": "kitty --class memclean-dev -e fish -lc 'memclean-dev dry-run; echo; read -P \"enter...\"'",
+      "on-click-middle": "kitty -e btop"
+    },
+
+    "custom/nixclean": {
+      "format": "󰃢",
+      "tooltip": true,
+      "tooltip-format": "Limpiar Nix, journal, papelera, Flatpak unused",
+      "on-click": "kitty --class nixclean -e fish -lc 'nixclean; read -P \"enter...\"'"
+    },
+
     "custom/kbd_layout": {
       "exec": "~/.config/waybar/kbd-layout.sh",
       "interval": 1,
