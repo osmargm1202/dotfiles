@@ -21,6 +21,7 @@ choice="$(printf '%s\n' \
   '󰑓 Reload Hyprland' \
   '󰑓 Restart Waybar' \
   '󰑓 Reload Dock' \
+  '󰨸 Restart Conky' \
   '󰔎 Theme light' \
   '󰔎 Theme dark' \
   '󰆍 User logs' \
@@ -36,6 +37,7 @@ case "$choice" in
   *'Reload Hyprland') exec hyprctl reload ;;
   *'Restart Waybar') exec waybar-watch ~/.config/waybar-hypr ;;
   *'Reload Dock') exec ~/.local/bin/hypr-nwg-dock reload ;;
+  *'Restart Conky') pkill -x conky 2>/dev/null || true; sleep 0.3; sh -lc 'conky -c ~/.config/conky/conky.conf -d && conky -c ~/.config/conky/conky-clock.conf -d && conky -c ~/.config/conky/conky-apps.conf -d' ;;
   *'Theme light') [ -n "$theme_cmd" ] && exec "$theme_cmd" apply orgm-light ;;
   *'Theme dark') [ -n "$theme_cmd" ] && exec "$theme_cmd" apply orgm-dark ;;
   *'User logs') exec kitty --class user-logs -e journalctl --user -n 200 --no-pager ;;
