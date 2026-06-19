@@ -9,7 +9,7 @@
 
 window.top_bar#waybar,
 window.bottom_bar#waybar {
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.80);
   border: none;
   border-radius: 0;
   box-shadow: none;
