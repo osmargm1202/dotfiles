@@ -1,0 +1,1 @@
+/nix/store/293hfzxac9zjr08n23abvfgqh6zzsnjq-home-manager-files/.config/hypr/lua/monitors/lenovo.lua
