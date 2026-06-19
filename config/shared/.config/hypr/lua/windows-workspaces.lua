@@ -66,6 +66,7 @@ hl.window_rule({ match = { class = "^conky-overlay$" }, float = true })
 hl.window_rule({ match = { class = "^conky-overlay$" }, pin = true })
 hl.window_rule({ match = { class = "^conky-overlay$" }, no_initial_focus = true })
 hl.window_rule({ match = { class = "^conky-overlay$" }, border_size = 0 })
+hl.window_rule({ match = { class = "^conky-overlay$" }, opacity = "0.24 override 0.24 override" })
 
 hl.window_rule({
   name = "fix-xwayland-empty-class-drags",
