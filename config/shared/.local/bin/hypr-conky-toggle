@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Toggle conky-stats: kill if running, start if not.
+# With pin+below window rules, conky stays in background on all workspaces.
+if pgrep -x conky > /dev/null; then
+    pkill -x conky
+else
+    conky -c ~/.config/conky/conky.conf -d
+fi

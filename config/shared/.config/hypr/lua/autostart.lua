@@ -2,7 +2,8 @@ local exec_once = {
   "hypr-session-import-env",
   "systemctl --user start sunshine.service",
   "sh -lc '$HOME/.local/bin/hypr-display-targets ensure && $HOME/.local/bin/waybar-watch ~/.config/waybar-hypr'",
-  "sh -lc 'orgm-wallpaper daemon >/tmp/orgm-wallpaper.log 2>&1'",
+  "sh -lc 'orgm-wallpaper restore >>/tmp/orgm-wallpaper.log 2>&1'",
+  "sh -lc 'orgm-wallpaper daemon >>/tmp/orgm-wallpaper.log 2>&1'",
   "swaync",
   "nm-applet --indicator",
   "blueman-applet",
@@ -16,6 +17,7 @@ local exec_once = {
   "wl-paste --type image --watch cliphist store",
   "hypridle",
   "sh -lc '$HOME/.local/bin/hypr-nwg-dock 2>/tmp/hypr-nwg-dock.log'",
+  "sh -lc 'sleep 2 && conky -c ~/.config/conky/conky.conf -d'",
 }
 
 hl.on("hyprland.start", function()

@@ -58,6 +58,9 @@ hl.window_rule({ match = { modal = true }, float = true })
 
 -- Discord starts normally; no forced scratchpad.
 
+-- Conky runs as wlr-layer-shell bottom surface (not a Hyprland window client)
+-- No window rules needed
+
 hl.window_rule({
   name = "fix-xwayland-empty-class-drags",
   match = {

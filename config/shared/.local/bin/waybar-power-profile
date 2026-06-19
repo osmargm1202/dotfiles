@@ -28,8 +28,8 @@ case "$mode" in
     has_battery || exit 0
     current="$(powerprofilesctl get 2>/dev/null || echo "balanced")"
     icon="$(profile_icon "$current")"
-    printf '{"text":"%s %s","tooltip":"Power profile: %s\\nClick to change","class":"power-profile-%s"}\n' \
-      "$icon" "$current" "$current" "$current"
+    printf '{"text":"%s","tooltip":"Power profile: %s\\nClick to change","class":"power-profile-%s"}\n' \
+      "$icon" "$current" "$current"
     ;;
   pick)
     has_battery || exit 0
@@ -38,7 +38,8 @@ case "$mode" in
       "$(profile_icon balanced) balanced"
       "$(profile_icon power-saver) power-saver"
     )
-    selected="$(printf '%s\n' "${choices[@]}" | hypr_rofi_dmenu 'Power Profile' 3 || true)"
+    current="$(powerprofilesctl get 2>/dev/null || echo "balanced")"
+    selected="$(printf '%s\n' "${choices[@]}" | hypr_rofi_dmenu "Power Profile [$current]" 3 || true)"
     [ -z "$selected" ] && exit 0
     profile="${selected##* }"
     [ -n "$profile" ] && powerprofilesctl set "$profile"

@@ -23,6 +23,7 @@
       "tray",
       "custom/clipboard",
       "custom/theme_toggle",
+      "custom/conky_toggle",
       "custom/wallpaper",
       "custom/usb_devices",
       "custom/memclean",
@@ -154,6 +155,14 @@
       "interval": 60,
       "tooltip": false
     },
+    "custom/conky_toggle": {
+      "format": "󰥔",
+      "tooltip": true,
+      "tooltip-format": "Mostrar reloj/stats (5s)
+Click derecho: 10s",
+      "on-click": "hypr-conky-toggle 5",
+      "on-click-right": "hypr-conky-toggle 10"
+    },
     "custom/wallpaper": {
       "format": "",
       "tooltip": true,
@@ -251,7 +260,6 @@
       "modules": [
         "backlight",
         "battery",
-        "custom/power_profile",
         "pulseaudio",
         "pulseaudio/slider",
         "pulseaudio#microphone",
@@ -414,9 +422,9 @@
       "mpris"
     ],
     "modules-right": [
-      "group/usage",
       "custom/kbd_layout",
-      "custom/keybindings_help"
+      "custom/keybindings_help",
+      "custom/power_profile"
     ],
     "custom/orgm_logo": {
       "format": "NixOS",
@@ -546,6 +554,15 @@
       "tooltip-format": "Atajos Hyprland (Win+/)\nClick: abrir helper\nClick derecho: actualizar lista",
       "on-click": "hypr-keyhelper toggle",
       "on-click-right": "hypr-keyhelper init"
+    },
+    "custom/power_profile": {
+      "exec-if": "waybar-power-profile check",
+      "exec": "waybar-power-profile status",
+      "return-type": "json",
+      "interval": 10,
+      "format": "{}",
+      "tooltip": true,
+      "on-click": "waybar-power-profile pick"
     },
     "battery": {
       "states": {
