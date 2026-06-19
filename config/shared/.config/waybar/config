@@ -129,7 +129,7 @@
       "modules": [{ "type": "audio-in" }, { "type": "screenshare" }]
     },
     "tray": { "icon-size": 21, "spacing": 10 },
-    "custom/logout_menu": { "format": "󰐥", "tooltip": false, "on-click": "fish -c wlogout_uniqe" }
+    "custom/logout_menu": { "format": "⏻", "tooltip": false, "on-click": "fish -c wlogout_uniqe" }
   },
   {
     "name": "bottom_bar",

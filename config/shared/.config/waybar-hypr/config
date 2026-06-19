@@ -375,7 +375,7 @@
       "on-click": "hypr-config-editor"
     },
     "custom/logout_menu": {
-      "format": "󰐥",
+      "format": "⏻",
       "tooltip": false,
       "on-click": "hypr-power-menu"
     },

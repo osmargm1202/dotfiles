@@ -46,8 +46,8 @@ hl.config({
     },
     blur = {
       enabled = true,
-      size = 5,
-      passes = 3,
+      size = 8,
+      passes = 4,
       vibrancy = 0.17,
     },
   },
@@ -61,7 +61,7 @@ hl.layer_rule({
   name = "blur-waybar",
   match = { namespace = "waybar" },
   blur = true,
-  ignore_alpha = 0.10,
+  ignore_alpha = 0.0,
 })
 
 hl.layer_rule({

@@ -39,8 +39,8 @@ shadow_blur_radius 18
 shadow_color #00000070
 blur enable
 blur_xray disable
-blur_passes 3
-blur_radius 5
+blur_passes 4
+blur_radius 8
 for_window [app_id=".*"] opacity 0.96
 for_window [class=".*"] opacity 0.96
 for_window [app_id="kitty"] opacity 0.85

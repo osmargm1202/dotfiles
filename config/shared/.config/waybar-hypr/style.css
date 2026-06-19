@@ -9,7 +9,7 @@
 
 window.top_bar#waybar,
 window.bottom_bar#waybar {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.45);
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -60,7 +60,7 @@ window.top_bar .modules-center {
 }
 window.top_bar .modules-right {
   padding-left: 24px;
-  padding-right: 24px;
+  padding-right: 0;
 }
 window.bottom_bar .modules-center {
 }
