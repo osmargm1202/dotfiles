@@ -44,3 +44,5 @@ config/shared/.config/kdeglobals
 config/shared/.config/hypr/scheme/current.conf
 config/shared/.config/quickshell/theme/theme.json
 config/shared/.config/quickshell/theme/current.json
+config/shared/.config/orgm-hypr/display-targets.json
+config/shared/.config/Kvantum/catppuccin-macchiato-teal-standard#

@@ -1,9 +1,1 @@
-hotkey-overlay {
-    skip-at-startup
-}
-
-screenshot-path "~/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
-
-switch-events {
-    lid-close { spawn "dms" "ipc" "call" "lock" "lock"; }
-}
+/nix/store/qj7vmgiml6v8ysy00zgj2k1grjgdl46a-home-manager-files/.config/niri/95-other.kdl

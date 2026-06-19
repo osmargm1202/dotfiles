@@ -36,6 +36,7 @@ exec nwg-dock-hyprland \
   -a center \
   -i "${HYPR_NWG_DOCK_ICON_SIZE:-56}" \
   -x \
+  -g "Claude Code URL Handler" \
   -mr "${HYPR_NWG_DOCK_MARGIN_RIGHT:-8}" \
   -mt "${HYPR_NWG_DOCK_MARGIN_TOP:-0}" \
   -mb "${HYPR_NWG_DOCK_MARGIN_BOTTOM:-0}" \

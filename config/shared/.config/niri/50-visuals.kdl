@@ -1,8 +1,1 @@
-prefer-no-csd
-
-cursor {
-    xcursor-theme "Bibata-Modern-Ice"
-    xcursor-size 20
-    hide-when-typing
-    hide-after-inactive-ms 5000
-}
+/nix/store/qj7vmgiml6v8ysy00zgj2k1grjgdl46a-home-manager-files/.config/niri/50-visuals.kdl
