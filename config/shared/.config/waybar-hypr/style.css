@@ -154,6 +154,7 @@ window.bottom_bar .modules-right { margin-right: 0; }
   padding: 0 5px;
   margin: 0;
 }
+#group-system #battery, #system #battery { margin-right: 10px; }
 #group-usage #custom-metric_cpu,
 #group-usage #custom-metric_gpu,
 #group-usage #custom-metric_ram,

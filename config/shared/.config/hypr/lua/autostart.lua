@@ -17,7 +17,7 @@ local exec_once = {
   "wl-paste --type image --watch cliphist store",
   "hypridle",
   "sh -lc '$HOME/.local/bin/hypr-nwg-dock 2>/tmp/hypr-nwg-dock.log'",
-  "sh -lc 'sleep 2 && conky -c ~/.config/conky/conky.conf -d'",
+  "sh -lc 'sleep 2 && conky -c ~/.config/conky/conky.conf -d && conky -c ~/.config/conky/conky-clock.conf -d && conky -c ~/.config/conky/conky-apps.conf -d'",
 }
 
 hl.on("hyprland.start", function()

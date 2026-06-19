@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Toggle conky-stats: kill if running, start if not.
-# With pin+below window rules, conky stays in background on all workspaces.
-if pgrep -x conky > /dev/null; then
-    pkill -x conky
-else
-    conky -c ~/.config/conky/conky.conf -d
-fi
+# Show stats overlay above all windows for 4s. Background conky (layer-shell) stays untouched.
+LOCK=/tmp/hypr-conky-overlay.lock
+if [ -f "$LOCK" ]; then exit 0; fi
+touch "$LOCK"
+conky -c ~/.config/conky/conky-top.conf -d
+(sleep 4 && pkill -f "conky-top.conf" 2>/dev/null && rm -f "$LOCK") &
+disown $!

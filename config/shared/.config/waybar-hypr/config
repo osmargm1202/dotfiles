@@ -23,7 +23,6 @@
       "tray",
       "custom/clipboard",
       "custom/theme_toggle",
-      "custom/conky_toggle",
       "custom/wallpaper",
       "custom/usb_devices",
       "custom/memclean",
@@ -154,14 +153,6 @@
       "exec": "waybar-date-es",
       "interval": 60,
       "tooltip": false
-    },
-    "custom/conky_toggle": {
-      "format": "󰥔",
-      "tooltip": true,
-      "tooltip-format": "Mostrar reloj/stats (5s)
-Click derecho: 10s",
-      "on-click": "hypr-conky-toggle 5",
-      "on-click-right": "hypr-conky-toggle 10"
     },
     "custom/wallpaper": {
       "format": "",
@@ -422,6 +413,7 @@ Click derecho: 10s",
       "mpris"
     ],
     "modules-right": [
+      "custom/conky_toggle",
       "custom/kbd_layout",
       "custom/keybindings_help",
       "custom/power_profile"
@@ -586,6 +578,12 @@ Click derecho: 10s",
         "󰂂",
         "󰁹"
       ]
+    },
+    "custom/conky_toggle": {
+      "format": "󰥔",
+      "tooltip": true,
+      "tooltip-format": "Ver stats 4s encima de ventanas",
+      "on-click": "hypr-conky-toggle"
     }
   }
 ]
