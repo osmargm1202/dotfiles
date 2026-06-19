@@ -145,9 +145,9 @@ clean() {
   sleep 0.3
   pkill -x conky 2>/dev/null || true
   sleep 0.3
-  distrobox-host-exec conky -c ~/.config/conky/conky.conf -d 2>/dev/null || true
-  distrobox-host-exec conky -c ~/.config/conky/conky-clock.conf -d 2>/dev/null || true
-  distrobox-host-exec conky -c ~/.config/conky/conky-apps.conf -d 2>/dev/null || true
+  conky -c ~/.config/conky/conky.conf -d 2>/dev/null || true
+  conky -c ~/.config/conky/conky-clock.conf -d 2>/dev/null || true
+  conky -c ~/.config/conky/conky-apps.conf -d 2>/dev/null || true
 
   local msg="Procesos: ${count} (~$((total / 1024)) MiB)"
   [[ "$containers_stopped" -eq 1 ]] && msg="$msg · contenedores detenidos"
