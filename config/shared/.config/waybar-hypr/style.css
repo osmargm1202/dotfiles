@@ -9,9 +9,10 @@
 
 window.top_bar#waybar,
 window.bottom_bar#waybar {
-  border: 2px solid rgba(56, 213, 255, 0.42);
-  border-radius: 12px;
-  box-shadow: inset 0 1px rgba(96, 165, 250, 0.20), inset 0 -1px rgba(15, 51, 87, 0.85);
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 #custom-ws_1, #custom-ws_2, #custom-ws_3, #custom-ws_4, #custom-ws_5,
 #custom-ws_6, #custom-ws_7, #custom-ws_8, #custom-ws_9, #custom-ws_10 {
@@ -19,7 +20,7 @@ window.bottom_bar#waybar {
   font-size: 17px;
   font-weight: 700;
   padding: 0 6px;
-  margin: 7px 1px;
+  margin: 4px 1px;
   border-radius: 12px;
 }
 #custom-ws_1.empty, #custom-ws_2.empty, #custom-ws_3.empty, #custom-ws_4.empty, #custom-ws_5.empty,
@@ -29,9 +30,9 @@ window.bottom_bar#waybar {
 #mode, #submap {
   background: transparent;
   border-radius: 12px;
-  padding: 0 14px;
-  margin-top: 7px;
-  margin-bottom: 7px;
+  padding: 0 12px;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 window.top_bar .modules-left,
 window.top_bar .modules-center,
@@ -46,8 +47,8 @@ window.bottom_bar .modules-right,
   background: transparent;
   border: none;
   border-radius: 0;
-  min-height: 40px;
-  padding: 10px 10px;
+  min-height: 32px;
+  padding: 4px 10px;
 }
 window.top_bar .modules-left {
   padding-left: 14px;
@@ -67,17 +68,17 @@ window.bottom_bar .modules-left { margin-left: 0; }
 window.bottom_bar .modules-right { margin-right: 0; }
 #custom-day_month, #custom-date {
   color: @text;
-  padding: 0 14px;
-  margin: 7px 5px;
+  padding: 0 12px;
+  margin: 4px 4px;
 }
 #custom-time {
   background: transparent;
   border-radius: 12px;
   color: @text;
-  font-size: 34px;
+  font-size: 24px;
   font-weight: 800;
-  padding: 0 20px;
-  margin: 0 8px;
+  padding: 0 10px;
+  margin: 0 4px;
 }
 #custom-menu {
   background: transparent;
@@ -154,7 +155,7 @@ window.bottom_bar .modules-right { margin-right: 0; }
   padding: 0 5px;
   margin: 0;
 }
-#group-system #battery, #system #battery { margin-right: 10px; }
+#group-system #battery, #system #battery { margin-right: 6px; }
 #group-usage #custom-metric_cpu,
 #group-usage #custom-metric_gpu,
 #group-usage #custom-metric_ram,
@@ -165,15 +166,15 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #usage #custom-metric_ram,
 #usage #custom-metric_ssd,
 #usage #custom-metric_swap {
-  margin: 0 7px;
+  margin: 0 4px;
 }
 .metric-widget {
   background: @surface0;
   border: none;
   border-radius: 11px;
-  padding: 4px 8px;
-  margin: 0 6px;
-  min-width: 92px;
+  padding: 3px 7px;
+  margin: 0 4px;
+  min-width: 88px;
   font-size: 15px;
 }
 #custom-metric_cpu,
@@ -243,9 +244,10 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #idle_inhibitor, #custom-keybindings_help {
   background: transparent;
   border-radius: 12px;
-  padding: 0 12px;
-  margin-top: 4px;
-  margin-bottom: 4px;
+  min-height: 28px;
+  padding: 0 10px;
+  margin-top: 2px;
+  margin-bottom: 2px;
 }
 #custom-keybindings_help { color: @text; font-weight: bold; }
 #battery.charging { color: @blue; }
@@ -253,9 +255,10 @@ window.bottom_bar .modules-right { margin-right: 0; }
 #battery.warning { color: @text; }
 
 window.dock_bar#waybar {
-  background-color: @panel_bg;
+  background: rgba(0, 0, 0, 0.6);
   border: none;
-  border-radius: 12px;
+  border-radius: 0;
+  box-shadow: none;
 }
 #custom-dock_windows,
 #custom-dock_kitty,
@@ -298,8 +301,12 @@ window.dock_bar#waybar {
   font-size: 8px;
   letter-spacing: 1px;
 }
-window.dock_bar#waybar {
-  border: 2px solid @panel_border;
+window.dock_spacer#waybar,
+window.dock_spacer#waybar * {
+  background: transparent;
+  color: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 #custom-dock_windows { background-image: url("/home/osmarg/.local/share/icons/windows.png"); }

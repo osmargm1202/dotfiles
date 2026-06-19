@@ -9,15 +9,16 @@
 
 window.top_bar#waybar,
 window.bottom_bar#waybar {
-  background-color: @panel_bg;
+  background: rgba(0, 0, 0, 0.6);
   border: none;
-  border-radius: 12px;
+  border-radius: 0;
+  box-shadow: none;
 }
 #workspaces {
   background: transparent;
   border-radius: 12px;
   padding: 0 4px;
-  margin: 7px 0;
+  margin: 4px 0;
 }
 #workspaces button {
   color: @text;
@@ -38,9 +39,10 @@ window.bottom_bar .modules-left, window.bottom_bar .modules-center, window.botto
 #group-system, #system {
   background: transparent;
   border-radius: 12px;
-  padding: 0 14px;
-  margin-top: 7px;
-  margin-bottom: 7px;
+  min-height: 32px;
+  padding: 0 12px;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 window.top_bar .modules-center {
   font-weight: bold;
@@ -54,17 +56,17 @@ window.bottom_bar .modules-left { border-radius: 12px; margin-left: 0; }
 window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #custom-day_month, #custom-date {
   color: @text;
-  padding: 0 14px;
-  margin: 7px 5px;
+  padding: 0 12px;
+  margin: 4px 4px;
 }
 #custom-time {
   background: transparent;
   border-radius: 12px;
   color: @text;
-  font-size: 34px;
+  font-size: 24px;
   font-weight: 800;
-  padding: 0 20px;
-  margin: 0 8px;
+  padding: 0 10px;
+  margin: 0 4px;
 }
 #custom-menu {
   background: transparent;
@@ -73,7 +75,7 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
   font-size: 29px;
   padding: 0;
   min-width: 47px;
-  margin: 7px 0 7px 13px;
+  margin: 4px 0 4px 13px;
 }
 #custom-orgm_logo {
   background: transparent;
@@ -153,9 +155,10 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #idle_inhibitor, #custom-keybindings_help {
   background: transparent;
   border-radius: 12px;
-  padding: 0 12px;
-  margin-top: 4px;
-  margin-bottom: 4px;
+  min-height: 28px;
+  padding: 0 10px;
+  margin-top: 2px;
+  margin-bottom: 2px;
 }
 #custom-keybindings_help { color: @text; font-weight: bold; }
 #battery.charging { color: @blue; }
@@ -163,9 +166,10 @@ window.bottom_bar .modules-right { border-radius: 12px; margin-right: 0; }
 #battery.warning { color: @text; }
 
 window.dock_bar#waybar {
-  background-color: @panel_bg;
+  background: rgba(0, 0, 0, 0.6);
   border: none;
-  border-radius: 12px;
+  border-radius: 0;
+  box-shadow: none;
 }
 #custom-dock_windows,
 #custom-dock_kitty,
