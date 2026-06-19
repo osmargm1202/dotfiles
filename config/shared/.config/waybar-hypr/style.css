@@ -300,13 +300,6 @@ window.dock_bar#waybar {
   font-size: 8px;
   letter-spacing: 1px;
 }
-window.dock_spacer#waybar,
-window.dock_spacer#waybar * {
-  background: transparent;
-  color: transparent;
-  border: none;
-  box-shadow: none;
-}
 window.dock_bar#waybar {
   border: 2px solid @panel_border;
 }

@@ -651,17 +651,5 @@
       "tooltip-format": "Ver stats 4s encima de ventanas",
       "on-click": "hypr-conky-toggle"
     }
-  },
-  {
-    "name": "dock_spacer",
-    "layer": "top",
-    "position": "right",
-    "width": 80,
-    "exclusive": true,
-    "passthrough": true,
-    "modules-center": ["custom/dock_spacer"],
-    "custom/dock_spacer": {
-      "format": ""
-    }
   }
 ]
