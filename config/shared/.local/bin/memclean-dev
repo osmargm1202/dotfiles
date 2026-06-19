@@ -112,14 +112,48 @@ clean() {
     total=$((total + rss))
   done < <(candidates)
 
-  if [[ "$count" -eq 0 ]]; then
-    command -v notify-send >/dev/null 2>&1 && notify-send "Memclean dev" "Nada que limpiar" || true
-    exit 0
+  if [[ "$count" -gt 0 ]]; then
+    kill -TERM "${pids[@]}" 2>/dev/null || true
   fi
 
-  kill -TERM "${pids[@]}" 2>/dev/null || true
-  command -v notify-send >/dev/null 2>&1 && notify-send "Memclean dev" "TERM enviado a ${count} procesos (~$((total / 1024)) MiB RSS). Protegidos: ${PROTECTED_DESC}" || true
-  printf 'TERM sent to %s processes (~%s MiB RSS)\n' "$count" "$((total / 1024))"
+  # Stop all containers
+  local containers_stopped=0
+  if command -v docker >/dev/null 2>&1; then
+    local running
+    running="$(docker ps -q 2>/dev/null || true)"
+    if [[ -n "$running" ]]; then
+      docker stop $running >/dev/null 2>&1 || true
+      containers_stopped=1
+    fi
+  fi
+  if command -v podman >/dev/null 2>&1; then
+    local running_p
+    running_p="$(podman ps -q 2>/dev/null || true)"
+    if [[ -n "$running_p" ]]; then
+      podman stop --all >/dev/null 2>&1 || true
+      containers_stopped=1
+    fi
+  fi
+
+  # Sync filesystem
+  sync
+
+  # Restart all desktop components
+  hyprctl reload >/dev/null 2>&1 || true
+  (waybar-watch ~/.config/waybar-hypr >/dev/null 2>&1 &)
+  ~/.local/bin/hypr-nwg-dock reload >/dev/null 2>&1 || true
+  sleep 0.3
+  pkill -x conky 2>/dev/null || true
+  sleep 0.3
+  conky -c ~/.config/conky/conky.conf -d 2>/dev/null || true
+  conky -c ~/.config/conky/conky-clock.conf -d 2>/dev/null || true
+  conky -c ~/.config/conky/conky-apps.conf -d 2>/dev/null || true
+
+  local msg="Procesos: ${count} (~$((total / 1024)) MiB)"
+  [[ "$containers_stopped" -eq 1 ]] && msg="$msg · contenedores detenidos"
+  msg="$msg · desktop reiniciado"
+  command -v notify-send >/dev/null 2>&1 && notify-send "Memclean dev" "$msg" || true
+  printf '%s\n' "$msg"
 }
 
 case "$MODE" in

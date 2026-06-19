@@ -12,6 +12,7 @@ choice="$(printf '%s\n' \
   '󰸉 Wallpaper picker' \
   '󰹹 Transitions' \
   '󰌌 Keyboard layout next' \
+  '󰍛 Free memory' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Tweaks' || true)"
 
 case "$choice" in
@@ -21,5 +22,6 @@ case "$choice" in
   *'Wallpaper picker') exec orgm-wallpaper pick ;;
   *'Transitions') exec hypr-transition-menu ;;
   *'Keyboard layout next') exec kbd-layout-next ;;
+  *'Free memory') exec memclean-dev clean ;;
   *) exit 0 ;;
 esac
