@@ -1,1 +1,9 @@
-/nix/store/293hfzxac9zjr08n23abvfgqh6zzsnjq-home-manager-files/.config/niri/10-workspace.kdl
+workspace "1"
+workspace "2"
+workspace "3"
+workspace "4"
+workspace "5"
+workspace "6"
+workspace "7"
+workspace "8"
+workspace "9"

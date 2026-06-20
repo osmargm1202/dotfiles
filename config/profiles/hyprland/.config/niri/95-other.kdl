@@ -1,1 +1,9 @@
-/nix/store/293hfzxac9zjr08n23abvfgqh6zzsnjq-home-manager-files/.config/niri/95-other.kdl
+hotkey-overlay {
+    skip-at-startup
+}
+
+screenshot-path "~/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+switch-events {
+    lid-close { spawn "dms" "ipc" "call" "lock" "lock"; }
+}
