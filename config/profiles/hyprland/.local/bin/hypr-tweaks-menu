@@ -13,7 +13,6 @@ choice="$(printf '%s\n' \
   '󰹹 Transitions' \
   '󰌌 Keyboard layout next' \
   '󰍛 Free memory' \
-  '󰒠 Conky toggle' \
   '󰒓 Hypr config editor' \
   '󰅖 Cancel' | hypr_rofi_dmenu 'Tweaks' || true)"
 
@@ -25,7 +24,6 @@ case "$choice" in
   *'Transitions') exec hypr-transition-menu ;;
   *'Keyboard layout next') exec kbd-layout-next ;;
   *'Free memory') exec memclean-dev clean ;;
-  *'Conky toggle') exec hypr-conky-toggle ;;
   *'Hypr config editor') exec hypr-config-editor ;;
   *) exec hypr-main-menu ;;
 esac
