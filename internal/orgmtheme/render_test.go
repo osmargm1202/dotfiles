@@ -208,6 +208,7 @@ func TestRenderActivePathsMatchBashHelper(t *testing.T) {
 		"/cfg/quickshell/theme/theme.json",
 		"/cfg/rofi/orgm-current.rasi",
 		"/cfg/swaync/orgm-current.css",
+		"/cfg/vesktop/settings/quickcss.css",
 		"/cfg/waybar-hypr/orgm-current.css",
 		"/cfg/waybar/orgm-current.css",
 		"/data/icons/default/index.theme",
