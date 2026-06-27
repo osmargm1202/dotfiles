@@ -82,3 +82,6 @@ honor_ps1 = false
 
 [session.new_session_shell_override]
 executable = "/usr/bin/fish"
+
+[system]
+prefer_low_power_gpu = false
