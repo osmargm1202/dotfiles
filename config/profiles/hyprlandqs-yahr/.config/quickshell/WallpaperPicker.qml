@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
 
@@ -383,14 +382,7 @@ PanelWindow {
                             sourceSize.width: 290
                             sourceSize.height: 210
                             
-                            layer.enabled: true
-                            layer.effect: OpacityMask {
-                                maskSource: Rectangle {
-                                    width: thumbnail.width
-                                    height: thumbnail.height
-                                    radius: 10
-                                }
-                            }
+                            layer.enabled: false
                             
                             // Show loading/error state
                             onStatusChanged: {

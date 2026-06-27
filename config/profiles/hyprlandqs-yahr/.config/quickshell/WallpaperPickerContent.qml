@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
 
@@ -353,14 +352,7 @@ Item {
                     sourceSize.width: gridView.cellWidth - 10
                     sourceSize.height: gridView.cellHeight - 10
 
-                    layer.enabled: true
-                    layer.effect: OpacityMask {
-                        maskSource: Rectangle {
-                            width: wallThumbnail.width
-                            height: wallThumbnail.height
-                            radius: 8
-                        }
-                    }
+                    layer.enabled: false
 
                     onStatusChanged: {
                         if (status === Image.Error)
