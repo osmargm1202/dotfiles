@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# Quick menu for hyprlandqs profile — uses wofi, no waybar/conky/swaync dependencies.
+# Quick menu for hyprlandqs profile — uses rofi dmenu.
+
+# shellcheck source=hypr-rofi-lib
+. "$(dirname "$0")/hypr-rofi-lib"
+hypr_rofi_load_env
 
 MENU_ENTRIES=(
   "  Lock Screen"
@@ -19,7 +23,7 @@ MENU_ENTRIES=(
   "  Webapp Maker"
 )
 
-CHOICE=$(printf '%s\n' "${MENU_ENTRIES[@]}" | wofi --show dmenu --prompt "Menu" --width 400 --height 450)
+CHOICE=$(printf '%s\n' "${MENU_ENTRIES[@]}" | hypr_rofi_dmenu "Menu" 15 400px)
 
 case "$CHOICE" in
   *"Lock Screen"*)    hypr-lock ;;

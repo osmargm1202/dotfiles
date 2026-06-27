@@ -9,7 +9,7 @@ local programs = {
   power_menu = "hypr-power-menu",
   display_settings = "nwg-displays",
   distrobox = "kitty -e distrobox-enter arch --",
-  piPrompt = "hypr-pi-prompt --launcher wofi",
+  piPrompt = "hypr-pi-prompt --launcher rofi",
 }
 
 return programs
