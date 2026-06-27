@@ -1,72 +1,44 @@
 #!/bin/sh
 set -eu
 
-state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
-config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
-dir="$state_home/orgm-helper"
-cache="$dir/keybindings.json"
-request="$dir/keyhelper-request.json"
-shell_path="$config_home/orgm-hypr/keyhelper/shell.qml"
-mkdir -p "$dir"
+lib="${HYPR_ROFI_LIB:-$HOME/.local/bin/hypr-rofi-lib}"
+# shellcheck disable=SC1090
+. "$lib"
 
-write_cache() {
-  cat >"$cache" <<'JSON'
-{
-  "schemaVersion": 1,
-  "defaultCategory": "launchers",
-  "categories": [
-    {"id":"launchers","title":"Launchers","icon":"󰀻","entries":[
-      {"key":"Win+/","description":"Atajos Hyprland","command":"hypr-keyhelper toggle"},
-      {"key":"Win+Enter","description":"Terminal","command":"kitty"},
-      {"key":"Win+Space","description":"Launcher Caelestia","command":"caelestia-shell ipc call drawers toggle launcher"},
-      {"key":"Win+Alt+Space","description":"Menú QS","command":"hypr-qs-menu"},
-      {"key":"Win+E","description":"Explorador de archivos","command":"nautilus"},
-      {"key":"Win+O","description":"Obsidian","command":"hypr-obsidian-open-or-focus"},
-      {"key":"Win+W","description":"Nueva ventana Zen","command":"hypr-zen-new-window"}
-    ]},
-    {"id":"tools","title":"Tools","icon":"󰒓","entries":[
-      {"key":"Win+M","description":"Buscar archivo","command":"hypr-rofi-open-file"},
-      {"key":"Win+Ctrl+M","description":"Buscar archivo (dir)","command":"hypr-rofi-open-file-dir"},
-      {"key":"Win+Shift+M","description":"Buscar archivo (terminal)","command":"hypr-rofi-open-file-terminal"},
-      {"key":"Win+Esc","description":"Cambiar ventana","command":"hypr-rofi-window"},
-      {"key":"Win+Shift+T","description":"Sesiones tmux arch","command":"hypr-rofi-tmux-arch"},
-      {"key":"Win+C","description":"Calculadora","command":"hypr-rofi-calc"},
-      {"key":"Win+D","description":"SSH host","command":"hypr-rofi-ssh-host"},
-      {"key":"Win+V","description":"Portapapeles","command":"hypr-rofi-clipboard"}
-    ]},
-    {"id":"system","title":"Sistema","icon":"󰒓","entries":[
-      {"key":"Win+Alt+L","description":"Bloquear pantalla","command":"hypr-lock"},
-      {"key":"Win+Alt+E","description":"Power menu","command":"hypr-power-menu"},
-      {"key":"Win+F10","description":"Audio (pavucontrol)","command":"pavucontrol"},
-      {"key":"Ctrl+Space","description":"Cambiar teclado","command":"hyprctl switchxkblayout all next"},
-      {"key":"Win+S","description":"Scratchpad toggle","command":"hyprctl dispatch togglespecialworkspace magic"},
-      {"key":"Print","description":"Captura de pantalla","command":"grim+swappy"},
-      {"key":"Win+Print","description":"Grabar pantalla MP4","command":"record_screen_mp4"}
-    ]}
-  ]
-}
-JSON
-}
+ENTRIES="$(cat <<'EOF'
+ Win+/           → Atajos Hyprland (este menú)
+ Win+Enter       → Terminal (kitty)
+ Win+Space       → Launcher Caelestia
+ Win+Alt+Space   → Menú QS
+ Win+E           → Explorador de archivos
+ Win+O           → Obsidian
+ Win+W           → Nueva ventana Zen
+───────────────────────────────
+ Win+M           → Buscar archivo
+ Win+Ctrl+M      → Buscar archivo (dir)
+ Win+Shift+M     → Buscar archivo (terminal)
+ Win+Esc         → Cambiar ventana
+ Win+Shift+T     → Sesiones tmux arch
+ Win+C           → Calculadora
+ Win+D           → SSH host
+ Win+V           → Portapapeles
+───────────────────────────────
+ Win+Alt+L       → Bloquear pantalla
+ Win+Alt+E       → Power menu
+ Win+F10         → Audio (pavucontrol)
+ Ctrl+Space      → Cambiar distribución teclado
+ Win+S           → Scratchpad toggle
+ Print           → Captura de pantalla (área)
+ Win+Print       → Grabar pantalla (MP4)
+ Win+Shift+Print → Grabar pantalla (GIF)
+EOF
+)"
 
-show_request() {
-  cat >"$request" <<JSON
-{"action":"toggle","cachePath":"$cache","nonce":"$(date +%s%N)"}
-JSON
-}
-
-case "${1:-toggle}" in
-  init)
-    write_cache
-    ;;
-  toggle)
-    write_cache
-    show_request
-    if ! pgrep -f 'quickshell.*keyhelper[/]shell[.]qml\|orgm-hypr.*keyhelper' >/dev/null 2>&1; then
-      ORGM_HELPER_CACHE="$cache" ORGM_HELPER_REQUEST="$request" ORGM_HELPER_SHOW=1 caelestia-shell -p "$shell_path" >/tmp/orgm-keyhelper.log 2>&1 &
-    fi
-    ;;
-  *)
-    echo "usage: hypr-keyhelper [init|toggle]" >&2
-    exit 2
-    ;;
-esac
+printf '%s\n' "$ENTRIES" | rofi \
+  -dmenu \
+  -p "Atajos" \
+  -i \
+  -no-fixed-num-lines \
+  -no-custom \
+  -theme-str 'window { width: 680px; } listview { lines: 24; }' \
+  || true
