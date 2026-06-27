@@ -1,5 +1,6 @@
 local exec_once = {
   "hypr-session-import-env",
+  "sh -lc 'sleep 0.5 && systemctl --user start graphical-session.target'",
   "systemctl --user start sunshine.service",
   "sh -lc 'orgm-wallpaper restore >>/tmp/orgm-wallpaper.log 2>&1'",
   "sh -lc 'orgm-wallpaper daemon >>/tmp/orgm-wallpaper.log 2>&1'",
