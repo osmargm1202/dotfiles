@@ -24,6 +24,7 @@ local opacity_rules = {
   -- Light mode is fully opaque to preserve contrast and avoid washed-out terminals.
   { class = "^(org.gnome.Nautilus)$", opacity = file_opacity },
   { class = "^(kitty)$", opacity = terminal_opacity },
+  { class = "^(dev.warp.Warp)$", opacity = terminal_opacity },
   { class = "^(app.zen_browser.zen)$", opacity = browser_opacity },
   { class = "^(zen-browser)$", opacity = browser_opacity },
   { class = "^(chromium)$", opacity = browser_opacity },
