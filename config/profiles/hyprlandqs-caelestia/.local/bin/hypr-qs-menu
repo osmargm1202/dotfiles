@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Quick menu for hyprlandqs profile — uses wofi, no waybar/conky/swaync dependencies.
+
+MENU_ENTRIES=(
+  "  Lock Screen"
+  "  Power Menu"
+  "  Wifi"
+  "  Bluetooth"
+  "  Audio Devices"
+  "  Keyboard Layout"
+  "  USB Devices"
+  "  Performance"
+  "  Kill Window"
+  "  Clipboard"
+  "  SSH Hosts"
+  "  Open File"
+  "  Calc"
+  "  Obsidian"
+  "  Webapp Maker"
+)
+
+CHOICE=$(printf '%s\n' "${MENU_ENTRIES[@]}" | wofi --show dmenu --prompt "Menu" --width 400 --height 450)
+
+case "$CHOICE" in
+  *"Lock Screen"*)    hypr-lock ;;
+  *"Power Menu"*)     hypr-power-menu ;;
+  *"Wifi"*)           hypr-wifi-menu ;;
+  *"Bluetooth"*)      hypr-bluetooth-menu ;;
+  *"Audio Devices"*)  hypr-audio-device-menu ;;
+  *"Keyboard"*)       hypr-keyboard-menu ;;
+  *"USB"*)            hypr-usb-menu ;;
+  *"Performance"*)    hypr-performance-menu ;;
+  *"Kill Window"*)    hypr-kill-windows ;;
+  *"Clipboard"*)      hypr-rofi-clipboard ;;
+  *"SSH"*)            hypr-rofi-ssh-host ;;
+  *"Open File"*)      hypr-rofi-open-file ;;
+  *"Calc"*)           hypr-rofi-calc ;;
+  *"Obsidian"*)       hypr-obsidian-open-or-focus ;;
+  *"Webapp"*)         hypr-webapp-maker ;;
+esac
