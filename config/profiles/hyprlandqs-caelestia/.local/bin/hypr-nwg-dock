@@ -32,7 +32,6 @@ fi
 exec nwg-dock-hyprland \
   "${dock_output_args[@]}" \
   -d \
-  -hd 0 \
   -hl top \
   -p bottom \
   -a center \
