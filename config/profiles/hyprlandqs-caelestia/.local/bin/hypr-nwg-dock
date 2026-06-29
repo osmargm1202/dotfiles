@@ -11,11 +11,16 @@ fi
 _resolve_hyprland_instance() {
   local hypr_dir="/run/user/$(id -u)/hypr"
   [ -d "$hypr_dir" ] || return 0
-  local sock="${hypr_dir}/${HYPRLAND_INSTANCE_SIGNATURE:-}/.socket.sock"
-  [ -S "$sock" ] && return 0  # current signature has a live socket
+  # hyprctl prints errors to stdout — use JSON monitor count to confirm alive
+  _sig_alive() {
+    local n
+    n=$(HYPRLAND_INSTANCE_SIGNATURE="$1" hyprctl -j monitors 2>/dev/null | jq 'length' 2>/dev/null)
+    [ "${n:-0}" -gt 0 ]
+  }
+  [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && _sig_alive "$HYPRLAND_INSTANCE_SIGNATURE" && return 0
   local sig
   for sig in $(ls -t "$hypr_dir" 2>/dev/null); do
-    if [ -S "${hypr_dir}/${sig}/.socket.sock" ]; then
+    if _sig_alive "$sig"; then
       export HYPRLAND_INSTANCE_SIGNATURE="$sig"
       return 0
     fi
