@@ -14,7 +14,7 @@ local exec_once = {
   "hypr-start-discord",
   "wl-paste --type text --watch cliphist store",
   "wl-paste --type image --watch cliphist store",
-  "hypridle",
+  -- hypridle is intentionally absent: caelestia manages idle/lock/dpms/sleep internally
   "sh -lc '$HOME/.local/bin/hypr-nwg-dock 2>/tmp/hypr-nwg-dock.log'",
   -- caelestia is started via systemd (programs.caelestia.systemd.enable = true in NixOS)
 }
