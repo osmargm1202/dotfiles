@@ -6,17 +6,16 @@ if ! command -v nwg-dock-hyprland >/dev/null 2>&1; then
   exit 1
 fi
 
-# Auto-detect active Hyprland instance — fixes stale HYPRLAND_INSTANCE_SIGNATURE
+# Auto-detect active Hyprland instance — fixes stale HYPRLAND_INSTANCE_SIGNATURE.
+# hyprctl exits 0 even on dead sockets, so check socket file existence instead.
 _resolve_hyprland_instance() {
   local hypr_dir="/run/user/$(id -u)/hypr"
   [ -d "$hypr_dir" ] || return 0
-  if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && \
-     hyprctl monitors >/dev/null 2>&1; then
-    return 0
-  fi
+  local sock="${hypr_dir}/${HYPRLAND_INSTANCE_SIGNATURE:-}/.socket.sock"
+  [ -S "$sock" ] && return 0
   local sig
   for sig in $(ls -t "$hypr_dir" 2>/dev/null); do
-    if HYPRLAND_INSTANCE_SIGNATURE="$sig" hyprctl monitors >/dev/null 2>&1; then
+    if [ -S "${hypr_dir}/${sig}/.socket.sock" ]; then
       export HYPRLAND_INSTANCE_SIGNATURE="$sig"
       return 0
     fi
