@@ -15,14 +15,14 @@ function M.setup(programs)
   hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("hypr-keyhelper toggle"))
   hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("chromium"))
   hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd("orgm-wallpaper pick"))
-  hl.bind(mainMod .. " + CTRL + slash", hl.dsp.exec_cmd("kitty --hold -e distrobox-enter arch -- tmuxls"))
-  hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(programs.terminal))
-  hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd("kitty -e distrobox-enter arch"))
+  hl.bind(mainMod .. " + CTRL + slash", hl.dsp.exec_cmd("kitty --hold -e fish -c tmuxls"))
+  hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("env NO_DEV_SHELL=1 kitty"))
+  hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd("kitty"))
   hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(programs.fileManager))
   hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("hypr-obsidian-open-or-focus"))
   hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("hypr-zen-new-window"))
 
-  hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("kitty -e distrobox-enter arch -- orgmrnc find"))
+  hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("kitty -e fish -c 'orgmrnc find'"))
   hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd(program("piPrompt", "kitty --hold -e pi")))
 
   -- Launchers and control center.
