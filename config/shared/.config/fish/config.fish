@@ -1,4 +1,5 @@
 set -g fish_greeting
+set -Ue fish_key_bindings
 
 # Auto-enter dev environment on interactive shells.
 # Skip with: NO_DEV_SHELL=1 fish  (or set it in terminal profile)
