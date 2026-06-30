@@ -1,5 +1,13 @@
 set -g fish_greeting
 
+# Auto-enter dev environment on interactive shells.
+# IN_DEV_SHELL is set by the buildFHSEnv profile so this does not loop.
+if status is-interactive; and not set -q IN_DEV_SHELL
+    if type -q dev
+        exec dev
+    end
+end
+
 # if not set -q TMUX
 #     if type -q fastfetch
 #         # Fastfetch local disponible
@@ -31,10 +39,7 @@ set -gx PATH $HOME/.local/bin $PATH
 set -gx PATH $HOME/.cargo/bin $PATH
 set -gx PATH $HOME/go/bin $PATH
 
-# Node: en el host usa pnpm por defecto; dentro de distrobox no carga el wrapper.
-if not set -q DISTROBOX_ENTER_PATH
-    alias npm="pnpm"
-end
+alias npm="pnpm"
 
 # Nix cleanup helpers.
 # En NixOS, sudo con setuid vive en /run/wrappers/bin/sudo. Algunas apps
