@@ -1,8 +1,8 @@
 set -g fish_greeting
 
 # Auto-enter dev environment on interactive shells.
-# IN_DEV_SHELL is set by the buildFHSEnv profile so this does not loop.
-if status is-interactive; and not set -q IN_DEV_SHELL
+# Skip with: NO_DEV_SHELL=1 fish  (or set it in terminal profile)
+if status is-interactive; and not set -q IN_DEV_SHELL; and not set -q NO_DEV_SHELL
     if type -q dev
         exec dev
     end
